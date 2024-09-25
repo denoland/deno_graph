@@ -232,10 +232,25 @@ TS2304 [ERROR]: Cannot find name 'CSSStyleDeclaration'.
                                          ~~~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/types.ts:33:42
 
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Reactor<T>'.
+  static create<T = void>(handler: (push: (input: T) => boolean, stop: () => void) => void | (() => void)): BufferedReactor<T> {
+         ~~~~~~
+    at file://<tmpdir>/src/utils.ts:33:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Reactor<T>'.
+  push(input: T): boolean {
+  ~~~~
+    at file://<tmpdir>/src/utils.ts:36:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Reactor<T>'.
+  next(): Promise<IteratorResult<T, void>> {
+  ~~~~
+    at file://<tmpdir>/src/utils.ts:39:3
+
 TS2304 [ERROR]: Cannot find name 'IdleDeadline'.
 export function idle(): Reactor<IdleDeadline> {
                                 ~~~~~~~~~~~~
     at file://<tmpdir>/src/utils.ts:55:33
 
-Found 46 errors.
+Found 49 errors.
 

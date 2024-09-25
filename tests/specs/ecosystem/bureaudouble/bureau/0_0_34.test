@@ -1939,6 +1939,13 @@ bureaudouble/bureau/0.0.34
 -- stdout --
 
 -- stderr --
+Warning The following packages contained npm lifecycle scripts (preinstall/install/postinstall) that were not executed:
+┠─ npm:esbuild@0.20.1
+┃
+┠─ This may cause the packages to not work correctly.
+┠─ Lifecycle scripts are only supported when using a `node_modules` directory.
+┠─ Enable it in your deno config file:
+┖─ "nodeModulesDir": "auto"
 error: TS2503 [ERROR]: Cannot find namespace 'JSX'.
 export const CustomInput = ({}: CustomInputProps): JSX.Element =>({} as never);
                                                    ~~~

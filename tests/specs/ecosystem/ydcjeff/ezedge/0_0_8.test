@@ -264,6 +264,13 @@ ydcjeff/ezedge/0.0.8
 -- stdout --
 
 -- stderr --
+Warning The following packages contained npm lifecycle scripts (preinstall/install/postinstall) that were not executed:
+┠─ npm:esbuild@0.20.2
+┃
+┠─ This may cause the packages to not work correctly.
+┠─ Lifecycle scripts are only supported when using a `node_modules` directory.
+┠─ Enable it in your deno config file:
+┖─ "nodeModulesDir": "auto"
 error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
  */ export function start_client(import_meta_url: string, fn: (el: HTMLElement, hydratable: boolean, data: unknown | null) => void): void {}
                                                                    ~~~~~~~~~~~

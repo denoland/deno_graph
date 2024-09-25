@@ -57,4 +57,23 @@ oak/oak/16.0.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+    at file://<tmpdir>/application.ts:303:77
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+    at file://<tmpdir>/application.ts:306:26
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+    at file://<tmpdir>/application.ts:308:80
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+   * `"error"` and `"listen"`. */ addEventListener(param0?: any, param1?: any, param2?: any): any {
+                                  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/application.ts:310:35
+
+Found 4 errors.
+

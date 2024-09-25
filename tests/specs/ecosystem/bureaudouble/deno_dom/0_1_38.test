@@ -9,4 +9,89 @@ bureaudouble/deno-dom/0.1.38
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Node'.
+  _shallowClone(): Node {
+  ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/dom/document.ts:30:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Node'.
+  _shallowClone(): Node {
+  ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/dom/document.ts:47:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Node'.
+  appendChild(child: Node): Node {
+  ~~~~~~~~~~~
+    at file://<tmpdir>/src/dom/document.ts:81:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
+  _shallowClone(): Node {
+  ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/dom/document.ts:133:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Node'.
+  _shallowClone(): Node {
+  ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/dom/element.ts:146:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Element'.
+  get innerHTML(): string {
+      ~~~~~~~~~
+    at file://<tmpdir>/src/dom/elements/html-template-element.ts:32:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Element'.
+  set innerHTML(html: string) {}
+      ~~~~~~~~~
+    at file://<tmpdir>/src/dom/elements/html-template-element.ts:35:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Element'.
+  get outerHTML(): string {
+      ~~~~~~~~~
+    at file://<tmpdir>/src/dom/elements/html-template-element.ts:36:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Node'.
+  get nodeValue(): string {
+      ~~~~~~~~~
+    at file://<tmpdir>/src/dom/node.ts:145:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Node'.
+  set nodeValue(value: any) {}
+      ~~~~~~~~~
+    at file://<tmpdir>/src/dom/node.ts:148:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Node'.
+  get textContent(): string {
+      ~~~~~~~~~~~
+    at file://<tmpdir>/src/dom/node.ts:153:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Node'.
+  set textContent(value: any) {}
+      ~~~~~~~~~~~
+    at file://<tmpdir>/src/dom/node.ts:156:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'CharacterData'.
+  _shallowClone(): Node {
+  ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/dom/node.ts:169:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'CharacterData'.
+  get textContent(): string {
+      ~~~~~~~~~~~
+    at file://<tmpdir>/src/dom/node.ts:172:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'CharacterData'.
+  _shallowClone(): Node {
+  ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/dom/node.ts:180:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'CharacterData'.
+  get textContent(): string {
+      ~~~~~~~~~~~
+    at file://<tmpdir>/src/dom/node.ts:183:7
+
+Found 16 errors.
+

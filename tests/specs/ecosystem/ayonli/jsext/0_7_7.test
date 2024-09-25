@@ -13,8 +13,53 @@ ayonli/jsext/0.7.7
 -- stdout --
 
 -- stderr --
-error: TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, V>'.
+  get [Symbol.toStringTag](): "BiMap" {
+      ~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/collections/BiMap.ts:4:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, any>'.
+  get [Symbol.toStringTag](): "CiMap" {
+      ~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/collections/CiMap.ts:2:7
+
+TS2416 [ERROR]: Property 'entries' in type 'CiMap<K, V>' is not assignable to the same property in base type 'Map<K, any>'.
+  Type '() => IterableIterator<[K, V]>' is not assignable to type '() => MapIterator<[K, any]>'.
+    Type 'IterableIterator<[K, V]>' is missing the following properties from type 'MapIterator<[K, any]>': map, filter, take, drop, and 9 more.
+  override entries(): IterableIterator<[K, V]> {
+           ~~~~~~~
+    at file://<tmpdir>/collections/CiMap.ts:20:12
+
+TS2416 [ERROR]: Property 'keys' in type 'CiMap<K, V>' is not assignable to the same property in base type 'Map<K, any>'.
+  Type '() => IterableIterator<K>' is not assignable to type '() => MapIterator<K>'.
+    Type 'IterableIterator<K>' is missing the following properties from type 'MapIterator<K>': map, filter, take, drop, and 9 more.
+  override keys(): IterableIterator<K> {
+           ~~~~
+    at file://<tmpdir>/collections/CiMap.ts:23:12
+
+TS2416 [ERROR]: Property 'values' in type 'CiMap<K, V>' is not assignable to the same property in base type 'Map<K, any>'.
+  Type '() => IterableIterator<V>' is not assignable to type '() => MapIterator<any>'.
+    Type 'IterableIterator<V>' is missing the following properties from type 'MapIterator<any>': map, filter, take, drop, and 9 more.
+  override values(): IterableIterator<V> {
+           ~~~~~~
+    at file://<tmpdir>/collections/CiMap.ts:26:12
+
+TS2416 [ERROR]: Property '[Symbol.iterator]' in type 'CiMap<K, V>' is not assignable to the same property in base type 'Map<K, any>'.
+  Type '() => IterableIterator<[K, V]>' is not assignable to type '() => MapIterator<[K, any]>'.
+    Type 'IterableIterator<[K, V]>' is missing the following properties from type 'MapIterator<[K, any]>': map, filter, take, drop, and 9 more.
+  [Symbol.iterator](): IterableIterator<[K, V]> {
+  ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/collections/CiMap.ts:30:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, any>'.
+  [Symbol.iterator](): IterableIterator<[K, V]> {
+  ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/collections/CiMap.ts:30:3
+
+TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
  */ export default function read<T>(target: NodeJS.EventEmitter, eventMap?: {
                                             ~~~~~~
     at file://<tmpdir>/read.ts:66:45
+
+Found 8 errors.
 

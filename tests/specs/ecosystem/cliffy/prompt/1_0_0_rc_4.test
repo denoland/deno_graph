@@ -40,4 +40,312 @@ cliffy/prompt/1.0.0-rc.4
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericPrompt<TValue, TRawValue>'.
+  public getDefaultSettings(options: GenericInputPromptOptions<TValue, TRawValue>): GenericInputPromptSettings<TValue, TRawValue> {
+         ~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/_generic_input.ts:19:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericPrompt<TValue, TRawValue>'.
+  protected message(): string {
+            ~~~~~~~
+    at file://<tmpdir>/_generic_input.ts:25:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericPrompt<TValue, TRawValue>'.
+   */ protected handleEvent(event: KeyCode): Promise<void> {
+                ~~~~~~~~~~~
+    at file://<tmpdir>/_generic_input.ts:37:17
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<TReturnValue, TRawValue>'.
+    at file://<tmpdir>/_generic_list.ts:84:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<TReturnValue, TRawValue>'.
+  protected message(): string {
+            ~~~~~~~
+    at file://<tmpdir>/_generic_list.ts:113:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<TReturnValue, TRawValue>'.
+  /** Render options. */ protected body(): string | Promise<string> {
+                                   ~~~~
+    at file://<tmpdir>/_generic_list.ts:116:36
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<TReturnValue, TRawValue>'.
+  /** Read user input. */ protected read(): Promise<boolean> {
+                                    ~~~~
+    at file://<tmpdir>/_generic_list.ts:162:37
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<TReturnValue, TRawValue>'.
+   */ protected handleEvent(event: KeyCode): Promise<void> {
+                ~~~~~~~~~~~
+    at file://<tmpdir>/_generic_list.ts:172:17
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<TReturnValue, TRawValue>'.
+  protected submit(): Promise<void> {
+            ~~~~~~
+    at file://<tmpdir>/_generic_list.ts:175:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<TReturnValue, TRawValue>'.
+  protected moveCursorLeft(): void {}
+            ~~~~~~~~~~~~~~
+    at file://<tmpdir>/_generic_list.ts:178:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<TReturnValue, TRawValue>'.
+  protected moveCursorRight(): void {}
+            ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/_generic_list.ts:179:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<TReturnValue, TRawValue>'.
+  protected deleteChar(): void {}
+            ~~~~~~~~~~
+    at file://<tmpdir>/_generic_list.ts:180:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<TReturnValue, TRawValue>'.
+  protected deleteCharRight(): void {}
+            ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/_generic_list.ts:181:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<TReturnValue, TRawValue>'.
+  protected addChar(char: string): void {}
+            ~~~~~~~
+    at file://<tmpdir>/_generic_list.ts:182:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<TValue, TRawValue>'.
+  public getDefaultSettings(options: GenericSuggestionsOptions<TValue, TRawValue>): GenericSuggestionsSettings<TValue, TRawValue> {
+         ~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/_generic_suggestions.ts:54:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<TValue, TRawValue>'.
+  protected render(): Promise<void> {
+            ~~~~~~
+    at file://<tmpdir>/_generic_suggestions.ts:64:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<TValue, TRawValue>'.
+  protected input(): string {
+            ~~~~~
+    at file://<tmpdir>/_generic_suggestions.ts:70:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<TValue, TRawValue>'.
+  protected body(): string | Promise<string> {
+            ~~~~
+    at file://<tmpdir>/_generic_suggestions.ts:85:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<TValue, TRawValue>'.
+   */ protected handleEvent(event: KeyCode): Promise<void> {
+                ~~~~~~~~~~~
+    at file://<tmpdir>/_generic_suggestions.ts:107:17
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<TValue, TRawValue>'.
+  /** Delete char right. */ protected deleteCharRight(): void {}
+                                      ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/_generic_suggestions.ts:110:39
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericList<TValue, TValue[], TValue[], CheckboxOptionSettings<TValue>, CheckboxOptionGroupSettings<TValue>>'.
+   */ public static inject<TValue>(value: Array<TValue>): void {}
+                    ~~~~~~
+    at file://<tmpdir>/checkbox.ts:130:21
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericList<TValue, TValue[], TValue[], CheckboxOptionSettings<TValue>, CheckboxOptionGroupSettings<TValue>>'.
+  public getDefaultSettings(options: CheckboxOptions<TValue>): CheckboxSettings<TValue> {
+         ~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/checkbox.ts:134:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericList<TValue, TValue[], TValue[], CheckboxOptionSettings<TValue>, CheckboxOptionGroupSettings<TValue>>'.
+  protected mapOption(options: CheckboxOptions<TValue>, option: CheckboxOption<TValue> | GenericListSeparatorOption): CheckboxOptionSettings<TValue> {
+            ~~~~~~~~~
+    at file://<tmpdir>/checkbox.ts:140:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericList<TValue, TValue[], TValue[], CheckboxOptionSettings<TValue>, CheckboxOptionGroupSettings<TValue>>'.
+  protected mapOptionGroup(promptOptions: CheckboxOptions<TValue>, option: CheckboxOptionGroup<TValue>): CheckboxOptionGroupSettings<TValue> {
+            ~~~~~~~~~~~~~~
+    at file://<tmpdir>/checkbox.ts:143:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericList<TValue, TValue[], TValue[], CheckboxOptionSettings<TValue>, CheckboxOptionGroupSettings<TValue>>'.
+  protected match(): void {}
+            ~~~~~
+    at file://<tmpdir>/checkbox.ts:146:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericList<TValue, TValue[], TValue[], CheckboxOptionSettings<TValue>, CheckboxOptionGroupSettings<TValue>>'.
+  protected getListItemIcon(option: CheckboxOptionSettings<TValue> | CheckboxOptionGroupSettings<TValue>): string {
+            ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/checkbox.ts:147:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericList<TValue, TValue[], TValue[], CheckboxOptionSettings<TValue>, CheckboxOptionGroupSettings<TValue>>'.
+   */ protected handleEvent(event: KeyCode): Promise<void> {
+                ~~~~~~~~~~~
+    at file://<tmpdir>/checkbox.ts:157:17
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericList<TValue, TValue[], TValue[], CheckboxOptionSettings<TValue>, CheckboxOptionGroupSettings<TValue>>'.
+  protected hint(): string | undefined {
+            ~~~~
+    at file://<tmpdir>/checkbox.ts:160:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericList<TValue, TValue[], TValue[], CheckboxOptionSettings<TValue>, CheckboxOptionGroupSettings<TValue>>'.
+  protected submit(hasConfirmed?: boolean): Promise<void> {
+            ~~~~~~
+    at file://<tmpdir>/checkbox.ts:163:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<boolean, string>'.
+   */ public static inject(value: string): void {}
+                    ~~~~~~
+    at file://<tmpdir>/confirm.ts:33:21
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<boolean, string>'.
+  public getDefaultSettings(options: ConfirmOptions): ConfirmSettings {
+         ~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/confirm.ts:37:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<boolean, string>'.
+  protected defaults(): string {
+            ~~~~~~~~
+    at file://<tmpdir>/confirm.ts:40:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<boolean, string>'.
+  protected success(value: boolean): string | undefined {
+            ~~~~~~~
+    at file://<tmpdir>/confirm.ts:43:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<string, string>'.
+   */ public static inject(value: string): void {}
+                    ~~~~~~
+    at file://<tmpdir>/input.ts:32:21
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<string, string>'.
+  public getDefaultSettings(options: InputOptions): InputSettings {
+         ~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/input.ts:36:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<string, string>'.
+  protected success(value: string): string | undefined {
+            ~~~~~~~
+    at file://<tmpdir>/input.ts:39:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<string[], string>'.
+   */ public static inject(value: string): void {}
+                    ~~~~~~
+    at file://<tmpdir>/list.ts:38:21
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<string[], string>'.
+  public getDefaultSettings(options: ListOptions): ListSettings {
+         ~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/list.ts:42:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<string[], string>'.
+  protected input(): string {
+            ~~~~~
+    at file://<tmpdir>/list.ts:45:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<string[], string>'.
+  protected success(value: string[]): string | undefined {
+            ~~~~~~~
+    at file://<tmpdir>/list.ts:54:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<string[], string>'.
+  protected getCurrentInputValue(): string {
+            ~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/list.ts:60:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<string[], string>'.
+  /** Add char. */ protected addChar(char: string): void {}
+                             ~~~~~~~
+    at file://<tmpdir>/list.ts:63:30
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<string[], string>'.
+  /** Delete char left. */ protected deleteChar(): void {}
+                                     ~~~~~~~~~~
+    at file://<tmpdir>/list.ts:64:38
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<string[], string>'.
+  protected complete(): Promise<string> {
+            ~~~~~~~~
+    at file://<tmpdir>/list.ts:65:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<number, string>'.
+   */ public static inject(value: string): void {}
+                    ~~~~~~
+    at file://<tmpdir>/number.ts:41:21
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<number, string>'.
+  public getDefaultSettings(options: NumberOptions): NumberSettings {
+         ~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/number.ts:45:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<number, string>'.
+  protected success(value: number): string | undefined {
+            ~~~~~~~
+    at file://<tmpdir>/number.ts:48:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<number, string>'.
+   */ protected handleEvent(event: KeyCode): Promise<void> {
+                ~~~~~~~~~~~
+    at file://<tmpdir>/number.ts:54:17
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericSuggestions<number, string>'.
+   */ protected addChar(char: string): void {}
+                ~~~~~~~
+    at file://<tmpdir>/number.ts:63:17
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<string, string>'.
+   */ public static inject(value: string): void {}
+                    ~~~~~~
+    at file://<tmpdir>/secret.ts:39:21
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<string, string>'.
+  public getDefaultSettings(options: SecretOptions): SecretSettings {
+         ~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/secret.ts:43:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<string, string>'.
+  protected input(): string {
+            ~~~~~
+    at file://<tmpdir>/secret.ts:46:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericInput<string, string>'.
+  /** Read user input. */ protected read(): Promise<boolean> {
+                                    ~~~~
+    at file://<tmpdir>/secret.ts:49:37
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericList<TValue, TValue, TValue, SelectOptionSettings<TValue>, SelectOptionGroupSettings<TValue>>'.
+   */ public static inject(value: string): void {}
+                    ~~~~~~
+    at file://<tmpdir>/select.ts:94:21
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericList<TValue, TValue, TValue, SelectOptionSettings<TValue>, SelectOptionGroupSettings<TValue>>'.
+  public getDefaultSettings(options: SelectOptions<TValue>): SelectSettings<TValue> {
+         ~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/select.ts:98:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericList<TValue, TValue, TValue, SelectOptionSettings<TValue>, SelectOptionGroupSettings<TValue>>'.
+  protected input(): string {
+            ~~~~~
+    at file://<tmpdir>/select.ts:104:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericList<TValue, TValue, TValue, SelectOptionSettings<TValue>, SelectOptionGroupSettings<TValue>>'.
+  protected submit(): Promise<void> {
+            ~~~~~~
+    at file://<tmpdir>/select.ts:107:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericPrompt<boolean, string>'.
+  public getDefaultSettings(options: ToggleOptions): ToggleSettings {
+         ~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/toggle.ts:34:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericPrompt<boolean, string>'.
+  protected message(): string {
+            ~~~~~~~
+    at file://<tmpdir>/toggle.ts:37:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericPrompt<boolean, string>'.
+  /** Read user input from stdin, handle events and validate user input. */ protected read(): Promise<boolean> {
+                                                                                      ~~~~
+    at file://<tmpdir>/toggle.ts:40:87
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericPrompt<boolean, string>'.
+   */ protected handleEvent(event: KeyCode): Promise<void> {
+                ~~~~~~~~~~~
+    at file://<tmpdir>/toggle.ts:46:17
+
+Found 61 errors.
+

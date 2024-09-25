@@ -42,6 +42,13 @@ TS2416 [ERROR]: Property 'map' in type 'Ok<T>' is not assignable to the same pro
         Types of parameters 'fn' and 'fn' are incompatible.
           Type 'Err<any> | Ok<any>' is not assignable to type 'Result<any, any>'.
             Type 'Err<any>' is not assignable to type 'Result<any, any>'.
+              Types of property 'flatMap' are incompatible.
+                Types of parameters '_fn' and 'fn' are incompatible.
+                  Type 'Err<any> | Ok<any>' is not assignable to type 'Result<any, any>'.
+                    Type 'Ok<any>' is not assignable to type 'Result<any, any>'.
+                      Types of property 'isErr' are incompatible.
+                        Type '() => false' is not assignable to type '<UError extends any>() => this is Err<UError>'.
+                          Signature '(): false' must be a type predicate.
   /** {@link Result.map} */ map<U>(fn: (value: T) => U): Ok<U> {
                             ~~~
     at file://<tmpdir>/result.ts:570:29
@@ -51,7 +58,16 @@ TS2416 [ERROR]: Property 'mapErr' in type 'Ok<T>' is not assignable to the same 
     Type 'this' is not assignable to type 'Result<T, UError>'.
       Type 'Ok<T>' is not assignable to type 'Result<T, UError>'.
         Types of property 'flatMap' are incompatible.
-          Type '<U, UError>(fn: (value: T) => Result<U, UError>) => Result<U, UError>' is not assignable to type '{ <U, UError>(fn: (value: T) => Ok<U> | Err<UError>): Result<U, UError>; <U, UError>(fn: (value: T) => Result<U, UError>): Result<U, UError>; }'.
+          Types of parameters 'fn' and 'fn' are incompatible.
+            Type 'Err<any> | Ok<any>' is not assignable to type 'Result<any, any>'.
+              Type 'Err<any>' is not assignable to type 'Result<any, any>'.
+                Types of property 'flatMap' are incompatible.
+                  Types of parameters '_fn' and 'fn' are incompatible.
+                    Type 'Err<any> | Ok<any>' is not assignable to type 'Result<any, any>'.
+                      Type 'Ok<any>' is not assignable to type 'Result<any, any>'.
+                        Types of property 'isErr' are incompatible.
+                          Type '() => false' is not assignable to type '<UError extends any>() => this is Err<UError>'.
+                            Signature '(): false' must be a type predicate.
   /** {@link Result.mapErr} */ mapErr<U>(_fn: (value: never) => U): this {
                                ~~~~~~
     at file://<tmpdir>/result.ts:573:32
@@ -60,6 +76,13 @@ TS2416 [ERROR]: Property 'flatMap' in type 'Err<TError>' is not assignable to th
   Types of parameters '_fn' and 'fn' are incompatible.
     Type 'Err<any> | Ok<any>' is not assignable to type 'Result<any, any>'.
       Type 'Err<any>' is not assignable to type 'Result<any, any>'.
+        Types of property 'flatMap' are incompatible.
+          Types of parameters '_fn' and 'fn' are incompatible.
+            Type 'Err<any> | Ok<any>' is not assignable to type 'Result<any, any>'.
+              Type 'Ok<any>' is not assignable to type 'Result<any, any>'.
+                Types of property 'isErr' are incompatible.
+                  Type '() => false' is not assignable to type '<UError extends any>() => this is Err<UError>'.
+                    Signature '(): false' must be a type predicate.
   /** {@link Result.flatMap} */ flatMap<U, UError>(_fn: (value: never) => Result<U, UError>): this {
                                 ~~~~~~~
     at file://<tmpdir>/result.ts:607:33
@@ -79,6 +102,13 @@ TS2416 [ERROR]: Property 'map' in type 'Err<TError>' is not assignable to the sa
           Types of parameters '_fn' and 'fn' are incompatible.
             Type 'Err<any> | Ok<any>' is not assignable to type 'Result<any, any>'.
               Type 'Err<any>' is not assignable to type 'Result<any, any>'.
+                Types of property 'flatMap' are incompatible.
+                  Types of parameters '_fn' and 'fn' are incompatible.
+                    Type 'Err<any> | Ok<any>' is not assignable to type 'Result<any, any>'.
+                      Type 'Ok<any>' is not assignable to type 'Result<any, any>'.
+                        Types of property 'isErr' are incompatible.
+                          Type '() => false' is not assignable to type '<UError extends any>() => this is Err<UError>'.
+                            Signature '(): false' must be a type predicate.
   /** {@link Result.map} */ map<U>(_fn: (value: never) => U): this {
                             ~~~
     at file://<tmpdir>/result.ts:622:29
@@ -90,6 +120,13 @@ TS2416 [ERROR]: Property 'mapErr' in type 'Err<TError>' is not assignable to the
         Types of parameters '_fn' and 'fn' are incompatible.
           Type 'Err<any> | Ok<any>' is not assignable to type 'Result<any, any>'.
             Type 'Err<any>' is not assignable to type 'Result<any, any>'.
+              Types of property 'flatMap' are incompatible.
+                Types of parameters '_fn' and 'fn' are incompatible.
+                  Type 'Err<any> | Ok<any>' is not assignable to type 'Result<any, any>'.
+                    Type 'Ok<any>' is not assignable to type 'Result<any, any>'.
+                      Types of property 'isErr' are incompatible.
+                        Type '() => false' is not assignable to type '<UError extends any>() => this is Err<UError>'.
+                          Signature '(): false' must be a type predicate.
   /** {@link Result.mapErr} */ mapErr<U>(fn: (value: TError) => U): Err<U> {
                                ~~~~~~
     at file://<tmpdir>/result.ts:625:32

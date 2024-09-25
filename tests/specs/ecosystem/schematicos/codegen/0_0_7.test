@@ -41,4 +41,12 @@ schematicos/codegen/0.0.7
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'SchematicBase'.
+  toString(): string {
+  ~~~~~~~~
+    at file://<tmpdir>/generate/elements/Definition.ts:44:3
+

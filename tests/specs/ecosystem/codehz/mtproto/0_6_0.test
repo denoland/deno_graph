@@ -9,4 +9,12 @@ codehz/mtproto/0.6.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Closer'.
+export interface Transport extends Deno.Closer {
+                                        ~~~~~~
+    at file://<tmpdir>/types.ts:13:41
+
