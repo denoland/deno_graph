@@ -13,20 +13,6 @@ kwhinnery/animals/0.0.16
 -- stdout --
 
 -- stderr --
-error: TS2834 [ERROR]: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Consider adding an extension to the import path.
-export * from "./animal";
-              ~~~~~~~~~~
+error: Module not found "file://<tmpdir>/types/animal".
     at file://<tmpdir>/types/mod.d.ts:1:15
-
-TS2834 [ERROR]: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Consider adding an extension to the import path.
-export * from "./cat";
-              ~~~~~~~
-    at file://<tmpdir>/types/mod.d.ts:2:15
-
-TS2834 [ERROR]: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Consider adding an extension to the import path.
-export * from "./dog";
-              ~~~~~~~
-    at file://<tmpdir>/types/mod.d.ts:3:15
-
-Found 3 errors.
 

@@ -9,4 +9,9 @@ kwhinnery/animals/0.0.14
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: Module not found "file://<tmpdir>/dist/animal.js".
+    at file://<tmpdir>/dist/mod.d.ts:1:15
