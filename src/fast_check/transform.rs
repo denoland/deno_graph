@@ -872,11 +872,10 @@ impl<'a> FastCheckTransformer<'a> {
                 },
                 is_abstract: false,
                 is_optional,
-                is_override: prop.is_override,
+                is_override: false,
                 readonly: prop.readonly,
-                // declare is not valid with override
-                declare: !prop.is_override,
-                definite: prop.is_override,
+                declare: true,
+                definite: false,
               }));
               *param = ParamOrTsParamProp::Param(Param {
                 span: prop.span,
@@ -970,11 +969,10 @@ impl<'a> FastCheckTransformer<'a> {
             accessibility: Some(Accessibility::Private),
             is_abstract: n.is_abstract,
             is_optional: n.is_optional,
-            is_override: n.is_override,
+            is_override: false,
             readonly: false,
-            // delcare is not valid with override
-            declare: !n.is_override,
-            definite: n.is_override,
+            declare: true,
+            definite: false,
           });
           return Ok(true);
         }
@@ -1083,10 +1081,10 @@ impl<'a> FastCheckTransformer<'a> {
           // once this pr lands: https://github.com/swc-project/swc/pull/8736
           is_abstract: false,
           is_optional: false,
-          is_override: n.is_override,
+          is_override: false,
           readonly: false,
-          declare: !n.is_override,
-          definite: n.is_override,
+          declare: true,
+          definite: false,
         });
         Ok(true)
       }
