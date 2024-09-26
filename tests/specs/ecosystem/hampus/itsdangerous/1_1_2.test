@@ -184,11 +184,6 @@ TS2580 [ERROR]: Cannot find name 'Buffer'.
                                                                                         ~~~~~~
     at file://<tmpdir>/src/timed.ts:30:89
 
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Serializer'.
-  signer = TimestampSigner;
-  ~~~~~~
-    at file://<tmpdir>/src/timed.ts:44:3
-
 TS2580 [ERROR]: Cannot find name 'Buffer'.
 export type StringBuffer = string | Buffer;
                                     ~~~~~~
@@ -204,5 +199,5 @@ TS2580 [ERROR]: Cannot find name 'Buffer'.
                                        ~~~~~~
     at file://<tmpdir>/src/url-safe.ts:12:40
 
-Found 36 errors.
+Found 35 errors.
 
