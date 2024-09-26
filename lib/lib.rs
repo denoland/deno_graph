@@ -100,7 +100,7 @@ impl Loader for JsLoader {
         };
         response
           .map(|value| serde_wasm_bindgen::from_value(value).unwrap())
-          .map_err(|_| anyhow!("load rejected or errored"))
+          .map_err(|_| anyhow!("load rejected or errored").into())
       };
       Box::pin(f)
     }
