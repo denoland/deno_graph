@@ -121,15 +121,14 @@ available in the path. If it is, the following command should _just work_:
 ## Versioning Strategy
 
 This crate does not follow semver so make sure to pin it to a patch version.
-Instead the following versioning strategy is used:
+Instead a versioning strategy that optimizes for more efficient maintenance is
+used:
 
 - Does [deno_doc](https://github.com/denoland/deno_doc) and
   [eszip](https://github.com/denoland/eszip) still compile in the
   [Deno](https://github.com/denoland/deno) repo?
   - If yes, it's a patch release.
   - If no, it's a minor release.
-
-This versioning strategy optimizes for more efficient development speed.
 
 ### Contributing
 
