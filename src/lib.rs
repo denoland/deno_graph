@@ -3316,11 +3316,16 @@ export const foo = 'bar';"#,
           imports: vec![Import {
             specifier: "./a.js".to_string(),
             kind: ImportKind::Es,
-            range: Range {
+            specifier_range: Range {
               specifier: specifier.clone(),
               start: Position::new(2, 22),
               end: Position::new(2, 30),
             },
+            full_range: Some(Range {
+              specifier: specifier.clone(),
+              start: Position::new(2, 4),
+              end: Position::new(2, 31),
+            }),
             is_dynamic: false,
             attributes: Default::default(),
           }],

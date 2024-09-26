@@ -669,7 +669,10 @@ pub struct Import {
   pub specifier: String,
   #[serde(skip_serializing_if = "ImportKind::is_es")]
   pub kind: ImportKind,
-  pub range: Range,
+  #[serde(rename = "range")]
+  pub specifier_range: Range,
+  #[serde(skip_serializing)]
+  pub full_range: Option<Range>,
   #[serde(skip_serializing_if = "is_false")]
   pub is_dynamic: bool,
   // Don't include attributes in `deno info --json` until someone has a need.
@@ -716,8 +719,8 @@ impl Dependency {
   /// otherwise none.
   pub fn includes(&self, position: &Position) -> Option<&Range> {
     for import in &self.imports {
-      if import.range.includes(position) {
-        return Some(&import.range);
+      if import.specifier_range.includes(position) {
+        return Some(&import.specifier_range);
       }
     }
     // `@deno-types` directives won't be associated with an import.
@@ -2414,7 +2417,8 @@ pub(crate) fn parse_js_module_from_module_info(
           dep.imports.push(Import {
             specifier: specifier.text,
             kind: ImportKind::TsReferencePath,
-            range,
+            specifier_range: range,
+            full_range: None,
             is_dynamic: false,
             attributes: Default::default(),
           });
@@ -2452,7 +2456,8 @@ pub(crate) fn parse_js_module_from_module_info(
             dep.imports.push(Import {
               specifier: specifier.text,
               kind: ImportKind::TsReferenceTypes,
-              range,
+              specifier_range: range,
+              full_range: None,
               is_dynamic: false,
               attributes: Default::default(),
             });
@@ -2574,7 +2579,8 @@ pub(crate) fn parse_js_module_from_module_info(
       dep.imports.push(Import {
         specifier: specifier_text,
         kind: ImportKind::JsxImportSource,
-        range,
+        specifier_range: range,
+        full_range: None,
         is_dynamic: false,
         attributes: Default::default(),
       });
@@ -2588,12 +2594,12 @@ pub(crate) fn parse_js_module_from_module_info(
         .dependencies
         .entry(specifier.text.clone())
         .or_default();
-      let range =
+      let specifier_range =
         Range::from_position_range(module.specifier.clone(), specifier.range);
       if dep.maybe_type.is_none() {
         dep.maybe_type = resolve(
           &specifier.text,
-          range.clone(),
+          specifier_range.clone(),
           ResolutionMode::Types,
           jsr_url_provider,
           maybe_resolver,
@@ -2603,7 +2609,8 @@ pub(crate) fn parse_js_module_from_module_info(
       dep.imports.push(Import {
         specifier: specifier.text,
         kind: ImportKind::JsDoc,
-        range,
+        specifier_range,
+        full_range: None,
         is_dynamic: false,
         attributes: Default::default(),
       });
@@ -2714,11 +2721,12 @@ fn fill_module_dependencies(
         if is_import_or_export_type && !graph_kind.include_types() {
           continue; // skip
         }
-        let range = Range::from_position_range(
+        let specifier_range = Range::from_position_range(
           module_specifier.clone(),
           desc.specifier_range,
         );
-
+        let full_range =
+          Range::from_position_range(module_specifier.clone(), desc.range);
         (
           vec![Import {
             specifier: desc.specifier,
@@ -2726,7 +2734,8 @@ fn fill_module_dependencies(
               true => ImportKind::TsType,
               false => ImportKind::Es,
             },
-            range,
+            specifier_range,
+            full_range: Some(full_range),
             is_dynamic: false,
             attributes: desc.import_attributes,
           }],
@@ -2756,17 +2765,20 @@ fn fill_module_dependencies(
           }
           _ => continue,
         };
-        let range = Range::from_position_range(
+        let specifier_range = Range::from_position_range(
           module_specifier.clone(),
           desc.argument_range,
         );
+        let full_range =
+          Range::from_position_range(module_specifier.clone(), desc.range);
         (
           specifiers
             .into_iter()
             .map(|specifier| Import {
               specifier,
               kind: ImportKind::Es,
-              range: range.clone(),
+              specifier_range: specifier_range.clone(),
+              full_range: Some(full_range.clone()),
               is_dynamic: true,
               attributes: import_attributes.clone(),
             })
@@ -2806,7 +2818,7 @@ fn fill_module_dependencies(
         if dep.maybe_type.is_none() {
           dep.maybe_type = resolve(
             &import.specifier,
-            import.range.clone(),
+            import.specifier_range.clone(),
             ResolutionMode::Types,
             jsr_url_provider,
             maybe_resolver,
@@ -2818,7 +2830,7 @@ fn fill_module_dependencies(
         // Resolve and determine the initial `is_dynamic` value from it.
         dep.maybe_code = resolve(
           &import.specifier,
-          import.range.clone(),
+          import.specifier_range.clone(),
           ResolutionMode::Execution,
           jsr_url_provider,
           maybe_resolver,
@@ -2835,7 +2847,7 @@ fn fill_module_dependencies(
       if graph_kind.include_types() && dep.maybe_type.is_none() {
         let maybe_type = resolve(
           &import.specifier,
-          import.range.clone(),
+          import.specifier_range.clone(),
           ResolutionMode::Types,
           jsr_url_provider,
           maybe_resolver,
@@ -5162,7 +5174,7 @@ mod tests {
         Import {
           specifier: "./b.ts".to_string(),
           kind: ImportKind::Es,
-          range: Range {
+          specifier_range: Range {
             specifier: specifier.clone(),
             start: Position {
               line: 0,
@@ -5173,13 +5185,18 @@ mod tests {
               character: 27,
             },
           },
+          full_range: Some(Range {
+            specifier: specifier.clone(),
+            start: Position::new(2, 16),
+            end: Position::new(2, 65),
+          }),
           is_dynamic: false,
           attributes: Default::default(),
         },
         Import {
           specifier: "./b.ts".to_string(),
           kind: ImportKind::Es,
-          range: Range {
+          specifier_range: Range {
             specifier: specifier.clone(),
             start: Position {
               line: 1,
@@ -5190,6 +5207,11 @@ mod tests {
               character: 27,
             },
           },
+          full_range: Some(Range {
+            specifier: specifier.clone(),
+            start: Position::new(2, 16),
+            end: Position::new(2, 65),
+          }),
           is_dynamic: false,
           attributes: Default::default(),
         },
@@ -5830,7 +5852,7 @@ mod tests {
         Import {
           specifier: "file:///bar.ts".to_string(),
           kind: ImportKind::TsReferencePath,
-          range: Range {
+          specifier_range: Range {
             specifier: Url::parse("file:///foo.ts").unwrap(),
             start: Position {
               line: 1,
@@ -5841,13 +5863,14 @@ mod tests {
               character: 52,
             },
           },
+          full_range: None,
           is_dynamic: false,
           attributes: ImportAttributes::None,
         },
         Import {
           specifier: "file:///bar.ts".to_string(),
           kind: ImportKind::TsReferenceTypes,
-          range: Range {
+          specifier_range: Range {
             specifier: Url::parse("file:///foo.ts").unwrap(),
             start: Position {
               line: 2,
@@ -5858,13 +5881,14 @@ mod tests {
               character: 53,
             },
           },
+          full_range: None,
           is_dynamic: false,
           attributes: ImportAttributes::None,
         },
         Import {
           specifier: "file:///bar.ts".to_string(),
           kind: ImportKind::Es,
-          range: Range {
+          specifier_range: Range {
             specifier: Url::parse("file:///foo.ts").unwrap(),
             start: Position {
               line: 4,
@@ -5875,13 +5899,18 @@ mod tests {
               character: 39,
             },
           },
+          full_range: Some(Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position::new(4, 16),
+            end: Position::new(4, 40),
+          }),
           is_dynamic: false,
           attributes: ImportAttributes::None,
         },
         Import {
           specifier: "file:///bar.ts".to_string(),
           kind: ImportKind::Es,
-          range: Range {
+          specifier_range: Range {
             specifier: Url::parse("file:///foo.ts").unwrap(),
             start: Position {
               line: 5,
@@ -5892,13 +5921,18 @@ mod tests {
               character: 45,
             },
           },
+          full_range: Some(Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position::new(5, 22),
+            end: Position::new(5, 46),
+          }),
           is_dynamic: true,
           attributes: ImportAttributes::None,
         },
         Import {
           specifier: "file:///bar.ts".to_string(),
           kind: ImportKind::Es,
-          range: Range {
+          specifier_range: Range {
             specifier: Url::parse("file:///foo.ts").unwrap(),
             start: Position {
               line: 6,
@@ -5909,13 +5943,18 @@ mod tests {
               character: 45,
             },
           },
+          full_range: Some(Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position::new(6, 22),
+            end: Position::new(6, 68),
+          }),
           is_dynamic: true,
           attributes: ImportAttributes::Unknown,
         },
         Import {
           specifier: "file:///bar.ts".to_string(),
           kind: ImportKind::TsType,
-          range: Range {
+          specifier_range: Range {
             specifier: Url::parse("file:///foo.ts").unwrap(),
             start: Position {
               line: 8,
@@ -5926,6 +5965,11 @@ mod tests {
               character: 52,
             },
           },
+          full_range: Some(Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            start: Position::new(8, 16),
+            end: Position::new(8, 53),
+          }),
           is_dynamic: false,
           attributes: ImportAttributes::None,
         },
@@ -5936,7 +5980,7 @@ mod tests {
       vec![Import {
         specifier: "file:///baz.json".to_string(),
         kind: ImportKind::Es,
-        range: Range {
+        specifier_range: Range {
           specifier: Url::parse("file:///foo.ts").unwrap(),
           start: Position {
             line: 7,
@@ -5947,6 +5991,11 @@ mod tests {
             character: 41,
           },
         },
+        full_range: Some(Range {
+          specifier: Url::parse("file:///foo.ts").unwrap(),
+          start: Position::new(7, 16),
+          end: Position::new(7, 66),
+        }),
         is_dynamic: false,
         attributes: ImportAttributes::Known(HashMap::from_iter(vec![(
           "type".to_string(),

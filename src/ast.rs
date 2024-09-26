@@ -462,6 +462,7 @@ fn analyze_dependencies(
             d.specifier_range,
             text_info,
           ),
+          range: PositionRange::from_source_range(d.range, text_info),
           import_attributes: d.import_attributes,
         })
       }
@@ -498,6 +499,7 @@ fn analyze_dependencies(
             d.argument_range,
             text_info,
           ),
+          range: PositionRange::from_source_range(d.range, text_info),
           import_attributes: d.import_attributes,
         })
       }
