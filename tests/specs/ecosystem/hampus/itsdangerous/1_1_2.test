@@ -119,11 +119,6 @@ TS2580 [ERROR]: Cannot find name 'Buffer'.
                                                        ~~~~~~
     at file://<tmpdir>/src/signer.ts:18:56
 
-TS2612 [ERROR]: Property 'digestMethod' will overwrite the base property in 'SigningAlgorithm'. If this is intentional, add an initializer. Otherwise, add a 'declare' modifier or remove the redundant declaration.
-  override digestMethod!: string;
-           ~~~~~~~~~~~~
-    at file://<tmpdir>/src/signer.ts:25:12
-
 TS2580 [ERROR]: Cannot find name 'Buffer'.
   override getSignature(key: Buffer, value: Buffer): Buffer {
                              ~~~~~~
@@ -188,6 +183,11 @@ TS2580 [ERROR]: Cannot find name 'Buffer'.
   override unsign(signedValue: StringBuffer, maxAge?: number, returnTimestamp?: true): [Buffer, Date];
                                                                                         ~~~~~~
     at file://<tmpdir>/src/timed.ts:30:89
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Serializer'.
+  signer = TimestampSigner;
+  ~~~~~~
+    at file://<tmpdir>/src/timed.ts:44:3
 
 TS2580 [ERROR]: Cannot find name 'Buffer'.
 export type StringBuffer = string | Buffer;
