@@ -35,7 +35,7 @@ export class CookieMapBase {
   }
 }
 
-export class Bar {
+export abstract class Bar {
   abstract foo: string;
   bar: number;
 }
@@ -79,7 +79,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 858,
+      "size": 867,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -114,12 +114,12 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
       return {} as never;
     }
   }
-  export class Bar {
+  export abstract class Bar {
     declare abstract foo: string;
     declare bar: number;
   }
   export class Baz extends Bar {
-    override foo!: string;
+    declare foo: string;
   }
   --- DTS ---
   export declare class RedBlackNode<T> extends BinarySearchNode<T> {
@@ -136,10 +136,10 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     [isSecure]: boolean;
     [public2](): number;
   }
-  export declare class Bar {
+  export declare abstract class Bar {
     abstract foo: string;
     bar: number;
   }
   export declare class Baz extends Bar {
-    override foo: string;
+    foo: string;
   }
