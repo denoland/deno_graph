@@ -140,8 +140,7 @@ import 'jsr:@scope/a'
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export class PrivateMethodOverloadable {
-    private constructor() {
-    }
+    private constructor(){}
     declare private method: any;
     declare private methodWithOverload: any;
     declare private "stringAndIdent": any;

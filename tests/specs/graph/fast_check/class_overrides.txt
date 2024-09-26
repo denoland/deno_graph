@@ -15,7 +15,7 @@ export class Bar extends Foo {
 
 export class Baz extends Foo {
   public constructor(public override name: string) {
-    super();
+    super(name);
   }
 }
 
@@ -54,7 +54,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 166,
+      "size": 241,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -69,14 +69,26 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  export abstract class Value {
-    protected body?(): string | undefined | Promise<string | undefined>;
-    protected footer(): string | undefined {
-      return {} as never;
+  export class Foo extends Error {
+    declare public name: string;
+  }
+  export class Bar extends Foo {
+    declare public name: string;
+  }
+  export class Baz extends Foo {
+    declare name: string;
+    public constructor(name: string){
+      super({} as never);
     }
   }
   --- DTS ---
-  export declare abstract class Value {
-    protected body?(): string | undefined | Promise<string | undefined>;
-    protected footer(): string | undefined;
+  export declare class Foo extends Error {
+    public name: string;
+  }
+  export declare class Bar extends Foo {
+    public name: string;
+  }
+  export declare class Baz extends Foo {
+    name: string;
+    public constructor(name: string);
   }

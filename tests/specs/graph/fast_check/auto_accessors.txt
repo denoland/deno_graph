@@ -56,7 +56,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 386,
+      "size": 438,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -73,6 +73,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export class AutoAccessor {
     /** Some comment */ declare public_accessor: string;
+    declare override_accessor: string;
     declare private private_accessor: any;
     declare static static_accessor: number;
     declare private static private_static: any;
@@ -84,6 +85,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   --- DTS ---
   export declare class AutoAccessor {
     /** Some comment */ public_accessor: string;
+    override_accessor: string;
     private private_accessor: any;
     static static_accessor: number;
     private static private_static: any;

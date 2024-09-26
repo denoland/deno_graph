@@ -687,8 +687,10 @@ impl<'a> FastCheckTransformer<'a> {
           if ctor.accessibility == Some(Accessibility::Private) {
             if had_private_constructor {
               retain = false;
-            } else {
+            } else if is_ambient || ctor.body.is_some() {
               had_private_constructor = true;
+            } else {
+              retain = false;
             }
           }
         } else if let ClassMember::Method(method) = &member {
@@ -1033,8 +1035,9 @@ impl<'a> FastCheckTransformer<'a> {
         } else {
           n.value = None;
         }
-        n.declare = n.value.is_none() && !n.is_override;
-        n.definite = n.value.is_none() && n.is_override;
+        n.declare = n.value.is_none();
+        n.definite = false;
+        n.is_override = false;
         n.decorators.clear();
         Ok(true)
       }
