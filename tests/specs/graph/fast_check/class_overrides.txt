@@ -19,6 +19,20 @@ export class Baz extends Foo {
   }
 }
 
+interface HeaderField {
+  name: string;
+}
+
+export class BaseHeader {
+  fields: HeaderField[] = [{ name: 'Date', }];
+}
+
+export class ChildHeader extends BaseHeader {
+  override fields = [{
+    name: 'Content-ID'
+  }];
+}
+
 # mod.ts
 import 'jsr:@scope/a'
 
@@ -54,7 +68,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 241,
+      "size": 461,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -81,6 +95,19 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
       super({} as never);
     }
   }
+  interface HeaderField {
+    name: string;
+  }
+  export class BaseHeader {
+    declare fields: HeaderField[];
+  }
+  export class ChildHeader extends BaseHeader {
+    override fields = [
+      {
+        name: 'Content-ID'
+      }
+    ];
+  }
   --- DTS ---
   export declare class Foo extends Error {
     public name: string;
@@ -91,4 +118,15 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export declare class Baz extends Foo {
     name: string;
     public constructor(name: string);
+  }
+  interface HeaderField {
+    name: string;
+  }
+  export declare class BaseHeader {
+    fields: HeaderField[];
+  }
+  export declare class ChildHeader extends BaseHeader {
+    override fields: [{
+        name: string;
+      }];
   }

@@ -995,10 +995,9 @@ impl<'a> FastCheckTransformer<'a> {
       ClassMember::ClassProp(n) => {
         if n.accessibility == Some(Accessibility::Private) {
           n.type_ann = Some(any_type_ann());
-          // it doesn't make sense for a private property to have the override
-          // keyword, but might as well make this consistent with elsewhere
-          n.declare = !n.is_override;
-          n.definite = n.is_override;
+          n.declare = true;
+          n.definite = false;
+          n.is_override = false;
           n.value = None;
           return Ok(true);
         }
@@ -1037,7 +1036,7 @@ impl<'a> FastCheckTransformer<'a> {
         }
         n.declare = n.value.is_none();
         n.definite = false;
-        n.is_override = false;
+        n.is_override = n.value.is_some() && n.is_override;
         n.decorators.clear();
         Ok(true)
       }
