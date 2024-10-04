@@ -127,7 +127,9 @@ used:
 - Does [deno_doc](https://github.com/denoland/deno_doc) and
   [eszip](https://github.com/denoland/eszip) still compile in the
   [Deno](https://github.com/denoland/deno) repo?
-  - If yes, it's a patch release.
+  - If yes, is this a change that would break something at runtime?
+    - If yes, it's a minor release.
+    - If no, it's a patch release.
   - If no, it's a minor release.
 
 ### Contributing
