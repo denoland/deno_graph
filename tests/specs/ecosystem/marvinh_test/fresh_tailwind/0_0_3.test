@@ -276,13 +276,6 @@ marvinh-test/fresh-tailwind/0.0.3
 -- stdout --
 
 -- stderr --
-Warning The following packages contained npm lifecycle scripts (preinstall/install/postinstall) that were not executed:
-┠─ npm:esbuild@0.20.2
-┃
-┠─ This may cause the packages to not work correctly.
-┠─ Lifecycle scripts are only supported when using a `node_modules` directory.
-┠─ Enable it in your deno config file:
-┖─ "nodeModulesDir": "auto"
 error: TS2305 [ERROR]: Module '"https://jsr.io/@marvinh-test/fresh/2.0.0-prealpha.17/src/dev/mod.ts"' has no exported member 'DevApp'.
 import type { DevApp } from "jsr:/@marvinh-test/fresh@^2.0.0-prealpha.11/dev";
               ~~~~~~
