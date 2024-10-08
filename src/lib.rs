@@ -67,6 +67,8 @@ pub use graph::FastCheckTypeModuleSlot;
 pub use graph::FillFromLockfileOptions;
 pub use graph::GraphImport;
 pub use graph::GraphKind;
+pub use graph::Import;
+pub use graph::ImportKind;
 pub use graph::JsModule;
 pub use graph::JsonModule;
 pub use graph::JsrLoadError;
