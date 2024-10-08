@@ -123,8 +123,6 @@ pub struct StaticDependencyDescriptor {
   pub specifier: String,
   /// The range of the specifier.
   pub specifier_range: PositionRange,
-  /// The range of the import statement.
-  pub range: PositionRange,
   /// Import attributes for this dependency.
   #[serde(skip_serializing_if = "ImportAttributes::is_none", default)]
   pub import_attributes: ImportAttributes,
@@ -174,7 +172,6 @@ pub struct DynamicDependencyDescriptor {
   pub argument: DynamicArgument,
   /// The range of the argument.
   pub argument_range: PositionRange,
-  pub range: PositionRange,
   /// Import attributes for this dependency.
   #[serde(skip_serializing_if = "ImportAttributes::is_none", default)]
   pub import_attributes: ImportAttributes,
@@ -378,16 +375,6 @@ mod test {
               character: 4,
             },
           },
-          range: PositionRange {
-            start: Position {
-              line: 1,
-              character: 0,
-            },
-            end: Position {
-              line: 3,
-              character: 5,
-            },
-          },
           import_attributes: ImportAttributes::None,
         }
         .into(),
@@ -395,10 +382,6 @@ mod test {
           types_specifier: None,
           argument: DynamicArgument::String("./test2".to_string()),
           argument_range: PositionRange {
-            start: Position::zeroed(),
-            end: Position::zeroed(),
-          },
-          range: PositionRange {
             start: Position::zeroed(),
             end: Position::zeroed(),
           },
@@ -421,6 +404,8 @@ mod test {
     };
     run_serialization_test(
       &module_info,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!({
         "dependencies": [{
           "type": "static",
@@ -431,12 +416,10 @@ mod test {
           },
           "specifier": "./test",
           "specifierRange": [[1, 2], [3, 4]],
-          "range": [[1, 0], [3, 5]],
         }, {
           "type": "dynamic",
           "argument": "./test2",
           "argumentRange": [[0, 0], [0, 0]],
-          "range": [[0, 0], [0, 0]],
           "importAttributes": {
             "known": {
               "key": null,
@@ -476,6 +459,8 @@ mod test {
     };
     run_serialization_test(
       &module_info,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!({
         "tsReferences": [{
           "type": "path",
@@ -508,6 +493,8 @@ mod test {
     };
     run_serialization_test(
       &module_info,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!({
         "selfTypesSpecifier": {
           "text": "a",
@@ -535,6 +522,8 @@ mod test {
     };
     run_serialization_test(
       &module_info,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!({
         "jsxImportSource": {
           "text": "a",
@@ -562,6 +551,8 @@ mod test {
     };
     run_serialization_test(
       &module_info,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!({
         "jsxImportSourceTypes": {
           "text": "a",
@@ -589,6 +580,8 @@ mod test {
     };
     run_serialization_test(
       &module_info,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!({
         "jsdocImports": [{
           "text": "a",
@@ -615,14 +608,12 @@ mod test {
         start: Position::zeroed(),
         end: Position::zeroed(),
       },
-      range: PositionRange {
-        start: Position::zeroed(),
-        end: Position::zeroed(),
-      },
       import_attributes: ImportAttributes::Unknown,
     });
     run_serialization_test(
       &descriptor,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!({
         "type": "static",
         "kind": "exportEquals",
@@ -632,7 +623,6 @@ mod test {
         },
         "specifier": "./test",
         "specifierRange": [[0, 0], [0, 0]],
-        "range": [[0, 0], [0, 0]],
         "importAttributes": "unknown",
       }),
     );
@@ -654,12 +644,10 @@ mod test {
           start: Position::zeroed(),
           end: Position::zeroed(),
         },
-        range: PositionRange {
-          start: Position::zeroed(),
-          end: Position::zeroed(),
-        },
         import_attributes: ImportAttributes::Unknown,
       }),
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!({
         "type": "dynamic",
         "typesSpecifier": {
@@ -667,7 +655,6 @@ mod test {
           "range": [[0, 0], [0, 0]],
         },
         "argumentRange": [[0, 0], [0, 0]],
-        "range": [[0, 0], [0, 0]],
         "importAttributes": "unknown",
       }),
     );
@@ -680,17 +667,14 @@ mod test {
           start: Position::zeroed(),
           end: Position::zeroed(),
         },
-        range: PositionRange {
-          start: Position::zeroed(),
-          end: Position::zeroed(),
-        },
         import_attributes: ImportAttributes::Unknown,
       }),
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!({
         "type": "dynamic",
         "argument": "test",
         "argumentRange": [[0, 0], [0, 0]],
-        "range": [[0, 0], [0, 0]],
         "importAttributes": "unknown",
       }),
     );
@@ -709,6 +693,8 @@ mod test {
         },
         DynamicTemplatePart::Expr,
       ]),
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!([{
         "type": "string",
         "value": "test",
@@ -762,16 +748,6 @@ mod test {
               character: 4,
             },
           },
-          range: PositionRange {
-            start: Position {
-              line: 1,
-              character: 0,
-            },
-            end: Position {
-              line: 3,
-              character: 5,
-            },
-          },
           types_specifier: Some(SpecifierWithRange {
             text: "./a.d.ts".to_string(),
             range: PositionRange {
@@ -800,7 +776,6 @@ mod test {
         "kind": "import",
         "specifier": "./a.js",
         "specifierRange": [[1, 2], [3, 4]],
-        "range": [[1, 0], [3, 5]],
         "leadingComments": [{
           "text": " @deno-types=\"./a.d.ts\"",
           "range": [[0, 0], [0, 25]],
@@ -827,16 +802,6 @@ mod test {
               character: 4,
             },
           },
-          range: PositionRange {
-            start: Position {
-              line: 1,
-              character: 0,
-            },
-            end: Position {
-              line: 3,
-              character: 5,
-            },
-          },
           types_specifier: None,
           import_attributes: ImportAttributes::None,
         },
@@ -853,7 +818,6 @@ mod test {
         "kind": "import",
         "specifier": "./a.js",
         "specifierRange": [[1, 2], [3, 4]],
-        "range": [[1, 0], [3, 5]],
       }]
     });
     run_v1_deserialization_test(json, &expected);
