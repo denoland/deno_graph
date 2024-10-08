@@ -201,10 +201,10 @@ pub enum TypeScriptReference {
   Types(SpecifierWithRange),
 }
 
-/// Information about the module.
+/// Information about the JS/TS module.
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ModuleInfo {
+pub struct JsModuleInfo {
   /// Dependencies of the module.
   #[serde(skip_serializing_if = "Vec::is_empty", default)]
   pub dependencies: Vec<DependencyDescriptor>,
@@ -319,7 +319,7 @@ pub trait ModuleAnalyzer {
     specifier: &ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
-  ) -> Result<ModuleInfo, ParseDiagnostic>;
+  ) -> Result<JsModuleInfo, ParseDiagnostic>;
 }
 
 impl<'a> Default for &'a dyn ModuleAnalyzer {
@@ -342,7 +342,7 @@ mod test {
   #[test]
   fn module_info_serialization_empty() {
     // empty
-    let module_info = ModuleInfo {
+    let module_info = JsModuleInfo {
       dependencies: Vec::new(),
       ts_references: Vec::new(),
       self_types_specifier: None,
@@ -356,7 +356,7 @@ mod test {
   #[test]
   fn module_info_serialization_deps() {
     // with dependencies
-    let module_info = ModuleInfo {
+    let module_info = JsModuleInfo {
       dependencies: Vec::from([
         StaticDependencyDescriptor {
           kind: DependencyKind::ImportEquals,
@@ -451,7 +451,7 @@ mod test {
 
   #[test]
   fn module_info_serialization_ts_references() {
-    let module_info = ModuleInfo {
+    let module_info = JsModuleInfo {
       dependencies: Vec::new(),
       ts_references: Vec::from([
         TypeScriptReference::Path(SpecifierWithRange {
@@ -492,7 +492,7 @@ mod test {
 
   #[test]
   fn module_info_serialization_self_types_specifier() {
-    let module_info = ModuleInfo {
+    let module_info = JsModuleInfo {
       dependencies: Vec::new(),
       ts_references: Vec::new(),
       self_types_specifier: Some(SpecifierWithRange {
@@ -519,7 +519,7 @@ mod test {
 
   #[test]
   fn module_info_serialization_jsx_import_source() {
-    let module_info = ModuleInfo {
+    let module_info = JsModuleInfo {
       dependencies: Vec::new(),
       ts_references: Vec::new(),
       self_types_specifier: None,
@@ -546,7 +546,7 @@ mod test {
 
   #[test]
   fn module_info_serialization_jsx_import_source_types() {
-    let module_info = ModuleInfo {
+    let module_info = JsModuleInfo {
       dependencies: Vec::new(),
       ts_references: Vec::new(),
       self_types_specifier: None,
@@ -573,7 +573,7 @@ mod test {
 
   #[test]
   fn module_info_jsdoc_imports() {
-    let module_info = ModuleInfo {
+    let module_info = JsModuleInfo {
       dependencies: Vec::new(),
       ts_references: Vec::new(),
       self_types_specifier: None,
@@ -747,7 +747,7 @@ mod test {
 
   #[test]
   fn test_v1_to_v2_deserialization_with_leading_comment() {
-    let expected = ModuleInfo {
+    let expected = JsModuleInfo {
       dependencies: vec![DependencyDescriptor::Static(
         StaticDependencyDescriptor {
           kind: DependencyKind::Import,
@@ -812,7 +812,7 @@ mod test {
 
   #[test]
   fn test_v1_to_v2_deserialization_no_leading_comment() {
-    let expected = ModuleInfo {
+    let expected = JsModuleInfo {
       dependencies: vec![DependencyDescriptor::Static(
         StaticDependencyDescriptor {
           kind: DependencyKind::Import,

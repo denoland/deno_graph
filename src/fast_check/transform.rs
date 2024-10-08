@@ -30,7 +30,7 @@ use crate::symbols::EsModuleInfo;
 use crate::symbols::ExpandoPropertyRef;
 use crate::symbols::Symbol;
 use crate::ModuleGraph;
-use crate::ModuleInfo;
+use crate::JsModuleInfo;
 use crate::ParserModuleAnalyzer;
 use crate::WorkspaceMember;
 
@@ -96,7 +96,7 @@ pub struct FastCheckDtsModule {
 
 #[derive(Debug)]
 pub struct FastCheckModule {
-  pub module_info: Arc<ModuleInfo>,
+  pub module_info: Arc<JsModuleInfo>,
   pub text: Arc<str>,
   pub source_map: Arc<[u8]>,
   pub dts: Option<FastCheckDtsModule>,

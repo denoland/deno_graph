@@ -3,8 +3,8 @@
 use crate::analyzer::DependencyDescriptor;
 use crate::analyzer::DynamicArgument;
 use crate::analyzer::DynamicTemplatePart;
+use crate::analyzer::JsModuleInfo;
 use crate::analyzer::ModuleAnalyzer;
-use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
@@ -850,6 +850,7 @@ pub enum Module {
   // todo(#239): remove this when updating the --json output for 2.0
   #[serde(rename = "asserted")]
   Json(JsonModule),
+  Wasm(WasmModule),
   Npm(NpmModule),
   Node(BuiltInNodeModule),
   External(ExternalModule),
@@ -860,6 +861,7 @@ impl Module {
     match self {
       Module::Js(module) => &module.specifier,
       Module::Json(module) => &module.specifier,
+      Module::Wasm(module) => &module.specifier,
       Module::Npm(module) => &module.specifier,
       Module::Node(module) => &module.specifier,
       Module::External(module) => &module.specifier,
@@ -910,7 +912,8 @@ impl Module {
     match self {
       crate::Module::Js(m) => Some(&m.source),
       crate::Module::Json(m) => Some(&m.source),
-      crate::Module::Npm(_)
+      crate::Module::Wasm(_)
+      | crate::Module::Npm(_)
       | crate::Module::Node(_)
       | crate::Module::External(_) => None,
     }
@@ -1043,6 +1046,21 @@ impl JsModule {
       None => &self.dependencies,
     }
   }
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WasmModule {
+  pub specifier: ModuleSpecifier,
+  #[serde(rename = "size", serialize_with = "serialize_source_bytes")]
+  pub source: Arc<[u8]>,
+  #[serde(
+    skip_serializing_if = "IndexMap::is_empty",
+    serialize_with = "serialize_wasm_dependencies"
+  )]
+  pub dependencies: IndexMap<String, Resolution>,
+  #[serde(flatten, skip_serializing_if = "Option::is_none")]
+  pub maybe_cache_info: Option<CacheInfo>,
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -1332,6 +1350,17 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
                     self.visiting.push_front(specifier);
                   }
                 }
+              }
+            }
+          }
+        }
+        Module::Wasm(module) => {
+          let module_deps = &module.dependencies;
+          for resolution in module_deps.values().rev() {
+            if let Resolution::Ok(resolved) = resolution {
+              let specifier = &resolved.specifier;
+              if self.seen.insert(specifier) {
+                self.visiting.push_front(specifier);
               }
             }
           }
@@ -1920,6 +1949,14 @@ impl ModuleGraph {
         let dependency = referring_module.dependencies.get(specifier)?;
         self.resolve_dependency_from_dep(dependency, prefer_types)
       }
+      Module::Wasm(referring_module) => {
+        let dependency = referring_module.dependencies.get(specifier)?;
+        let unresolved_specifier = dependency.maybe_specifier()?;
+        self.resolve_dependency_from_unresolved_specifier(
+          unresolved_specifier,
+          prefer_types,
+        )
+      }
       Module::Json(_)
       | Module::Npm(_)
       | Module::Node(_)
@@ -1940,6 +1977,17 @@ impl ModuleGraph {
     let unresolved_specifier = maybe_first
       .maybe_specifier()
       .or_else(|| maybe_second.maybe_specifier())?;
+    self.resolve_dependency_from_unresolved_specifier(
+      unresolved_specifier,
+      prefer_types,
+    )
+  }
+
+  fn resolve_dependency_from_unresolved_specifier<'a>(
+    &'a self,
+    unresolved_specifier: &'a ModuleSpecifier,
+    prefer_types: bool,
+  ) -> Option<&'a ModuleSpecifier> {
     let resolved_specifier = self.resolve(unresolved_specifier);
     // Even if we resolved the specifier, it doesn't mean the module is actually
     // there, so check in the module slots
@@ -2169,7 +2217,7 @@ pub(crate) enum ModuleSourceAndInfo {
     media_type: MediaType,
     source: Arc<str>,
     maybe_headers: Option<HashMap<String, String>>,
-    module_info: Box<ModuleInfo>,
+    module_info: Box<JsModuleInfo>,
   },
 }
 
@@ -2365,7 +2413,7 @@ pub(crate) fn parse_js_module_from_module_info(
   specifier: ModuleSpecifier,
   media_type: MediaType,
   maybe_headers: Option<&HashMap<String, String>>,
-  module_info: ModuleInfo,
+  module_info: JsModuleInfo,
   source: Arc<str>,
   file_system: &dyn FileSystem,
   jsr_url_provider: &dyn JsrUrlProvider,
@@ -3079,7 +3127,7 @@ enum PendingInfoResponse {
   Module {
     specifier: ModuleSpecifier,
     module_source_and_info: ModuleSourceAndInfo,
-    pending_load: Option<Box<(LoaderChecksum, ModuleInfo)>>,
+    pending_load: Option<Box<(LoaderChecksum, JsModuleInfo)>>,
   },
   Redirect {
     count: usize,
@@ -3204,7 +3252,7 @@ struct PendingContentLoadItem {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
   result: LoadResult,
-  module_info: ModuleInfo,
+  module_info: JsModuleInfo,
 }
 
 #[derive(Debug, Default)]
@@ -3698,6 +3746,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                         Err(err) => *slot = ModuleSlot::Err(*err),
                       }
                     }
+                    Module::Wasm(module) => {
+                      module.source = content.clone();
+                    }
                     Module::Npm(_) | Module::Node(_) | Module::External(_) => {
                       unreachable!(); // should not happen by design
                     }
@@ -3757,6 +3808,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               self.loader.get_cache_info(&module.specifier);
           }
           Module::Js(module) => {
+            module.maybe_cache_info =
+              self.loader.get_cache_info(&module.specifier);
+          }
+          Module::Wasm(module) => {
             module.maybe_cache_info =
               self.loader.get_cache_info(&module.specifier);
           }
@@ -3906,7 +3961,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_attribute_type: Option<AttributeTypeWithRange>,
     maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) {
-    struct ProvidedModuleAnalyzer(RefCell<Option<ModuleInfo>>);
+    struct ProvidedModuleAnalyzer(RefCell<Option<JsModuleInfo>>);
 
     #[async_trait::async_trait(?Send)]
     impl ModuleAnalyzer for ProvidedModuleAnalyzer {
@@ -3915,7 +3970,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         _specifier: &ModuleSpecifier,
         _source: Arc<str>,
         _media_type: MediaType,
-      ) -> Result<ModuleInfo, ParseDiagnostic> {
+      ) -> Result<JsModuleInfo, ParseDiagnostic> {
         Ok(self.0.borrow_mut().take().unwrap()) // will only be called once
       }
     }
@@ -5072,8 +5127,37 @@ where
   seq.end()
 }
 
+fn serialize_wasm_dependencies<S>(
+  dependencies: &IndexMap<String, Resolution>,
+  serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+  S: Serializer,
+{
+  #[derive(Serialize)]
+  struct DependencyWithSpecifier<'a> {
+    specifier: &'a str,
+    code: &'a Resolution,
+  }
+  let mut seq = serializer.serialize_seq(Some(dependencies.len()))?;
+  for (specifier, code) in dependencies {
+    seq.serialize_element(&DependencyWithSpecifier { specifier, code })?
+  }
+  seq.end()
+}
+
 fn serialize_source<S>(
   source: &Arc<str>,
+  serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+  S: Serializer,
+{
+  serializer.serialize_u32(source.len() as u32)
+}
+
+fn serialize_source_bytes<S>(
+  source: &Arc<[u8]>,
   serializer: S,
 ) -> Result<S::Ok, S::Error>
 where

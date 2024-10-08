@@ -59,6 +59,7 @@ sha2 = "^0.10.0"
 thiserror = "1.0.24"
 twox-hash = { version = "1.6.3", optional = true }
 url = { version = "2.2.2", features = ["serde"] }
+wasm_dep_analyzer = "0.1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 deno_unsync = { workspace = true, features = ["tokio"] }

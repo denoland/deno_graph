@@ -5,7 +5,7 @@ use crate::analyzer::DynamicArgument;
 use crate::analyzer::DynamicDependencyDescriptor;
 use crate::analyzer::DynamicTemplatePart;
 use crate::analyzer::ModuleAnalyzer;
-use crate::analyzer::ModuleInfo;
+use crate::analyzer::JsModuleInfo;
 use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::StaticDependencyDescriptor;
@@ -249,7 +249,7 @@ impl ModuleAnalyzer for DefaultModuleAnalyzer {
     specifier: &deno_ast::ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
-  ) -> Result<ModuleInfo, ParseDiagnostic> {
+  ) -> Result<JsModuleInfo, ParseDiagnostic> {
     ParserModuleAnalyzer::default()
       .analyze(specifier, source, media_type)
       .await
@@ -268,10 +268,10 @@ impl<'a> ParserModuleAnalyzer<'a> {
   }
 
   /// Gets the module info from a parsed source.
-  pub fn module_info(parsed_source: &ParsedSource) -> ModuleInfo {
+  pub fn module_info(parsed_source: &ParsedSource) -> JsModuleInfo {
     let module = match parsed_source.program_ref() {
       deno_ast::swc::ast::Program::Module(m) => m,
-      deno_ast::swc::ast::Program::Script(_) => return ModuleInfo::default(),
+      deno_ast::swc::ast::Program::Script(_) => return JsModuleInfo::default(),
     };
     Self::module_info_from_swc(
       parsed_source.media_type(),
@@ -286,7 +286,7 @@ impl<'a> ParserModuleAnalyzer<'a> {
     module: &deno_ast::swc::ast::Module,
     text_info: &SourceTextInfo,
     comments: &MultiThreadedComments,
-  ) -> ModuleInfo {
+  ) -> JsModuleInfo {
     let leading_comments = match module.body.first() {
       Some(item) => comments.get_leading(item.start()),
       None => match module.shebang {
@@ -294,7 +294,7 @@ impl<'a> ParserModuleAnalyzer<'a> {
         None => comments.get_leading(module.start()),
       },
     };
-    ModuleInfo {
+    JsModuleInfo {
       dependencies: analyze_dependencies(module, text_info, comments),
       ts_references: analyze_ts_references(text_info, leading_comments),
       self_types_specifier: analyze_ts_self_types(
@@ -321,7 +321,7 @@ impl<'a> ParserModuleAnalyzer<'a> {
     specifier: &deno_ast::ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
-  ) -> Result<ModuleInfo, ParseDiagnostic> {
+  ) -> Result<JsModuleInfo, ParseDiagnostic> {
     let parsed_source = self.parser.parse_module(ParseOptions {
       specifier,
       source,
@@ -348,7 +348,7 @@ impl<'a> ModuleAnalyzer for ParserModuleAnalyzer<'a> {
     specifier: &deno_ast::ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
-  ) -> Result<ModuleInfo, ParseDiagnostic> {
+  ) -> Result<JsModuleInfo, ParseDiagnostic> {
     self.analyze_sync(specifier, source, media_type)
   }
 }
@@ -392,7 +392,7 @@ impl ModuleAnalyzer for CapturingModuleAnalyzer {
     specifier: &deno_ast::ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
-  ) -> Result<ModuleInfo, ParseDiagnostic> {
+  ) -> Result<JsModuleInfo, ParseDiagnostic> {
     let capturing_parser = self.as_capturing_parser();
     let module_analyzer = ParserModuleAnalyzer::new(&capturing_parser);
     module_analyzer.analyze(specifier, source, media_type).await
@@ -1106,7 +1106,7 @@ export {};
       .unwrap();
     assert_eq!(
       module_info,
-      ModuleInfo {
+      JsModuleInfo {
         dependencies: vec![],
         ts_references: vec![TypeScriptReference::Path(SpecifierWithRange {
           text: "./ref.d.ts".to_owned(),

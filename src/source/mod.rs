@@ -5,7 +5,7 @@ use crate::module_specifier::resolve_import;
 use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
 use crate::text_encoding;
-use crate::ModuleInfo;
+use crate::JsModuleInfo;
 use crate::NpmLoadError;
 use crate::SpecifierError;
 use async_trait::async_trait;
@@ -296,7 +296,7 @@ pub trait Loader {
     _specifier: &ModuleSpecifier,
     _media_type: MediaType,
     _source: &Arc<[u8]>,
-    _module_info: &ModuleInfo,
+    _module_info: &JsModuleInfo,
   ) {
   }
 }
