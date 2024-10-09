@@ -18,6 +18,7 @@ use deno_ast::SourceTextInfo;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
 
+use crate::graph::WasmModule;
 use crate::JsModule;
 use crate::JsonModule;
 use crate::ModuleGraph;
@@ -99,6 +100,7 @@ impl<'a> RootSymbol<'a> {
       crate::Module::Json(json_module) => {
         Some(self.analyze_json_module(json_module))
       }
+      crate::Module::Wasm(wasm_module) => self.analyze_wasm_module(wasm_module),
       crate::Module::Npm(_)
       | crate::Module::Node(_)
       | crate::Module::External(_) => None,
@@ -240,6 +242,18 @@ impl<'a> RootSymbol<'a> {
       source_text_info,
     };
     self.finalize_insert(ModuleInfo::Json(Box::new(module_symbol)))
+  }
+
+  fn analyze_wasm_module(
+    &self,
+    wasm_module: &WasmModule,
+  ) -> Option<ModuleInfoRef> {
+    let specifier = &wasm_module.specifier;
+    let imports_and_exports = wasm_dep_analyzer::WasmDeps::parse(
+      &wasm_module.source,
+      wasm_dep_analyzer::ParseOptions { skip_types: true },
+    )
+    .ok()?;
   }
 
   fn finalize_insert(&self, module: ModuleInfo) -> ModuleInfoRef {
@@ -1355,6 +1369,7 @@ impl UniqueSymbolId {
 pub enum ModuleInfoRef<'a> {
   Json(&'a JsonModuleInfo),
   Esm(&'a EsModuleInfo),
+  Wasm(&'a WasmModuleInfo),
 }
 
 impl<'a> ModuleInfoRef<'a> {
@@ -1362,6 +1377,7 @@ impl<'a> ModuleInfoRef<'a> {
     match self {
       Self::Json(json) => Some(json),
       Self::Esm(_) => None,
+      Self::Wasm(_) => None,
     }
   }
 
@@ -1369,6 +1385,15 @@ impl<'a> ModuleInfoRef<'a> {
     match self {
       Self::Json(_) => None,
       Self::Esm(esm) => Some(esm),
+      Self::Wasm(_) => None,
+    }
+  }
+
+  pub fn wasm(&self) -> Option<&'a WasmModuleInfo> {
+    match self {
+      Self::Json(_) => None,
+      Self::Esm(_) => None,
+      Self::Wasm(m) => Some(m),
     }
   }
 
@@ -1376,6 +1401,7 @@ impl<'a> ModuleInfoRef<'a> {
     match self {
       Self::Json(m) => m.module_id,
       Self::Esm(m) => m.module_id,
+      Self::Wasm(m) => m.module_id,
     }
   }
 
@@ -1387,13 +1413,17 @@ impl<'a> ModuleInfoRef<'a> {
   }
 
   pub fn text(&self) -> &'a str {
-    self.text_info().text_str()
+    match self {
+      ModuleInfoRef::Json(m) => &m.source_text_info.text_str(),
+      ModuleInfoRef::Esm(m) => m.source.text().as_ref(),
+    }
   }
 
   pub fn module_symbol(&self) -> &'a Symbol {
     match self {
       Self::Json(m) => &m.module_symbol,
       Self::Esm(m) => m.module_symbol(),
+      Self::Wasm(m) => m.module_symbol(),
     }
   }
 
@@ -1401,6 +1431,7 @@ impl<'a> ModuleInfoRef<'a> {
     match self {
       Self::Json(m) => &m.specifier,
       Self::Esm(m) => &m.specifier,
+      Self::Wasm(m) => &m.specifier,
     }
   }
 
@@ -1408,6 +1439,7 @@ impl<'a> ModuleInfoRef<'a> {
     match self {
       Self::Json(m) => Box::new(m.symbols()),
       Self::Esm(m) => Box::new(m.symbols()),
+      Self::Wasm(m) => Box::new(m.symbols()),
     }
   }
 
@@ -1415,6 +1447,7 @@ impl<'a> ModuleInfoRef<'a> {
     match self {
       Self::Json(m) => m.symbol(id),
       Self::Esm(m) => m.symbol(id),
+      Self::Wasm(m) => m.symbol(id),
     }
   }
 
@@ -1432,6 +1465,7 @@ impl<'a> ModuleInfoRef<'a> {
     match self {
       Self::Json(_) => None,
       Self::Esm(m) => Some(m.re_exports.iter().map(|n| n.value())),
+      Self::Wasm(_) => None,
     }
   }
 
@@ -1443,6 +1477,7 @@ impl<'a> ModuleInfoRef<'a> {
       Self::Esm(m) => {
         Some(m.re_exports.iter().map(|e| e.value().src.value.as_str()))
       }
+      Self::Wasm(_) => None,
     }
   }
 
@@ -1493,6 +1528,7 @@ impl<'a> ModuleInfoRef<'a> {
 pub enum ModuleInfo {
   Json(Box<JsonModuleInfo>),
   Esm(EsModuleInfo),
+  Wasm(WasmModuleInfo),
 }
 
 impl ModuleInfo {
@@ -1500,6 +1536,7 @@ impl ModuleInfo {
     match self {
       Self::Json(json) => Some(json),
       Self::Esm(_) => None,
+      Self::Wasm(_) => None,
     }
   }
 
@@ -1507,6 +1544,7 @@ impl ModuleInfo {
     match self {
       Self::Json(_) => None,
       Self::Esm(esm) => Some(esm),
+      Self::Wasm(_) => None,
     }
   }
 
@@ -1514,6 +1552,7 @@ impl ModuleInfo {
     match self {
       ModuleInfo::Json(m) => (**m).as_ref(),
       ModuleInfo::Esm(m) => m.as_ref(),
+      ModuleInfo::Wasm(m) => m.as_ref(),
     }
   }
 
@@ -1521,6 +1560,7 @@ impl ModuleInfo {
     match self {
       Self::Json(m) => m.module_id,
       Self::Esm(m) => m.module_id,
+      Self::Wasm(m) => m.module_id,
     }
   }
 
@@ -1652,6 +1692,41 @@ impl EsModuleInfo {
   pub fn symbol_from_swc(&self, id: &Id) -> Option<&Symbol> {
     let id = self.symbol_id_from_swc(id)?;
     self.symbol(id)
+  }
+
+  pub fn symbols(&self) -> impl Iterator<Item = &Symbol> {
+    self.symbols.values()
+  }
+
+  pub fn symbol(&self, id: SymbolId) -> Option<&Symbol> {
+    self.symbols.get(&id)
+  }
+}
+
+#[derive(Clone)]
+pub struct WasmModuleInfo {
+  module_id: ModuleId,
+  specifier: ModuleSpecifier,
+  symbols: IndexMap<SymbolId, Symbol>,
+}
+
+impl std::fmt::Debug for WasmModuleInfo {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.debug_struct("WasmModuleInfo")
+      .field("module_id", &self.module_id)
+      .field("specifier", &self.specifier.as_str())
+      .field("symbols", &self.symbols)
+      .finish()
+  }
+}
+
+impl WasmModuleInfo {
+  pub fn as_ref(&self) -> ModuleInfoRef {
+    ModuleInfoRef::Wasm(self)
+  }
+
+  pub fn module_symbol(&self) -> &Symbol {
+    self.symbol(SymbolId(0)).unwrap()
   }
 
   pub fn symbols(&self) -> impl Iterator<Item = &Symbol> {

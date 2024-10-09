@@ -32,6 +32,7 @@ use url::Url;
 
 mod file_system;
 pub use file_system::*;
+pub mod wasm;
 
 pub const DEFAULT_JSX_IMPORT_SOURCE_MODULE: &str = "jsx-runtime";
 

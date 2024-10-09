@@ -67,6 +67,8 @@ pub use graph::FastCheckTypeModuleSlot;
 pub use graph::FillFromLockfileOptions;
 pub use graph::GraphImport;
 pub use graph::GraphKind;
+pub use graph::Import;
+pub use graph::ImportKind;
 pub use graph::JsModule;
 pub use graph::JsonModule;
 pub use graph::JsrLoadError;
@@ -3321,11 +3323,6 @@ export const foo = 'bar';"#,
               start: Position::new(2, 22),
               end: Position::new(2, 30),
             },
-            full_range: Some(Range {
-              specifier: specifier.clone(),
-              start: Position::new(2, 4),
-              end: Position::new(2, 31),
-            }),
             is_dynamic: false,
             attributes: Default::default(),
           }],
