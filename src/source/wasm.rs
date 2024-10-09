@@ -29,7 +29,7 @@ pub fn wasm_module_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
       Cow::Borrowed(export.name)
     } else {
       let export_name =
-        format!("\"__deno_wasm_export_{}__\"", internal_names_count);
+        format!("__deno_wasm_export_{}__", internal_names_count);
       internal_names_count += 1;
       Cow::Owned(export_name)
     };
@@ -50,13 +50,15 @@ pub fn wasm_module_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
           Ok(signature) => {
             text.push_str("declare function ");
             text.push_str(&export_name);
-            text.push_str("(\n");
+            text.push_str("(");
             for (i, param) in signature.params.iter().enumerate() {
-              text.push_str("  arg");
+              if i > 0 {
+                text.push_str(", ");
+              }
+              text.push_str("arg");
               text.push_str(i.to_string().as_str());
               text.push_str(": ");
               text.push_str(value_type_to_ts_type(*param));
-              text.push_str(",\n");
             }
             text.push_str("): ");
             text.push_str(
@@ -85,7 +87,7 @@ pub fn wasm_module_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
 
     if !is_exported {
       text.push_str(&format!(
-        "export {{ {} as \"{}\" }};",
+        "export {{ {} as \"{}\" }};\n",
         export_name, export.name
       ));
     }
@@ -95,6 +97,7 @@ pub fn wasm_module_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
 
 #[cfg(test)]
 mod test {
+  use pretty_assertions::assert_eq;
   use wasm_dep_analyzer::Export;
   use wasm_dep_analyzer::FunctionSignature;
   use wasm_dep_analyzer::WasmDeps;
@@ -105,17 +108,87 @@ mod test {
   fn test_output() {
     let text = wasm_module_to_dts(&WasmDeps {
       imports: vec![],
-      exports: vec![Export {
-        name: "name--1",
-        index: 0,
-        export_type: wasm_dep_analyzer::ExportType::Function(Ok(
-          FunctionSignature {
-            params: vec![],
-            returns: vec![],
-          },
-        )),
-      }],
+      exports: vec![
+        Export {
+          name: "name--1",
+          index: 0,
+          export_type: wasm_dep_analyzer::ExportType::Function(Ok(
+            FunctionSignature {
+              params: vec![],
+              returns: vec![],
+            },
+          )),
+        },
+        Export {
+          name: "name2",
+          index: 1,
+          export_type: wasm_dep_analyzer::ExportType::Function(Ok(
+            FunctionSignature {
+              params: vec![ValueType::I32, ValueType::I64],
+              returns: vec![ValueType::I32],
+            },
+          )),
+        },
+        Export {
+          name: "name3",
+          index: 2,
+          export_type: wasm_dep_analyzer::ExportType::Function(Err(
+            wasm_dep_analyzer::ParseError::IntegerOverflow,
+          )),
+        },
+        Export {
+          name: "name4",
+          index: 3,
+          export_type: wasm_dep_analyzer::ExportType::Table,
+        },
+        Export {
+          name: "name5",
+          index: 4,
+          export_type: wasm_dep_analyzer::ExportType::Memory,
+        },
+        Export {
+          name: "name6",
+          index: 5,
+          export_type: wasm_dep_analyzer::ExportType::Global(Ok(
+            wasm_dep_analyzer::GlobalType {
+              value_type: ValueType::I32,
+              mutability: false,
+            },
+          )),
+        },
+        Export {
+          name: "name7",
+          index: 6,
+          export_type: wasm_dep_analyzer::ExportType::Global(Err(
+            wasm_dep_analyzer::ParseError::NotWasm,
+          )),
+        },
+        Export {
+          name: "name8",
+          index: 7,
+          export_type: wasm_dep_analyzer::ExportType::Unknown,
+        },
+        Export {
+          name: "name9--",
+          index: 8,
+          export_type: wasm_dep_analyzer::ExportType::Unknown,
+        },
+      ],
     });
-    assert_eq!(text, "export declare function name1(): void;\n");
+    assert_eq!(
+      text,
+      "declare function __deno_wasm_export_0__(): void;
+export { __deno_wasm_export_0__ as \"name--1\" };
+export declare function name2(arg0: number, arg1: bigint): number;
+export declare const name3: unknown;
+export declare const name4: WebAssembly.Table;
+export declare const name5: WebAssembly.Memory;
+export declare const name6: number;
+export declare const name7: unknown;
+export declare const name8: unknown;
+declare const __deno_wasm_export_1__: unknown;
+export { __deno_wasm_export_1__ as \"name9--\" };
+"
+    );
   }
 }
