@@ -1017,7 +1017,7 @@ impl JsModule {
 
   /// Return the size in bytes of the content of the module.
   pub fn size(&self) -> usize {
-    self.source.as_bytes().len()
+    self.source.len()
   }
 
   pub fn fast_check_diagnostics(&self) -> Option<&Vec<FastCheckDiagnostic>> {
@@ -1050,15 +1050,15 @@ impl JsModule {
 #[serde(rename_all = "camelCase")]
 pub struct WasmModule {
   pub specifier: ModuleSpecifier,
+  #[serde(
+    skip_serializing_if = "IndexMap::is_empty",
+    serialize_with = "serialize_dependencies"
+  )]
+  pub dependencies: IndexMap<String, Dependency>,
   #[serde(rename = "size", serialize_with = "serialize_source_bytes")]
   pub source: Arc<[u8]>,
   #[serde(skip_serializing)]
-  pub dts_source: Arc<str>,
-  #[serde(
-    skip_serializing_if = "IndexMap::is_empty",
-    serialize_with = "serialize_wasm_dependencies"
-  )]
-  pub dependencies: IndexMap<String, Resolution>,
+  pub source_dts: Arc<str>,
   #[serde(flatten, skip_serializing_if = "Option::is_none")]
   pub maybe_cache_info: Option<CacheInfo>,
 }
@@ -1319,6 +1319,30 @@ impl<'a> ModuleEntryIterator<'a> {
           | MediaType::Jsx
       )
   }
+
+  fn analyze_module_deps(
+    &mut self,
+    module_deps: &'a IndexMap<String, Dependency>,
+  ) {
+    for dep in module_deps.values().rev() {
+      if !dep.is_dynamic || self.follow_dynamic {
+        let mut resolutions = Vec::with_capacity(2);
+        resolutions.push(&dep.maybe_code);
+        if self.kind.include_types() {
+          resolutions.push(&dep.maybe_type);
+        }
+        #[allow(clippy::manual_flatten)]
+        for resolution in resolutions {
+          if let Resolution::Ok(resolved) = resolution {
+            let specifier = &resolved.specifier;
+            if self.seen.insert(specifier) {
+              self.visiting.push_front(specifier);
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 impl<'a> Iterator for ModuleEntryIterator<'a> {
@@ -1335,35 +1359,10 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
           } else {
             &module.dependencies
           };
-          for dep in module_deps.values().rev() {
-            if !dep.is_dynamic || self.follow_dynamic {
-              let mut resolutions = Vec::with_capacity(2);
-              resolutions.push(&dep.maybe_code);
-              if self.kind.include_types() {
-                resolutions.push(&dep.maybe_type);
-              }
-              #[allow(clippy::manual_flatten)]
-              for resolution in resolutions {
-                if let Resolution::Ok(resolved) = resolution {
-                  let specifier = &resolved.specifier;
-                  if self.seen.insert(specifier) {
-                    self.visiting.push_front(specifier);
-                  }
-                }
-              }
-            }
-          }
+          self.analyze_module_deps(module_deps);
         }
         Module::Wasm(module) => {
-          let module_deps = &module.dependencies;
-          for resolution in module_deps.values().rev() {
-            if let Resolution::Ok(resolved) = resolution {
-              let specifier = &resolved.specifier;
-              if self.seen.insert(specifier) {
-                self.visiting.push_front(specifier);
-              }
-            }
-          }
+          self.analyze_module_deps(&module.dependencies);
         }
         Module::Json(_)
         | Module::External(_)
@@ -1951,11 +1950,7 @@ impl ModuleGraph {
       }
       Module::Wasm(referring_module) => {
         let dependency = referring_module.dependencies.get(specifier)?;
-        let unresolved_specifier = dependency.maybe_specifier()?;
-        self.resolve_dependency_from_unresolved_specifier(
-          unresolved_specifier,
-          prefer_types,
-        )
+        self.resolve_dependency_from_dep(dependency, prefer_types)
       }
       Module::Json(_)
       | Module::Npm(_)
@@ -1977,17 +1972,6 @@ impl ModuleGraph {
     let unresolved_specifier = maybe_first
       .maybe_specifier()
       .or_else(|| maybe_second.maybe_specifier())?;
-    self.resolve_dependency_from_unresolved_specifier(
-      unresolved_specifier,
-      prefer_types,
-    )
-  }
-
-  fn resolve_dependency_from_unresolved_specifier<'a>(
-    &'a self,
-    unresolved_specifier: &'a ModuleSpecifier,
-    prefer_types: bool,
-  ) -> Option<&'a ModuleSpecifier> {
     let resolved_specifier = self.resolve(unresolved_specifier);
     // Even if we resolved the specifier, it doesn't mean the module is actually
     // there, so check in the module slots

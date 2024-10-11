@@ -23,6 +23,10 @@ pub fn wasm_module_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
   let mut text = String::new();
   let mut internal_names_count = 0;
 
+  for import in &wasm_deps.imports {
+    text.push_str(&format!("import \"{}\";\n", import.module));
+  }
+
   for export in &wasm_deps.exports {
     let is_exported = is_valid_ident(export.name);
     let export_name = if is_exported {
