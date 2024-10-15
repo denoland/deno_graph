@@ -12,8 +12,6 @@ use async_trait::async_trait;
 use deno_ast::MediaType;
 use deno_semver::package::PackageNv;
 
-use anyhow::anyhow;
-use anyhow::Error;
 use data_url::DataUrl;
 use deno_ast::ModuleSpecifier;
 use deno_semver::package::PackageReq;
@@ -79,7 +77,21 @@ pub enum LoadResponse {
   },
 }
 
-pub type LoadResult = Result<Option<LoadResponse>, anyhow::Error>;
+#[derive(Debug, Error)]
+pub enum LoadError {
+  #[error("Unsupported scheme: {0}")]
+  UnsupportedScheme(String),
+  #[error(transparent)]
+  ChecksumIntegrity(#[from] ChecksumIntegrityError),
+  #[error(transparent)]
+  JsonParse(#[from] serde_json::Error),
+  #[error(transparent)]
+  DataUrl(std::io::Error),
+  #[error(transparent)]
+  Other(#[from] anyhow::Error),
+}
+
+pub type LoadResult = Result<Option<LoadResponse>, LoadError>;
 pub type LoadFuture = LocalBoxFuture<'static, LoadResult>;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -116,7 +128,8 @@ pub static DEFAULT_JSR_URL: Lazy<Url> =
   Lazy::new(|| Url::parse("https://jsr.io").unwrap());
 
 #[derive(Debug, Clone, Error)]
-#[error("Integrity check failed.\n\nActual: {}\nExpected: {}", .actual, .expected)]
+#[error("Integrity check failed.\n\nActual: {}\nExpected: {}", .actual, .expected
+)]
 pub struct ChecksumIntegrityError {
   pub actual: String,
   pub expected: String,
@@ -361,6 +374,8 @@ pub enum ResolveError {
   #[error(transparent)]
   Specifier(#[from] SpecifierError),
   #[error(transparent)]
+  ImportMap(#[from] import_map::ImportMapError),
+  #[error(transparent)]
   Other(#[from] anyhow::Error),
 }
 
@@ -488,8 +503,8 @@ pub trait NpmResolver: fmt::Debug {
 
 pub fn load_data_url(
   specifier: &ModuleSpecifier,
-) -> Result<Option<LoadResponse>, anyhow::Error> {
-  let data_url = RawDataUrl::parse(specifier)?;
+) -> Result<Option<LoadResponse>, LoadError> {
+  let data_url = RawDataUrl::parse(specifier).map_err(LoadError::DataUrl)?;
   let (bytes, headers) = data_url.into_bytes_and_headers();
   Ok(Some(LoadResponse::Module {
     specifier: specifier.clone(),
@@ -563,7 +578,7 @@ fn get_mime_type_charset(mime_type: &str) -> Option<&str> {
 /// ahead of time. This is useful for testing or
 #[derive(Default)]
 pub struct MemoryLoader {
-  sources: HashMap<ModuleSpecifier, Result<LoadResponse, Error>>,
+  sources: HashMap<ModuleSpecifier, Result<LoadResponse, anyhow::Error>>,
   cache_info: HashMap<ModuleSpecifier, CacheInfo>,
 }
 
@@ -575,11 +590,11 @@ pub enum Source<S> {
   },
   Redirect(S),
   External(S),
-  Err(Error),
+  Err(anyhow::Error),
 }
 
 impl<S: AsRef<str>> Source<S> {
-  fn into_result(self) -> Result<LoadResponse, Error> {
+  fn into_result(self) -> Result<LoadResponse, anyhow::Error> {
     match self {
       Source::Module {
         specifier,
@@ -699,7 +714,7 @@ impl Loader for MemoryLoader {
   ) -> LoadFuture {
     let response = match self.sources.get(specifier) {
       Some(Ok(response)) => Ok(Some(response.clone())),
-      Some(Err(err)) => Err(anyhow!("{}", err)),
+      Some(Err(err)) => Err(LoadError::Other(anyhow::anyhow!("{}", err))),
       None if specifier.scheme() == "data" => load_data_url(specifier),
       _ => Ok(None),
     };

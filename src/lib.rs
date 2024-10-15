@@ -1265,8 +1265,7 @@ console.log(a);
     fn resolve_builtin_node_module(
       &self,
       specifier: &deno_ast::ModuleSpecifier,
-    ) -> anyhow::Result<Option<String>, source::UnknownBuiltInNodeModuleError>
-    {
+    ) -> Result<Option<String>, source::UnknownBuiltInNodeModuleError> {
       if specifier.to_string() == "node:path" {
         Ok(Some("path".to_string()))
       } else {
@@ -1322,12 +1321,11 @@ console.log(a);
       _mode: ResolutionMode,
     ) -> Result<deno_ast::ModuleSpecifier, source::ResolveError> {
       use import_map::ImportMapError;
-      Err(source::ResolveError::Other(
+      Err(source::ResolveError::ImportMap(
         ImportMapError::UnmappedBareSpecifier(
           specifier_text.to_string(),
           Some(referrer_range.specifier.to_string()),
-        )
-        .into(),
+        ),
       ))
     }
 
