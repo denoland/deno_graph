@@ -20,7 +20,7 @@ require("./final_cjs.cjs")
 export class Final {}
 
 # final_cjs.cjs
-export class FinalCjs {}
+module.exports = 5;
 
 # output
 {
@@ -118,7 +118,7 @@ export class FinalCjs {}
     },
     {
       "kind": "esm",
-      "size": 25,
+      "size": 20,
       "mediaType": "Cjs",
       "specifier": "file:///final_cjs.cjs"
     },
