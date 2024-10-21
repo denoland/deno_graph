@@ -181,7 +181,7 @@ fn run_graph_test(test: &CollectedTest) {
             module.source.to_string(),
           );
           let EmittedSourceText { text, .. } = emit(
-            &dts.program,
+            (&dts.program).into(),
             &dts.comments.as_single_threaded(),
             &source_map,
             &EmitOptions {

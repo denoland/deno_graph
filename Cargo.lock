@@ -341,7 +341,7 @@ dependencies = [
 [[package]]
 name = "deno_ast"
 version = "0.42.2"
-source = "git+https://github.com/dsherret/deno_ast?branch=feat_analyze_require_calls_as_dynamic_deps#880d610a1d67bd7d2d481e7fa01f03ec68970860"
+source = "git+https://github.com/dsherret/deno_ast?branch=feat_use_program_more#0f98ca8cd932ba3c46652fb4b5526bd733e90627"
 dependencies = [
  "base64 0.21.7",
  "deno_media_type",

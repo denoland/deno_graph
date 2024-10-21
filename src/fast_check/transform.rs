@@ -21,6 +21,7 @@ use deno_ast::EmitOptions;
 use deno_ast::ModuleSpecifier;
 use deno_ast::MultiThreadedComments;
 use deno_ast::ParsedSource;
+use deno_ast::ProgramRef;
 use deno_ast::SourceMap;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
@@ -128,7 +129,7 @@ pub fn transform(
   let specifier = es_module_info.specifier();
   let module_info = ParserModuleAnalyzer::module_info_from_swc(
     parsed_source.media_type(),
-    &module,
+    ProgramRef::Module(&module),
     parsed_source.text_info_lazy(),
     &comments,
   );
@@ -145,9 +146,8 @@ pub fn transform(
   // now emit
   let source_map =
     SourceMap::single(specifier.clone(), parsed_source.text().to_string());
-  let program = Program::Module(module);
   let emitted_source = emit(
-    &program,
+    ProgramRef::Module(&module),
     &fast_check_comments,
     &source_map,
     &EmitOptions {
@@ -181,10 +181,10 @@ pub fn transform(
       specifier,
     );
 
-    let module = dts_transformer.transform(program.expect_module())?;
+    let program = dts_transformer.transform(Program::Module(module));
 
     Some(FastCheckDtsModule {
-      program: Program::Module(module),
+      program,
       comments: dts_comments,
       diagnostics: dts_transformer.diagnostics,
     })
@@ -254,9 +254,22 @@ impl<'a> FastCheckTransformer<'a> {
     Vec<FastCheckDiagnostic>,
   > {
     let is_ambient = self.parsed_source.media_type().is_declaration();
-    let mut module = self.parsed_source.module().clone();
+    let program = self.parsed_source.program_ref();
     let mut comments =
       CommentsMut::new(self.parsed_source.comments().as_single_threaded());
+    // gracefully handle a script
+    let mut module = match program {
+      ProgramRef::Module(module) => module.clone(),
+      ProgramRef::Script(script) => Module {
+        span: script.span,
+        body: script
+          .body
+          .iter()
+          .map(|stmt| ModuleItem::Stmt(stmt.clone()))
+          .collect(),
+        shebang: script.shebang.clone(),
+      },
+    };
     module.body = self.transform_module_body(
       std::mem::take(&mut module.body),
       &mut comments,

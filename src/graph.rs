@@ -6192,7 +6192,7 @@ mod tests {
     let source_map =
       SourceMap::single(module.specifier.clone(), module.source.to_string());
     let EmittedSourceText { text, .. } = emit(
-      &dts.program,
+      (&dts.program).into(),
       &dts.comments.as_single_threaded(),
       &source_map,
       &EmitOptions {
@@ -6280,7 +6280,7 @@ mod tests {
         module.source().unwrap().to_string(),
       );
       let EmittedSourceText { text, .. } = emit(
-        &dts.program,
+        (&dts.program).into(),
         &dts.comments.as_single_threaded(),
         &source_map,
         &EmitOptions {

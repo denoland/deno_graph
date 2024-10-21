@@ -15,6 +15,7 @@ use crate::module_specifier::ModuleSpecifier;
 
 use deno_ast::dep::DependencyComment;
 use deno_ast::MultiThreadedComments;
+use deno_ast::ProgramRef;
 use deno_ast::SourcePos;
 use deno_ast::SourceRanged;
 use deno_ast::SourceRangedForSpanned;
@@ -89,7 +90,7 @@ impl ModuleParser for DefaultModuleParser {
     &self,
     options: ParseOptions,
   ) -> Result<ParsedSource, ParseDiagnostic> {
-    deno_ast::parse_module(deno_ast::ParseParams {
+    deno_ast::parse_program(deno_ast::ParseParams {
       specifier: options.specifier.clone(),
       text: options.source,
       media_type: options.media_type,
@@ -269,13 +270,10 @@ impl<'a> ParserModuleAnalyzer<'a> {
 
   /// Gets the module info from a parsed source.
   pub fn module_info(parsed_source: &ParsedSource) -> ModuleInfo {
-    let module = match parsed_source.program_ref() {
-      deno_ast::swc::ast::Program::Module(m) => m,
-      deno_ast::swc::ast::Program::Script(_) => return ModuleInfo::default(),
-    };
+    let program = parsed_source.program_ref();
     Self::module_info_from_swc(
       parsed_source.media_type(),
-      module,
+      program,
       parsed_source.text_info_lazy(),
       parsed_source.comments(),
     )
@@ -283,19 +281,19 @@ impl<'a> ParserModuleAnalyzer<'a> {
 
   pub fn module_info_from_swc(
     media_type: MediaType,
-    module: &deno_ast::swc::ast::Module,
+    program: ProgramRef,
     text_info: &SourceTextInfo,
     comments: &MultiThreadedComments,
   ) -> ModuleInfo {
-    let leading_comments = match module.body.first() {
+    let leading_comments = match program.body().next() {
       Some(item) => comments.get_leading(item.start()),
-      None => match module.shebang {
-        Some(_) => comments.get_trailing(module.end()),
-        None => comments.get_leading(module.start()),
+      None => match program.shebang() {
+        Some(_) => comments.get_trailing(program.end()),
+        None => comments.get_leading(program.start()),
       },
     };
     ModuleInfo {
-      dependencies: analyze_dependencies(module, text_info, comments),
+      dependencies: analyze_dependencies(program, text_info, comments),
       ts_references: analyze_ts_references(text_info, leading_comments),
       self_types_specifier: analyze_ts_self_types(
         media_type,
@@ -441,11 +439,11 @@ impl ParsedSourceStore for CapturingModuleAnalyzer {
 }
 
 fn analyze_dependencies(
-  module: &deno_ast::swc::ast::Module,
+  program: deno_ast::ProgramRef,
   text_info: &SourceTextInfo,
   comments: &MultiThreadedComments,
 ) -> Vec<DependencyDescriptor> {
-  let deps = deno_ast::dep::analyze_module_dependencies(module, comments);
+  let deps = deno_ast::dep::analyze_program_dependencies(program, comments);
 
   deps
     .into_iter()
