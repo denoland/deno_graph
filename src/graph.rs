@@ -2274,6 +2274,8 @@ pub(crate) async fn parse_module_source_and_info(
     | MediaType::TypeScript
     | MediaType::Mts
     | MediaType::Tsx
+    | MediaType::Cjs
+    | MediaType::Cts
     | MediaType::Dts
     | MediaType::Dmts
     | MediaType::Dcts => {
@@ -2299,9 +2301,7 @@ pub(crate) async fn parse_module_source_and_info(
         }
       }
     }
-    MediaType::Cjs
-    | MediaType::Cts
-    | MediaType::Json
+    MediaType::Json
     | MediaType::Wasm
     | MediaType::TsBuildInfo
     | MediaType::SourceMap

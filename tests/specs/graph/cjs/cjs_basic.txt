@@ -1,0 +1,180 @@
+# mod.ts
+import "./file.cjs";
+
+# file.cjs
+require("./other.cjs");
+module.exports.test = {};
+
+# other.cjs
+require("./esm.js");
+
+# esm.js
+import "./final.js";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+
+require("./final_cjs.cjs")
+
+# final.js
+export class Final {}
+
+# final_cjs.cjs
+export class FinalCjs {}
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./final.js",
+          "code": {
+            "specifier": "file:///final.js",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 19
+              }
+            }
+          }
+        },
+        {
+          "specifier": "node:module",
+          "code": {
+            "specifier": "node:module",
+            "span": {
+              "start": {
+                "line": 1,
+                "character": 30
+              },
+              "end": {
+                "line": 1,
+                "character": 43
+              }
+            }
+          }
+        },
+        {
+          "specifier": "./final_cjs.cjs",
+          "code": {
+            "specifier": "file:///final_cjs.cjs",
+            "span": {
+              "start": {
+                "line": 5,
+                "character": 8
+              },
+              "end": {
+                "line": 5,
+                "character": 25
+              }
+            }
+          },
+          "isDynamic": true
+        }
+      ],
+      "size": 143,
+      "mediaType": "JavaScript",
+      "specifier": "file:///esm.js"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./other.cjs",
+          "code": {
+            "specifier": "file:///other.cjs",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 8
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          },
+          "isDynamic": true
+        }
+      ],
+      "size": 50,
+      "mediaType": "Cjs",
+      "specifier": "file:///file.cjs"
+    },
+    {
+      "kind": "esm",
+      "size": 22,
+      "mediaType": "JavaScript",
+      "specifier": "file:///final.js"
+    },
+    {
+      "kind": "esm",
+      "size": 25,
+      "mediaType": "Cjs",
+      "specifier": "file:///final_cjs.cjs"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./file.cjs",
+          "code": {
+            "specifier": "file:///file.cjs",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 19
+              }
+            }
+          }
+        }
+      ],
+      "size": 21,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./esm.js",
+          "code": {
+            "specifier": "file:///esm.js",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 8
+              },
+              "end": {
+                "line": 0,
+                "character": 18
+              }
+            }
+          },
+          "isDynamic": true
+        }
+      ],
+      "size": 21,
+      "mediaType": "Cjs",
+      "specifier": "file:///other.cjs"
+    },
+    {
+      "specifier": "node:module",
+      "error": "Module not found \"node:module\"."
+    }
+  ],
+  "redirects": {}
+}

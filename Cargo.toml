@@ -80,4 +80,4 @@ lto = true
 opt-level = "z"
 
 [patch.crates-io]
-deno_ast = { path = "../deno_ast" }
+deno_ast = { git = "https://github.com/dsherret/deno_ast", branch = "feat_analyze_require_calls_as_dynamic_deps" }
