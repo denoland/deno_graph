@@ -29,7 +29,7 @@ use crate::rt::Executor;
 
 use crate::source::*;
 
-use deno_ast::dep::DependencyKind;
+use deno_ast::dep::StaticDependencyKind;
 use deno_ast::dep::ImportAttributes;
 use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
@@ -2710,7 +2710,7 @@ fn fill_module_dependencies(
       DependencyDescriptor::Static(desc) => {
         let is_import_or_export_type = matches!(
           desc.kind,
-          DependencyKind::ImportType | DependencyKind::ExportType
+          StaticDependencyKind::ImportType | StaticDependencyKind::ExportType
         );
         if is_import_or_export_type && !graph_kind.include_types() {
           continue; // skip

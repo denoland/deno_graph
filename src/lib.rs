@@ -96,9 +96,9 @@ pub use module_specifier::SpecifierError;
 pub use rt::Executor;
 pub use source::NpmResolvePkgReqsResult;
 
-pub use deno_ast::dep::DependencyKind;
 pub use deno_ast::dep::ImportAttribute;
 pub use deno_ast::dep::ImportAttributes;
+pub use deno_ast::dep::StaticDependencyKind;
 
 #[derive(Debug, Clone)]
 pub struct ReferrerImports {

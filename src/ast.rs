@@ -467,6 +467,7 @@ fn analyze_dependencies(
       }
       deno_ast::dep::DependencyDescriptor::Dynamic(d) => {
         DependencyDescriptor::Dynamic(DynamicDependencyDescriptor {
+          kind: d.kind,
           types_specifier: analyze_ts_or_deno_types(
             text_info,
             &d.leading_comments,
