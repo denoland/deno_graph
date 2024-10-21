@@ -29,8 +29,8 @@ use crate::rt::Executor;
 
 use crate::source::*;
 
-use deno_ast::dep::StaticDependencyKind;
 use deno_ast::dep::ImportAttributes;
+use deno_ast::dep::StaticDependencyKind;
 use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
 use deno_ast::ParseDiagnostic;
