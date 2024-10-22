@@ -313,6 +313,7 @@ impl fmt::Display for ModuleError {
       Self::LoadingErr(_, _, err) => err.fmt(f),
       Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {diagnostic}"),
       Self::UnsupportedMediaType(specifier, MediaType::Json, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import attribute with the type of \"json\".\n  Specifier: {specifier}"),
+      Self::UnsupportedMediaType(specifier, MediaType::Cjs | MediaType::Cts, ..) if specifier.scheme() != "file" => write!(f, "Remote CJS modules are not supported.\n  Specifier: {specifier}"),
       Self::UnsupportedMediaType(specifier, media_type, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {media_type} module. Importing these types of modules is currently not supported.\n  Specifier: {specifier}"),
       Self::Missing(specifier, _) => write!(f, "Module not found \"{specifier}\"."),
       Self::MissingDynamic(specifier, _) => write!(f, "Dynamic import not found \"{specifier}\"."),
@@ -2264,6 +2265,16 @@ pub(crate) async fn parse_module_source_and_info(
         kind: attribute_type.kind.clone(),
       });
     }
+  }
+
+  if matches!(media_type, MediaType::Cjs | MediaType::Cts)
+    && opts.specifier.scheme() != "file"
+  {
+    return Err(ModuleError::UnsupportedMediaType(
+      opts.specifier,
+      media_type,
+      opts.maybe_referrer.map(|r| r.to_owned()),
+    ));
   }
 
   // Here we check for known ES Modules that we will analyze the dependencies of
