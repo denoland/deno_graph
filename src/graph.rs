@@ -3903,6 +3903,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     )
   }
 
+  #[allow(clippy::too_many_arguments)]
   fn load_with_redirect_count(
     &mut self,
     redirect_count: usize,
