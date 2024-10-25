@@ -537,6 +537,20 @@ async fn test_json_root() {
     "https://jsr.io/@scope/example/1.0.0/data.json",
     "{ \"a\": 1 }",
   );
+  loader.add_source(
+    "https://deno.land/x/redirect",
+    deno_graph::source::Source::Redirect(
+      "https://jsr.io/@scope/example/1.0.0/data.json",
+    ),
+  );
+  loader.add_source(
+    "https://deno.land/x/redirect2",
+    deno_graph::source::Source::Redirect("https://deno.land/x/redirect"),
+  );
+  loader.add_source(
+    "https://deno.land/x/redirect3",
+    deno_graph::source::Source::Redirect("https://deno.land/x/redirect2"),
+  );
   loader.add_jsr_package_info(
     "@scope/example",
     &JsrPackageInfo {
@@ -565,8 +579,29 @@ async fn test_json_root() {
       Default::default(),
     )
     .await;
-  let mut errors = graph.module_errors();
-  if let Some(error) = errors.next() {
-    panic!("unexpected error: {error}");
-  }
+  graph.valid().unwrap();
+  graph
+    .build(
+      vec![Url::parse("https://deno.land/x/redirect").unwrap()],
+      &loader,
+      Default::default(),
+    )
+    .await;
+  graph.valid().unwrap();
+  graph
+    .build(
+      vec![Url::parse("https://deno.land/x/redirect3").unwrap()],
+      &loader,
+      Default::default(),
+    )
+    .await;
+  graph.valid().unwrap();
+  assert_eq!(
+    graph.roots.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
+    vec![
+      "jsr:/@scope/example@^1.0.0/json-export",
+      "https://deno.land/x/redirect",
+      "https://deno.land/x/redirect3", // not 2
+    ]
+  );
 }
