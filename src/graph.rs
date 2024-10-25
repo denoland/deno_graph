@@ -62,6 +62,7 @@ use serde::Serializer;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
@@ -3257,7 +3258,7 @@ struct Builder<'a, 'graph> {
   state: PendingState<'a>,
   fill_pass_mode: FillPassMode,
   executor: &'a dyn Executor,
-  resolved_roots: IndexSet<ModuleSpecifier>,
+  resolved_roots: BTreeSet<ModuleSpecifier>,
 }
 
 impl<'a, 'graph> Builder<'a, 'graph> {
