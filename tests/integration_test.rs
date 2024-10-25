@@ -7,6 +7,9 @@
 use std::cell::RefCell;
 
 use deno_ast::ModuleSpecifier;
+use deno_graph::packages::JsrPackageInfo;
+use deno_graph::packages::JsrPackageInfoVersion;
+use deno_graph::packages::JsrPackageVersionInfo;
 use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
 use deno_graph::source::LoadOptions;
@@ -523,4 +526,46 @@ fn test_fill_from_lockfile() {
       .unwrap(),
     PackageNv::from_str("@scope/example@1.0.0").unwrap(),
   );
+}
+
+#[tokio::test]
+async fn test_json_root() {
+  let mut graph = ModuleGraph::new(GraphKind::All);
+  let mut loader = MemoryLoader::default();
+
+  loader.add_source_with_text(
+    "https://jsr.io/@scope/example/1.0.0/data.json",
+    "{ \"a\": 1 }",
+  );
+  loader.add_jsr_package_info(
+    "@scope/example",
+    &JsrPackageInfo {
+      versions: vec![(
+        deno_semver::Version::parse_standard("1.0.0").unwrap(),
+        JsrPackageInfoVersion::default(),
+      )]
+      .into_iter()
+      .collect(),
+    },
+  );
+  loader.add_jsr_version_info(
+    "@scope/example",
+    "1.0.0",
+    &JsrPackageVersionInfo {
+      exports: serde_json::json!({
+        "./json-export": "./data.json"
+      }),
+      ..Default::default()
+    },
+  );
+  graph
+    .build(
+      vec![Url::parse("jsr:/@scope/example@^1.0.0/json-export").unwrap()],
+      &loader,
+      Default::default(),
+    )
+    .await;
+  for error in graph.module_errors() {
+    panic!("unexpected error: {error}");
+  }
 }

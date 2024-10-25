@@ -3063,24 +3063,27 @@ impl GraphKind {
 enum PendingInfoResponse {
   External {
     specifier: ModuleSpecifier,
+    is_root: bool,
   },
   Module {
     specifier: ModuleSpecifier,
     module_source_and_info: ModuleSourceAndInfo,
     pending_load: Option<Box<(LoaderChecksum, ModuleInfo)>>,
+    is_root: bool,
   },
   Redirect {
     count: usize,
     specifier: ModuleSpecifier,
     maybe_attribute_type: Option<AttributeTypeWithRange>,
     is_dynamic: bool,
+    is_root: bool,
   },
 }
 
 impl PendingInfoResponse {
   fn specifier(&self) -> &ModuleSpecifier {
     match self {
-      Self::External { specifier } => specifier,
+      Self::External { specifier, .. } => specifier,
       Self::Module {
         module_source_and_info,
         ..
@@ -3145,6 +3148,7 @@ struct PendingModuleLoadItem {
   maybe_range: Option<Range>,
   load_specifier: Url,
   is_dynamic: bool,
+  is_root: bool,
   maybe_checksum: Option<LoaderChecksum>,
   maybe_version_info: Option<JsrPackageVersionInfoExt>,
 }
@@ -3176,6 +3180,7 @@ struct PendingJsrReqResolutionItem {
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_range: Option<Range>,
   is_dynamic: bool,
+  is_root: bool,
 }
 
 #[derive(Debug)]
@@ -3185,6 +3190,7 @@ struct PendingJsrNvResolutionItem {
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_range: Option<Range>,
   is_dynamic: bool,
+  is_root: bool,
 }
 
 #[derive(Debug)]
@@ -3251,6 +3257,7 @@ struct Builder<'a, 'graph> {
   state: PendingState<'a>,
   fill_pass_mode: FillPassMode,
   executor: &'a dyn Executor,
+  resolved_roots: IndexSet<ModuleSpecifier>,
 }
 
 impl<'a, 'graph> Builder<'a, 'graph> {
@@ -3280,6 +3287,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       state: PendingState::default(),
       fill_pass_mode,
       executor: options.executor,
+      resolved_roots: Default::default(),
     };
     builder.fill(roots, options.imports).await;
   }
@@ -3305,7 +3313,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     self.graph.roots.extend(roots.clone());
 
     for root in roots {
-      self.load(&root, None, self.in_dynamic_branch, None, None);
+      self.load(&root, None, self.in_dynamic_branch, true, None, None);
     }
 
     // process any imports that are being added to the graph.
@@ -3404,6 +3412,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             &resolved.specifier,
             Some(&resolved.range),
             self.in_dynamic_branch,
+            self.resolved_roots.contains(&resolved.specifier),
             None,
             None,
           );
@@ -3461,6 +3470,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 maybe_attribute_type: pending_resolution.maybe_attribute_type,
                 maybe_range: pending_resolution.maybe_range,
                 is_dynamic: pending_resolution.is_dynamic,
+                is_root: pending_resolution.is_root,
               });
             }
             None => {
@@ -3555,6 +3565,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 .graph
                 .redirects
                 .insert(resolution_item.specifier, specifier.clone());
+              if resolution_item.is_root {
+                self.resolved_roots.insert(specifier.clone());
+              }
               let version_info = JsrPackageVersionInfoExt {
                 base_url,
                 inner: version_info,
@@ -3563,6 +3576,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 &specifier,
                 resolution_item.maybe_range.as_ref(),
                 resolution_item.is_dynamic,
+                resolution_item.is_root,
                 resolution_item.maybe_attribute_type,
                 Some(&version_info),
               );
@@ -3621,6 +3635,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             &specifier,
             Some(&dynamic_branch.range),
             true,
+            self.resolved_roots.contains(&specifier),
             dynamic_branch.maybe_attribute_type,
             dynamic_branch.maybe_version_info.as_ref(),
           );
@@ -3872,6 +3887,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     specifier: &ModuleSpecifier,
     maybe_range: Option<&Range>,
     is_dynamic: bool,
+    is_root: bool,
     maybe_attribute_type: Option<AttributeTypeWithRange>,
     maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) {
@@ -3880,6 +3896,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       specifier,
       maybe_range,
       is_dynamic,
+      is_root,
       maybe_attribute_type,
       maybe_version_info,
     )
@@ -3891,6 +3908,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     specifier: &ModuleSpecifier,
     maybe_range: Option<&Range>,
     is_dynamic: bool,
+    is_root: bool,
     maybe_attribute_type: Option<AttributeTypeWithRange>,
     maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) {
@@ -3954,7 +3972,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               maybe_checksum: Some(checksum.clone()),
             },
           );
-          let is_root = self.roots_contain(specifier);
           let is_dynamic_branch = self.in_dynamic_branch;
           let module_analyzer = self.module_analyzer;
           self.state.pending.push_back({
@@ -3985,12 +4002,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                       specifier: requested_specifier.clone(),
                       module_source_and_info,
                       pending_load: Some(Box::new((checksum, module_info))),
+                      is_root,
                     }
                   })
                 }
                 Ok(Some(response)) => match response {
                   LoadResponse::External { specifier } => {
-                    Ok(PendingInfoResponse::External { specifier })
+                    Ok(PendingInfoResponse::External { specifier, is_root })
                   }
                   LoadResponse::Redirect { specifier } => {
                     Err(ModuleError::LoadingErr(
@@ -4021,6 +4039,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                       specifier: specifier.clone(),
                       module_source_and_info,
                       pending_load: None,
+                      is_root,
                     }
                   }),
                 },
@@ -4053,6 +4072,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             maybe_range: maybe_range.cloned(),
             load_specifier: specifier.clone(),
             is_dynamic,
+            is_root,
             maybe_checksum: Some(checksum),
             maybe_version_info: Some(version_info.clone()),
           });
@@ -4080,6 +4100,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             maybe_attribute_type,
             maybe_range,
             is_dynamic,
+            is_root,
           );
         }
       }
@@ -4121,6 +4142,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           maybe_range: maybe_range.cloned(),
           load_specifier: specifier.clone(),
           is_dynamic,
+          is_root,
           maybe_checksum: None,
           maybe_version_info: None,
         });
@@ -4141,6 +4163,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_attribute_type: Option<AttributeTypeWithRange>,
     maybe_range: Option<&Range>,
     is_dynamic: bool,
+    is_root: bool,
   ) {
     let package_name = &package_ref.req().name;
     let specifier = specifier.clone();
@@ -4155,6 +4178,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         maybe_attribute_type,
         maybe_range: maybe_range.cloned(),
         is_dynamic,
+        is_root,
       });
   }
 
@@ -4295,6 +4319,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       maybe_range,
       load_specifier,
       is_dynamic,
+      is_root,
       mut maybe_checksum,
       mut maybe_version_info,
     } = item;
@@ -4305,7 +4330,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let loader = self.loader;
     let module_analyzer = self.module_analyzer;
     let jsr_url_provider = self.jsr_url_provider;
-    let is_root = self.roots_contain(&requested_specifier);
     let was_dynamic_root = self.was_dynamic_root;
     let maybe_nv_when_no_version_info = if maybe_version_info.is_none() {
       self
@@ -4430,11 +4454,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   specifier,
                   maybe_attribute_type,
                   is_dynamic,
+                  is_root,
                 })
               }
             }
             LoadResponse::External { specifier } => {
-              Ok(PendingInfoResponse::External { specifier })
+              Ok(PendingInfoResponse::External { specifier, is_root })
             }
             LoadResponse::Module {
               content,
@@ -4458,6 +4483,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 specifier: specifier.clone(),
                 module_source_and_info,
                 pending_load: None,
+                is_root,
               }
             }),
           },
@@ -4542,15 +4568,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     );
   }
 
-  fn roots_contain(&self, specifier: &ModuleSpecifier) -> bool {
-    for root in &self.graph.roots {
-      if root == specifier {
-        return true;
-      }
-    }
-    false
-  }
-
   fn visit(
     &mut self,
     response: PendingInfoResponse,
@@ -4558,7 +4575,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) {
     match response {
-      PendingInfoResponse::External { specifier } => {
+      PendingInfoResponse::External { specifier, is_root } => {
+        if is_root {
+          self.resolved_roots.insert(specifier.clone());
+        }
         let module_slot =
           ModuleSlot::Module(Module::External(ExternalModule {
             specifier: specifier.clone(),
@@ -4569,6 +4589,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         specifier,
         pending_load,
         module_source_and_info,
+        is_root,
       } => {
         // this should have been handled by now
         debug_assert_eq!(
@@ -4580,6 +4601,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           "{}",
           specifier
         );
+
+        if is_root {
+          self.resolved_roots.insert(specifier.clone());
+        }
 
         if let Some((checksum, module_info)) = pending_load.map(|v| *v) {
           self.state.jsr.pending_content_loads.push({
@@ -4630,6 +4655,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         count,
         specifier,
         is_dynamic,
+        is_root,
         maybe_attribute_type,
       } => {
         self.load_with_redirect_count(
@@ -4637,6 +4663,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           &specifier,
           maybe_referrer.as_ref(),
           is_dynamic,
+          is_root,
           maybe_attribute_type,
           None,
         );
@@ -4701,6 +4728,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   specifier,
                   Some(range),
                   self.in_dynamic_branch,
+                  self.resolved_roots.contains(specifier),
                   maybe_attribute_type,
                   maybe_version_info,
                 );
@@ -4736,6 +4764,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   specifier,
                   Some(range),
                   self.in_dynamic_branch,
+                  self.resolved_roots.contains(specifier),
                   maybe_attribute_type,
                   maybe_version_info,
                 );
@@ -4759,6 +4788,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             &resolved.specifier,
             Some(&resolved.range),
             false,
+            self.resolved_roots.contains(&resolved.specifier),
             None,
             maybe_version_info,
           );
