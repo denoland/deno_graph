@@ -565,7 +565,8 @@ async fn test_json_root() {
       Default::default(),
     )
     .await;
-  for error in graph.module_errors() {
+  let mut errors = graph.module_errors();
+  if let Some(error) = errors.next() {
     panic!("unexpected error: {error}");
   }
 }
