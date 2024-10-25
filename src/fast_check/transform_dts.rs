@@ -6,7 +6,6 @@ use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use deno_ast::SourceTextInfo;
 
-use crate::FastCheckDiagnostic;
 use crate::FastCheckDiagnosticRange;
 
 use super::range_finder::ModulePublicRanges;
@@ -128,15 +127,26 @@ impl<'a> FastCheckDtsTransformer<'a> {
     })
   }
 
-  pub fn transform(
-    &mut self,
-    mut module: Module,
-  ) -> Result<Module, Vec<FastCheckDiagnostic>> {
+  pub fn transform(&mut self, program: Program) -> Program {
     self.is_top_level = true;
-    let body = module.body;
-
-    module.body = self.transform_module_items(body);
-    Ok(module)
+    match program {
+      Program::Module(mut module) => {
+        let body = module.body;
+        module.body = self.transform_module_items(body);
+        Program::Module(module)
+      }
+      Program::Script(mut script) => {
+        script.body = script
+          .body
+          .into_iter()
+          .filter_map(|stmt| {
+            let new_stmt = self.transform_module_stmt(stmt)?;
+            Some(new_stmt)
+          })
+          .collect();
+        Program::Script(script)
+      }
+    }
   }
 
   fn transform_module_items(
@@ -258,35 +268,42 @@ impl<'a> FastCheckDtsTransformer<'a> {
           }
         },
         ModuleItem::Stmt(stmt) => {
-          if let Stmt::Decl(decl) = stmt {
-            if let Decl::Fn(_) = &decl {
-              if self.public_ranges.is_impl_with_overloads(&decl.range()) {
-                continue; // skip implementation signature
-              }
-            }
-            match decl {
-              Decl::TsEnum(_)
-              | Decl::Class(_)
-              | Decl::Fn(_)
-              | Decl::Var(_)
-              | Decl::TsModule(_) => {
-                if let Some(decl) = self.decl_to_type_decl(decl.clone()) {
-                  new_items.push(ModuleItem::Stmt(Stmt::Decl(decl)));
-                } else {
-                  self.mark_diagnostic_unable_to_infer(decl.range())
-                }
-              }
-
-              Decl::TsInterface(_) | Decl::TsTypeAlias(_) | Decl::Using(_) => {
-                new_items.push(ModuleItem::Stmt(Stmt::Decl(decl)));
-              }
-            }
+          if let Some(new_stmt) = self.transform_module_stmt(stmt) {
+            new_items.push(ModuleItem::Stmt(new_stmt));
           }
         }
       }
     }
 
     new_items
+  }
+
+  fn transform_module_stmt(&mut self, stmt: Stmt) -> Option<Stmt> {
+    let Stmt::Decl(decl) = stmt else {
+      return None;
+    };
+    if let Decl::Fn(_) = &decl {
+      if self.public_ranges.is_impl_with_overloads(&decl.range()) {
+        return None; // skip implementation signature
+      }
+    }
+    match decl {
+      Decl::TsEnum(_)
+      | Decl::Class(_)
+      | Decl::Fn(_)
+      | Decl::Var(_)
+      | Decl::TsModule(_) => {
+        if let Some(decl) = self.decl_to_type_decl(decl.clone()) {
+          Some(Stmt::Decl(decl))
+        } else {
+          self.mark_diagnostic_unable_to_infer(decl.range());
+          None
+        }
+      }
+      Decl::TsInterface(_) | Decl::TsTypeAlias(_) | Decl::Using(_) => {
+        Some(Stmt::Decl(decl))
+      }
+    }
   }
 
   fn expr_to_ts_type(
@@ -1094,7 +1111,7 @@ mod tests {
       .unwrap();
 
     let parsed_source = module_info.source();
-    let module = parsed_source.module().to_owned();
+    let program = parsed_source.program_ref().to_owned();
     let nv = PackageNv::from_str("package@1.0.0").unwrap();
     let public_ranges = find_public_ranges(
       None,
@@ -1120,7 +1137,7 @@ mod tests {
       &public_ranges,
       &specifier,
     );
-    let module = transformer.transform(module).unwrap();
+    let program = transformer.transform(program);
 
     let comments = parsed_source.comments().as_single_threaded();
 
@@ -1128,7 +1145,7 @@ mod tests {
       SourceMap::single(specifier, parsed_source.text().to_string());
 
     let EmittedSourceText { text: actual, .. } = emit(
-      &deno_ast::swc::ast::Program::Module(module),
+      (&program).into(),
       &comments,
       &source_map,
       &EmitOptions {

@@ -2,8 +2,9 @@
 
 use std::sync::Arc;
 
-use deno_ast::dep::DependencyKind;
+use deno_ast::dep::DynamicDependencyKind;
 use deno_ast::dep::ImportAttributes;
+use deno_ast::dep::StaticDependencyKind;
 use deno_ast::MediaType;
 use deno_ast::ModuleSpecifier;
 use deno_ast::ParseDiagnostic;
@@ -114,7 +115,7 @@ impl DependencyDescriptor {
 #[serde(rename_all = "camelCase")]
 pub struct StaticDependencyDescriptor {
   /// The kind of dependency.
-  pub kind: DependencyKind,
+  pub kind: StaticDependencyKind,
   /// An optional specifier overriding the types associated with the
   /// import/export statement, if any.
   #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -163,6 +164,8 @@ pub enum DynamicTemplatePart {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DynamicDependencyDescriptor {
+  #[serde(skip_serializing_if = "is_dynamic_esm", default)]
+  pub kind: DynamicDependencyKind,
   /// An optional specifier overriding the types associated with the
   /// import/export statement, if any.
   #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -175,6 +178,10 @@ pub struct DynamicDependencyDescriptor {
   /// Import attributes for this dependency.
   #[serde(skip_serializing_if = "ImportAttributes::is_none", default)]
   pub import_attributes: ImportAttributes,
+}
+
+fn is_dynamic_esm(kind: &DynamicDependencyKind) -> bool {
+  *kind == DynamicDependencyKind::Import
 }
 
 impl From<DynamicDependencyDescriptor> for DependencyDescriptor {
@@ -356,7 +363,7 @@ mod test {
     let module_info = ModuleInfo {
       dependencies: Vec::from([
         StaticDependencyDescriptor {
-          kind: DependencyKind::ImportEquals,
+          kind: StaticDependencyKind::ImportEquals,
           types_specifier: Some(SpecifierWithRange {
             text: "a".to_string(),
             range: PositionRange {
@@ -379,6 +386,7 @@ mod test {
         }
         .into(),
         DynamicDependencyDescriptor {
+          kind: DynamicDependencyKind::Import,
           types_specifier: None,
           argument: DynamicArgument::String("./test2".to_string()),
           argument_range: PositionRange {
@@ -393,6 +401,17 @@ mod test {
             ),
             ("kind".to_string(), ImportAttribute::Unknown),
           ])),
+        }
+        .into(),
+        DynamicDependencyDescriptor {
+          kind: DynamicDependencyKind::Require,
+          types_specifier: None,
+          argument: DynamicArgument::String("./test3".to_string()),
+          argument_range: PositionRange {
+            start: Position::zeroed(),
+            end: Position::zeroed(),
+          },
+          import_attributes: ImportAttributes::None,
         }
         .into(),
       ]),
@@ -427,6 +446,11 @@ mod test {
               "key2": "value",
             }
           }
+        }, {
+          "type": "dynamic",
+          "kind": "require",
+          "argument": "./test3",
+          "argumentRange": [[0, 0], [0, 0]]
         }]
       }),
     );
@@ -595,7 +619,7 @@ mod test {
   fn static_dependency_descriptor_serialization() {
     // with dependencies
     let descriptor = DependencyDescriptor::Static(StaticDependencyDescriptor {
-      kind: DependencyKind::ExportEquals,
+      kind: StaticDependencyKind::ExportEquals,
       types_specifier: Some(SpecifierWithRange {
         text: "a".to_string(),
         range: PositionRange {
@@ -632,6 +656,7 @@ mod test {
   fn dynamic_dependency_descriptor_serialization() {
     run_serialization_test(
       &DependencyDescriptor::Dynamic(DynamicDependencyDescriptor {
+        kind: DynamicDependencyKind::Import,
         types_specifier: Some(SpecifierWithRange {
           text: "a".to_string(),
           range: PositionRange {
@@ -661,6 +686,7 @@ mod test {
 
     run_serialization_test(
       &DependencyDescriptor::Dynamic(DynamicDependencyDescriptor {
+        kind: DynamicDependencyKind::Import,
         types_specifier: None,
         argument: DynamicArgument::String("test".to_string()),
         argument_range: PositionRange {
@@ -736,7 +762,7 @@ mod test {
     let expected = ModuleInfo {
       dependencies: vec![DependencyDescriptor::Static(
         StaticDependencyDescriptor {
-          kind: DependencyKind::Import,
+          kind: StaticDependencyKind::Import,
           specifier: "./a.js".to_string(),
           specifier_range: PositionRange {
             start: Position {
@@ -790,7 +816,7 @@ mod test {
     let expected = ModuleInfo {
       dependencies: vec![DependencyDescriptor::Static(
         StaticDependencyDescriptor {
-          kind: DependencyKind::Import,
+          kind: StaticDependencyKind::Import,
           specifier: "./a.js".to_string(),
           specifier_range: PositionRange {
             start: Position {
