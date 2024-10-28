@@ -309,7 +309,7 @@ async fn test_version(
     fast_check_cache: Default::default(),
     fast_check_dts: true,
     jsr_url_provider: &PassthroughJsrUrlProvider,
-    module_parser: Some(&module_analyzer),
+    es_parser: Some(&module_analyzer),
     resolver: None,
     npm_resolver: None,
     workspace_fast_check: WorkspaceFastCheckOption::Enabled(&workspace_members),

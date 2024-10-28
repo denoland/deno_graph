@@ -1152,7 +1152,7 @@ pub struct BuildFastCheckTypeGraphOptions<'a> {
   pub fast_check_cache: Option<&'a dyn crate::fast_check::FastCheckCache>,
   pub fast_check_dts: bool,
   pub jsr_url_provider: &'a dyn JsrUrlProvider,
-  pub module_parser: Option<&'a dyn crate::EsParser>,
+  pub es_parser: Option<&'a dyn crate::EsParser>,
   pub resolver: Option<&'a dyn Resolver>,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   /// Whether to fill workspace members with fast check TypeScript data.
@@ -1687,10 +1687,10 @@ impl ModuleGraph {
       return;
     }
 
-    let default_module_parser = crate::CapturingModuleAnalyzer::default();
+    let default_es_parser = crate::CapturingModuleAnalyzer::default();
     let root_symbol = crate::symbols::RootSymbol::new(
       self,
-      options.module_parser.unwrap_or(&default_module_parser),
+      options.es_parser.unwrap_or(&default_es_parser),
     );
 
     let modules = crate::fast_check::build_fast_check_type_graph(

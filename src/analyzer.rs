@@ -209,7 +209,7 @@ pub enum TypeScriptReference {
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ModuleInfo {
-  /// If the module has nothing that makes it for sure ESM
+  /// If the module has nothing that makes it for sure an ES module
   /// (no TLA, imports, exports, import.meta).
   #[serde(skip_serializing_if = "is_false", default, rename = "script")]
   pub is_script: bool,
