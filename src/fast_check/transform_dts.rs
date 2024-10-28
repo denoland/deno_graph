@@ -1156,8 +1156,6 @@ mod tests {
         inline_sources: false,
       },
     )
-    .unwrap()
-    .into_string()
     .unwrap();
 
     assert_eq!(actual.trim(), expected.trim());

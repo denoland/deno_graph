@@ -16,7 +16,6 @@ use deno_ast::swc::common::Spanned;
 use deno_ast::swc::common::SyntaxContext;
 use deno_ast::swc::common::DUMMY_SP;
 use deno_ast::swc::visit::VisitWith;
-use deno_ast::EmitError;
 use deno_ast::EmitOptions;
 use deno_ast::ModuleSpecifier;
 use deno_ast::MultiThreadedComments;
@@ -99,7 +98,7 @@ pub struct FastCheckDtsModule {
 pub struct FastCheckModule {
   pub module_info: Arc<ModuleInfo>,
   pub text: Arc<str>,
-  pub source_map: Arc<[u8]>,
+  pub source_map: Arc<str>,
   pub dts: Option<FastCheckDtsModule>,
 }
 
@@ -164,15 +163,7 @@ pub fn transform(
       inner: Arc::new(e),
     }]
   })?;
-  let emitted_text = String::from_utf8(emitted_source.source).map_err(|e| {
-    vec![FastCheckDiagnostic::Emit {
-      specifier: specifier.clone(),
-      inner: Arc::new(EmitError::SwcEmit(std::io::Error::new(
-        std::io::ErrorKind::InvalidData,
-        e,
-      ))),
-    }]
-  })?;
+  let emitted_text = emitted_source.text;
 
   let dts = if let Some(dts_comments) = dts_comments {
     let mut dts_transformer = FastCheckDtsTransformer::new(

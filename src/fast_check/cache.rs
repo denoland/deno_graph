@@ -76,7 +76,7 @@ pub struct FastCheckCacheModuleItemInfo {
   /// skip_serializing_if.
   pub module_info: String,
   pub text: Arc<str>,
-  pub source_map: Arc<[u8]>,
+  pub source_map: Arc<str>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -109,8 +109,6 @@ pub(crate) fn fast_insecure_hash(bytes: &[u8]) -> u64 {
 
 #[cfg(test)]
 mod test {
-  use std::sync::Arc;
-
   #[test]
   fn module_item_info_serialization() {
     let item = super::FastCheckCacheModuleItem::Info(
@@ -118,7 +116,7 @@ mod test {
         source_hash: 0,
         module_info: Default::default(),
         text: "test".to_string().into(),
-        source_map: Arc::new([0, 1, 2]),
+        source_map: "012".to_string().into(),
       },
     );
 

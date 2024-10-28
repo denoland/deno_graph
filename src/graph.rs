@@ -975,7 +975,7 @@ pub enum FastCheckTypeModuleSlot {
 pub struct FastCheckTypeModule {
   pub dependencies: IndexMap<String, Dependency>,
   pub source: Arc<str>,
-  pub source_map: Arc<[u8]>,
+  pub source_map: Arc<str>,
   #[cfg(feature = "fast_check")]
   pub dts: Option<FastCheckDtsModule>,
 }
@@ -2316,9 +2316,9 @@ pub(crate) async fn parse_module_source_and_info(
         }
       }
     }
-    MediaType::Json
+    MediaType::Css
+    | MediaType::Json
     | MediaType::Wasm
-    | MediaType::TsBuildInfo
     | MediaType::SourceMap
     | MediaType::Unknown => Err(ModuleError::UnsupportedMediaType(
       opts.specifier,
@@ -6248,8 +6248,6 @@ mod tests {
         ..Default::default()
       },
     )
-    .unwrap()
-    .into_string()
     .unwrap();
     assert_eq!(
       text.trim(),
@@ -6336,8 +6334,6 @@ mod tests {
           ..Default::default()
         },
       )
-      .unwrap()
-      .into_string()
       .unwrap();
       assert_eq!(text.trim(), "export * from 'jsr:@package/foo';");
       assert!(dts.diagnostics.is_empty());

@@ -190,8 +190,6 @@ fn run_graph_test(test: &CollectedTest) {
               ..Default::default()
             },
           )
-          .unwrap()
-          .into_string()
           .unwrap();
           if !text.is_empty() {
             output_text.push_str(&indent("--- DTS ---\n"));
