@@ -21,7 +21,7 @@ use indexmap::IndexSet;
 use crate::JsModule;
 use crate::JsonModule;
 use crate::ModuleGraph;
-use crate::ModuleParser;
+use crate::EsParser;
 use crate::ParseOptions;
 
 use super::collections::AdditiveOnlyIndexMap;
@@ -43,7 +43,7 @@ use super::SymbolNodeDep;
 /// Building the symbols for modules is lazy.
 pub struct RootSymbol<'a> {
   module_graph: &'a ModuleGraph,
-  parser: &'a dyn ModuleParser,
+  parser: &'a dyn EsParser,
   specifiers_to_ids: AdditiveOnlyMapForCopyValues<ModuleSpecifier, ModuleId>,
   ids_to_modules: AdditiveOnlyMap<ModuleId, ModuleInfo>,
 }
@@ -51,7 +51,7 @@ pub struct RootSymbol<'a> {
 impl<'a> RootSymbol<'a> {
   pub fn new(
     module_graph: &'a ModuleGraph,
-    parser: &'a dyn ModuleParser,
+    parser: &'a dyn EsParser,
   ) -> Self {
     Self {
       module_graph,
@@ -255,7 +255,7 @@ impl<'a> RootSymbol<'a> {
     &self,
     graph_module: &JsModule,
   ) -> Result<ParsedSource, deno_ast::ParseDiagnostic> {
-    self.parser.parse_module(ParseOptions {
+    self.parser.parse_program(ParseOptions {
       specifier: &graph_module.specifier,
       source: graph_module.source.clone(),
       media_type: graph_module.media_type,

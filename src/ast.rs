@@ -74,19 +74,19 @@ pub struct ParseOptions<'a> {
   pub scope_analysis: bool,
 }
 
-/// Parses modules to a ParsedSource.
-pub trait ModuleParser {
-  fn parse_module(
+/// Parses programs to a ParsedSource.
+pub trait EsParser {
+  fn parse_program(
     &self,
     options: ParseOptions,
   ) -> Result<ParsedSource, ParseDiagnostic>;
 }
 
 #[derive(Default, Clone)]
-pub struct DefaultModuleParser;
+pub struct DefaultEsParser;
 
-impl ModuleParser for DefaultModuleParser {
-  fn parse_module(
+impl EsParser for DefaultEsParser {
+  fn parse_program(
     &self,
     options: ParseOptions,
   ) -> Result<ParsedSource, ParseDiagnostic> {
@@ -186,14 +186,14 @@ impl ParsedSourceStore for DefaultParsedSourceStore {
 /// last parsed, so if two threads race to parse, when they're
 /// both done it will have whatever was last stored.
 #[derive(Clone, Copy)]
-pub struct CapturingModuleParser<'a> {
-  parser: Option<&'a dyn ModuleParser>,
+pub struct CapturingEsParser<'a> {
+  parser: Option<&'a dyn EsParser>,
   store: &'a dyn ParsedSourceStore,
 }
 
-impl<'a> CapturingModuleParser<'a> {
+impl<'a> CapturingEsParser<'a> {
   pub fn new(
-    parser: Option<&'a dyn ModuleParser>,
+    parser: Option<&'a dyn EsParser>,
     store: &'a dyn ParsedSourceStore,
   ) -> Self {
     Self { parser, store }
@@ -220,18 +220,18 @@ impl<'a> CapturingModuleParser<'a> {
   }
 }
 
-impl<'a> ModuleParser for CapturingModuleParser<'a> {
-  fn parse_module(
+impl<'a> EsParser for CapturingEsParser<'a> {
+  fn parse_program(
     &self,
     options: ParseOptions,
   ) -> Result<ParsedSource, ParseDiagnostic> {
     if let Some(parsed_source) = self.get_from_store_if_matches(&options) {
       Ok(parsed_source)
     } else {
-      let default_parser = DefaultModuleParser;
+      let default_parser = DefaultEsParser;
       let parser = self.parser.unwrap_or(&default_parser);
       let specifier = options.specifier.clone();
-      let parsed_source = parser.parse_module(options)?;
+      let parsed_source = parser.parse_program(options)?;
       self
         .store
         .set_parsed_source(specifier, parsed_source.clone());
@@ -259,12 +259,12 @@ impl ModuleAnalyzer for DefaultModuleAnalyzer {
 
 /// Default module analyzer that analyzes based on a deno_ast::ParsedSource.
 pub struct ParserModuleAnalyzer<'a> {
-  parser: &'a dyn ModuleParser,
+  parser: &'a dyn EsParser,
 }
 
 impl<'a> ParserModuleAnalyzer<'a> {
   /// Creates a new module analyzer.
-  pub fn new(parser: &'a dyn ModuleParser) -> Self {
+  pub fn new(parser: &'a dyn EsParser) -> Self {
     Self { parser }
   }
 
@@ -324,7 +324,7 @@ impl<'a> ParserModuleAnalyzer<'a> {
     source: Arc<str>,
     media_type: MediaType,
   ) -> Result<ModuleInfo, ParseDiagnostic> {
-    let parsed_source = self.parser.parse_module(ParseOptions {
+    let parsed_source = self.parser.parse_program(ParseOptions {
       specifier,
       source,
       media_type,
@@ -338,7 +338,7 @@ impl<'a> ParserModuleAnalyzer<'a> {
 impl<'a> Default for ParserModuleAnalyzer<'a> {
   fn default() -> Self {
     Self {
-      parser: &DefaultModuleParser,
+      parser: &DefaultEsParser,
     }
   }
 }
@@ -356,11 +356,11 @@ impl<'a> ModuleAnalyzer for ParserModuleAnalyzer<'a> {
 }
 
 /// Helper struct for creating a single object that implements
-/// `deno_graph::ModuleAnalyzer`, `deno_graph::ModuleParser`,
+/// `deno_graph::ModuleAnalyzer`, `deno_graph::EsParser`,
 /// and `deno_graph::ParsedSourceStore`. All parses will be captured
 /// to prevent them from occuring more than one time.
 pub struct CapturingModuleAnalyzer {
-  parser: Box<dyn ModuleParser>,
+  parser: Box<dyn EsParser>,
   store: Box<dyn ParsedSourceStore>,
 }
 
@@ -372,18 +372,18 @@ impl Default for CapturingModuleAnalyzer {
 
 impl CapturingModuleAnalyzer {
   pub fn new(
-    parser: Option<Box<dyn ModuleParser>>,
+    parser: Option<Box<dyn EsParser>>,
     store: Option<Box<dyn ParsedSourceStore>>,
   ) -> Self {
     Self {
-      parser: parser.unwrap_or_else(|| Box::<DefaultModuleParser>::default()),
+      parser: parser.unwrap_or_else(|| Box::<DefaultEsParser>::default()),
       store: store
         .unwrap_or_else(|| Box::<DefaultParsedSourceStore>::default()),
     }
   }
 
-  pub fn as_capturing_parser(&self) -> CapturingModuleParser {
-    CapturingModuleParser::new(Some(&*self.parser), &*self.store)
+  pub fn as_capturing_parser(&self) -> CapturingEsParser {
+    CapturingEsParser::new(Some(&*self.parser), &*self.store)
   }
 }
 
@@ -401,13 +401,13 @@ impl ModuleAnalyzer for CapturingModuleAnalyzer {
   }
 }
 
-impl ModuleParser for CapturingModuleAnalyzer {
-  fn parse_module(
+impl EsParser for CapturingModuleAnalyzer {
+  fn parse_program(
     &self,
     options: ParseOptions,
   ) -> Result<ParsedSource, ParseDiagnostic> {
     let capturing_parser = self.as_capturing_parser();
-    capturing_parser.parse_module(options)
+    capturing_parser.parse_program(options)
   }
 }
 
@@ -774,8 +774,8 @@ mod tests {
 
     const React4 = await /* @deno-types="https://deno.land/x/types/react/index.d.ts" */ import("https://cdn.skypack.dev/react");
     "#;
-    let parsed_source = DefaultModuleParser
-      .parse_module(ParseOptions {
+    let parsed_source = DefaultEsParser
+      .parse_program(ParseOptions {
         specifier: &specifier,
         source: source.into(),
         media_type: MediaType::Tsx,
@@ -899,8 +899,8 @@ mod tests {
     import type { i } from "./i.d.ts";
     export type { j } from "./j.d.ts";
     "#;
-    let parsed_source = DefaultModuleParser
-      .parse_module(ParseOptions {
+    let parsed_source = DefaultEsParser
+      .parse_program(ParseOptions {
         specifier: &specifier,
         source: source.into(),
         media_type: MediaType::TypeScript,
@@ -934,8 +934,8 @@ mod tests {
 
       import * as a from "./a.ts";
     "#;
-    let parsed_source = DefaultModuleParser
-      .parse_module(ParseOptions {
+    let parsed_source = DefaultEsParser
+      .parse_program(ParseOptions {
         specifier: &specifier,
         source: source.into(),
         media_type: MediaType::JavaScript,
@@ -973,8 +973,8 @@ mod tests {
       await import(\"./b.json\", {{ {keyword}: {{ type: \"json\" }} }});
       "
       );
-      let parsed_source = DefaultModuleParser
-        .parse_module(ParseOptions {
+      let parsed_source = DefaultEsParser
+        .parse_program(ParseOptions {
           specifier: &specifier,
           source: source.into(),
           media_type: MediaType::TypeScript,
@@ -1024,8 +1024,8 @@ function b(c) {
  */
 const f = new Set();
 "#;
-    let parsed_source = DefaultModuleParser
-      .parse_module(ParseOptions {
+    let parsed_source = DefaultEsParser
+      .parse_program(ParseOptions {
         specifier: &specifier,
         source: source.into(),
         media_type: MediaType::JavaScript,
