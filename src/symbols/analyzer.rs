@@ -18,10 +18,10 @@ use deno_ast::SourceTextInfo;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
 
+use crate::EsParser;
 use crate::JsModule;
 use crate::JsonModule;
 use crate::ModuleGraph;
-use crate::EsParser;
 use crate::ParseOptions;
 
 use super::collections::AdditiveOnlyIndexMap;
@@ -49,10 +49,7 @@ pub struct RootSymbol<'a> {
 }
 
 impl<'a> RootSymbol<'a> {
-  pub fn new(
-    module_graph: &'a ModuleGraph,
-    parser: &'a dyn EsParser,
-  ) -> Self {
+  pub fn new(module_graph: &'a ModuleGraph, parser: &'a dyn EsParser) -> Self {
     Self {
       module_graph,
       parser,
