@@ -1,0 +1,44 @@
+# mod.ts
+import "https://deno.land/file.cjs";
+
+# https://deno.land/file.cjs
+require("./other.cjs");
+module.exports.test = {};
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "https://deno.land/file.cjs",
+          "code": {
+            "specifier": "https://deno.land/file.cjs",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 35
+              }
+            }
+          }
+        }
+      ],
+      "size": 37,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "specifier": "https://deno.land/file.cjs",
+      "error": "Remote CJS modules are not supported.\n  Specifier: https://deno.land/file.cjs"
+    }
+  ],
+  "redirects": {}
+}

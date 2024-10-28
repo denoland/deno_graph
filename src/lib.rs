@@ -37,12 +37,12 @@ pub use analyzer::PositionRange;
 pub use analyzer::SpecifierWithRange;
 pub use analyzer::StaticDependencyDescriptor;
 pub use analyzer::TypeScriptReference;
+pub use ast::CapturingEsParser;
 pub use ast::CapturingModuleAnalyzer;
-pub use ast::CapturingModuleParser;
+pub use ast::DefaultEsParser;
 pub use ast::DefaultModuleAnalyzer;
-pub use ast::DefaultModuleParser;
 pub use ast::DefaultParsedSourceStore;
-pub use ast::ModuleParser;
+pub use ast::EsParser;
 pub use ast::ParseOptions;
 pub use ast::ParsedSourceStore;
 pub use ast::ParserModuleAnalyzer;
@@ -96,9 +96,9 @@ pub use module_specifier::SpecifierError;
 pub use rt::Executor;
 pub use source::NpmResolvePkgReqsResult;
 
-pub use deno_ast::dep::DependencyKind;
 pub use deno_ast::dep::ImportAttribute;
 pub use deno_ast::dep::ImportAttributes;
+pub use deno_ast::dep::StaticDependencyKind;
 
 #[derive(Debug, Clone)]
 pub struct ReferrerImports {

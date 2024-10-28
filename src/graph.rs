@@ -29,8 +29,8 @@ use crate::rt::Executor;
 
 use crate::source::*;
 
-use deno_ast::dep::DependencyKind;
 use deno_ast::dep::ImportAttributes;
+use deno_ast::dep::StaticDependencyKind;
 use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
 use deno_ast::ParseDiagnostic;
@@ -314,6 +314,7 @@ impl fmt::Display for ModuleError {
       Self::LoadingErr(_, _, err) => err.fmt(f),
       Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {diagnostic}"),
       Self::UnsupportedMediaType(specifier, MediaType::Json, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import attribute with the type of \"json\".\n  Specifier: {specifier}"),
+      Self::UnsupportedMediaType(specifier, MediaType::Cjs | MediaType::Cts, ..) if specifier.scheme() != "file" => write!(f, "Remote CJS modules are not supported.\n  Specifier: {specifier}"),
       Self::UnsupportedMediaType(specifier, media_type, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {media_type} module. Importing these types of modules is currently not supported.\n  Specifier: {specifier}"),
       Self::Missing(specifier, _) => write!(f, "Module not found \"{specifier}\"."),
       Self::MissingDynamic(specifier, _) => write!(f, "Dynamic import not found \"{specifier}\"."),
@@ -974,7 +975,7 @@ pub enum FastCheckTypeModuleSlot {
 pub struct FastCheckTypeModule {
   pub dependencies: IndexMap<String, Dependency>,
   pub source: Arc<str>,
-  pub source_map: Arc<[u8]>,
+  pub source_map: Arc<str>,
   #[cfg(feature = "fast_check")]
   pub dts: Option<FastCheckDtsModule>,
 }
@@ -982,6 +983,8 @@ pub struct FastCheckTypeModule {
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct JsModule {
+  #[serde(skip_serializing)]
+  pub is_script: bool,
   #[serde(
     skip_serializing_if = "IndexMap::is_empty",
     serialize_with = "serialize_dependencies"
@@ -1003,6 +1006,7 @@ pub struct JsModule {
 impl JsModule {
   fn new(specifier: ModuleSpecifier, source: Arc<str>) -> Self {
     Self {
+      is_script: false,
       dependencies: Default::default(),
       maybe_cache_info: None,
       source,
@@ -1148,7 +1152,7 @@ pub struct BuildFastCheckTypeGraphOptions<'a> {
   pub fast_check_cache: Option<&'a dyn crate::fast_check::FastCheckCache>,
   pub fast_check_dts: bool,
   pub jsr_url_provider: &'a dyn JsrUrlProvider,
-  pub module_parser: Option<&'a dyn crate::ModuleParser>,
+  pub es_parser: Option<&'a dyn crate::EsParser>,
   pub resolver: Option<&'a dyn Resolver>,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   /// Whether to fill workspace members with fast check TypeScript data.
@@ -1683,10 +1687,10 @@ impl ModuleGraph {
       return;
     }
 
-    let default_module_parser = crate::CapturingModuleAnalyzer::default();
+    let default_es_parser = crate::CapturingModuleAnalyzer::default();
     let root_symbol = crate::symbols::RootSymbol::new(
       self,
-      options.module_parser.unwrap_or(&default_module_parser),
+      options.es_parser.unwrap_or(&default_es_parser),
     );
 
     let modules = crate::fast_check::build_fast_check_type_graph(
@@ -2267,6 +2271,16 @@ pub(crate) async fn parse_module_source_and_info(
     }
   }
 
+  if matches!(media_type, MediaType::Cjs | MediaType::Cts)
+    && opts.specifier.scheme() != "file"
+  {
+    return Err(ModuleError::UnsupportedMediaType(
+      opts.specifier,
+      media_type,
+      opts.maybe_referrer.map(|r| r.to_owned()),
+    ));
+  }
+
   // Here we check for known ES Modules that we will analyze the dependencies of
   match media_type {
     MediaType::JavaScript
@@ -2275,6 +2289,8 @@ pub(crate) async fn parse_module_source_and_info(
     | MediaType::TypeScript
     | MediaType::Mts
     | MediaType::Tsx
+    | MediaType::Cjs
+    | MediaType::Cts
     | MediaType::Dts
     | MediaType::Dmts
     | MediaType::Dcts => {
@@ -2300,11 +2316,9 @@ pub(crate) async fn parse_module_source_and_info(
         }
       }
     }
-    MediaType::Cjs
-    | MediaType::Cts
+    MediaType::Css
     | MediaType::Json
     | MediaType::Wasm
-    | MediaType::TsBuildInfo
     | MediaType::SourceMap
     | MediaType::Unknown => Err(ModuleError::UnsupportedMediaType(
       opts.specifier,
@@ -2372,6 +2386,7 @@ pub(crate) fn parse_js_module_from_module_info(
   maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> JsModule {
   let mut module = JsModule::new(specifier, source);
+  module.is_script = module_info.is_script;
   module.media_type = media_type;
 
   // Analyze the TypeScript triple-slash references and self types specifier
@@ -2711,7 +2726,7 @@ fn fill_module_dependencies(
       DependencyDescriptor::Static(desc) => {
         let is_import_or_export_type = matches!(
           desc.kind,
-          DependencyKind::ImportType | DependencyKind::ExportType
+          StaticDependencyKind::ImportType | StaticDependencyKind::ExportType
         );
         if is_import_or_export_type && !graph_kind.include_types() {
           continue; // skip
@@ -6224,7 +6239,7 @@ mod tests {
     let source_map =
       SourceMap::single(module.specifier.clone(), module.source.to_string());
     let EmittedSourceText { text, .. } = emit(
-      &dts.program,
+      (&dts.program).into(),
       &dts.comments.as_single_threaded(),
       &source_map,
       &EmitOptions {
@@ -6233,8 +6248,6 @@ mod tests {
         ..Default::default()
       },
     )
-    .unwrap()
-    .into_string()
     .unwrap();
     assert_eq!(
       text.trim(),
@@ -6312,7 +6325,7 @@ mod tests {
         module.source().unwrap().to_string(),
       );
       let EmittedSourceText { text, .. } = emit(
-        &dts.program,
+        (&dts.program).into(),
         &dts.comments.as_single_threaded(),
         &source_map,
         &EmitOptions {
@@ -6321,8 +6334,6 @@ mod tests {
           ..Default::default()
         },
       )
-      .unwrap()
-      .into_string()
       .unwrap();
       assert_eq!(text.trim(), "export * from 'jsr:@package/foo';");
       assert!(dts.diagnostics.is_empty());

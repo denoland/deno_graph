@@ -314,7 +314,7 @@ impl TestBuilder {
           fast_check_cache: fast_check_cache.as_ref().map(|c| c as _),
           fast_check_dts: !self.fast_check_cache,
           jsr_url_provider: Default::default(),
-          module_parser: Some(&capturing_analyzer),
+          es_parser: Some(&capturing_analyzer),
           resolver: None,
           npm_resolver: None,
           workspace_fast_check: if self.workspace_fast_check {
