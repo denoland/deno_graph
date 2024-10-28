@@ -983,6 +983,8 @@ pub struct FastCheckTypeModule {
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct JsModule {
+  #[serde(skip_serializing)]
+  pub is_script: bool,
   #[serde(
     skip_serializing_if = "IndexMap::is_empty",
     serialize_with = "serialize_dependencies"
@@ -1004,6 +1006,7 @@ pub struct JsModule {
 impl JsModule {
   fn new(specifier: ModuleSpecifier, source: Arc<str>) -> Self {
     Self {
+      is_script: false,
       dependencies: Default::default(),
       maybe_cache_info: None,
       source,
@@ -2383,6 +2386,7 @@ pub(crate) fn parse_js_module_from_module_info(
   maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> JsModule {
   let mut module = JsModule::new(specifier, source);
+  module.is_script = module_info.is_script;
   module.media_type = media_type;
 
   // Analyze the TypeScript triple-slash references and self types specifier

@@ -293,6 +293,10 @@ impl<'a> ParserModuleAnalyzer<'a> {
       },
     };
     ModuleInfo {
+      is_script: match program {
+        ProgramRef::Module(_) => false,
+        ProgramRef::Script(_) => true,
+      },
       dependencies: analyze_dependencies(program, text_info, comments),
       ts_references: analyze_ts_references(text_info, leading_comments),
       self_types_specifier: analyze_ts_self_types(
@@ -1029,6 +1033,7 @@ const f = new Set();
       })
       .unwrap();
     let module_info = ParserModuleAnalyzer::module_info(&parsed_source);
+    assert!(module_info.is_script);
     let dependencies = module_info.jsdoc_imports;
     assert_eq!(
       dependencies,
@@ -1104,6 +1109,7 @@ export {};
     assert_eq!(
       module_info,
       ModuleInfo {
+        is_script: false,
         dependencies: vec![],
         ts_references: vec![TypeScriptReference::Path(SpecifierWithRange {
           text: "./ref.d.ts".to_owned(),

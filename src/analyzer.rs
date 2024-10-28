@@ -209,6 +209,10 @@ pub enum TypeScriptReference {
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ModuleInfo {
+  /// If the module has nothing that makes it for sure ESM
+  /// (no TLA, imports, exports, import.meta).
+  #[serde(skip_serializing_if = "is_false", default, rename = "script")]
+  pub is_script: bool,
   /// Dependencies of the module.
   #[serde(skip_serializing_if = "Vec::is_empty", default)]
   pub dependencies: Vec<DependencyDescriptor>,
@@ -332,6 +336,10 @@ impl<'a> Default for &'a dyn ModuleAnalyzer {
   }
 }
 
+fn is_false(v: &bool) -> bool {
+  !v
+}
+
 #[cfg(test)]
 mod test {
   use std::collections::HashMap;
@@ -347,6 +355,7 @@ mod test {
   fn module_info_serialization_empty() {
     // empty
     let module_info = ModuleInfo {
+      is_script: false,
       dependencies: Vec::new(),
       ts_references: Vec::new(),
       self_types_specifier: None,
@@ -361,6 +370,7 @@ mod test {
   fn module_info_serialization_deps() {
     // with dependencies
     let module_info = ModuleInfo {
+      is_script: true,
       dependencies: Vec::from([
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::ImportEquals,
@@ -426,6 +436,7 @@ mod test {
       // WARNING: Deserialization MUST be backwards compatible in order
       // to load data from JSR.
       json!({
+        "script": true,
         "dependencies": [{
           "type": "static",
           "kind": "importEquals",
@@ -459,6 +470,7 @@ mod test {
   #[test]
   fn module_info_serialization_ts_references() {
     let module_info = ModuleInfo {
+      is_script: false,
       dependencies: Vec::new(),
       ts_references: Vec::from([
         TypeScriptReference::Path(SpecifierWithRange {
@@ -502,6 +514,7 @@ mod test {
   #[test]
   fn module_info_serialization_self_types_specifier() {
     let module_info = ModuleInfo {
+      is_script: false,
       dependencies: Vec::new(),
       ts_references: Vec::new(),
       self_types_specifier: Some(SpecifierWithRange {
@@ -531,6 +544,7 @@ mod test {
   #[test]
   fn module_info_serialization_jsx_import_source() {
     let module_info = ModuleInfo {
+      is_script: false,
       dependencies: Vec::new(),
       ts_references: Vec::new(),
       self_types_specifier: None,
@@ -560,6 +574,7 @@ mod test {
   #[test]
   fn module_info_serialization_jsx_import_source_types() {
     let module_info = ModuleInfo {
+      is_script: false,
       dependencies: Vec::new(),
       ts_references: Vec::new(),
       self_types_specifier: None,
@@ -589,6 +604,7 @@ mod test {
   #[test]
   fn module_info_jsdoc_imports() {
     let module_info = ModuleInfo {
+      is_script: false,
       dependencies: Vec::new(),
       ts_references: Vec::new(),
       self_types_specifier: None,
@@ -760,6 +776,7 @@ mod test {
   #[test]
   fn test_v1_to_v2_deserialization_with_leading_comment() {
     let expected = ModuleInfo {
+      is_script: false,
       dependencies: vec![DependencyDescriptor::Static(
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::Import,
@@ -814,6 +831,7 @@ mod test {
   #[test]
   fn test_v1_to_v2_deserialization_no_leading_comment() {
     let expected = ModuleInfo {
+      is_script: false,
       dependencies: vec![DependencyDescriptor::Static(
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::Import,
