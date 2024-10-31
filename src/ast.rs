@@ -293,10 +293,7 @@ impl<'a> ParserModuleAnalyzer<'a> {
       },
     };
     ModuleInfo {
-      is_script: match program {
-        ProgramRef::Module(_) => false,
-        ProgramRef::Script(_) => true,
-      },
+      is_script: program.compute_is_script(),
       dependencies: analyze_dependencies(program, text_info, comments),
       ts_references: analyze_ts_references(text_info, leading_comments),
       self_types_specifier: analyze_ts_self_types(
@@ -1092,6 +1089,27 @@ const f = new Set();
         },
       ]
     );
+  }
+
+  #[test]
+  fn test_import_equals() {
+    let specifier = ModuleSpecifier::parse("file:///a/test.ts").unwrap();
+    let source = r#"
+export import value = require("./a.js");
+import value2 = require("./b.js");
+"#;
+    let parsed_source = DefaultEsParser
+      .parse_program(ParseOptions {
+        specifier: &specifier,
+        source: source.into(),
+        media_type: MediaType::TypeScript,
+        scope_analysis: false,
+      })
+      .unwrap();
+    let module_info = ParserModuleAnalyzer::module_info(&parsed_source);
+    assert!(module_info.is_script);
+    let dependencies = module_info.dependencies;
+    assert_eq!(dependencies.len(), 2);
   }
 
   #[tokio::test]
