@@ -3,8 +3,8 @@
 use crate::analyzer::DependencyDescriptor;
 use crate::analyzer::DynamicArgument;
 use crate::analyzer::DynamicTemplatePart;
-use crate::analyzer::JsModuleInfo;
 use crate::analyzer::ModuleAnalyzer;
+use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
@@ -1072,6 +1072,13 @@ pub struct WasmModule {
   pub source_dts: Arc<str>,
   #[serde(flatten, skip_serializing_if = "Option::is_none")]
   pub maybe_cache_info: Option<CacheInfo>,
+}
+
+impl WasmModule {
+  /// Return the size in bytes of the content of the module.
+  pub fn size(&self) -> usize {
+    self.source.len()
+  }
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -2212,13 +2219,13 @@ pub(crate) enum ModuleSourceAndInfo {
     media_type: MediaType,
     source: Arc<str>,
     maybe_headers: Option<HashMap<String, String>>,
-    module_info: Box<JsModuleInfo>,
+    module_info: Box<ModuleInfo>,
   },
   Wasm {
     specifier: ModuleSpecifier,
     source: Arc<[u8]>,
     source_dts: Arc<str>,
-    module_info: Box<JsModuleInfo>,
+    module_info: Box<ModuleInfo>,
   },
 }
 
@@ -2471,7 +2478,7 @@ pub(crate) fn parse_js_module_from_module_info(
   specifier: ModuleSpecifier,
   media_type: MediaType,
   maybe_headers: Option<&HashMap<String, String>>,
-  module_info: JsModuleInfo,
+  module_info: ModuleInfo,
   source: Arc<str>,
   file_system: &dyn FileSystem,
   jsr_url_provider: &dyn JsrUrlProvider,
@@ -2806,7 +2813,7 @@ pub(crate) fn parse_js_module_from_module_info(
 fn parse_wasm_module_from_module_info(
   graph_kind: GraphKind,
   specifier: Url,
-  module_info: JsModuleInfo,
+  module_info: ModuleInfo,
   source: Arc<[u8]>,
   source_dts: Arc<str>,
   file_system: &dyn FileSystem,
@@ -3208,7 +3215,7 @@ enum PendingInfoResponse {
   Module {
     specifier: ModuleSpecifier,
     module_source_and_info: ModuleSourceAndInfo,
-    pending_load: Option<Box<(LoaderChecksum, JsModuleInfo)>>,
+    pending_load: Option<Box<(LoaderChecksum, ModuleInfo)>>,
     is_root: bool,
   },
   Redirect {
@@ -3338,7 +3345,7 @@ struct PendingContentLoadItem {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
   result: LoadResult,
-  module_info: JsModuleInfo,
+  module_info: ModuleInfo,
 }
 
 #[derive(Debug, Default)]
@@ -4076,7 +4083,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_attribute_type: Option<AttributeTypeWithRange>,
     maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) {
-    struct ProvidedModuleAnalyzer(RefCell<Option<JsModuleInfo>>);
+    struct ProvidedModuleAnalyzer(RefCell<Option<ModuleInfo>>);
 
     #[async_trait::async_trait(?Send)]
     impl ModuleAnalyzer for ProvidedModuleAnalyzer {
@@ -4085,7 +4092,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         _specifier: &ModuleSpecifier,
         _source: Arc<str>,
         _media_type: MediaType,
-      ) -> Result<JsModuleInfo, ParseDiagnostic> {
+      ) -> Result<ModuleInfo, ParseDiagnostic> {
         Ok(self.0.borrow_mut().take().unwrap()) // will only be called once
       }
     }

@@ -14,7 +14,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::analyzer::module_graph_1_to_2;
-use crate::JsModuleInfo;
+use crate::ModuleInfo;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct JsrPackageInfo {
@@ -87,7 +87,7 @@ impl JsrPackageVersionInfo {
     }
   }
 
-  pub fn module_info(&self, specifier: &str) -> Option<JsModuleInfo> {
+  pub fn module_info(&self, specifier: &str) -> Option<ModuleInfo> {
     if let Some(module_graph) = self.module_graph_2.as_ref() {
       let module_graph = module_graph.as_object()?;
       let module_info = module_graph.get(specifier)?;
