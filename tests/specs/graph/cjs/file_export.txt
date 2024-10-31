@@ -2,7 +2,7 @@
 import "./file.cjs";
 
 # file.cjs
-module.exports.test = {};
+export class Test {}
 
 # output
 {
@@ -12,7 +12,7 @@ module.exports.test = {};
   "modules": [
     {
       "specifier": "file:///file.cjs",
-      "error": "Expected a JavaScript or TypeScript module, but identified a Cjs module. Importing these types of modules is currently not supported.\n  Specifier: file:///file.cjs"
+      "error": "The module's source code could not be parsed: 'import', and 'export' cannot be used outside of module code at file:///file.cjs:1:1\n\n  export class Test {}\n  ~~~~~~"
     },
     {
       "kind": "esm",

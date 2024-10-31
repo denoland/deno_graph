@@ -16,11 +16,11 @@ use deno_ast::swc::common::Spanned;
 use deno_ast::swc::common::SyntaxContext;
 use deno_ast::swc::common::DUMMY_SP;
 use deno_ast::swc::visit::VisitWith;
-use deno_ast::EmitError;
 use deno_ast::EmitOptions;
 use deno_ast::ModuleSpecifier;
 use deno_ast::MultiThreadedComments;
 use deno_ast::ParsedSource;
+use deno_ast::ProgramRef;
 use deno_ast::SourceMap;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
@@ -98,7 +98,7 @@ pub struct FastCheckDtsModule {
 pub struct FastCheckModule {
   pub module_info: Arc<JsModuleInfo>,
   pub text: Arc<str>,
-  pub source_map: Arc<[u8]>,
+  pub source_map: Arc<str>,
   pub dts: Option<FastCheckDtsModule>,
 }
 
@@ -128,7 +128,7 @@ pub fn transform(
   let specifier = es_module_info.specifier();
   let module_info = ParserModuleAnalyzer::module_info_from_swc(
     parsed_source.media_type(),
-    &module,
+    ProgramRef::Module(&module),
     parsed_source.text_info_lazy(),
     &comments,
   );
@@ -145,9 +145,8 @@ pub fn transform(
   // now emit
   let source_map =
     SourceMap::single(specifier.clone(), parsed_source.text().to_string());
-  let program = Program::Module(module);
   let emitted_source = emit(
-    &program,
+    ProgramRef::Module(&module),
     &fast_check_comments,
     &source_map,
     &EmitOptions {
@@ -164,15 +163,7 @@ pub fn transform(
       inner: Arc::new(e),
     }]
   })?;
-  let emitted_text = String::from_utf8(emitted_source.source).map_err(|e| {
-    vec![FastCheckDiagnostic::Emit {
-      specifier: specifier.clone(),
-      inner: Arc::new(EmitError::SwcEmit(std::io::Error::new(
-        std::io::ErrorKind::InvalidData,
-        e,
-      ))),
-    }]
-  })?;
+  let emitted_text = emitted_source.text;
 
   let dts = if let Some(dts_comments) = dts_comments {
     let mut dts_transformer = FastCheckDtsTransformer::new(
@@ -181,10 +172,10 @@ pub fn transform(
       specifier,
     );
 
-    let module = dts_transformer.transform(program.expect_module())?;
+    let program = dts_transformer.transform(Program::Module(module));
 
     Some(FastCheckDtsModule {
-      program: Program::Module(module),
+      program,
       comments: dts_comments,
       diagnostics: dts_transformer.diagnostics,
     })
@@ -254,9 +245,22 @@ impl<'a> FastCheckTransformer<'a> {
     Vec<FastCheckDiagnostic>,
   > {
     let is_ambient = self.parsed_source.media_type().is_declaration();
-    let mut module = self.parsed_source.module().clone();
+    let program = self.parsed_source.program_ref();
     let mut comments =
       CommentsMut::new(self.parsed_source.comments().as_single_threaded());
+    // gracefully handle a script
+    let mut module = match program {
+      ProgramRef::Module(module) => module.clone(),
+      ProgramRef::Script(script) => Module {
+        span: script.span,
+        body: script
+          .body
+          .iter()
+          .map(|stmt| ModuleItem::Stmt(stmt.clone()))
+          .collect(),
+        shebang: script.shebang.clone(),
+      },
+    };
     module.body = self.transform_module_body(
       std::mem::take(&mut module.body),
       &mut comments,

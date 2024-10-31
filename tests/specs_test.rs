@@ -181,7 +181,7 @@ fn run_graph_test(test: &CollectedTest) {
             module.source.to_string(),
           );
           let EmittedSourceText { text, .. } = emit(
-            &dts.program,
+            (&dts.program).into(),
             &dts.comments.as_single_threaded(),
             &source_map,
             &EmitOptions {
@@ -190,8 +190,6 @@ fn run_graph_test(test: &CollectedTest) {
               ..Default::default()
             },
           )
-          .unwrap()
-          .into_string()
           .unwrap();
           if !text.is_empty() {
             output_text.push_str(&indent("--- DTS ---\n"));
