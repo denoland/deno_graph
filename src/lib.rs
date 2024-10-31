@@ -2477,7 +2477,7 @@ export const foo = 'bar';"#,
           },
           {
             "specifier": "file:///a/e.wasm",
-            "error": "Expected a JavaScript or TypeScript module, but identified a Wasm module. Importing these types of modules is currently not supported.\n  Specifier: file:///a/e.wasm"
+            "error": "The Wasm module could not be parsed: not a Wasm module\n  Specifier: file:///a/e.wasm"
           },
           {
             "dependencies": [

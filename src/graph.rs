@@ -70,6 +70,7 @@ use std::fmt;
 use std::sync::Arc;
 use thiserror::Error;
 use url::Url;
+use wasm::wasm_module_to_dts;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct Position {
@@ -243,6 +244,7 @@ pub enum ModuleError {
   Missing(ModuleSpecifier, Option<Range>),
   MissingDynamic(ModuleSpecifier, Range),
   ParseErr(ModuleSpecifier, deno_ast::ParseDiagnostic),
+  WasmParseErr(ModuleSpecifier, wasm_dep_analyzer::ParseError),
   UnsupportedMediaType(ModuleSpecifier, MediaType, Option<Range>),
   InvalidTypeAssertion {
     specifier: ModuleSpecifier,
@@ -262,6 +264,7 @@ impl ModuleError {
     match self {
       Self::LoadingErr(s, _, _)
       | Self::ParseErr(s, _)
+      | Self::WasmParseErr(s, _)
       | Self::UnsupportedMediaType(s, _, _)
       | Self::Missing(s, _)
       | Self::MissingDynamic(s, _)
@@ -279,6 +282,7 @@ impl ModuleError {
         maybe_referrer.as_ref()
       }
       Self::ParseErr { .. } => None,
+      Self::WasmParseErr { .. } => None,
       Self::InvalidTypeAssertion { range, .. } => Some(range),
       Self::UnsupportedImportAttributeType { range, .. } => Some(range),
     }
@@ -301,6 +305,7 @@ impl std::error::Error for ModuleError {
       Self::Missing { .. }
       | Self::MissingDynamic { .. }
       | Self::ParseErr { .. }
+      | Self::WasmParseErr { .. }
       | Self::UnsupportedMediaType { .. }
       | Self::InvalidTypeAssertion { .. }
       | Self::UnsupportedImportAttributeType { .. } => None,
@@ -313,6 +318,7 @@ impl fmt::Display for ModuleError {
     match self {
       Self::LoadingErr(_, _, err) => err.fmt(f),
       Self::ParseErr(_, diagnostic) => write!(f, "The module's source code could not be parsed: {diagnostic}"),
+      Self::WasmParseErr(specifier, diagnostic) => write!(f, "The Wasm module could not be parsed: {diagnostic}\n  Specifier: {specifier}"),
       Self::UnsupportedMediaType(specifier, MediaType::Json, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import attribute with the type of \"json\".\n  Specifier: {specifier}"),
       Self::UnsupportedMediaType(specifier, MediaType::Cjs | MediaType::Cts, ..) if specifier.scheme() != "file" => write!(f, "Remote CJS modules are not supported.\n  Specifier: {specifier}"),
       Self::UnsupportedMediaType(specifier, media_type, ..) => write!(f, "Expected a JavaScript or TypeScript module, but identified a {media_type} module. Importing these types of modules is currently not supported.\n  Specifier: {specifier}"),
@@ -2208,6 +2214,12 @@ pub(crate) enum ModuleSourceAndInfo {
     maybe_headers: Option<HashMap<String, String>>,
     module_info: Box<JsModuleInfo>,
   },
+  Wasm {
+    specifier: ModuleSpecifier,
+    source: Arc<[u8]>,
+    source_dts: Arc<str>,
+    module_info: Box<JsModuleInfo>,
+  },
 }
 
 impl ModuleSourceAndInfo {
@@ -2215,6 +2227,7 @@ impl ModuleSourceAndInfo {
     match self {
       Self::Json { specifier, .. } => specifier,
       Self::Js { specifier, .. } => specifier,
+      Self::Wasm { specifier, .. } => specifier,
     }
   }
 
@@ -2222,13 +2235,15 @@ impl ModuleSourceAndInfo {
     match self {
       Self::Json { .. } => MediaType::Json,
       Self::Js { media_type, .. } => *media_type,
+      Self::Wasm { .. } => MediaType::Wasm,
     }
   }
 
-  pub fn source(&self) -> &str {
+  pub fn source_bytes(&self) -> &[u8] {
     match self {
-      Self::Json { source, .. } => source,
-      Self::Js { source, .. } => source,
+      Self::Json { source, .. } => source.as_bytes(),
+      Self::Js { source, .. } => source.as_bytes(),
+      Self::Wasm { source, .. } => source,
     }
   }
 }
@@ -2350,9 +2365,37 @@ pub(crate) async fn parse_module_source_and_info(
         }
       }
     }
+    MediaType::Wasm => {
+      let analysis_result = wasm_dep_analyzer::WasmDeps::parse(
+        &opts.content,
+        wasm_dep_analyzer::ParseOptions { skip_types: false },
+      );
+      match analysis_result {
+        Ok(wasm_deps) => {
+          let source_dts: Arc<str> = wasm_module_to_dts(&wasm_deps).into();
+          match module_analyzer
+            .analyze(&opts.specifier, source_dts.clone(), MediaType::Dts)
+            .await
+          {
+            Ok(module_info) => {
+              // Return the module as a valid module
+              Ok(ModuleSourceAndInfo::Wasm {
+                specifier: opts.specifier,
+                module_info: Box::new(module_info),
+                source: opts.content,
+                source_dts,
+              })
+            }
+            Err(diagnostic) => {
+              Err(ModuleError::ParseErr(opts.specifier, diagnostic))
+            }
+          }
+        }
+        Err(err) => Err(ModuleError::WasmParseErr(opts.specifier, err)),
+      }
+    }
     MediaType::Css
     | MediaType::Json
-    | MediaType::Wasm
     | MediaType::SourceMap
     | MediaType::Unknown => Err(ModuleError::UnsupportedMediaType(
       opts.specifier,
@@ -2398,6 +2441,22 @@ pub(crate) fn parse_module(
       maybe_headers.as_ref(),
       *module_info,
       source,
+      file_system,
+      jsr_url_provider,
+      maybe_resolver,
+      maybe_npm_resolver,
+    ))),
+    ModuleSourceAndInfo::Wasm {
+      specifier,
+      source,
+      source_dts,
+      module_info,
+    } => Ok(Module::Wasm(parse_wasm_module_from_module_info(
+      options.graph_kind,
+      specifier,
+      *module_info,
+      source,
+      source_dts,
       file_system,
       jsr_url_provider,
       maybe_resolver,
@@ -2741,6 +2800,37 @@ pub(crate) fn parse_js_module_from_module_info(
   );
 
   // Return the module as a valid module
+  module
+}
+
+fn parse_wasm_module_from_module_info(
+  graph_kind: GraphKind,
+  specifier: Url,
+  module_info: JsModuleInfo,
+  source: Arc<[u8]>,
+  source_dts: Arc<str>,
+  file_system: &dyn FileSystem,
+  jsr_url_provider: &dyn JsrUrlProvider,
+  maybe_resolver: Option<&dyn Resolver>,
+  maybe_npm_resolver: Option<&dyn NpmResolver>,
+) -> WasmModule {
+  let mut module = WasmModule {
+    specifier,
+    dependencies: Default::default(),
+    source,
+    source_dts,
+    maybe_cache_info: None,
+  };
+  fill_module_dependencies(
+    graph_kind,
+    module_info.dependencies,
+    &module.specifier,
+    &mut module.dependencies,
+    file_system,
+    jsr_url_provider,
+    maybe_resolver,
+    maybe_npm_resolver,
+  );
   module
 }
 
@@ -3752,14 +3842,22 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                       }
                     }
                     Module::Wasm(module) => {
+                      // we never skip types because we use it to store the
                       match wasm_dep_analyzer::WasmDeps::parse(
                         &content,
-                        wasm_dep_analyzer::ParseOptions { skip_types: true },
+                        wasm_dep_analyzer::ParseOptions { skip_types: false },
                       ) {
-                        Ok(imports_exports) => {
+                        Ok(wasm_deps) => {
                           module.source = content.clone();
+                          module.source_dts =
+                            wasm_module_to_dts(&wasm_deps).into();
                         }
-                        Err(err) => {}
+                        Err(err) => {
+                          *slot = ModuleSlot::Err(ModuleError::WasmParseErr(
+                            module.specifier.clone(),
+                            err,
+                          ));
+                        }
                       }
                     }
                     Module::Npm(_) | Module::Node(_) | Module::External(_) => {
@@ -4706,7 +4804,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               locker.set_remote_checksum(
                 &specifier,
                 LoaderChecksum::new(LoaderChecksum::gen(
-                  module_source_and_info.source().as_bytes(),
+                  module_source_and_info.source_bytes(),
                 )),
               );
             }
@@ -5152,25 +5250,6 @@ where
       specifier,
       dependency,
     })?
-  }
-  seq.end()
-}
-
-fn serialize_wasm_dependencies<S>(
-  dependencies: &IndexMap<String, Resolution>,
-  serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-  S: Serializer,
-{
-  #[derive(Serialize)]
-  struct DependencyWithSpecifier<'a> {
-    specifier: &'a str,
-    code: &'a Resolution,
-  }
-  let mut seq = serializer.serialize_seq(Some(dependencies.len()))?;
-  for (specifier, code) in dependencies {
-    seq.serialize_element(&DependencyWithSpecifier { specifier, code })?
   }
   seq.end()
 }

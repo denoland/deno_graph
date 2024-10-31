@@ -10,6 +10,7 @@ use deno_ast::swc::ast::*;
 use deno_ast::swc::atoms::Atom;
 use deno_ast::swc::utils::find_pat_ids;
 use deno_ast::swc::utils::is_valid_ident;
+use deno_ast::MediaType;
 use deno_ast::ModuleSpecifier;
 use deno_ast::ParsedSource;
 use deno_ast::SourceRange;
@@ -167,30 +168,7 @@ impl<'a> RootSymbol<'a> {
     let Ok(source) = self.parsed_source(script_module) else {
       return None;
     };
-    let specifier = &script_module.specifier;
-    let program = source.program();
-
-    let module_id = ModuleId(self.ids_to_modules.len() as u32);
-    let builder = ModuleBuilder::new(module_id);
-    let filler = SymbolFiller {
-      source: &source,
-      builder: &builder,
-    };
-    filler.fill(program.as_ref());
-    let module_symbol = EsModuleInfo {
-      specifier: specifier.clone(),
-      module_id,
-      source: source.clone(),
-      re_exports: builder.re_exports.take(),
-      swc_id_to_symbol_id: builder.swc_id_to_symbol_id.take(),
-      symbols: builder
-        .symbols
-        .take()
-        .into_iter()
-        .map(|(k, v)| (k, v.0.into_inner()))
-        .collect(),
-    };
-    Some(self.finalize_insert(ModuleInfo::Esm(module_symbol)))
+    Some(self.build_raw_es_module_info(&script_module.specifier, &source))
   }
 
   fn analyze_json_module(&self, json_module: &JsonModule) -> ModuleInfoRef {
@@ -245,12 +223,46 @@ impl<'a> RootSymbol<'a> {
     &self,
     wasm_module: &WasmModule,
   ) -> Option<ModuleInfoRef> {
-    let specifier = &wasm_module.specifier;
-    let imports_and_exports = wasm_dep_analyzer::WasmDeps::parse(
-      &wasm_module.source,
-      wasm_dep_analyzer::ParseOptions { skip_types: true },
-    )
-    .ok()?;
+    let maybe_parsed_source = self.parser.parse_program(ParseOptions {
+      specifier: &wasm_module.specifier,
+      source: wasm_module.source_dts.clone(),
+      media_type: MediaType::Dts,
+      scope_analysis: true,
+    });
+    let Ok(source) = maybe_parsed_source else {
+      return None;
+    };
+    Some(self.build_raw_es_module_info(&wasm_module.specifier, &source))
+  }
+
+  fn build_raw_es_module_info(
+    &self,
+    specifier: &ModuleSpecifier,
+    source: &ParsedSource,
+  ) -> ModuleInfoRef {
+    let program = source.program();
+
+    let module_id = ModuleId(self.ids_to_modules.len() as u32);
+    let builder = ModuleBuilder::new(module_id);
+    let filler = SymbolFiller {
+      source: &source,
+      builder: &builder,
+    };
+    filler.fill(program.as_ref());
+    let module_symbol = EsModuleInfo {
+      specifier: specifier.clone(),
+      module_id,
+      source: source.clone(),
+      re_exports: builder.re_exports.take(),
+      swc_id_to_symbol_id: builder.swc_id_to_symbol_id.take(),
+      symbols: builder
+        .symbols
+        .take()
+        .into_iter()
+        .map(|(k, v)| (k, v.0.into_inner()))
+        .collect(),
+    };
+    self.finalize_insert(ModuleInfo::Esm(module_symbol))
   }
 
   fn finalize_insert(&self, module: ModuleInfo) -> ModuleInfoRef {
