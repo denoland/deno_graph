@@ -87,6 +87,7 @@ pub use graph::ResolutionError;
 pub use graph::ResolutionResolved;
 pub use graph::TypesDependency;
 pub use graph::WalkOptions;
+pub use graph::WasmModule;
 #[cfg(feature = "fast_check")]
 pub use graph::WorkspaceFastCheckOption;
 pub use graph::WorkspaceMember;

@@ -226,7 +226,7 @@ impl<'a> RootSymbol<'a> {
     let maybe_parsed_source = self.parser.parse_program(ParseOptions {
       specifier: &wasm_module.specifier,
       source: wasm_module.source_dts.clone(),
-      media_type: MediaType::Dts,
+      media_type: MediaType::Dmts,
       scope_analysis: true,
     });
     let Ok(source) = maybe_parsed_source else {
@@ -245,7 +245,7 @@ impl<'a> RootSymbol<'a> {
     let module_id = ModuleId(self.ids_to_modules.len() as u32);
     let builder = ModuleBuilder::new(module_id);
     let filler = SymbolFiller {
-      source: &source,
+      source,
       builder: &builder,
     };
     filler.fill(program.as_ref());
@@ -1411,7 +1411,7 @@ impl<'a> ModuleInfoRef<'a> {
 
   pub fn text(&self) -> &'a str {
     match self {
-      ModuleInfoRef::Json(m) => &m.source_text_info.text_str(),
+      ModuleInfoRef::Json(m) => m.source_text_info.text_str(),
       ModuleInfoRef::Esm(m) => m.source.text().as_ref(),
     }
   }

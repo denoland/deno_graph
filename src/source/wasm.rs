@@ -4,7 +4,17 @@ use std::borrow::Cow;
 
 use wasm_dep_analyzer::ValueType;
 
-pub fn wasm_module_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
+pub fn wasm_module_to_dts(
+  bytes: &[u8],
+) -> Result<String, wasm_dep_analyzer::ParseError> {
+  let wasm_deps = wasm_dep_analyzer::WasmDeps::parse(
+    bytes,
+    wasm_dep_analyzer::ParseOptions { skip_types: false },
+  )?;
+  Ok(wasm_module_deps_to_dts(&wasm_deps))
+}
+
+fn wasm_module_deps_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
   fn value_type_to_ts_type(value_type: ValueType) -> &'static str {
     match value_type {
       ValueType::I32 => "number",
@@ -27,9 +37,12 @@ pub fn wasm_module_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
     text.push_str(&format!("import \"{}\";\n", import.module));
   }
 
+  text.push_str("declare namespace __DenoWasmInstance__ {\n");
+
   for export in &wasm_deps.exports {
-    let is_exported = is_valid_ident(export.name);
-    let export_name = if is_exported {
+    let has_valid_export_ident = is_valid_ident(export.name);
+    text.push_str("  ");
+    let export_name = if has_valid_export_ident {
       Cow::Borrowed(export.name)
     } else {
       let export_name =
@@ -37,14 +50,14 @@ pub fn wasm_module_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
       internal_names_count += 1;
       Cow::Owned(export_name)
     };
-    if is_exported {
+    if has_valid_export_ident {
       text.push_str("export ");
     }
     let mut add_var = |type_text: &str| {
-      text.push_str("declare const ");
+      text.push_str("const ");
       text.push_str(&export_name);
       text.push_str(": ");
-      text.push_str(&type_text);
+      text.push_str(type_text);
       text.push_str(";\n");
     };
 
@@ -52,9 +65,9 @@ pub fn wasm_module_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
       wasm_dep_analyzer::ExportType::Function(function_signature) => {
         match function_signature {
           Ok(signature) => {
-            text.push_str("declare function ");
+            text.push_str("function ");
             text.push_str(&export_name);
-            text.push_str("(");
+            text.push('(');
             for (i, param) in signature.params.iter().enumerate() {
               if i > 0 {
                 text.push_str(", ");
@@ -89,13 +102,16 @@ pub fn wasm_module_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
       | wasm_dep_analyzer::ExportType::Unknown => add_var("unknown"),
     }
 
-    if !is_exported {
+    if !has_valid_export_ident {
       text.push_str(&format!(
-        "export {{ {} as \"{}\" }};\n",
+        "  export {{ {} as \"{}\" }};\n",
         export_name, export.name
       ));
     }
   }
+
+  text.push_str("}\n\n");
+  text.push_str("export default __DenoWasmInstance__;\n");
   text
 }
 
@@ -110,7 +126,7 @@ mod test {
 
   #[test]
   fn test_output() {
-    let text = wasm_module_to_dts(&WasmDeps {
+    let text = wasm_module_deps_to_dts(&WasmDeps {
       imports: vec![],
       exports: vec![
         Export {
@@ -181,17 +197,21 @@ mod test {
     });
     assert_eq!(
       text,
-      "declare function __deno_wasm_export_0__(): void;
-export { __deno_wasm_export_0__ as \"name--1\" };
-export declare function name2(arg0: number, arg1: bigint): number;
-export declare const name3: unknown;
-export declare const name4: WebAssembly.Table;
-export declare const name5: WebAssembly.Memory;
-export declare const name6: number;
-export declare const name7: unknown;
-export declare const name8: unknown;
-declare const __deno_wasm_export_1__: unknown;
-export { __deno_wasm_export_1__ as \"name9--\" };
+      "declare namespace __DenoWasmInstance__ {
+  function __deno_wasm_export_0__(): void;
+  export { __deno_wasm_export_0__ as \"name--1\" };
+  export function name2(arg0: number, arg1: bigint): number;
+  export const name3: unknown;
+  export const name4: WebAssembly.Table;
+  export const name5: WebAssembly.Memory;
+  export const name6: number;
+  export const name7: unknown;
+  export const name8: unknown;
+  const __deno_wasm_export_1__: unknown;
+  export { __deno_wasm_export_1__ as \"name9--\" };
+}
+
+export default __DenoWasmInstance__;
 "
     );
   }

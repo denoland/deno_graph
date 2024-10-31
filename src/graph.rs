@@ -2373,15 +2373,12 @@ pub(crate) async fn parse_module_source_and_info(
       }
     }
     MediaType::Wasm => {
-      let analysis_result = wasm_dep_analyzer::WasmDeps::parse(
-        &opts.content,
-        wasm_dep_analyzer::ParseOptions { skip_types: false },
-      );
-      match analysis_result {
-        Ok(wasm_deps) => {
-          let source_dts: Arc<str> = wasm_module_to_dts(&wasm_deps).into();
+      let source_dts_result = wasm_module_to_dts(&opts.content);
+      match source_dts_result {
+        Ok(source_dts) => {
+          let source_dts: Arc<str> = source_dts.into();
           match module_analyzer
-            .analyze(&opts.specifier, source_dts.clone(), MediaType::Dts)
+            .analyze(&opts.specifier, source_dts.clone(), MediaType::Dmts)
             .await
           {
             Ok(module_info) => {
@@ -2810,6 +2807,7 @@ pub(crate) fn parse_js_module_from_module_info(
   module
 }
 
+#[allow(clippy::too_many_arguments)]
 fn parse_wasm_module_from_module_info(
   graph_kind: GraphKind,
   specifier: Url,
@@ -3849,15 +3847,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                       }
                     }
                     Module::Wasm(module) => {
-                      // we never skip types because we use it to store the
-                      match wasm_dep_analyzer::WasmDeps::parse(
-                        &content,
-                        wasm_dep_analyzer::ParseOptions { skip_types: false },
-                      ) {
-                        Ok(wasm_deps) => {
+                      match wasm_module_to_dts(&content) {
+                        Ok(source_dts) => {
                           module.source = content.clone();
-                          module.source_dts =
-                            wasm_module_to_dts(&wasm_deps).into();
+                          module.source_dts = source_dts.into();
                         }
                         Err(err) => {
                           *slot = ModuleSlot::Err(ModuleError::WasmParseErr(
