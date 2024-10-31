@@ -18,8 +18,8 @@ use deno_ast::SourceTextInfo;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
 
-use crate::EsParser;
 use crate::graph::WasmModule;
+use crate::EsParser;
 use crate::JsModule;
 use crate::JsonModule;
 use crate::ModuleGraph;
