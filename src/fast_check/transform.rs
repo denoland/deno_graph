@@ -29,8 +29,8 @@ use indexmap::IndexMap;
 use crate::symbols::EsModuleInfo;
 use crate::symbols::ExpandoPropertyRef;
 use crate::symbols::Symbol;
-use crate::ModuleInfo;
 use crate::ModuleGraph;
+use crate::ModuleInfo;
 use crate::ParserModuleAnalyzer;
 use crate::WorkspaceMember;
 
