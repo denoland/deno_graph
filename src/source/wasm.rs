@@ -187,6 +187,11 @@ mod test {
           index: 8,
           export_type: wasm_dep_analyzer::ExportType::Unknown,
         },
+        Export {
+          name: "default",
+          index: 9,
+          export_type: wasm_dep_analyzer::ExportType::Unknown,
+        },
       ],
     });
     assert_eq!(
@@ -202,6 +207,8 @@ export declare const name7: unknown;
 export declare const name8: unknown;
 declare const __deno_wasm_export_1__: unknown;
 export { __deno_wasm_export_1__ as \"name9--\" };
+declare const __deno_wasm_export_2__: unknown;
+export { __deno_wasm_export_2__ as \"default\" };
 "
     );
   }
