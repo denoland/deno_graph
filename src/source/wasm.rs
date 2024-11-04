@@ -15,9 +15,19 @@ pub fn wasm_module_to_dts(
 }
 
 fn wasm_module_deps_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
-  fn value_type_to_ts_type(value_type: ValueType) -> &'static str {
+  #[derive(PartialEq, Eq)]
+  enum TypePosition {
+    Input,
+    Output,
+  }
+
+  fn value_type_to_ts_type(
+    value_type: ValueType,
+    position: TypePosition,
+  ) -> &'static str {
     match value_type {
       ValueType::I32 => "number",
+      ValueType::I64 if position == TypePosition::Input => "bigint | number",
       ValueType::I64 => "bigint",
       ValueType::F32 => "number",
       ValueType::F64 => "number",
@@ -75,14 +85,14 @@ fn wasm_module_deps_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
               text.push_str("arg");
               text.push_str(i.to_string().as_str());
               text.push_str(": ");
-              text.push_str(value_type_to_ts_type(*param));
+              text.push_str(value_type_to_ts_type(*param, TypePosition::Input));
             }
             text.push_str("): ");
             text.push_str(
               signature
                 .returns
                 .first()
-                .map(|t| value_type_to_ts_type(*t))
+                .map(|t| value_type_to_ts_type(*t, TypePosition::Output))
                 .unwrap_or("void"),
             );
             text.push_str(";\n");
@@ -93,9 +103,10 @@ fn wasm_module_deps_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
       wasm_dep_analyzer::ExportType::Table => add_var("WebAssembly.Table"),
       wasm_dep_analyzer::ExportType::Memory => add_var("WebAssembly.Memory"),
       wasm_dep_analyzer::ExportType::Global(global_type) => match global_type {
-        Ok(global_type) => {
-          add_var(value_type_to_ts_type(global_type.value_type))
-        }
+        Ok(global_type) => add_var(value_type_to_ts_type(
+          global_type.value_type,
+          TypePosition::Output,
+        )),
         Err(_) => add_var("unknown"),
       },
       wasm_dep_analyzer::ExportType::Tag
@@ -145,7 +156,7 @@ mod test {
           export_type: wasm_dep_analyzer::ExportType::Function(Ok(
             FunctionSignature {
               params: vec![ValueType::I32, ValueType::I64],
-              returns: vec![ValueType::I32],
+              returns: vec![ValueType::I64],
             },
           )),
         },
@@ -200,7 +211,7 @@ mod test {
       "declare namespace __DenoWasmInstance__ {
   function __deno_wasm_export_0__(): void;
   export { __deno_wasm_export_0__ as \"name--1\" };
-  export function name2(arg0: number, arg1: bigint): number;
+  export function name2(arg0: number, arg1: bigint | number): bigint;
   export const name3: unknown;
   export const name4: WebAssembly.Table;
   export const name5: WebAssembly.Memory;
