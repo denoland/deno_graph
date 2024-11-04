@@ -209,7 +209,7 @@ mod test {
       text,
       "declare function __deno_wasm_export_0__(): void;
 export { __deno_wasm_export_0__ as \"name--1\" };
-export declare function name2(arg0: number, arg1: bigint): number;
+export declare function name2(arg0: number, arg1: bigint | number): bigint;
 export declare const name3: unknown;
 export declare const name4: WebAssembly.Table;
 export declare const name5: WebAssembly.Memory;
