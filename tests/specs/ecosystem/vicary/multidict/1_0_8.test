@@ -9,4 +9,37 @@ vicary/multidict/1.0.8
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2416 [ERROR]: Property 'entries' in type 'MultiDict<K, V>' is not assignable to the same property in base type 'Omit<Map<K | V, Set<K | V>>, "set">'.
+  Type '() => IterableIterator<[K | V, Set<K | V>]>' is not assignable to type '() => MapIterator<[K | V, Set<K | V>]>'.
+    Type 'IterableIterator<[K | V, Set<K | V>]>' is missing the following properties from type 'MapIterator<[K | V, Set<K | V>]>': map, filter, take, drop, and 9 more.
+   */ entries(): IterableIterator<[K | V, Set<K | V>]> {
+      ~~~~~~~
+    at file://<tmpdir>/src/MultiDict.ts:26:7
+
+TS2416 [ERROR]: Property 'keys' in type 'MultiDict<K, V>' is not assignable to the same property in base type 'Omit<Map<K | V, Set<K | V>>, "set">'.
+  Type '() => IterableIterator<K | V>' is not assignable to type '() => MapIterator<K | V>'.
+    Type 'IterableIterator<K | V>' is missing the following properties from type 'MapIterator<K | V>': map, filter, take, drop, and 9 more.
+   */ keys(): IterableIterator<K | V> {
+      ~~~~
+    at file://<tmpdir>/src/MultiDict.ts:50:7
+
+TS2416 [ERROR]: Property 'values' in type 'MultiDict<K, V>' is not assignable to the same property in base type 'Omit<Map<K | V, Set<K | V>>, "set">'.
+  Type '() => IterableIterator<Set<K | V>>' is not assignable to type '() => MapIterator<Set<K | V>>'.
+    Type 'IterableIterator<Set<K | V>>' is missing the following properties from type 'MapIterator<Set<K | V>>': map, filter, take, drop, and 9 more.
+   */ values(): IterableIterator<Set<K | V>> {
+      ~~~~~~
+    at file://<tmpdir>/src/MultiDict.ts:71:7
+
+TS2416 [ERROR]: Property '[Symbol.iterator]' in type 'MultiDict<K, V>' is not assignable to the same property in base type 'Omit<Map<K | V, Set<K | V>>, "set">'.
+  Type '() => IterableIterator<[K | V, Set<K | V>]>' is not assignable to type '() => MapIterator<[K | V, Set<K | V>]>'.
+    Type 'IterableIterator<[K | V, Set<K | V>]>' is missing the following properties from type 'MapIterator<[K | V, Set<K | V>]>': map, filter, take, drop, and 9 more.
+  [Symbol.iterator](): IterableIterator<[K | V, Set<K | V>]> {
+  ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/MultiDict.ts:74:3
+
+Found 4 errors.
+

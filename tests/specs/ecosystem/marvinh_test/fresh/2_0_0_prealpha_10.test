@@ -40,4 +40,19 @@ marvinh-test/fresh/2.0.0-prealpha.10
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
+export interface ListenOptions extends Partial<Deno.ServeTlsOptions> {
+                                                    ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/app.ts:27:53
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'FreshApp<T>'.
+  listen(options?: ListenOptions): Promise<void> {
+  ~~~~~~
+    at file://<tmpdir>/src/dev/dev_app.ts:23:3
+
+Found 2 errors.
+

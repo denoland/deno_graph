@@ -1145,3 +1145,10 @@ export const partialTrigger = (node: HTMLElement, {}: {
                                      ~~~~~~~~~~~
     at file://<tmpdir>/fresh/createPartial.ts:1:38
 
+TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
+  server: Partial<Deno.ServeTlsOptions>;
+                       ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/fresh/types.ts:72:24
+
+Found 2 errors.
+

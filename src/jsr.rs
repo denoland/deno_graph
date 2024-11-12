@@ -194,6 +194,7 @@ impl JsrMetadataStore {
       &specifier,
       LoadOptions {
         is_dynamic: false,
+        was_dynamic_root: false,
         cache_setting,
         maybe_checksum: maybe_expected_checksum,
       },

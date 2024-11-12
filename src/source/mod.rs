@@ -41,12 +41,6 @@ pub struct CacheInfo {
   /// path to the original file, if a remote file, the path to the file in the
   /// cache.
   pub local: Option<PathBuf>,
-  /// If the file has been transpiled, the path to the cached version of the
-  /// transpiled JavaScript.
-  pub emit: Option<PathBuf>,
-  /// If the file has been transpiled and there is a source map separate from
-  /// the transpiled JavaScript, the path to this file.
-  pub map: Option<PathBuf>,
 }
 
 /// The response that is expected from a loader's `.load()` method.
@@ -267,6 +261,11 @@ impl Locker for HashMapLocker {
 #[derive(Debug, Clone)]
 pub struct LoadOptions {
   pub is_dynamic: bool,
+  /// If the root specifier building the graph was in a dynamic branch.
+  ///
+  /// This can be useful for telling if a dynamic load is statically analyzable
+  /// where `is_dynamic` is `true`` and `was_dynamic_root` is `false`.
+  pub was_dynamic_root: bool,
   pub cache_setting: CacheSetting,
   /// It is the loader's responsibility to verify the provided checksum if it
   /// exists because in the CLI we only verify the checksum of the source when
@@ -308,6 +307,7 @@ pub trait Loader {
   fn cache_module_info(
     &self,
     _specifier: &ModuleSpecifier,
+    _media_type: MediaType,
     _source: &Arc<[u8]>,
     _module_info: &ModuleInfo,
   ) {
@@ -359,13 +359,13 @@ pub fn recommended_registry_package_url_to_nv(
 ) -> Option<PackageNv> {
   let path = url.as_str().strip_prefix(registry_url.as_str())?;
   let path = path.strip_prefix('/').unwrap_or(path);
-  let parts = path.split('/').take(3).collect::<Vec<_>>();
-  if parts.len() != 3 {
-    return None;
-  }
+  let mut parts = path.split('/');
+  let scope = parts.next()?;
+  let name = parts.next()?;
+  let version = parts.next()?;
   Some(PackageNv {
-    name: format!("{}/{}", parts[0], parts[1]),
-    version: deno_semver::Version::parse_standard(parts[2]).ok()?,
+    name: format!("{}/{}", scope, name),
+    version: deno_semver::Version::parse_standard(version).ok()?,
   })
 }
 

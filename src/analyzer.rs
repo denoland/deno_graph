@@ -2,8 +2,9 @@
 
 use std::sync::Arc;
 
-use deno_ast::dep::DependencyKind;
+use deno_ast::dep::DynamicDependencyKind;
 use deno_ast::dep::ImportAttributes;
+use deno_ast::dep::StaticDependencyKind;
 use deno_ast::MediaType;
 use deno_ast::ModuleSpecifier;
 use deno_ast::ParseDiagnostic;
@@ -114,7 +115,7 @@ impl DependencyDescriptor {
 #[serde(rename_all = "camelCase")]
 pub struct StaticDependencyDescriptor {
   /// The kind of dependency.
-  pub kind: DependencyKind,
+  pub kind: StaticDependencyKind,
   /// An optional specifier overriding the types associated with the
   /// import/export statement, if any.
   #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -163,6 +164,8 @@ pub enum DynamicTemplatePart {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DynamicDependencyDescriptor {
+  #[serde(skip_serializing_if = "is_dynamic_esm", default)]
+  pub kind: DynamicDependencyKind,
   /// An optional specifier overriding the types associated with the
   /// import/export statement, if any.
   #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -175,6 +178,10 @@ pub struct DynamicDependencyDescriptor {
   /// Import attributes for this dependency.
   #[serde(skip_serializing_if = "ImportAttributes::is_none", default)]
   pub import_attributes: ImportAttributes,
+}
+
+fn is_dynamic_esm(kind: &DynamicDependencyKind) -> bool {
+  *kind == DynamicDependencyKind::Import
 }
 
 impl From<DynamicDependencyDescriptor> for DependencyDescriptor {
@@ -202,6 +209,10 @@ pub enum TypeScriptReference {
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ModuleInfo {
+  /// If the module has nothing that makes it for sure an ES module
+  /// (no TLA, imports, exports, import.meta).
+  #[serde(skip_serializing_if = "is_false", default, rename = "script")]
+  pub is_script: bool,
   /// Dependencies of the module.
   #[serde(skip_serializing_if = "Vec::is_empty", default)]
   pub dependencies: Vec<DependencyDescriptor>,
@@ -325,6 +336,10 @@ impl<'a> Default for &'a dyn ModuleAnalyzer {
   }
 }
 
+fn is_false(v: &bool) -> bool {
+  !v
+}
+
 #[cfg(test)]
 mod test {
   use std::collections::HashMap;
@@ -340,6 +355,7 @@ mod test {
   fn module_info_serialization_empty() {
     // empty
     let module_info = ModuleInfo {
+      is_script: false,
       dependencies: Vec::new(),
       ts_references: Vec::new(),
       self_types_specifier: None,
@@ -354,9 +370,10 @@ mod test {
   fn module_info_serialization_deps() {
     // with dependencies
     let module_info = ModuleInfo {
+      is_script: true,
       dependencies: Vec::from([
         StaticDependencyDescriptor {
-          kind: DependencyKind::ImportEquals,
+          kind: StaticDependencyKind::ImportEquals,
           types_specifier: Some(SpecifierWithRange {
             text: "a".to_string(),
             range: PositionRange {
@@ -379,6 +396,7 @@ mod test {
         }
         .into(),
         DynamicDependencyDescriptor {
+          kind: DynamicDependencyKind::Import,
           types_specifier: None,
           argument: DynamicArgument::String("./test2".to_string()),
           argument_range: PositionRange {
@@ -395,6 +413,17 @@ mod test {
           ])),
         }
         .into(),
+        DynamicDependencyDescriptor {
+          kind: DynamicDependencyKind::Require,
+          types_specifier: None,
+          argument: DynamicArgument::String("./test3".to_string()),
+          argument_range: PositionRange {
+            start: Position::zeroed(),
+            end: Position::zeroed(),
+          },
+          import_attributes: ImportAttributes::None,
+        }
+        .into(),
       ]),
       ts_references: Vec::new(),
       self_types_specifier: None,
@@ -404,7 +433,10 @@ mod test {
     };
     run_serialization_test(
       &module_info,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!({
+        "script": true,
         "dependencies": [{
           "type": "static",
           "kind": "importEquals",
@@ -425,6 +457,11 @@ mod test {
               "key2": "value",
             }
           }
+        }, {
+          "type": "dynamic",
+          "kind": "require",
+          "argument": "./test3",
+          "argumentRange": [[0, 0], [0, 0]]
         }]
       }),
     );
@@ -433,6 +470,7 @@ mod test {
   #[test]
   fn module_info_serialization_ts_references() {
     let module_info = ModuleInfo {
+      is_script: false,
       dependencies: Vec::new(),
       ts_references: Vec::from([
         TypeScriptReference::Path(SpecifierWithRange {
@@ -457,6 +495,8 @@ mod test {
     };
     run_serialization_test(
       &module_info,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!({
         "tsReferences": [{
           "type": "path",
@@ -474,6 +514,7 @@ mod test {
   #[test]
   fn module_info_serialization_self_types_specifier() {
     let module_info = ModuleInfo {
+      is_script: false,
       dependencies: Vec::new(),
       ts_references: Vec::new(),
       self_types_specifier: Some(SpecifierWithRange {
@@ -489,6 +530,8 @@ mod test {
     };
     run_serialization_test(
       &module_info,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!({
         "selfTypesSpecifier": {
           "text": "a",
@@ -501,6 +544,7 @@ mod test {
   #[test]
   fn module_info_serialization_jsx_import_source() {
     let module_info = ModuleInfo {
+      is_script: false,
       dependencies: Vec::new(),
       ts_references: Vec::new(),
       self_types_specifier: None,
@@ -516,6 +560,8 @@ mod test {
     };
     run_serialization_test(
       &module_info,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!({
         "jsxImportSource": {
           "text": "a",
@@ -528,6 +574,7 @@ mod test {
   #[test]
   fn module_info_serialization_jsx_import_source_types() {
     let module_info = ModuleInfo {
+      is_script: false,
       dependencies: Vec::new(),
       ts_references: Vec::new(),
       self_types_specifier: None,
@@ -543,6 +590,8 @@ mod test {
     };
     run_serialization_test(
       &module_info,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!({
         "jsxImportSourceTypes": {
           "text": "a",
@@ -555,6 +604,7 @@ mod test {
   #[test]
   fn module_info_jsdoc_imports() {
     let module_info = ModuleInfo {
+      is_script: false,
       dependencies: Vec::new(),
       ts_references: Vec::new(),
       self_types_specifier: None,
@@ -570,6 +620,8 @@ mod test {
     };
     run_serialization_test(
       &module_info,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!({
         "jsdocImports": [{
           "text": "a",
@@ -583,7 +635,7 @@ mod test {
   fn static_dependency_descriptor_serialization() {
     // with dependencies
     let descriptor = DependencyDescriptor::Static(StaticDependencyDescriptor {
-      kind: DependencyKind::ExportEquals,
+      kind: StaticDependencyKind::ExportEquals,
       types_specifier: Some(SpecifierWithRange {
         text: "a".to_string(),
         range: PositionRange {
@@ -600,6 +652,8 @@ mod test {
     });
     run_serialization_test(
       &descriptor,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!({
         "type": "static",
         "kind": "exportEquals",
@@ -618,6 +672,7 @@ mod test {
   fn dynamic_dependency_descriptor_serialization() {
     run_serialization_test(
       &DependencyDescriptor::Dynamic(DynamicDependencyDescriptor {
+        kind: DynamicDependencyKind::Import,
         types_specifier: Some(SpecifierWithRange {
           text: "a".to_string(),
           range: PositionRange {
@@ -632,6 +687,8 @@ mod test {
         },
         import_attributes: ImportAttributes::Unknown,
       }),
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!({
         "type": "dynamic",
         "typesSpecifier": {
@@ -645,6 +702,7 @@ mod test {
 
     run_serialization_test(
       &DependencyDescriptor::Dynamic(DynamicDependencyDescriptor {
+        kind: DynamicDependencyKind::Import,
         types_specifier: None,
         argument: DynamicArgument::String("test".to_string()),
         argument_range: PositionRange {
@@ -653,6 +711,8 @@ mod test {
         },
         import_attributes: ImportAttributes::Unknown,
       }),
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!({
         "type": "dynamic",
         "argument": "test",
@@ -675,6 +735,8 @@ mod test {
         },
         DynamicTemplatePart::Expr,
       ]),
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
       json!([{
         "type": "string",
         "value": "test",
@@ -714,9 +776,10 @@ mod test {
   #[test]
   fn test_v1_to_v2_deserialization_with_leading_comment() {
     let expected = ModuleInfo {
+      is_script: false,
       dependencies: vec![DependencyDescriptor::Static(
         StaticDependencyDescriptor {
-          kind: DependencyKind::Import,
+          kind: StaticDependencyKind::Import,
           specifier: "./a.js".to_string(),
           specifier_range: PositionRange {
             start: Position {
@@ -768,9 +831,10 @@ mod test {
   #[test]
   fn test_v1_to_v2_deserialization_no_leading_comment() {
     let expected = ModuleInfo {
+      is_script: false,
       dependencies: vec![DependencyDescriptor::Static(
         StaticDependencyDescriptor {
-          kind: DependencyKind::Import,
+          kind: StaticDependencyKind::Import,
           specifier: "./a.js".to_string(),
           specifier_range: PositionRange {
             start: Position {
@@ -797,7 +861,7 @@ mod test {
         "type": "static",
         "kind": "import",
         "specifier": "./a.js",
-        "specifierRange": [[1, 2], [3, 4]]
+        "specifierRange": [[1, 2], [3, 4]],
       }]
     });
     run_v1_deserialization_test(json, &expected);

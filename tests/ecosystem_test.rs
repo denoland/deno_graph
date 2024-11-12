@@ -4,6 +4,7 @@ use std::path::PathBuf;
 
 use anyhow::Context;
 use deno_ast::diagnostics::Diagnostic;
+use deno_ast::MediaType;
 use deno_graph::source::LoadResponse;
 use deno_graph::source::NullFileSystem;
 use deno_graph::BuildFastCheckTypeGraphOptions;
@@ -254,10 +255,8 @@ async fn test_version(
   let workspace_members = vec![WorkspaceMember {
     base: Url::parse("file:///").unwrap(),
     exports: version_meta.exports.clone(),
-    nv: PackageNv {
-      name: format!("@{scope}/{name}"),
-      version: deno_semver::Version::parse_standard(version).unwrap(),
-    },
+    name: format!("@{scope}/{name}"),
+    version: Some(deno_semver::Version::parse_standard(version).unwrap()),
   }];
 
   let mut roots = vec![];
@@ -290,12 +289,26 @@ async fn test_version(
       },
     )
     .await;
-  graph.valid().unwrap();
+  if let Err(err) = graph.valid() {
+    match err {
+      deno_graph::ModuleGraphError::ModuleError(
+        deno_graph::ModuleError::UnsupportedMediaType(
+          _,
+          MediaType::Cjs | MediaType::Cts,
+          _,
+        ),
+      ) => {
+        // ignore, old packages with cjs and cts
+        return;
+      }
+      err => panic!("{}", err),
+    }
+  }
   graph.build_fast_check_type_graph(BuildFastCheckTypeGraphOptions {
     fast_check_cache: Default::default(),
     fast_check_dts: true,
     jsr_url_provider: &PassthroughJsrUrlProvider,
-    module_parser: Some(&module_analyzer),
+    es_parser: Some(&module_analyzer),
     resolver: None,
     npm_resolver: None,
     workspace_fast_check: WorkspaceFastCheckOption::Enabled(&workspace_members),

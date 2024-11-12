@@ -16,11 +16,11 @@ use deno_ast::swc::common::Spanned;
 use deno_ast::swc::common::SyntaxContext;
 use deno_ast::swc::common::DUMMY_SP;
 use deno_ast::swc::visit::VisitWith;
-use deno_ast::EmitError;
 use deno_ast::EmitOptions;
 use deno_ast::ModuleSpecifier;
 use deno_ast::MultiThreadedComments;
 use deno_ast::ParsedSource;
+use deno_ast::ProgramRef;
 use deno_ast::SourceMap;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
@@ -98,7 +98,7 @@ pub struct FastCheckDtsModule {
 pub struct FastCheckModule {
   pub module_info: Arc<ModuleInfo>,
   pub text: Arc<str>,
-  pub source_map: Arc<[u8]>,
+  pub source_map: Arc<str>,
   pub dts: Option<FastCheckDtsModule>,
 }
 
@@ -128,7 +128,7 @@ pub fn transform(
   let specifier = es_module_info.specifier();
   let module_info = ParserModuleAnalyzer::module_info_from_swc(
     parsed_source.media_type(),
-    &module,
+    ProgramRef::Module(&module),
     parsed_source.text_info_lazy(),
     &comments,
   );
@@ -145,9 +145,8 @@ pub fn transform(
   // now emit
   let source_map =
     SourceMap::single(specifier.clone(), parsed_source.text().to_string());
-  let program = Program::Module(module);
   let emitted_source = emit(
-    &program,
+    ProgramRef::Module(&module),
     &fast_check_comments,
     &source_map,
     &EmitOptions {
@@ -164,12 +163,7 @@ pub fn transform(
       inner: Arc::new(e),
     }]
   })?;
-  let emitted_text = String::from_utf8(emitted_source.source).map_err(|e| {
-    vec![FastCheckDiagnostic::Emit {
-      specifier: specifier.clone(),
-      inner: Arc::new(EmitError::SwcEmit(e.into())),
-    }]
-  })?;
+  let emitted_text = emitted_source.text;
 
   let dts = if let Some(dts_comments) = dts_comments {
     let mut dts_transformer = FastCheckDtsTransformer::new(
@@ -178,10 +172,10 @@ pub fn transform(
       specifier,
     );
 
-    let module = dts_transformer.transform(program.expect_module())?;
+    let program = dts_transformer.transform(Program::Module(module));
 
     Some(FastCheckDtsModule {
-      program: Program::Module(module),
+      program,
       comments: dts_comments,
       diagnostics: dts_transformer.diagnostics,
     })
@@ -251,9 +245,22 @@ impl<'a> FastCheckTransformer<'a> {
     Vec<FastCheckDiagnostic>,
   > {
     let is_ambient = self.parsed_source.media_type().is_declaration();
-    let mut module = self.parsed_source.module().clone();
+    let program = self.parsed_source.program_ref();
     let mut comments =
       CommentsMut::new(self.parsed_source.comments().as_single_threaded());
+    // gracefully handle a script
+    let mut module = match program {
+      ProgramRef::Module(module) => module.clone(),
+      ProgramRef::Script(script) => Module {
+        span: script.span,
+        body: script
+          .body
+          .iter()
+          .map(|stmt| ModuleItem::Stmt(stmt.clone()))
+          .collect(),
+        shebang: script.shebang.clone(),
+      },
+    };
     module.body = self.transform_module_body(
       std::mem::take(&mut module.body),
       &mut comments,
@@ -392,7 +399,7 @@ impl<'a> FastCheckTransformer<'a> {
     else {
       return;
     };
-    if let Some(relative) = self.specifier.make_relative(&resolved_specifier) {
+    if let Some(relative) = self.specifier.make_relative(resolved_specifier) {
       if !relative.starts_with("../") {
         src.value = format!("./{}", relative).into();
       } else {
@@ -684,8 +691,10 @@ impl<'a> FastCheckTransformer<'a> {
           if ctor.accessibility == Some(Accessibility::Private) {
             if had_private_constructor {
               retain = false;
-            } else {
+            } else if is_ambient || ctor.body.is_some() {
               had_private_constructor = true;
+            } else {
+              retain = false;
             }
           }
         } else if let ClassMember::Method(method) = &member {
@@ -869,11 +878,10 @@ impl<'a> FastCheckTransformer<'a> {
                 },
                 is_abstract: false,
                 is_optional,
-                is_override: prop.is_override,
+                is_override: false,
                 readonly: prop.readonly,
-                // declare is not valid with override
-                declare: !prop.is_override,
-                definite: prop.is_override,
+                declare: true,
+                definite: false,
               }));
               *param = ParamOrTsParamProp::Param(Param {
                 span: prop.span,
@@ -967,11 +975,10 @@ impl<'a> FastCheckTransformer<'a> {
             accessibility: Some(Accessibility::Private),
             is_abstract: n.is_abstract,
             is_optional: n.is_optional,
-            is_override: n.is_override,
+            is_override: false,
             readonly: false,
-            // delcare is not valid with override
-            declare: !n.is_override,
-            definite: n.is_override,
+            declare: true,
+            definite: false,
           });
           return Ok(true);
         }
@@ -992,10 +999,9 @@ impl<'a> FastCheckTransformer<'a> {
       ClassMember::ClassProp(n) => {
         if n.accessibility == Some(Accessibility::Private) {
           n.type_ann = Some(any_type_ann());
-          // it doesn't make sense for a private property to have the override
-          // keyword, but might as well make this consistent with elsewhere
-          n.declare = !n.is_override;
-          n.definite = n.is_override;
+          n.declare = true;
+          n.definite = false;
+          n.is_override = false;
           n.value = None;
           return Ok(true);
         }
@@ -1032,8 +1038,9 @@ impl<'a> FastCheckTransformer<'a> {
         } else {
           n.value = None;
         }
-        n.declare = n.value.is_none() && !n.is_override;
-        n.definite = n.value.is_none() && n.is_override;
+        n.declare = n.value.is_none();
+        n.definite = false;
+        n.is_override = n.value.is_some() && n.is_override;
         n.decorators.clear();
         Ok(true)
       }
@@ -1080,10 +1087,10 @@ impl<'a> FastCheckTransformer<'a> {
           // once this pr lands: https://github.com/swc-project/swc/pull/8736
           is_abstract: false,
           is_optional: false,
-          is_override: n.is_override,
+          is_override: false,
           readonly: false,
-          declare: !n.is_override,
-          definite: n.is_override,
+          declare: true,
+          definite: false,
         });
         Ok(true)
       }

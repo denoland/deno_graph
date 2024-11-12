@@ -19,4 +19,19 @@ jersey/test/0.3.4
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
+type Socket = Deno.Reader & Deno.Writer;
+                   ~~~~~~
+    at file://<tmpdir>/src/protocol/protocol.ts:2:20
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Writer'.
+type Socket = Deno.Reader & Deno.Writer;
+                                 ~~~~~~
+    at file://<tmpdir>/src/protocol/protocol.ts:2:34
+
+Found 2 errors.
+

@@ -9,4 +9,82 @@ vicary/frail-map/1.0.9
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, V>'.
+   */ get(key: K): V | undefined {
+      ~~~
+    at file://<tmpdir>/src/FrailMap.ts:25:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, V>'.
+   */ has(key: K): boolean {
+      ~~~
+    at file://<tmpdir>/src/FrailMap.ts:31:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, V>'.
+   */ set(key: K, value: V, options?: SetOptions): this {
+      ~~~
+    at file://<tmpdir>/src/FrailMap.ts:40:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, V>'.
+   */ forEach(callbackfn: (value: V, key: K, map: Map<K, V>) => void, thisArg?: this): void {}
+      ~~~~~~~
+    at file://<tmpdir>/src/FrailMap.ts:46:7
+
+TS2416 [ERROR]: Property 'entries' in type 'FrailMap<K, V>' is not assignable to the same property in base type 'Map<K, V>'.
+  Type '() => IterableIterator<[K, V]>' is not assignable to type '() => MapIterator<[K, V]>'.
+    Type 'IterableIterator<[K, V]>' is missing the following properties from type 'MapIterator<[K, V]>': map, filter, take, drop, and 9 more.
+   */ entries(): IterableIterator<[K, V]> {
+      ~~~~~~~
+    at file://<tmpdir>/src/FrailMap.ts:49:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, V>'.
+   */ entries(): IterableIterator<[K, V]> {
+      ~~~~~~~
+    at file://<tmpdir>/src/FrailMap.ts:49:7
+
+TS2416 [ERROR]: Property 'keys' in type 'FrailMap<K, V>' is not assignable to the same property in base type 'Map<K, V>'.
+  Type '() => IterableIterator<K>' is not assignable to type '() => MapIterator<K>'.
+    Type 'IterableIterator<K>' is missing the following properties from type 'MapIterator<K>': map, filter, take, drop, and 9 more.
+   */ keys(): IterableIterator<K> {
+      ~~~~
+    at file://<tmpdir>/src/FrailMap.ts:54:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, V>'.
+   */ keys(): IterableIterator<K> {
+      ~~~~
+    at file://<tmpdir>/src/FrailMap.ts:54:7
+
+TS2416 [ERROR]: Property 'values' in type 'FrailMap<K, V>' is not assignable to the same property in base type 'Map<K, V>'.
+  Type '() => IterableIterator<V>' is not assignable to type '() => MapIterator<V>'.
+    Type 'IterableIterator<V>' is missing the following properties from type 'MapIterator<V>': map, filter, take, drop, and 9 more.
+   */ values(): IterableIterator<V> {
+      ~~~~~~
+    at file://<tmpdir>/src/FrailMap.ts:59:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, V>'.
+   */ values(): IterableIterator<V> {
+      ~~~~~~
+    at file://<tmpdir>/src/FrailMap.ts:59:7
+
+TS2416 [ERROR]: Property '[Symbol.iterator]' in type 'FrailMap<K, V>' is not assignable to the same property in base type 'Map<K, V>'.
+  Type '() => IterableIterator<[K, V]>' is not assignable to type '() => MapIterator<[K, V]>'.
+    Type 'IterableIterator<[K, V]>' is missing the following properties from type 'MapIterator<[K, V]>': map, filter, take, drop, and 9 more.
+  [Symbol.iterator](): IterableIterator<[K, V]> {
+  ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/FrailMap.ts:62:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, V>'.
+  [Symbol.iterator](): IterableIterator<[K, V]> {
+  ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/FrailMap.ts:62:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, V>'.
+  get [Symbol.toStringTag](): string {
+      ~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/FrailMap.ts:65:7
+
+Found 13 errors.
+

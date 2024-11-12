@@ -37,12 +37,12 @@ pub use analyzer::PositionRange;
 pub use analyzer::SpecifierWithRange;
 pub use analyzer::StaticDependencyDescriptor;
 pub use analyzer::TypeScriptReference;
+pub use ast::CapturingEsParser;
 pub use ast::CapturingModuleAnalyzer;
-pub use ast::CapturingModuleParser;
+pub use ast::DefaultEsParser;
 pub use ast::DefaultModuleAnalyzer;
-pub use ast::DefaultModuleParser;
 pub use ast::DefaultParsedSourceStore;
-pub use ast::ModuleParser;
+pub use ast::EsParser;
 pub use ast::ParseOptions;
 pub use ast::ParsedSourceStore;
 pub use ast::ParserModuleAnalyzer;
@@ -64,8 +64,11 @@ pub use graph::Dependency;
 pub use graph::ExternalModule;
 pub use graph::FastCheckTypeModule;
 pub use graph::FastCheckTypeModuleSlot;
+pub use graph::FillFromLockfileOptions;
 pub use graph::GraphImport;
 pub use graph::GraphKind;
+pub use graph::Import;
+pub use graph::ImportKind;
 pub use graph::JsModule;
 pub use graph::JsonModule;
 pub use graph::JsrLoadError;
@@ -93,9 +96,9 @@ pub use module_specifier::SpecifierError;
 pub use rt::Executor;
 pub use source::NpmResolvePkgReqsResult;
 
-pub use deno_ast::dep::DependencyKind;
 pub use deno_ast::dep::ImportAttribute;
 pub use deno_ast::dep::ImportAttributes;
+pub use deno_ast::dep::StaticDependencyKind;
 
 #[derive(Debug, Clone)]
 pub struct ReferrerImports {
@@ -952,6 +955,7 @@ console.log(a);
         false
       ),
       Some(ModuleSpecifier::parse("https://example.com/jsx-runtime").unwrap())
+        .as_ref()
     );
     assert_eq!(
       graph.resolve_dependency(
@@ -962,6 +966,7 @@ console.log(a);
       Some(
         ModuleSpecifier::parse("https://example.com/jsx-runtime.d.ts").unwrap()
       )
+      .as_ref()
     );
     assert_eq!(
       graph
@@ -3311,7 +3316,7 @@ export const foo = 'bar';"#,
           imports: vec![Import {
             specifier: "./a.js".to_string(),
             kind: ImportKind::Es,
-            range: Range {
+            specifier_range: Range {
               specifier: specifier.clone(),
               start: Position::new(2, 22),
               end: Position::new(2, 30),
@@ -3948,6 +3953,7 @@ export function a(a: A): B {
         false
       ),
       Some(ModuleSpecifier::parse("https://example.com/jsx-runtime").unwrap())
+        .as_ref()
     );
     assert_eq!(
       graph.resolve_dependency(
@@ -3958,6 +3964,7 @@ export function a(a: A): B {
       Some(
         ModuleSpecifier::parse("https://example.com/jsx-runtime.d.ts").unwrap()
       )
+      .as_ref()
     );
   }
 
@@ -3970,7 +3977,7 @@ export function a(a: A): B {
           Source::Module {
             specifier: "file:///a/test01.ts",
             maybe_headers: None,
-            content: r#"import * as b from "./test02.ts"; import "https://example.com/a.ts"; import "./test04.js"; await import("./test03.ts");"#,
+            content: r#"import * as b from "./test02.ts"; import "https://example.com/a.ts"; import "./test04.js"; import "./test_no_dts.js"; await import("./test03.ts");"#,
           },
         ),
         (
@@ -4003,6 +4010,14 @@ export function a(a: A): B {
             specifier: "file:///a/test04.d.ts",
             maybe_headers: None,
             content: r#"export const d: "d";"#,
+          },
+        ),
+        (
+          "file:///a/test_no_dts.js",
+          Source::Module {
+            specifier: "file:///a/test_no_dts.js",
+            maybe_headers: None,
+            content: r#"export const e = "e";"#,
           },
         ),
         (
@@ -4073,7 +4088,7 @@ export function a(a: A): B {
       WalkOptions {
         check_js: true,
         follow_dynamic: true,
-        follow_type_only: true,
+        kind: GraphKind::All,
         prefer_fast_check_graph: true,
       },
     );
@@ -4091,6 +4106,7 @@ export function a(a: A): B {
         "https://example.com/c.ts",
         "file:///a/test04.js",
         "file:///a/test04.d.ts",
+        "file:///a/test_no_dts.js",
         "file:///a/test03.ts",
       ]
     );
@@ -4101,7 +4117,7 @@ export function a(a: A): B {
       WalkOptions {
         check_js: false,
         follow_dynamic: false,
-        follow_type_only: false,
+        kind: GraphKind::CodeOnly,
         prefer_fast_check_graph: true,
       },
     );
@@ -4116,6 +4132,7 @@ export function a(a: A): B {
         "https://example.com/c",
         "https://example.com/c.ts",
         "file:///a/test04.js", // no types
+        "file:///a/test_no_dts.js",
       ]
     );
     // dynamic true
@@ -4124,7 +4141,7 @@ export function a(a: A): B {
       WalkOptions {
         check_js: false,
         follow_dynamic: true,
-        follow_type_only: false,
+        kind: GraphKind::CodeOnly,
         prefer_fast_check_graph: true,
       },
     );
@@ -4139,17 +4156,18 @@ export function a(a: A): B {
         "https://example.com/c",
         "https://example.com/c.ts",
         "file:///a/test04.js",
+        "file:///a/test_no_dts.js",
         "file:///a/test03.ts",
       ]
     );
 
-    // check_js true (won't have any effect since follow_type_only is false)
+    // check_js true (won't have any effect since GraphKind is CodeOnly)
     let result = graph.walk(
       roots.iter(),
       WalkOptions {
         check_js: true,
         follow_dynamic: false,
-        follow_type_only: false,
+        kind: GraphKind::CodeOnly,
         prefer_fast_check_graph: true,
       },
     );
@@ -4164,41 +4182,17 @@ export function a(a: A): B {
         "https://example.com/c",
         "https://example.com/c.ts",
         "file:///a/test04.js",
+        "file:///a/test_no_dts.js",
       ]
     );
 
-    // follow_type_only true
+    // check_js false, GraphKind All
     let result = graph.walk(
       roots.iter(),
       WalkOptions {
         check_js: false,
         follow_dynamic: false,
-        follow_type_only: true,
-        prefer_fast_check_graph: true,
-      },
-    );
-    assert_eq!(
-      result
-        .map(|(specifier, _)| specifier.to_string())
-        .collect::<Vec<_>>(),
-      vec![
-        "https://example.com/jsx-runtime",
-        "file:///a/test01.ts",
-        "file:///a/test02.ts",
-        "https://example.com/a.ts",
-        "https://example.com/c",
-        "https://example.com/c.ts",
-        "file:///a/test04.js",
-      ]
-    );
-
-    // check_js true, follow_type_only true
-    let result = graph.walk(
-      roots.iter(),
-      WalkOptions {
-        check_js: true,
-        follow_dynamic: false,
-        follow_type_only: true,
+        kind: GraphKind::All,
         prefer_fast_check_graph: true,
       },
     );
@@ -4216,6 +4210,59 @@ export function a(a: A): B {
         "https://example.com/c.ts",
         "file:///a/test04.js",
         "file:///a/test04.d.ts",
+        "file:///a/test_no_dts.js",
+      ]
+    );
+
+    // check_js false, GraphKind TypesOnly
+    let result = graph.walk(
+      roots.iter(),
+      WalkOptions {
+        check_js: false,
+        follow_dynamic: false,
+        kind: GraphKind::TypesOnly,
+        prefer_fast_check_graph: true,
+      },
+    );
+    assert_eq!(
+      result
+        .map(|(specifier, _)| specifier.to_string())
+        .collect::<Vec<_>>(),
+      vec![
+        "https://example.com/jsx-runtime.d.ts",
+        "file:///a/test01.ts",
+        "file:///a/test02.ts",
+        "https://example.com/a.ts",
+        "https://example.com/c",
+        "https://example.com/c.ts",
+        "file:///a/test04.d.ts",
+      ]
+    );
+
+    // check_js true, GraphKind::TypesOnly
+    let result = graph.walk(
+      roots.iter(),
+      WalkOptions {
+        check_js: true,
+        follow_dynamic: false,
+        kind: GraphKind::TypesOnly,
+        prefer_fast_check_graph: true,
+      },
+    );
+    assert_eq!(
+      result
+        .map(|(specifier, _)| specifier.to_string())
+        .collect::<Vec<_>>(),
+      vec![
+        "https://example.com/jsx-runtime.d.ts",
+        "file:///a/test01.ts",
+        "file:///a/test02.ts",
+        "https://example.com/a.ts",
+        "https://example.com/c",
+        "https://example.com/c.ts",
+        "file:///a/test04.d.ts",
+        // will include this now
+        "file:///a/test_no_dts.js",
       ]
     );
 
@@ -4226,7 +4273,7 @@ export function a(a: A): B {
         WalkOptions {
           check_js: true,
           follow_dynamic: false,
-          follow_type_only: true,
+          kind: GraphKind::All,
           prefer_fast_check_graph: false,
         },
       );
@@ -4250,7 +4297,7 @@ export function a(a: A): B {
         WalkOptions {
           check_js: true,
           follow_dynamic: false,
-          follow_type_only: true,
+          kind: GraphKind::All,
           prefer_fast_check_graph: false,
         },
       );
@@ -4271,6 +4318,10 @@ export function a(a: A): B {
       iterator.skip_previous_dependencies(); // now won't analyze the remote's dependencies
       assert_eq!(iterator.next().unwrap().0.as_str(), "file:///a/test04.js");
       assert_eq!(iterator.next().unwrap().0.as_str(), "file:///a/test04.d.ts");
+      assert_eq!(
+        iterator.next().unwrap().0.as_str(),
+        "file:///a/test_no_dts.js"
+      );
       assert!(iterator.next().is_none());
     }
   }
@@ -4528,7 +4579,7 @@ export function a(a: A): B {
         graph.roots.iter(),
         WalkOptions {
           check_js: true,
-          follow_type_only: true,
+          kind: GraphKind::TypesOnly,
           follow_dynamic: false,
           prefer_fast_check_graph: true,
         },

@@ -9,4 +9,24 @@ open-fn/core/0.1.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
+export type ServerOptions = (Deno.ServeOptions | Deno.ServeTlsOptions) & {
+                                                      ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/server/server.ts:4:55
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'QueryResult'.
+   */ insertRow(row_data: Uint8Array[], controls?: ClientControls): void {}
+      ~~~~~~~~~
+    at file://<tmpdir>/vendor/deno.land/x/postgres@v0.19.3/query/query.ts:102:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'QueryResult'.
+   */ insertRow(row_data: Uint8Array[], controls?: ClientControls): void {}
+      ~~~~~~~~~
+    at file://<tmpdir>/vendor/deno.land/x/postgres@v0.19.3/query/query.ts:115:7
+
+Found 3 errors.
+

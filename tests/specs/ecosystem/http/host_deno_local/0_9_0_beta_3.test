@@ -26,4 +26,10 @@ http/host-deno-local/0.9.0-beta.3
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
+    at file://<tmpdir>/init.ts:5:233
+

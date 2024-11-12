@@ -20,7 +20,8 @@
             "range": [[0, 0], [0, 25]]
           }],
           "specifier": "./a.js",
-          "specifierRange": [[5, 6], [7, 8]]
+          "specifierRange": [[5, 6], [7, 8]],
+          "range": [[5, 0], [7, 8]]
       }]
     },
     "/a.js": {},
@@ -124,7 +125,7 @@ import 'jsr:@scope/a@^1.0';
     "jsr:@scope/a@^1.0": "https://jsr.io/@scope/a/1.0.0/mod.ts"
   },
   "packages": {
-    "@scope/a@^1.0": "@scope/a@1.0.0"
+    "@scope/a@1": "@scope/a@1.0.0"
   }
 }
 

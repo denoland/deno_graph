@@ -28,3 +28,15 @@ error: TS2377 [ERROR]: Constructors for derived classes must contain a 'super' c
   ~~~~~~~~~~~
     at file://<tmpdir>/StepSpinner.ts:4:3
 
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Spinner'.
+  start(): StepSpinner {
+  ~~~~~
+    at file://<tmpdir>/StepSpinner.ts:5:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Spinner'.
+  stop(): void {}
+  ~~~~
+    at file://<tmpdir>/StepSpinner.ts:8:3
+
+Found 3 errors.
+

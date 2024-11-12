@@ -69,6 +69,18 @@ class Public4 {}
 class Public5 {}
 class Private1 {}
 
+export class Base {
+  protected constructor(prop: string) {
+  }
+}
+
+export class Child extends Base {
+  private constructor();
+  private constructor() {
+    super("");
+  }
+}
+
 # mod.ts
 import 'jsr:@scope/a'
 
@@ -104,7 +116,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 1521,
+      "size": 1695,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -113,7 +125,7 @@ import 'jsr:@scope/a'
     "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
   },
   "packages": {
-    "@scope/a": "@scope/a@1.0.0"
+    "@scope/a@*": "@scope/a@1.0.0"
   }
 }
 
@@ -126,7 +138,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     private constructor(){}
   }
   export class ClassPrivateCtorWithOverloads {
-    private constructor();
+    private constructor(){}
   }
   export declare class ClassDeclarePrivateCtor {
     private constructor(prop: string, other: Private1);
@@ -174,6 +186,14 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   class Public4 {
   }
   class Public5 {
+  }
+  export class Base {
+    protected constructor(prop: string){}
+  }
+  export class Child extends Base {
+    private constructor(){
+      super({} as never);
+    }
   }
   --- DTS ---
   /** A */ export declare class ClassBasic {
@@ -229,4 +249,10 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   declare class Public4 {
   }
   declare class Public5 {
+  }
+  export declare class Base {
+    protected constructor(prop: string);
+  }
+  export declare class Child extends Base {
+    private constructor();
   }

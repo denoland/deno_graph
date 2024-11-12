@@ -68,4 +68,10 @@ amit/neon-serverless-driver/0.0.3
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: Module not found "file://<tmpdir>/pg-protocol".
+    at file://<tmpdir>/index.d.ts:1:31
+

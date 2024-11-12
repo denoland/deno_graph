@@ -19,4 +19,25 @@ cliffy/keypress/1.0.0-rc.4
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+    at file://<tmpdir>/mod.ts:46:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+  addEventListener(param0?: any, param1?: any, param2?: any): any {
+  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:47:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+    at file://<tmpdir>/mod.ts:56:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+  removeEventListener(param0?: any, param1?: any, param2?: any): any {
+  ~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:57:3
+
+Found 4 errors.
+

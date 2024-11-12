@@ -9,4 +9,49 @@ codehz/mtproto/0.6.3
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<string, string>'.
+  set(key: string, value: string): this {
+  ~~~
+    at file://<tmpdir>/storage/jsondb.ts:7:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<string, string>'.
+  delete(key: string): boolean {
+  ~~~~~~
+    at file://<tmpdir>/storage/jsondb.ts:10:3
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
+  read_packet(reader: Deno.Reader): AsyncIterable<Uint8Array> {
+                           ~~~~~~
+    at file://<tmpdir>/transport/codec/abridged.ts:22:28
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
+  read_packet(reader: Deno.Reader): AsyncIterable<Uint8Array> {
+                           ~~~~~~
+    at file://<tmpdir>/transport/codec/full.ts:20:28
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
+  read_packet(reader: Deno.Reader): AsyncIterable<Uint8Array> {
+                           ~~~~~~
+    at file://<tmpdir>/transport/codec/intermediate.ts:17:28
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
+  read_packet(reader: Deno.Reader): AsyncIterable<Uint8Array> {
+                           ~~~~~~
+    at file://<tmpdir>/transport/codec/obfuscated.ts:24:28
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
+  read_packet(reader: Deno.Reader): AsyncIterable<Uint8Array> {
+                           ~~~~~~
+    at file://<tmpdir>/transport/codec/padded.ts:18:28
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
+class WebSocketWrapper implements Deno.Reader {
+                                       ~~~~~~
+    at file://<tmpdir>/transport/connection/websocket.ts:2:40
+
+Found 8 errors.
+

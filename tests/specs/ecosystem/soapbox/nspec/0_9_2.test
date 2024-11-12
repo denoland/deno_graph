@@ -104,3 +104,33 @@ error: TS2416 [ERROR]: Property 'forEach' in type 'NSet' is not assignable to th
   ~~~~~~~
     at file://<tmpdir>/src/NSet.ts:43:3
 
+TS2416 [ERROR]: Property 'entries' in type 'NSet' is not assignable to the same property in base type 'Set<NostrEvent>'.
+  Type '() => IterableIterator<[NostrEvent, NostrEvent]>' is not assignable to type '() => SetIterator<[NostrEvent, NostrEvent]>'.
+    Type 'IterableIterator<[NostrEvent, NostrEvent]>' is missing the following properties from type 'SetIterator<[NostrEvent, NostrEvent]>': map, filter, take, drop, and 9 more.
+  entries(): IterableIterator<[NostrEvent, NostrEvent]> {
+  ~~~~~~~
+    at file://<tmpdir>/src/NSet.ts:47:3
+
+TS2416 [ERROR]: Property 'keys' in type 'NSet' is not assignable to the same property in base type 'Set<NostrEvent>'.
+  Type '() => IterableIterator<NostrEvent>' is not assignable to type '() => SetIterator<NostrEvent>'.
+    Type 'IterableIterator<NostrEvent>' is missing the following properties from type 'SetIterator<NostrEvent>': map, filter, take, drop, and 9 more.
+  keys(): IterableIterator<NostrEvent> {
+  ~~~~
+    at file://<tmpdir>/src/NSet.ts:50:3
+
+TS2416 [ERROR]: Property 'values' in type 'NSet' is not assignable to the same property in base type 'Set<NostrEvent>'.
+  Type '() => IterableIterator<NostrEvent>' is not assignable to type '() => SetIterator<NostrEvent>'.
+    Type 'IterableIterator<NostrEvent>' is missing the following properties from type 'SetIterator<NostrEvent>': map, filter, take, drop, and 9 more.
+  values(): IterableIterator<NostrEvent> {
+  ~~~~~~
+    at file://<tmpdir>/src/NSet.ts:53:3
+
+TS2416 [ERROR]: Property '[Symbol.iterator]' in type 'NSet' is not assignable to the same property in base type 'Set<NostrEvent>'.
+  Type '() => IterableIterator<NostrEvent>' is not assignable to type '() => SetIterator<NostrEvent>'.
+    Type 'IterableIterator<NostrEvent>' is missing the following properties from type 'SetIterator<NostrEvent>': map, filter, take, drop, and 9 more.
+  [Symbol.iterator](): IterableIterator<NostrEvent> {
+  ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/NSet.ts:56:3
+
+Found 5 errors.
+

@@ -9,4 +9,29 @@ lala/appraisal/0.7.4
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Tensor<DT, 2>'.
+  get length(): number {
+      ~~~~~~
+    at file://<tmpdir>/src/utils/misc/matrix.ts:31:7
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Tensor<DT, 2>'.
+  /** Filter the matrix by rows */ filter(fn: (value: DType<DT>, row: number, _: DType<DT>[]) => boolean): Matrix<DT> {
+                                   ~~~~~~
+    at file://<tmpdir>/src/utils/misc/matrix.ts:61:36
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Tensor<DT, 2>'.
+  /** Get an item using a row and column index */ item(row: number, col: number): DTypeValue<DT> {
+                                                  ~~~~
+    at file://<tmpdir>/src/utils/misc/matrix.ts:64:51
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Tensor<DT, 2>'.
+  /** Slice matrix by rows */ slice(start?: number, end?: number): Matrix<DT> {
+                              ~~~~~
+    at file://<tmpdir>/src/utils/misc/matrix.ts:85:31
+
+Found 4 errors.
+

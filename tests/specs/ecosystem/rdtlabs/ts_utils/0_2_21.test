@@ -9,4 +9,47 @@ rdtlabs/ts-utils/0.2.21
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
+  public get cause(): ErrorLike {
+             ~~~~~
+    at file://<tmpdir>/src/cancellation/CancellationError.ts:11:14
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'T[]'.
+   */ static of<T>(...array: readonly T[]): List<T> {
+             ~~
+    at file://<tmpdir>/src/common/List.ts:38:14
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'T[]'.
+   */ static from<T>(arrayLike: ArrayLike<T>): List<T>;
+             ~~~~
+    at file://<tmpdir>/src/common/List.ts:44:14
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'T[]'.
+   */ static from<T, U>(arrayLike: ArrayLike<T>, mapfn: (v: T, k: number) => U, thisArg?: any): List<T>;
+             ~~~~
+    at file://<tmpdir>/src/common/List.ts:50:14
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'T[]'.
+  static from<T>(...param0: any): any {
+         ~~~~
+    at file://<tmpdir>/src/common/List.ts:51:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'T[]'.
+  static fromAsync<T>(iterableOrArrayLike: AsyncIterable<T> | Iterable<T | Promise<T>> | ArrayLike<T | Promise<T>>): Promise<List<T>>;
+         ~~~~~~~~~
+    at file://<tmpdir>/src/common/List.ts:54:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'T[]'.
+    at file://<tmpdir>/src/common/List.ts:55:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'T[]'.
+  static fromAsync<T>(...param0: any): any {
+         ~~~~~~~~~
+    at file://<tmpdir>/src/common/List.ts:56:10
+
+Found 8 errors.
+

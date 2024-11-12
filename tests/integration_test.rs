@@ -7,6 +7,9 @@
 use std::cell::RefCell;
 
 use deno_ast::ModuleSpecifier;
+use deno_graph::packages::JsrPackageInfo;
+use deno_graph::packages::JsrPackageInfoVersion;
+use deno_graph::packages::JsrPackageVersionInfo;
 use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
 use deno_graph::source::LoadOptions;
@@ -14,8 +17,12 @@ use deno_graph::source::LoadResponse;
 use deno_graph::source::MemoryFileSystem;
 use deno_graph::source::MemoryLoader;
 use deno_graph::BuildOptions;
+use deno_graph::FillFromLockfileOptions;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
+use deno_semver::jsr::JsrDepPackageReq;
+use deno_semver::package::PackageNv;
+use deno_semver::package::PackageReq;
 use pretty_assertions::assert_eq;
 use url::Url;
 
@@ -488,4 +495,113 @@ await import(`./a/${test}`);
     ],
   )
   .await;
+}
+
+#[test]
+fn test_fill_from_lockfile() {
+  let mut graph = ModuleGraph::new(GraphKind::All);
+  let redirects = [("https://example.com", "https://example.com/final")];
+  let specifiers = [(
+    JsrDepPackageReq::from_str("jsr:@scope/example").unwrap(),
+    "1.0.0",
+  )];
+  graph.fill_from_lockfile(FillFromLockfileOptions {
+    redirects: redirects.iter().copied(),
+    package_specifiers: specifiers.iter().map(|(k, v)| (k, *v)),
+  });
+
+  assert_eq!(
+    graph
+      .redirects
+      .get(&Url::parse("https://example.com").unwrap())
+      .unwrap()
+      .as_str(),
+    "https://example.com/final"
+  );
+  assert_eq!(
+    *graph
+      .packages
+      .mappings()
+      .get(&PackageReq::from_str("@scope/example").unwrap())
+      .unwrap(),
+    PackageNv::from_str("@scope/example@1.0.0").unwrap(),
+  );
+}
+
+#[tokio::test]
+async fn test_json_root() {
+  let mut graph = ModuleGraph::new(GraphKind::All);
+  let mut loader = MemoryLoader::default();
+
+  loader.add_source_with_text(
+    "https://jsr.io/@scope/example/1.0.0/data.json",
+    "{ \"a\": 1 }",
+  );
+  loader.add_source(
+    "https://deno.land/x/redirect",
+    deno_graph::source::Source::Redirect(
+      "https://jsr.io/@scope/example/1.0.0/data.json",
+    ),
+  );
+  loader.add_source(
+    "https://deno.land/x/redirect2",
+    deno_graph::source::Source::Redirect("https://deno.land/x/redirect"),
+  );
+  loader.add_source(
+    "https://deno.land/x/redirect3",
+    deno_graph::source::Source::Redirect("https://deno.land/x/redirect2"),
+  );
+  loader.add_jsr_package_info(
+    "@scope/example",
+    &JsrPackageInfo {
+      versions: vec![(
+        deno_semver::Version::parse_standard("1.0.0").unwrap(),
+        JsrPackageInfoVersion::default(),
+      )]
+      .into_iter()
+      .collect(),
+    },
+  );
+  loader.add_jsr_version_info(
+    "@scope/example",
+    "1.0.0",
+    &JsrPackageVersionInfo {
+      exports: serde_json::json!({
+        "./json-export": "./data.json"
+      }),
+      ..Default::default()
+    },
+  );
+  graph
+    .build(
+      vec![Url::parse("jsr:/@scope/example@^1.0.0/json-export").unwrap()],
+      &loader,
+      Default::default(),
+    )
+    .await;
+  graph.valid().unwrap();
+  graph
+    .build(
+      vec![Url::parse("https://deno.land/x/redirect").unwrap()],
+      &loader,
+      Default::default(),
+    )
+    .await;
+  graph.valid().unwrap();
+  graph
+    .build(
+      vec![Url::parse("https://deno.land/x/redirect3").unwrap()],
+      &loader,
+      Default::default(),
+    )
+    .await;
+  graph.valid().unwrap();
+  assert_eq!(
+    graph.roots.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
+    vec![
+      "jsr:/@scope/example@^1.0.0/json-export",
+      "https://deno.land/x/redirect",
+      "https://deno.land/x/redirect3", // not 2
+    ]
+  );
 }

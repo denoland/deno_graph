@@ -133,14 +133,14 @@ import 'jsr:@scope/a'
     "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
   },
   "packages": {
-    "@scope/a": "@scope/a@1.0.0"
+    "@scope/a@*": "@scope/a@1.0.0"
   }
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export class PrivateMethodOverloadable {
-    private constructor();
+    private constructor(){}
     declare private method: any;
     declare private methodWithOverload: any;
     declare private "stringAndIdent": any;
@@ -166,7 +166,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   class Base {
   }
   export class TsPrivateMethodWithOverrideKeyword extends Base {
-    private override test!: any;
+    declare private test: any;
   }
   --- DTS ---
   export declare class PrivateMethodOverloadable {
@@ -196,5 +196,5 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   declare class Base {
   }
   export declare class TsPrivateMethodWithOverrideKeyword extends Base {
-    private override test: any;
+    private test: any;
   }

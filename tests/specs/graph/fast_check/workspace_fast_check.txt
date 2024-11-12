@@ -3,7 +3,8 @@
 [
   {
     "base": "file:///",
-    "nv": "@scope/b@1.0.1",
+    "name": "@scope/b",
+    "version": "1.0.1",
     "exports": {
       ".": "./mod.ts"
     }
@@ -100,7 +101,7 @@ class Private {
     "jsr:@scope/c": "https://jsr.io/@scope/c/1.0.0/mod.ts"
   },
   "packages": {
-    "@scope/c": "@scope/c@1.0.0"
+    "@scope/c@*": "@scope/c@1.0.0"
   }
 }
 
