@@ -4857,111 +4857,128 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       Err(err) => ModuleSlot::Err(err),
     };
 
-    if let ModuleSlot::Module(Module::Js(module)) = &mut module_slot {
-      if matches!(self.graph.graph_kind, GraphKind::All | GraphKind::CodeOnly)
-        || module.maybe_types_dependency.is_none()
-      {
-        for dep in module.dependencies.values_mut() {
-          if matches!(
-            self.graph.graph_kind,
-            GraphKind::All | GraphKind::CodeOnly
-          ) || dep.maybe_type.is_none()
-          {
-            if let Resolution::Ok(resolved) = &dep.maybe_code {
-              let specifier = &resolved.specifier;
-              let range = &resolved.range;
-              let maybe_attribute_type =
-                dep.maybe_attribute_type.as_ref().map(|attribute_type| {
-                  AttributeTypeWithRange {
-                    range: range.clone(),
-                    kind: attribute_type.clone(),
-                  }
-                });
-              if dep.is_dynamic && !self.in_dynamic_branch {
-                self.state.dynamic_branches.insert(
-                  specifier.clone(),
-                  PendingDynamicBranch {
-                    range: range.clone(),
-                    maybe_attribute_type,
-                    maybe_version_info: maybe_version_info
-                      .map(ToOwned::to_owned),
-                  },
-                );
-              } else {
-                self.load(
-                  specifier,
-                  Some(range),
-                  self.in_dynamic_branch,
-                  self.resolved_roots.contains(specifier),
-                  maybe_attribute_type,
-                  maybe_version_info,
-                );
-              }
-            }
-          } else {
-            dep.maybe_code = Resolution::None;
-          }
+    match &mut module_slot {
+      ModuleSlot::Module(Module::Js(module)) => {
+        if matches!(self.graph.graph_kind, GraphKind::All | GraphKind::CodeOnly)
+          || module.maybe_types_dependency.is_none()
+        {
+          self.visit_module_dependencies(
+            &mut module.dependencies,
+            maybe_version_info,
+          );
+        } else {
+          module.dependencies.clear();
+        }
 
-          if self.graph.graph_kind.include_types() {
-            if let Resolution::Ok(resolved) = &dep.maybe_type {
-              let specifier = &resolved.specifier;
-              let range = &resolved.range;
-              let maybe_attribute_type =
-                dep.maybe_attribute_type.as_ref().map(|assert_type| {
-                  AttributeTypeWithRange {
-                    range: range.clone(),
-                    kind: assert_type.clone(),
-                  }
-                });
-              if dep.is_dynamic && !self.in_dynamic_branch {
-                self.state.dynamic_branches.insert(
-                  specifier.clone(),
-                  PendingDynamicBranch {
-                    range: range.clone(),
-                    maybe_attribute_type,
-                    maybe_version_info: maybe_version_info
-                      .map(ToOwned::to_owned),
-                  },
-                );
-              } else {
-                self.load(
-                  specifier,
-                  Some(range),
-                  self.in_dynamic_branch,
-                  self.resolved_roots.contains(specifier),
-                  maybe_attribute_type,
-                  maybe_version_info,
-                );
+        if self.graph.graph_kind.include_types() {
+          if let Some(Resolution::Ok(resolved)) = module
+            .maybe_types_dependency
+            .as_ref()
+            .map(|d| &d.dependency)
+          {
+            self.load(
+              &resolved.specifier,
+              Some(&resolved.range),
+              false,
+              self.resolved_roots.contains(&resolved.specifier),
+              None,
+              maybe_version_info,
+            );
+          }
+        } else {
+          module.maybe_types_dependency = None;
+        }
+      }
+      ModuleSlot::Module(Module::Wasm(module)) => {
+        self.visit_module_dependencies(
+          &mut module.dependencies,
+          maybe_version_info,
+        );
+      }
+      _ => {}
+    }
+
+    module_slot
+  }
+
+  fn visit_module_dependencies(
+    &mut self,
+    dependencies: &mut IndexMap<String, Dependency>,
+    maybe_version_info: Option<&JsrPackageVersionInfoExt>,
+  ) {
+    for dep in dependencies.values_mut() {
+      if matches!(self.graph.graph_kind, GraphKind::All | GraphKind::CodeOnly)
+        || dep.maybe_type.is_none()
+      {
+        if let Resolution::Ok(resolved) = &dep.maybe_code {
+          let specifier = &resolved.specifier;
+          let range = &resolved.range;
+          let maybe_attribute_type =
+            dep.maybe_attribute_type.as_ref().map(|attribute_type| {
+              AttributeTypeWithRange {
+                range: range.clone(),
+                kind: attribute_type.clone(),
               }
-            }
+            });
+          if dep.is_dynamic && !self.in_dynamic_branch {
+            self.state.dynamic_branches.insert(
+              specifier.clone(),
+              PendingDynamicBranch {
+                range: range.clone(),
+                maybe_attribute_type,
+                maybe_version_info: maybe_version_info.map(ToOwned::to_owned),
+              },
+            );
           } else {
-            dep.maybe_type = Resolution::None;
+            self.load(
+              specifier,
+              Some(range),
+              self.in_dynamic_branch,
+              self.resolved_roots.contains(specifier),
+              maybe_attribute_type,
+              maybe_version_info,
+            );
           }
         }
       } else {
-        module.dependencies.clear();
+        dep.maybe_code = Resolution::None;
       }
 
       if self.graph.graph_kind.include_types() {
-        if let Some(Resolution::Ok(resolved)) = module
-          .maybe_types_dependency
-          .as_ref()
-          .map(|d| &d.dependency)
-        {
-          self.load(
-            &resolved.specifier,
-            Some(&resolved.range),
-            false,
-            self.resolved_roots.contains(&resolved.specifier),
-            None,
-            maybe_version_info,
-          );
+        if let Resolution::Ok(resolved) = &dep.maybe_type {
+          let specifier = &resolved.specifier;
+          let range = &resolved.range;
+          let maybe_attribute_type =
+            dep.maybe_attribute_type.as_ref().map(|assert_type| {
+              AttributeTypeWithRange {
+                range: range.clone(),
+                kind: assert_type.clone(),
+              }
+            });
+          if dep.is_dynamic && !self.in_dynamic_branch {
+            self.state.dynamic_branches.insert(
+              specifier.clone(),
+              PendingDynamicBranch {
+                range: range.clone(),
+                maybe_attribute_type,
+                maybe_version_info: maybe_version_info.map(ToOwned::to_owned),
+              },
+            );
+          } else {
+            self.load(
+              specifier,
+              Some(range),
+              self.in_dynamic_branch,
+              self.resolved_roots.contains(specifier),
+              maybe_attribute_type,
+              maybe_version_info,
+            );
+          }
         }
       } else {
-        module.maybe_types_dependency = None;
+        dep.maybe_type = Resolution::None;
       }
     }
-    module_slot
   }
 }
 

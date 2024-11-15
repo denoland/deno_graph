@@ -631,6 +631,21 @@ impl MemoryLoader {
     }
   }
 
+  pub fn add_bytes_source(
+    &mut self,
+    specifier: impl AsRef<str>,
+    content: Vec<u8>,
+  ) {
+    self.sources.insert(
+      ModuleSpecifier::parse(specifier.as_ref()).unwrap(),
+      Ok(LoadResponse::Module {
+        specifier: ModuleSpecifier::parse(specifier.as_ref()).unwrap(),
+        maybe_headers: None,
+        content: Arc::from(content),
+      }),
+    );
+  }
+
   pub fn add_source<S: AsRef<str>>(
     &mut self,
     specifier: impl AsRef<str>,

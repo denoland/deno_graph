@@ -605,3 +605,98 @@ async fn test_json_root() {
     ]
   );
 }
+
+#[tokio::test]
+async fn test_wasm_math() {
+  let mut graph = ModuleGraph::new(GraphKind::All);
+  let mut loader = MemoryLoader::default();
+
+  loader.add_bytes_source(
+    "file:///project/math.wasm",
+    std::fs::read("tests/testdata/math.wasm").unwrap(),
+  );
+
+  loader.add_source_with_text(
+    "file:///project/main.ts",
+    "import { add } from './math.wasm'; console.log(add(1, 2));",
+  );
+
+  graph
+    .build(
+      vec![Url::parse("file:///project/main.ts").unwrap()],
+      &loader,
+      Default::default(),
+    )
+    .await;
+  graph.valid().unwrap();
+  let wasm_module = graph
+    .get(&Url::parse("file:///project/math.wasm").unwrap())
+    .unwrap();
+  match wasm_module {
+    deno_graph::Module::Wasm(wasm_module) => {
+      assert_eq!(
+        wasm_module.source_dts.to_string(),
+        "export declare const memory: WebAssembly.Memory;
+export declare function add(arg0: number, arg1: number): number;
+export declare function subtract(arg0: number, arg1: number): number;
+export declare const __data_end: number;
+export declare const __heap_base: number;
+"
+      );
+    }
+    _ => unreachable!(),
+  }
+}
+
+#[tokio::test]
+async fn test_wasm_math_with_import() {
+  let mut graph = ModuleGraph::new(GraphKind::All);
+  let mut loader = MemoryLoader::default();
+
+  loader.add_bytes_source(
+    "file:///project/math.wasm",
+    std::fs::read("tests/testdata/math_with_import.wasm").unwrap(),
+  );
+
+  loader.add_source_with_text(
+    "file:///project/main.ts",
+    "import { add } from './math.wasm'; console.log(add(1, 2));",
+  );
+
+  loader.add_source_with_text(
+    "file:///project/math.ts",
+    "export function add(a: number, b: number): number { return a + b; }\n export function subtract(a: number, b: number): number { return a - b; }",
+  );
+
+  graph
+    .build(
+      vec![Url::parse("file:///project/main.ts").unwrap()],
+      &loader,
+      Default::default(),
+    )
+    .await;
+  graph.valid().unwrap();
+  let wasm_module = graph
+    .get(&Url::parse("file:///project/math.wasm").unwrap())
+    .unwrap();
+  match wasm_module {
+    deno_graph::Module::Wasm(wasm_module) => {
+      assert_eq!(
+        wasm_module.source_dts.to_string(),
+        "import \"./math.ts\";
+export declare const memory: WebAssembly.Memory;
+export declare function add(arg0: number, arg1: number): number;
+export declare function subtract(arg0: number, arg1: number): number;
+export declare const __data_end: number;
+export declare const __heap_base: number;
+"
+      );
+    }
+    _ => unreachable!(),
+  }
+
+  // now ensure the imports are in the graph
+  assert!(graph
+    .get(&Url::parse("file:///project/math.ts").unwrap())
+    .is_some());
+}

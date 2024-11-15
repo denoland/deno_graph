@@ -1,6 +1,7 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
 use std::borrow::Cow;
+use std::collections::HashSet;
 
 use wasm_dep_analyzer::ValueType;
 
@@ -43,8 +44,11 @@ fn wasm_module_deps_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
   let mut text = String::new();
   let mut internal_names_count = 0;
 
+  let mut seen_modules = HashSet::with_capacity(wasm_deps.imports.len());
   for import in &wasm_deps.imports {
-    text.push_str(&format!("import \"{}\";\n", import.module));
+    if seen_modules.insert(&import.module) {
+      text.push_str(&format!("import \"{}\";\n", import.module));
+    }
   }
 
   for export in &wasm_deps.exports {
