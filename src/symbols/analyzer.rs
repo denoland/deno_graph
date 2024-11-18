@@ -10,6 +10,7 @@ use deno_ast::swc::ast::*;
 use deno_ast::swc::atoms::Atom;
 use deno_ast::swc::utils::find_pat_ids;
 use deno_ast::swc::utils::is_valid_ident;
+use deno_ast::MediaType;
 use deno_ast::ModuleSpecifier;
 use deno_ast::ParsedSource;
 use deno_ast::SourceRange;
@@ -18,6 +19,7 @@ use deno_ast::SourceTextInfo;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
 
+use crate::graph::WasmModule;
 use crate::EsParser;
 use crate::JsModule;
 use crate::JsonModule;
@@ -96,6 +98,7 @@ impl<'a> RootSymbol<'a> {
       crate::Module::Json(json_module) => {
         Some(self.analyze_json_module(json_module))
       }
+      crate::Module::Wasm(wasm_module) => self.analyze_wasm_module(wasm_module),
       crate::Module::Npm(_)
       | crate::Module::Node(_)
       | crate::Module::External(_) => None,
@@ -165,30 +168,7 @@ impl<'a> RootSymbol<'a> {
     let Ok(source) = self.parsed_source(script_module) else {
       return None;
     };
-    let specifier = &script_module.specifier;
-    let program = source.program();
-
-    let module_id = ModuleId(self.ids_to_modules.len() as u32);
-    let builder = ModuleBuilder::new(module_id);
-    let filler = SymbolFiller {
-      source: &source,
-      builder: &builder,
-    };
-    filler.fill(program.as_ref());
-    let module_symbol = EsModuleInfo {
-      specifier: specifier.clone(),
-      module_id,
-      source: source.clone(),
-      re_exports: builder.re_exports.take(),
-      swc_id_to_symbol_id: builder.swc_id_to_symbol_id.take(),
-      symbols: builder
-        .symbols
-        .take()
-        .into_iter()
-        .map(|(k, v)| (k, v.0.into_inner()))
-        .collect(),
-    };
-    Some(self.finalize_insert(ModuleInfo::Esm(module_symbol)))
+    Some(self.build_raw_es_module_info(&script_module.specifier, &source))
   }
 
   fn analyze_json_module(&self, json_module: &JsonModule) -> ModuleInfoRef {
@@ -237,6 +217,52 @@ impl<'a> RootSymbol<'a> {
       source_text_info,
     };
     self.finalize_insert(ModuleInfo::Json(Box::new(module_symbol)))
+  }
+
+  fn analyze_wasm_module(
+    &self,
+    wasm_module: &WasmModule,
+  ) -> Option<ModuleInfoRef> {
+    let maybe_parsed_source = self.parser.parse_program(ParseOptions {
+      specifier: &wasm_module.specifier,
+      source: wasm_module.source_dts.clone(),
+      media_type: MediaType::Dmts,
+      scope_analysis: true,
+    });
+    let Ok(source) = maybe_parsed_source else {
+      return None;
+    };
+    Some(self.build_raw_es_module_info(&wasm_module.specifier, &source))
+  }
+
+  fn build_raw_es_module_info(
+    &self,
+    specifier: &ModuleSpecifier,
+    source: &ParsedSource,
+  ) -> ModuleInfoRef {
+    let program = source.program();
+
+    let module_id = ModuleId(self.ids_to_modules.len() as u32);
+    let builder = ModuleBuilder::new(module_id);
+    let filler = SymbolFiller {
+      source,
+      builder: &builder,
+    };
+    filler.fill(program.as_ref());
+    let module_symbol = EsModuleInfo {
+      specifier: specifier.clone(),
+      module_id,
+      source: source.clone(),
+      re_exports: builder.re_exports.take(),
+      swc_id_to_symbol_id: builder.swc_id_to_symbol_id.take(),
+      symbols: builder
+        .symbols
+        .take()
+        .into_iter()
+        .map(|(k, v)| (k, v.0.into_inner()))
+        .collect(),
+    };
+    self.finalize_insert(ModuleInfo::Esm(module_symbol))
   }
 
   fn finalize_insert(&self, module: ModuleInfo) -> ModuleInfoRef {
@@ -1384,7 +1410,10 @@ impl<'a> ModuleInfoRef<'a> {
   }
 
   pub fn text(&self) -> &'a str {
-    self.text_info().text_str()
+    match self {
+      ModuleInfoRef::Json(m) => m.source_text_info.text_str(),
+      ModuleInfoRef::Esm(m) => m.source.text().as_ref(),
+    }
   }
 
   pub fn module_symbol(&self) -> &'a Symbol {

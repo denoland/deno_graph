@@ -205,7 +205,7 @@ pub enum TypeScriptReference {
   Types(SpecifierWithRange),
 }
 
-/// Information about the module.
+/// Information about JS/TS module.
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ModuleInfo {
