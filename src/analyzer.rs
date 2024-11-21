@@ -228,7 +228,8 @@ pub struct ModuleInfo {
   /// Comment with a `@jsxImportSourceTypes` pragma on JSX/TSX media types
   #[serde(skip_serializing_if = "Option::is_none", default)]
   pub jsx_import_source_types: Option<SpecifierWithRange>,
-  /// Type imports in JSDoc comment blocks (e.g. `{import("./types.d.ts").Type}`).
+  /// Type imports in JSDoc comment blocks (e.g. `{import("./types.d.ts").Type}`)
+  /// or `@import { SomeType } from "npm:some-module"`.
   #[serde(skip_serializing_if = "Vec::is_empty", default)]
   pub jsdoc_imports: Vec<SpecifierWithRange>,
 }
