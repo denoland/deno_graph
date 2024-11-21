@@ -26,14 +26,13 @@ use deno_ast::ParseDiagnostic;
 use deno_ast::ParsedSource;
 use deno_ast::SourceTextInfo;
 use once_cell::sync::Lazy;
-use regex::Match;
 use regex::Regex;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
 
 /// Matches a JSDoc import type reference (`{import("./example.js")}`
-static JSDOC_IMPORT_RE: Lazy<Regex> = Lazy::new(|| {
+static JSDOC_DYNAMIC_IMPORT_RE: Lazy<Regex> = Lazy::new(|| {
   Regex::new(r#"\{[^}]*import\(['"]([^'"]+)['"]\)[^}]*}"#).unwrap()
 });
 /// Matches the `@jsxImportSource` pragma.
@@ -522,7 +521,7 @@ fn analyze_ts_references(
             text: m.as_str().to_string(),
             range: comment_source_to_position_range(
               comment_start,
-              &m,
+              m.range(),
               text_info,
               false,
             ),
@@ -535,7 +534,7 @@ fn analyze_ts_references(
             text: m.as_str().to_string(),
             range: comment_source_to_position_range(
               comment_start,
-              &m,
+              m.range(),
               text_info,
               false,
             ),
@@ -565,7 +564,12 @@ fn analyze_jsx_import_source(
       let m = captures.get(1)?;
       Some(SpecifierWithRange {
         text: m.as_str().to_string(),
-        range: comment_source_to_position_range(c.start(), &m, text_info, true),
+        range: comment_source_to_position_range(
+          c.start(),
+          m.range(),
+          text_info,
+          true,
+        ),
       })
     })
   })
@@ -589,7 +593,12 @@ fn analyze_jsx_import_source_types(
       let m = captures.get(1)?;
       Some(SpecifierWithRange {
         text: m.as_str().to_string(),
-        range: comment_source_to_position_range(c.start(), &m, text_info, true),
+        range: comment_source_to_position_range(
+          c.start(),
+          m.range(),
+          text_info,
+          true,
+        ),
       })
     })
   })
@@ -612,7 +621,7 @@ fn analyze_ts_self_types(
         text: m.as_str().to_string(),
         range: comment_source_to_position_range(
           c.start(),
-          &m,
+          m.range(),
           text_info,
           false,
         ),
@@ -634,7 +643,7 @@ pub fn analyze_ts_or_deno_types(
         text: m.as_str().to_string(),
         range: comment_source_to_position_range(
           comment.range.start(),
-          &m,
+          m.range(),
           text_info,
           false,
         ),
@@ -647,7 +656,7 @@ pub fn analyze_ts_or_deno_types(
       text: m.as_str().to_string(),
       range: comment_source_to_position_range(
         comment.range.start(),
-        &m,
+        m.range(),
         text_info,
         false,
       ),
@@ -657,7 +666,7 @@ pub fn analyze_ts_or_deno_types(
       text: m.as_str().to_string(),
       range: comment_source_to_position_range(
         comment.range.start(),
-        &m,
+        m.range(),
         text_info,
         true,
       ),
@@ -688,13 +697,27 @@ fn analyze_jsdoc_imports(
     if comment.kind != CommentKind::Block || !comment.text.starts_with('*') {
       continue;
     }
-    for captures in JSDOC_IMPORT_RE.captures_iter(&comment.text) {
+    for captures in JSDOC_DYNAMIC_IMPORT_RE.captures_iter(&comment.text) {
       if let Some(m) = captures.get(1) {
         deps.push(SpecifierWithRange {
           text: m.as_str().to_string(),
           range: comment_source_to_position_range(
             comment.range().start,
-            &m,
+            m.range(),
+            text_info,
+            false,
+          ),
+        });
+      }
+    }
+
+    for (i, _) in comment.text.match_indices("@import") {
+      if let Ok((_, js_doc)) = parse_jsdoc_import_decl(&comment.text[i..]) {
+        deps.push(SpecifierWithRange {
+          text: js_doc.specifier,
+          range: comment_source_to_position_range(
+            comment.range().start,
+            i + js_doc.range.start..i + js_doc.range.end,
             text_info,
             false,
           ),
@@ -706,9 +729,71 @@ fn analyze_jsdoc_imports(
   deps
 }
 
+#[derive(Debug, Clone)]
+struct JsDocImport {
+  specifier: String,
+  range: std::ops::Range<usize>,
+}
+
+fn parse_jsdoc_import_decl(input: &str) -> monch::ParseResult<JsDocImport> {
+  use monch::*;
+
+  fn skip_named_imports(input: &str) -> monch::ParseResult<()> {
+    // { ... }
+    let (input, _) = ch('{')(input)?;
+    let (input, _) = monch::take_while(|c| c != '}')(input)?;
+    let (input, _) = ch('}')(input)?;
+    Ok((input, ()))
+  }
+
+  fn skip_ident(input: &str) -> monch::ParseResult<()> {
+    let (input, c) = next_char(input)?;
+    if !c.is_alphabetic() {
+      return Err(monch::ParseError::Backtrace);
+    }
+    map(take_while(|c| !c.is_whitespace()), |_| ())(input)
+  }
+
+  fn skip_namespace_import(input: &str) -> monch::ParseResult<()> {
+    // * as ns
+    let (input, _) = ch('*')(input)?;
+    let (input, _) = skip_whitespace(input)?;
+    let (input, _) = tag("as")(input)?;
+    let (input, _) = whitespace(input)?;
+    let (input, _) = skip_ident(input)?;
+    Ok((input, ()))
+  }
+
+  let initial_input = input;
+  let (input, _) = tag("@import")(input)?;
+  let (input, _) = whitespace(input)?;
+  let (input, _) = or3(
+    skip_named_imports,
+    terminated(skip_namespace_import, whitespace),
+    terminated(skip_ident, whitespace),
+  )(input)?;
+  let (input, _) = skip_whitespace(input)?;
+  let (input, _) = tag("from")(input)?;
+  let (input, _) = skip_whitespace(input)?;
+  let (input, open_char) = or(ch('"'), ch('\''))(input)?;
+  let start_specifier_input = input;
+  let (input, specifier) = take_while(|c| c != open_char)(input)?;
+  let end_specifier_input = input;
+  let (input, _) = ch(open_char)(input)?;
+
+  Ok((
+    input,
+    JsDocImport {
+      specifier: specifier.to_string(),
+      range: initial_input.len() - start_specifier_input.len()
+        ..initial_input.len() - end_specifier_input.len(),
+    },
+  ))
+}
+
 fn comment_source_to_position_range(
   comment_start: SourcePos,
-  m: &Match,
+  inner_range: std::ops::Range<usize>,
   text_info: &SourceTextInfo,
   is_specifier_quoteless: bool,
 ) -> PositionRange {
@@ -718,11 +803,11 @@ fn comment_source_to_position_range(
   let padding = if is_specifier_quoteless { 0 } else { 1 };
   PositionRange {
     start: Position::from_source_pos(
-      comment_start + m.start() - padding,
+      comment_start + inner_range.start - padding,
       text_info,
     ),
     end: Position::from_source_pos(
-      comment_start + m.end() + padding,
+      comment_start + inner_range.end + padding,
       text_info,
     ),
   }
@@ -1020,6 +1105,10 @@ function b(c) {
  * @type {Set<import("./e.js").F>}
  */
 const f = new Set();
+
+/** @import { SomeType } from "./a.ts" */
+/** @import * as namespace from "./b.ts" */
+/** @import defaultImport from './c.ts' */
 "#;
     let parsed_source = DefaultEsParser
       .parse_program(ParseOptions {
@@ -1087,6 +1176,45 @@ const f = new Set();
             }
           }
         },
+        SpecifierWithRange {
+          text: "./a.ts".to_string(),
+          range: PositionRange {
+            start: Position {
+              line: 25,
+              character: 30,
+            },
+            end: Position {
+              line: 25,
+              character: 38,
+            },
+          },
+        },
+        SpecifierWithRange {
+          text: "./b.ts".to_string(),
+          range: PositionRange {
+            start: Position {
+              line: 26,
+              character: 32,
+            },
+            end: Position {
+              line: 26,
+              character: 40,
+            },
+          },
+        },
+        SpecifierWithRange {
+          text: "./c.ts".to_string(),
+          range: PositionRange {
+            start: Position {
+              line: 27,
+              character: 31,
+            },
+            end: Position {
+              line: 27,
+              character: 39,
+            },
+          },
+        }
       ]
     );
   }
@@ -1160,5 +1288,27 @@ export {};
         jsdoc_imports: vec![],
       },
     );
+  }
+
+  #[test]
+  fn test_parse_jsdoc_import_decl() {
+    // named imports
+    assert!(
+      parse_jsdoc_import_decl("@import { SomeType } from \"./a.ts\"").is_ok()
+    );
+    // quotes in named imports
+    assert!(parse_jsdoc_import_decl(
+      "@import { SomeType, \"test\" as test, 'b' as test2 } from \"./a.ts\""
+    )
+    .is_ok());
+    // single quotes and namespace import
+    assert!(parse_jsdoc_import_decl("@import * as test from './a.ts'").is_ok());
+    // missing space certain tokens
+    assert!(parse_jsdoc_import_decl("@import *as test from'./a.ts'").is_ok());
+    // default import
+    assert!(parse_jsdoc_import_decl("@import test from './a.ts'").is_ok());
+    // mixing quotes (invalid)
+    assert!(parse_jsdoc_import_decl("@import test from \"./a.ts'").is_err());
+    assert!(parse_jsdoc_import_decl("@import test from './a.ts\"").is_err());
   }
 }
