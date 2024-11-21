@@ -712,7 +712,7 @@ fn analyze_jsdoc_imports(
     }
 
     for (i, _) in comment.text.match_indices("@import") {
-      if let Ok((_, js_doc)) = parse_static_import(&comment.text[i..]) {
+      if let Ok((_, js_doc)) = parse_jsdoc_import_decl(&comment.text[i..]) {
         deps.push(SpecifierWithRange {
           text: js_doc.specifier,
           range: comment_source_to_position_range(
@@ -735,7 +735,7 @@ struct JsDocImport {
   range: std::ops::Range<usize>,
 }
 
-fn parse_static_import(input: &str) -> monch::ParseResult<JsDocImport> {
+fn parse_jsdoc_import_decl(input: &str) -> monch::ParseResult<JsDocImport> {
   use monch::*;
 
   fn skip_named_imports(input: &str) -> monch::ParseResult<()> {
@@ -774,7 +774,7 @@ fn parse_static_import(input: &str) -> monch::ParseResult<JsDocImport> {
   )(input)?;
   let (input, _) = skip_whitespace(input)?;
   let (input, _) = tag("from")(input)?;
-  let (input, _) = whitespace(input)?;
+  let (input, _) = skip_whitespace(input)?;
   let (input, open_char) = or(ch('"'), ch('\''))(input)?;
   let start_specifier_input = input;
   let (input, specifier) = take_while(|c| c != open_char)(input)?;
@@ -1288,5 +1288,27 @@ export {};
         jsdoc_imports: vec![],
       },
     );
+  }
+
+  #[test]
+  fn test_parse_jsdoc_import_decl() {
+    // named imports
+    assert!(
+      parse_jsdoc_import_decl("@import { SomeType } from \"./a.ts\"").is_ok()
+    );
+    // quotes in named imports
+    assert!(parse_jsdoc_import_decl(
+      "@import { SomeType, \"test\" as test, 'b' as test2 } from \"./a.ts\""
+    )
+    .is_ok());
+    // single quotes and namespace import
+    assert!(parse_jsdoc_import_decl("@import * as test from './a.ts'").is_ok());
+    // missing space certain tokens
+    assert!(parse_jsdoc_import_decl("@import *as test from'./a.ts'").is_ok());
+    // default import
+    assert!(parse_jsdoc_import_decl("@import test from './a.ts'").is_ok());
+    // mixing quotes (invalid)
+    assert!(parse_jsdoc_import_decl("@import test from \"./a.ts'").is_err());
+    assert!(parse_jsdoc_import_decl("@import test from './a.ts\"").is_err());
   }
 }
