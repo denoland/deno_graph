@@ -57,6 +57,7 @@ serde_json = { version = "1.0.67", features = ["preserve_order"] }
 sha2 = "^0.10.0"
 thiserror = "2"
 deno_error = "0.5.1"
+boxed_error = "0.2.3"
 twox-hash = { version = "1.6.3", optional = true }
 url = { version = "2.5.3", features = ["serde"] }
 wasm_dep_analyzer = "0.2.0"

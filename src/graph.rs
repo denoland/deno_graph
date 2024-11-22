@@ -190,14 +190,14 @@ pub enum JsrLoadError {
   PackageNotFound(String),
   #[class("NotFound")]
   #[error("JSR package version not found: {}", .0)]
-  PackageVersionNotFound(PackageNv),
+  PackageVersionNotFound(Box<PackageNv>),
   #[class(generic)] // TODO: maybe inherit?
   #[error("JSR package version manifest for '{}' failed to load: {:#}", .0, .1)]
-  PackageVersionManifestLoad(PackageNv, Arc<LoadError>),
+  PackageVersionManifestLoad(Box<PackageNv>, Arc<LoadError>),
   #[class(inherit)]
   #[error("JSR package version manifest for '{}' failed to load: {:#}", .0, .1)]
   PackageVersionManifestChecksumIntegrity(
-    PackageNv,
+    Box<PackageNv>,
     #[inherit] ChecksumIntegrityError,
   ),
   #[class(inherit)]
@@ -212,7 +212,7 @@ pub enum JsrLoadError {
   #[class("NotFound")]
   #[error("Unknown export '{}' for '{}'.\n  Package exports:\n{}", export_name, .nv, .exports.iter().map(|e| format!(" * {}", e)).collect::<Vec<_>>().join("\n"))]
   UnknownExport {
-    nv: PackageNv,
+    nv: Box<PackageNv>,
     export_name: String,
     exports: Vec<String>,
   },
@@ -3782,7 +3782,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   resolution_item.maybe_range,
                   JsrLoadError::UnknownExport {
                     export_name: export_name.to_string(),
-                    nv: resolution_item.nv_ref.into_inner().nv,
+                    nv: Box::new(resolution_item.nv_ref.into_inner().nv),
                     exports: version_info
                       .exports()
                       .map(|(k, _)| k.to_string())

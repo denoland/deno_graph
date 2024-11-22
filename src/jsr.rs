@@ -159,11 +159,12 @@ impl JsrMetadataStore {
               // use a more specific variant in order to allow the
               // cli to enhance this error message
               JsrLoadError::PackageVersionManifestChecksumIntegrity(
-                package_nv, err,
+                Box::new(package_nv),
+                err,
               )
             }
             err => JsrLoadError::PackageVersionManifestLoad(
-              package_nv,
+              Box::new(package_nv),
               Arc::new(err),
             ),
           }
@@ -171,7 +172,7 @@ impl JsrMetadataStore {
       },
       {
         let package_nv = package_nv.clone();
-        || JsrLoadError::PackageVersionNotFound(package_nv)
+        || JsrLoadError::PackageVersionNotFound(Box::new(package_nv))
       },
     );
     self
