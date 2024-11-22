@@ -1,6 +1,6 @@
 [package]
 name = "deno_graph"
-version = "0.84.1"
+version = "0.85.1"
 edition = "2021"
 description = "Module graph analysis for deno"
 homepage = "https://deno.land/"
@@ -60,6 +60,7 @@ thiserror = "2"
 deno_error = "0.5.1"
 twox-hash = { version = "1.6.3", optional = true }
 url = { version = "2.5.3", features = ["serde"] }
+wasm_dep_analyzer = "0.1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 deno_unsync = { workspace = true, features = ["tokio"] }

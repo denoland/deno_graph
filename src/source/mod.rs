@@ -31,6 +31,7 @@ use url::Url;
 
 mod file_system;
 pub use file_system::*;
+pub mod wasm;
 
 pub const DEFAULT_JSX_IMPORT_SOURCE_MODULE: &str = "jsx-runtime";
 
@@ -667,6 +668,21 @@ impl MemoryLoader {
         })
         .collect(),
     }
+  }
+
+  pub fn add_bytes_source(
+    &mut self,
+    specifier: impl AsRef<str>,
+    content: Vec<u8>,
+  ) {
+    self.sources.insert(
+      ModuleSpecifier::parse(specifier.as_ref()).unwrap(),
+      Ok(LoadResponse::Module {
+        specifier: ModuleSpecifier::parse(specifier.as_ref()).unwrap(),
+        maybe_headers: None,
+        content: Arc::from(content),
+      }),
+    );
   }
 
   pub fn add_source<S: AsRef<str>>(
