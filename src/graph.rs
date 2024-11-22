@@ -290,7 +290,8 @@ pub enum ModuleError {
   MissingDynamic(ModuleSpecifier, Range),
   #[class(inherit)]
   ParseErr(ModuleSpecifier, #[inherit] ParseDiagnostic),
-  WasmParseErr(ModuleSpecifier, wasm_dep_analyzer::ParseError),
+  #[class(inherit)]
+  WasmParseErr(ModuleSpecifier, #[inherit] wasm_dep_analyzer::ParseError),
   #[class(type)]
   UnsupportedMediaType(ModuleSpecifier, MediaType, Option<Range>),
   #[class(syntax)]

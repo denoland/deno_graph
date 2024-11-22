@@ -38,7 +38,6 @@ path = "tests/ecosystem_test.rs"
 harness = false
 
 [dependencies]
-anyhow = "1.0.43"
 async-trait = "0.1.68"
 data-url = "0.3.0"
 deno_ast = { version = "0.44.0", features = ["dep_analysis", "emit"] }
@@ -60,7 +59,7 @@ thiserror = "2"
 deno_error = "0.5.1"
 twox-hash = { version = "1.6.3", optional = true }
 url = { version = "2.5.3", features = ["serde"] }
-wasm_dep_analyzer = "0.1.0"
+wasm_dep_analyzer = "0.2.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 deno_unsync = { workspace = true, features = ["tokio"] }
@@ -74,6 +73,7 @@ tempfile = "3.4.0"
 tokio = { version = "1.10.1", features = ["macros", "rt-multi-thread", "sync"] }
 deno_terminal = "0.2.0"
 env_logger = "0.11.3"
+anyhow = "1.0.43"
 
 [profile.release]
 codegen-units = 1
