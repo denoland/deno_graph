@@ -95,7 +95,13 @@ pub enum LoadError {
   DataUrl(std::io::Error),
   #[class(inherit)]
   #[error(transparent)]
-  Other(#[from] Arc<dyn JsErrorClass>),
+  Other(Arc<dyn JsErrorClass>),
+}
+
+impl<T: JsErrorClass> From<Arc<T>> for LoadError {
+  fn from(value: Arc<T>) -> Self {
+    Self::Other(value)
+  }
 }
 
 pub type LoadResult = Result<Option<LoadResponse>, LoadError>;
@@ -388,6 +394,12 @@ pub enum ResolveError {
   #[class(inherit)]
   #[error("{0}")]
   Other(Box<dyn JsErrorClass>),
+}
+
+impl<T: JsErrorClass> From<Box<T>> for ResolveError {
+  fn from(value: Box<T>) -> Self {
+    Self::Other(value)
+  }
 }
 
 /// The kind of resolution currently being done by deno_graph.

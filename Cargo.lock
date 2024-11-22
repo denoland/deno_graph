@@ -455,8 +455,8 @@ dependencies = [
 name = "deno_graph_wasm"
 version = "0.0.0"
 dependencies = [
- "anyhow",
  "console_error_panic_hook",
+ "deno_error",
  "deno_graph",
  "futures",
  "getrandom",
@@ -465,6 +465,7 @@ dependencies = [
  "serde",
  "serde-wasm-bindgen",
  "serde_json",
+ "thiserror 2.0.3",
  "wasm-bindgen",
  "wasm-bindgen-futures",
 ]

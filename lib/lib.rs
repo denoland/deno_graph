@@ -5,8 +5,6 @@
 #![deny(clippy::disallowed_methods)]
 #![deny(clippy::disallowed_types)]
 
-use std::collections::HashMap;
-
 use deno_graph::resolve_import;
 use deno_graph::source::load_data_url;
 use deno_graph::source::CacheInfo;
@@ -25,12 +23,27 @@ use deno_graph::ModuleSpecifier;
 use deno_graph::Range;
 use deno_graph::ReferrerImports;
 use deno_graph::SpecifierError;
+use std::collections::HashMap;
+use std::sync::Arc;
 
-use anyhow::anyhow;
 use futures::future;
 use serde::Deserialize;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
+
+#[derive(Debug, thiserror::Error, deno_error::JsError)]
+#[class(generic)]
+pub enum WasmError {
+  #[error("load rejected or errored")]
+  Load,
+  #[error("JavaScript resolve threw.")]
+  JavaScriptResolve,
+  #[error("JavaScript resolveTypes() function threw.")]
+  JavaScriptResolveTypes,
+  #[error("{0}")]
+  // String because serde_wasm_bindgen::Error is not thread-safe.
+  Deserialize(String),
+}
 
 pub struct JsLoader {
   load: js_sys::Function,
@@ -100,7 +113,7 @@ impl Loader for JsLoader {
         };
         response
           .map(|value| serde_wasm_bindgen::from_value(value).unwrap())
-          .map_err(|_| anyhow!("load rejected or errored").into())
+          .map_err(|_| Arc::new(WasmError::Load).into())
       };
       Box::pin(f)
     }
@@ -168,11 +181,13 @@ impl Resolver for JsResolver {
       let arg2 = JsValue::from(referrer_range.specifier.to_string());
       let value = match resolve.call2(&this, &arg1, &arg2) {
         Ok(value) => value,
-        Err(_) => return Err(anyhow!("JavaScript resolve threw.").into()),
+        Err(_) => return Err(Box::new(WasmError::JavaScriptResolve).into()),
       };
       let value: String = match serde_wasm_bindgen::from_value(value) {
         Ok(value) => value,
-        Err(err) => return Err(anyhow!("{}", err.to_string()).into()),
+        Err(err) => {
+          return Err(Box::new(WasmError::Deserialize(err.to_string())).into())
+        }
       };
       ModuleSpecifier::parse(&value)
         .map_err(|err| ResolveError::Specifier(SpecifierError::InvalidUrl(err)))
@@ -191,10 +206,10 @@ impl Resolver for JsResolver {
       let arg1 = JsValue::from(specifier.to_string());
       let value = resolve_types
         .call1(&this, &arg1)
-        .map_err(|_| anyhow!("JavaScript resolveTypes() function threw."))?;
+        .map_err(|_| Box::new(WasmError::JavaScriptResolveTypes))?;
       let result: Option<JsResolveTypesResponse> =
         serde_wasm_bindgen::from_value(value)
-          .map_err(|err| anyhow!("{}", err.to_string()))?;
+          .map_err(|err| Box::new(WasmError::Deserialize(err.to_string())))?;
       Ok(result.map(|v| (v.types, v.source)))
     } else {
       Ok(None)
