@@ -4,6 +4,7 @@
 #![allow(clippy::unused_unit)]
 #![deny(clippy::disallowed_methods)]
 #![deny(clippy::disallowed_types)]
+#![deny(clippy::unnecessary_wraps)]
 
 use deno_graph::resolve_import;
 use deno_graph::source::load_data_url;

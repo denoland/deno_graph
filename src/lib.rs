@@ -3,6 +3,7 @@
 #![deny(clippy::print_stderr)]
 #![deny(clippy::print_stdout)]
 #![deny(clippy::unused_async)]
+#![deny(clippy::unnecessary_wraps)]
 
 mod analyzer;
 mod ast;
@@ -140,7 +141,7 @@ pub async fn parse_module(
     },
   )
   .await?;
-  graph::parse_module(
+  let module = graph::parse_module(
     options.file_system,
     options.jsr_url_provider,
     options.maybe_resolver,
@@ -149,7 +150,9 @@ pub async fn parse_module(
       graph_kind: options.graph_kind,
       module_source_and_info,
     },
-  )
+  );
+
+  Ok(module)
 }
 
 pub struct ParseModuleFromAstOptions<'a> {

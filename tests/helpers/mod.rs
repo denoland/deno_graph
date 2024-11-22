@@ -333,7 +333,7 @@ impl TestBuilder {
 
   #[allow(unused)]
   #[cfg(feature = "symbols")]
-  pub async fn symbols(&mut self) -> anyhow::Result<symbols::SymbolsResult> {
+  pub async fn symbols(&mut self) -> symbols::SymbolsResult {
     fn check_fatal_diagnostics(
       module: deno_graph::symbols::ModuleInfoRef,
     ) -> Vec<String> {
@@ -449,7 +449,7 @@ impl TestBuilder {
     let entry_point_types_url =
       ModuleSpecifier::parse(&self.entry_point_types).unwrap();
     let root_symbol = build_result.root_symbol();
-    Ok(symbols::SymbolsResult {
+    symbols::SymbolsResult {
       output: {
         let entrypoint_symbol = root_symbol
           .module_from_specifier(&entry_point_types_url)
@@ -590,7 +590,7 @@ impl TestBuilder {
         }
         output_text
       },
-    })
+    }
   }
 }
 

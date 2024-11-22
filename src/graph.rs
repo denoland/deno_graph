@@ -2470,15 +2470,15 @@ pub(crate) fn parse_module(
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
   options: ParseModuleOptions,
-) -> Result<Module, ModuleError> {
+) -> Module {
   match options.module_source_and_info {
     ModuleSourceAndInfo::Json { specifier, source } => {
-      Ok(Module::Json(JsonModule {
+      Module::Json(JsonModule {
         maybe_cache_info: None,
         source,
         media_type: MediaType::Json,
         specifier,
-      }))
+      })
     }
     ModuleSourceAndInfo::Js {
       specifier,
@@ -2486,7 +2486,7 @@ pub(crate) fn parse_module(
       source,
       maybe_headers,
       module_info,
-    } => Ok(Module::Js(parse_js_module_from_module_info(
+    } => Module::Js(parse_js_module_from_module_info(
       options.graph_kind,
       specifier,
       media_type,
@@ -2497,13 +2497,13 @@ pub(crate) fn parse_module(
       jsr_url_provider,
       maybe_resolver,
       maybe_npm_resolver,
-    ))),
+    )),
     ModuleSourceAndInfo::Wasm {
       specifier,
       source,
       source_dts,
       module_info,
-    } => Ok(Module::Wasm(parse_wasm_module_from_module_info(
+    } => Module::Wasm(parse_wasm_module_from_module_info(
       options.graph_kind,
       specifier,
       *module_info,
@@ -2513,7 +2513,7 @@ pub(crate) fn parse_module(
       jsr_url_provider,
       maybe_resolver,
       maybe_npm_resolver,
-    ))),
+    )),
   }
 }
 
@@ -4887,7 +4887,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     module_source_and_info: ModuleSourceAndInfo,
     maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) -> ModuleSlot {
-    let parse_module_result = parse_module(
+    let module = parse_module(
       self.file_system,
       self.jsr_url_provider,
       self.resolver,
@@ -4898,10 +4898,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       },
     );
 
-    let mut module_slot = match parse_module_result {
-      Ok(module) => ModuleSlot::Module(module),
-      Err(err) => ModuleSlot::Err(err),
-    };
+    let mut module_slot = ModuleSlot::Module(module);
 
     match &mut module_slot {
       ModuleSlot::Module(Module::Js(module)) => {

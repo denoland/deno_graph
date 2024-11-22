@@ -418,7 +418,6 @@ dependencies = [
 name = "deno_graph"
 version = "0.85.1"
 dependencies = [
- "anyhow",
  "async-trait",
  "bincode",
  "data-url",

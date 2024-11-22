@@ -200,14 +200,13 @@ fn run_graph_test(test: &CollectedTest) {
             let message = dts
               .diagnostics
               .iter()
-              .map(|d| match d.range() {
-                Some(range) => {
-                  format!(
-                    "{}\n    at {}@{}",
-                    d, range.specifier, range.range.start
-                  )
-                }
-                None => format!("{}\n    at {}", d, d.specifier()),
+              .map(|d| {
+                let range = d.range();
+
+                format!(
+                  "{}\n    at {}@{}",
+                  d, range.specifier, range.range.start
+                )
               })
               .collect::<Vec<_>>()
               .join("\n\n");
@@ -292,7 +291,7 @@ fn run_symbol_test(test: &CollectedTest) {
     .enable_all()
     .build()
     .unwrap();
-  let result = rt.block_on(async { builder.symbols().await.unwrap() });
+  let result = rt.block_on(async { builder.symbols().await });
   let spec = if std::env::var("UPDATE").as_deref() == Ok("1") {
     let mut spec = spec;
     spec.output_file.text.clone_from(&result.output);

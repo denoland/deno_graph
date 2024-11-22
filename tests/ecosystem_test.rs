@@ -2,7 +2,6 @@ use std::collections::HashSet;
 use std::io::Write as _;
 use std::path::PathBuf;
 
-use anyhow::Context;
 use deno_ast::diagnostics::Diagnostic;
 use deno_ast::MediaType;
 use deno_graph::source::LoadResponse;
@@ -376,9 +375,7 @@ async fn test_version(
         if let Some(fcm) = module.fast_check_module() {
           let path =
             format!("{}{}", tmpdir_path.display(), module.specifier.path());
-          std::fs::write(&path, fcm.source.as_bytes())
-            .with_context(|| format!("failed writing {}", path))
-            .unwrap();
+          std::fs::write(&path, fcm.source.as_bytes()).unwrap();
         }
       }
     }
