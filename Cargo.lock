@@ -421,7 +421,6 @@ dependencies = [
  "anyhow",
  "async-trait",
  "bincode",
- "boxed_error",
  "data-url",
  "deno_ast",
  "deno_error",
