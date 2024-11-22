@@ -14,6 +14,7 @@ use deno_semver::package::PackageNv;
 
 use data_url::DataUrl;
 use deno_ast::ModuleSpecifier;
+use deno_error::JsErrorClass;
 use deno_semver::package::PackageReq;
 use futures::future;
 use futures::future::LocalBoxFuture;
@@ -77,18 +78,35 @@ pub enum LoadResponse {
   },
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, deno_error::JsError)]
 pub enum LoadError {
+  #[class(type)]
   #[error("Unsupported scheme: {0}")]
   UnsupportedScheme(String),
+  #[class(inherit)]
   #[error(transparent)]
-  ChecksumIntegrity(#[from] ChecksumIntegrityError),
+  ChecksumIntegrity(
+    #[from]
+    #[inherit]
+    ChecksumIntegrityError,
+  ),
+  #[class(inherit)]
   #[error(transparent)]
-  JsonParse(#[from] serde_json::Error),
+  JsonParse(
+    #[from]
+    #[inherit]
+    serde_json::Error,
+  ),
+  #[class(inherit)]
   #[error(transparent)]
-  DataUrl(std::io::Error),
+  DataUrl(#[inherit] std::io::Error),
+  #[class(inherit)]
   #[error(transparent)]
-  Other(#[from] anyhow::Error),
+  Other(
+    #[from]
+    #[inherit]
+    Arc<dyn JsErrorClass>,
+  ),
 }
 
 pub type LoadResult = Result<Option<LoadResponse>, LoadError>;
@@ -127,7 +145,8 @@ impl CacheSetting {
 pub static DEFAULT_JSR_URL: Lazy<Url> =
   Lazy::new(|| Url::parse("https://jsr.io").unwrap());
 
-#[derive(Debug, Clone, Error)]
+#[derive(Debug, Clone, Error, deno_error::JsError)]
+#[class(generic)]
 #[error("Integrity check failed.\n\nActual: {}\nExpected: {}", .actual, .expected
 )]
 pub struct ChecksumIntegrityError {
@@ -369,14 +388,17 @@ pub fn recommended_registry_package_url_to_nv(
   })
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, deno_error::JsError)]
 pub enum ResolveError {
+  #[class(type)]
   #[error(transparent)]
   Specifier(#[from] SpecifierError),
+  #[class(inherit)]
   #[error(transparent)]
   ImportMap(#[from] import_map::ImportMapError),
-  #[error(transparent)]
-  Other(#[from] anyhow::Error),
+  #[class(inherit)]
+  #[error("{0}")]
+  Other(Box<dyn JsErrorClass>),
 }
 
 /// The kind of resolution currently being done by deno_graph.
@@ -446,7 +468,8 @@ pub trait Resolver: fmt::Debug {
   }
 }
 
-#[derive(Error, Debug, Clone)]
+#[derive(Error, Debug, Clone, deno_error::JsError)]
+#[class("NotFound")]
 #[error("Unknown built-in \"node:\" module: {module_name}")]
 pub struct UnknownBuiltInNodeModuleError {
   /// Name of the invalid module.
@@ -463,7 +486,7 @@ pub struct NpmResolvePkgReqsResult {
   /// were resolved to NVs.
   ///
   /// Don't run dependency graph resolution if there are any individual failures.
-  pub dep_graph_result: Result<(), Arc<anyhow::Error>>,
+  pub dep_graph_result: Result<(), Arc<dyn JsErrorClass>>,
 }
 
 #[async_trait(?Send)]
@@ -578,7 +601,8 @@ fn get_mime_type_charset(mime_type: &str) -> Option<&str> {
 /// ahead of time. This is useful for testing or
 #[derive(Default)]
 pub struct MemoryLoader {
-  sources: HashMap<ModuleSpecifier, Result<LoadResponse, anyhow::Error>>,
+  sources:
+    HashMap<ModuleSpecifier, Result<LoadResponse, Arc<dyn JsErrorClass>>>,
   cache_info: HashMap<ModuleSpecifier, CacheInfo>,
 }
 
@@ -590,11 +614,11 @@ pub enum Source<S> {
   },
   Redirect(S),
   External(S),
-  Err(anyhow::Error),
+  Err(Arc<dyn JsErrorClass>),
 }
 
 impl<S: AsRef<str>> Source<S> {
-  fn into_result(self) -> Result<LoadResponse, anyhow::Error> {
+  fn into_result(self) -> Result<LoadResponse, Arc<dyn JsErrorClass>> {
     match self {
       Source::Module {
         specifier,
@@ -714,7 +738,7 @@ impl Loader for MemoryLoader {
   ) -> LoadFuture {
     let response = match self.sources.get(specifier) {
       Some(Ok(response)) => Ok(Some(response.clone())),
-      Some(Err(err)) => Err(LoadError::Other(anyhow::anyhow!("{}", err))),
+      Some(Err(err)) => Err(LoadError::Other(err.clone())),
       None if specifier.scheme() == "data" => load_data_url(specifier),
       _ => Ok(None),
     };

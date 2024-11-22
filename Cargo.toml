@@ -41,12 +41,12 @@ harness = false
 anyhow = "1.0.43"
 async-trait = "0.1.68"
 data-url = "0.3.0"
-deno_ast = { version = "0.43.2", features = ["dep_analysis", "emit"] }
+deno_ast = { version = "0.44.0", features = ["dep_analysis", "emit"] }
 deno_unsync.workspace = true
-deno_semver = "0.5.13"
+deno_semver = "0.6.0"
 encoding_rs = "0.8.33"
 futures = "0.3.26"
-import_map = "0.20.0"
+import_map = "0.21.0"
 indexmap = { version = "2", features = ["serde"] }
 log = "0.4.20"
 monch = "0.5.0"
@@ -56,9 +56,10 @@ regex = "1.10.2"
 serde = { version = "1.0.130", features = ["derive", "rc"] }
 serde_json = { version = "1.0.67", features = ["preserve_order"] }
 sha2 = "^0.10.0"
-thiserror = "1.0.24"
+thiserror = "2"
+deno_error = "0.5.1"
 twox-hash = { version = "1.6.3", optional = true }
-url = { version = "2.2.2", features = ["serde"] }
+url = { version = "2.5.3", features = ["serde"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 deno_unsync = { workspace = true, features = ["tokio"] }
@@ -70,7 +71,7 @@ pretty_assertions = "1.0.0"
 reqwest = { version = "0.12.4", default-features = false, features = ["http2", "charset", "rustls-tls-webpki-roots"] }
 tempfile = "3.4.0"
 tokio = { version = "1.10.1", features = ["macros", "rt-multi-thread", "sync"] }
-deno_terminal = "0.1.1"
+deno_terminal = "0.2.0"
 env_logger = "0.11.3"
 
 [profile.release]

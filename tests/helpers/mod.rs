@@ -130,9 +130,7 @@ impl NpmResolver for TestNpmResolver {
               name: pkg_req.name.clone(),
               version,
             }),
-            Err(err) => {
-              Err(NpmLoadError::PackageReqResolution(Arc::new(err.into())))
-            }
+            Err(err) => Err(NpmLoadError::PackageReqResolution(Arc::new(err))),
           }
         })
         .collect::<Vec<_>>(),

@@ -1320,12 +1320,13 @@ console.log(a);
       referrer_range: &Range,
       _mode: ResolutionMode,
     ) -> Result<deno_ast::ModuleSpecifier, source::ResolveError> {
-      use import_map::ImportMapError;
+      use import_map::ImportMapErrorKind;
       Err(source::ResolveError::ImportMap(
-        ImportMapError::UnmappedBareSpecifier(
+        ImportMapErrorKind::UnmappedBareSpecifier(
           specifier_text.to_string(),
           Some(referrer_range.specifier.to_string()),
-        ),
+        )
+        .into_box(),
       ))
     }
 
@@ -4331,13 +4332,13 @@ export function a(a: A): B {
     #[derive(Debug)]
     struct ExtResolver;
 
-    impl crate::source::Resolver for ExtResolver {
+    impl Resolver for ExtResolver {
       fn resolve(
         &self,
         specifier_text: &str,
         referrer_range: &Range,
         mode: ResolutionMode,
-      ) -> Result<ModuleSpecifier, crate::source::ResolveError> {
+      ) -> Result<ModuleSpecifier, source::ResolveError> {
         let specifier_text = match mode {
           ResolutionMode::Types => format!("{}.d.ts", specifier_text),
           ResolutionMode::Execution => format!("{}.js", specifier_text),
@@ -4518,20 +4519,25 @@ export function a(a: A): B {
     #[derive(Debug)]
     struct FailForTypesResolver;
 
-    impl crate::source::Resolver for FailForTypesResolver {
+    #[derive(Debug, thiserror::Error, deno_error::JsError)]
+    #[class(generic)]
+    #[error("Failed.")]
+    struct FailedError;
+
+    impl Resolver for FailForTypesResolver {
       fn resolve(
         &self,
         specifier_text: &str,
         referrer_range: &Range,
         mode: ResolutionMode,
-      ) -> Result<ModuleSpecifier, crate::source::ResolveError> {
+      ) -> Result<ModuleSpecifier, source::ResolveError> {
         match mode {
           ResolutionMode::Execution => {
             Ok(resolve_import(specifier_text, &referrer_range.specifier)?)
           }
-          ResolutionMode::Types => Err(crate::source::ResolveError::Other(
-            anyhow::anyhow!("Failed."),
-          )),
+          ResolutionMode::Types => {
+            Err(source::ResolveError::Other(Box::new(FailedError)))
+          }
         }
       }
     }

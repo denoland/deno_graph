@@ -36,6 +36,8 @@ use deno_ast::MediaType;
 use deno_ast::ParseDiagnostic;
 use deno_ast::SourcePos;
 use deno_ast::SourceTextInfo;
+use deno_error::JsError;
+use deno_error::JsErrorClass;
 use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::jsr::JsrPackageNvReference;
 use deno_semver::jsr::JsrPackageReqReference;
@@ -163,34 +165,50 @@ impl Range {
   }
 }
 
-#[derive(Debug, Clone, Error)]
+#[derive(Debug, Clone, Error, JsError)]
 pub enum JsrLoadError {
+  #[class(type)]
   #[error(
     "Unsupported checksum in JSR package manifest. Maybe try upgrading deno?"
   )]
   UnsupportedManifestChecksum,
+  #[class(inherit)]
   #[error(transparent)]
-  ContentChecksumIntegrity(ChecksumIntegrityError),
+  ContentChecksumIntegrity(#[inherit] ChecksumIntegrityError),
+  #[class(generic)]
   #[error("Loader should never return an external specifier for a jsr: specifier content load.")]
   ContentLoadExternalSpecifier,
+  #[class(generic)] // TODO: maybe inherit?
   #[error(transparent)]
   ContentLoad(Arc<LoadError>),
+  #[class(generic)] // TODO: maybe inherit?
   #[error("JSR package manifest for '{}' failed to load. {:#}", .0, .1)]
   PackageManifestLoad(String, Arc<LoadError>),
+  #[class("NotFound")]
   #[error("JSR package not found: {}", .0)]
   PackageNotFound(String),
+  #[class("NotFound")]
   #[error("JSR package version not found: {}", .0)]
   PackageVersionNotFound(PackageNv),
+  #[class(generic)] // TODO: maybe inherit?
   #[error("JSR package version manifest for '{}' failed to load: {:#}", .0, .1)]
   PackageVersionManifestLoad(PackageNv, Arc<LoadError>),
+  #[class(inherit)]
   #[error("JSR package version manifest for '{}' failed to load: {:#}", .0, .1)]
-  PackageVersionManifestChecksumIntegrity(PackageNv, ChecksumIntegrityError),
+  PackageVersionManifestChecksumIntegrity(
+    PackageNv,
+    #[inherit] ChecksumIntegrityError,
+  ),
+  #[class(inherit)]
   #[error(transparent)]
-  PackageFormat(JsrPackageFormatError),
+  PackageFormat(#[inherit] JsrPackageFormatError),
+  #[class("NotFound")]
   #[error("Could not find version of '{}' that matches specified version constraint '{}'", .0.name, .0.version_req)]
   PackageReqNotFound(PackageReq),
+  #[class(generic)]
   #[error("Redirects in the JSR registry are not supported (redirected to '{}')", .0)]
   RedirectInPackage(ModuleSpecifier),
+  #[class("NotFound")]
   #[error("Unknown export '{}' for '{}'.\n  Package exports:\n{}", export_name, .nv, .exports.iter().map(|e| format!(" * {}", e)).collect::<Vec<_>>().join("\n"))]
   UnknownExport {
     nv: PackageNv,
@@ -199,7 +217,8 @@ pub enum JsrLoadError {
   },
 }
 
-#[derive(Error, Debug, Clone)]
+#[derive(Error, Debug, Clone, JsError)]
+#[class(type)]
 pub enum JsrPackageFormatError {
   #[error(transparent)]
   JsrPackageParseError(PackageReqReferenceParseError),
@@ -207,49 +226,79 @@ pub enum JsrPackageFormatError {
   VersionTagNotSupported,
 }
 
-#[derive(Debug, Clone, Error)]
+#[derive(Debug, Clone, Error, JsError)]
 pub enum NpmLoadError {
+  #[class(type)]
   #[error("npm specifiers are not supported in this environment")]
   NotSupportedEnvironment,
+  #[class(inherit)]
   #[error(transparent)]
-  PackageReqResolution(Arc<anyhow::Error>),
+  PackageReqResolution(#[inherit] Arc<dyn JsErrorClass>),
+  #[class(inherit)]
   #[error(transparent)]
-  PackageReqReferenceParse(PackageReqReferenceParseError),
+  PackageReqReferenceParse(#[inherit] PackageReqReferenceParseError),
+  #[class(inherit)]
   #[error(transparent)]
-  RegistryInfo(Arc<anyhow::Error>),
+  RegistryInfo(#[inherit] Arc<dyn JsErrorClass>),
 }
 
-#[derive(Debug, Error, Clone)]
+#[derive(Debug, Error, Clone, JsError)]
 pub enum ModuleLoadError {
+  #[class(inherit)]
   #[error(transparent)]
-  HttpsChecksumIntegrity(ChecksumIntegrityError),
+  HttpsChecksumIntegrity(#[inherit] ChecksumIntegrityError),
+  #[class(type)] // TODO: maybe inherit?
   #[error(transparent)]
   Decode(Arc<std::io::Error>),
+  #[class(inherit)]
   #[error(transparent)]
-  Loader(Arc<LoadError>),
+  Loader(#[inherit] Arc<LoadError>),
+  #[class(inherit)]
   #[error(transparent)]
-  Jsr(#[from] JsrLoadError),
+  Jsr(
+    #[from]
+    #[inherit]
+    JsrLoadError,
+  ),
+  #[class(inherit)]
   #[error(transparent)]
-  NodeUnknownBuiltinModule(#[from] UnknownBuiltInNodeModuleError),
+  NodeUnknownBuiltinModule(
+    #[from]
+    #[inherit]
+    UnknownBuiltInNodeModuleError,
+  ),
+  #[class(inherit)]
   #[error(transparent)]
-  Npm(#[from] NpmLoadError),
+  Npm(
+    #[from]
+    #[inherit]
+    NpmLoadError,
+  ),
+  #[class(generic)]
   #[error("Too many redirects.")]
   TooManyRedirects,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsError)]
 pub enum ModuleError {
-  LoadingErr(ModuleSpecifier, Option<Range>, ModuleLoadError),
+  #[class(inherit)]
+  LoadingErr(ModuleSpecifier, Option<Range>, #[inherit] ModuleLoadError),
+  #[class("NotFound")]
   Missing(ModuleSpecifier, Option<Range>),
+  #[class("NotFound")]
   MissingDynamic(ModuleSpecifier, Range),
-  ParseErr(ModuleSpecifier, deno_ast::ParseDiagnostic),
+  #[class(inherit)]
+  ParseErr(ModuleSpecifier, #[inherit] ParseDiagnostic),
+  #[class(type)]
   UnsupportedMediaType(ModuleSpecifier, MediaType, Option<Range>),
+  #[class(syntax)]
   InvalidTypeAssertion {
     specifier: ModuleSpecifier,
     range: Range,
     actual_media_type: MediaType,
     expected_media_type: MediaType,
   },
+  #[class(type)]
   UnsupportedImportAttributeType {
     specifier: ModuleSpecifier,
     range: Range,
@@ -328,11 +377,14 @@ impl fmt::Display for ModuleError {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsError)]
 pub enum ModuleGraphError {
-  ModuleError(ModuleError),
-  ResolutionError(ResolutionError),
-  TypesResolutionError(ResolutionError),
+  #[class(inherit)]
+  ModuleError(#[inherit] ModuleError),
+  #[class(inherit)]
+  ResolutionError(#[inherit] ResolutionError),
+  #[class(inherit)]
+  TypesResolutionError(#[inherit] ResolutionError),
 }
 
 impl ModuleGraphError {
@@ -391,7 +443,8 @@ impl fmt::Display for ModuleGraphError {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsError)]
+#[class(type)]
 pub enum ResolutionError {
   InvalidDowngrade {
     specifier: ModuleSpecifier,
@@ -1593,7 +1646,7 @@ pub struct ModuleGraph {
   /// The result of resolving all npm dependencies of non-dynamic
   /// npm specifiers in the graph.
   #[serde(skip_serializing)]
-  pub npm_dep_graph_result: Result<(), Arc<anyhow::Error>>,
+  pub npm_dep_graph_result: Result<(), Arc<dyn JsErrorClass>>,
 }
 
 impl ModuleGraph {
@@ -2086,14 +2139,17 @@ fn resolve(
   }
   if let Some(npm_resolver) = maybe_npm_resolver {
     if npm_resolver.enables_bare_builtin_node_module() {
-      use import_map::ImportMapError;
+      use import_map::ImportMapErrorKind;
       use ResolveError::*;
       use SpecifierError::*;
       let res_ref = response.as_ref();
       if matches!(res_ref, Err(Specifier(ImportPrefixMissing { .. })))
         || matches!(
           res_ref,
-          Err(ImportMap(ImportMapError::UnmappedBareSpecifier(_, _)))
+          Err(ImportMap(error)) if matches!(
+            error.as_kind(),
+            ImportMapErrorKind::UnmappedBareSpecifier(_, _)
+          )
         )
       {
         if let Ok(specifier) =
@@ -4835,7 +4891,7 @@ fn validate_jsr_specifier(
 struct NpmSpecifierBuildPendingInfo {
   found_pkg_nvs: IndexSet<PackageNv>,
   module_slots: HashMap<ModuleSpecifier, ModuleSlot>,
-  dependencies_resolution: Option<Result<(), Arc<anyhow::Error>>>,
+  dependencies_resolution: Option<Result<(), Arc<dyn JsErrorClass>>>,
   redirects: HashMap<ModuleSpecifier, ModuleSpecifier>,
 }
 

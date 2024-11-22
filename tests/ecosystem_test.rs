@@ -179,7 +179,9 @@ impl deno_graph::source::Loader for Loader<'_> {
             specifier: specifier.clone(),
           })),
           Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
-          Err(err) => Err(anyhow::Error::from(err).into()),
+          Err(err) => Err(deno_graph::source::LoadError::Other(
+            std::sync::Arc::new(err),
+          )),
         }
       }
       "data" => deno_graph::source::load_data_url(specifier),
