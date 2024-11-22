@@ -175,7 +175,7 @@ pub enum JsrLoadError {
   UnsupportedManifestChecksum,
   #[class(inherit)]
   #[error(transparent)]
-  ContentChecksumIntegrity(#[inherit] ChecksumIntegrityError),
+  ContentChecksumIntegrity(ChecksumIntegrityError),
   #[class(generic)]
   #[error("Loader should never return an external specifier for a jsr: specifier content load.")]
   ContentLoadExternalSpecifier,
@@ -202,7 +202,7 @@ pub enum JsrLoadError {
   ),
   #[class(inherit)]
   #[error(transparent)]
-  PackageFormat(#[inherit] JsrPackageFormatError),
+  PackageFormat(JsrPackageFormatError),
   #[class("NotFound")]
   #[error("Could not find version of '{}' that matches specified version constraint '{}'", .0.name, .0.version_req)]
   PackageReqNotFound(PackageReq),
@@ -234,47 +234,35 @@ pub enum NpmLoadError {
   NotSupportedEnvironment,
   #[class(inherit)]
   #[error(transparent)]
-  PackageReqResolution(#[inherit] Arc<dyn JsErrorClass>),
+  PackageReqResolution(Arc<dyn JsErrorClass>),
   #[class(inherit)]
   #[error(transparent)]
-  PackageReqReferenceParse(#[inherit] PackageReqReferenceParseError),
+  PackageReqReferenceParse(PackageReqReferenceParseError),
   #[class(inherit)]
   #[error(transparent)]
-  RegistryInfo(#[inherit] Arc<dyn JsErrorClass>),
+  RegistryInfo(Arc<dyn JsErrorClass>),
 }
 
 #[derive(Debug, Error, Clone, JsError)]
 pub enum ModuleLoadError {
   #[class(inherit)]
   #[error(transparent)]
-  HttpsChecksumIntegrity(#[inherit] ChecksumIntegrityError),
+  HttpsChecksumIntegrity(ChecksumIntegrityError),
   #[class(type)] // TODO: maybe inherit?
   #[error(transparent)]
   Decode(Arc<std::io::Error>),
   #[class(inherit)]
   #[error(transparent)]
-  Loader(#[inherit] Arc<LoadError>),
+  Loader(Arc<LoadError>),
   #[class(inherit)]
   #[error(transparent)]
-  Jsr(
-    #[from]
-    #[inherit]
-    JsrLoadError,
-  ),
+  Jsr(#[from] JsrLoadError),
   #[class(inherit)]
   #[error(transparent)]
-  NodeUnknownBuiltinModule(
-    #[from]
-    #[inherit]
-    UnknownBuiltInNodeModuleError,
-  ),
+  NodeUnknownBuiltinModule(#[from] UnknownBuiltInNodeModuleError),
   #[class(inherit)]
   #[error(transparent)]
-  Npm(
-    #[from]
-    #[inherit]
-    NpmLoadError,
-  ),
+  Npm(#[from] NpmLoadError),
   #[class(generic)]
   #[error("Too many redirects.")]
   TooManyRedirects,
@@ -387,11 +375,11 @@ impl fmt::Display for ModuleError {
 #[derive(Debug, Clone, JsError)]
 pub enum ModuleGraphError {
   #[class(inherit)]
-  ModuleError(#[inherit] ModuleError),
+  ModuleError(ModuleError),
   #[class(inherit)]
-  ResolutionError(#[inherit] ResolutionError),
+  ResolutionError(ResolutionError),
   #[class(inherit)]
-  TypesResolutionError(#[inherit] ResolutionError),
+  TypesResolutionError(ResolutionError),
 }
 
 impl ModuleGraphError {

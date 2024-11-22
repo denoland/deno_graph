@@ -86,28 +86,16 @@ pub enum LoadError {
   UnsupportedScheme(String),
   #[class(inherit)]
   #[error(transparent)]
-  ChecksumIntegrity(
-    #[from]
-    #[inherit]
-    ChecksumIntegrityError,
-  ),
+  ChecksumIntegrity(#[from] ChecksumIntegrityError),
   #[class(inherit)]
   #[error(transparent)]
-  JsonParse(
-    #[from]
-    #[inherit]
-    serde_json::Error,
-  ),
+  JsonParse(#[from] serde_json::Error),
   #[class(inherit)]
   #[error(transparent)]
-  DataUrl(#[inherit] std::io::Error),
+  DataUrl(std::io::Error),
   #[class(inherit)]
   #[error(transparent)]
-  Other(
-    #[from]
-    #[inherit]
-    Arc<dyn JsErrorClass>,
-  ),
+  Other(#[from] Arc<dyn JsErrorClass>),
 }
 
 pub type LoadResult = Result<Option<LoadResponse>, LoadError>;
