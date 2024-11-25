@@ -197,6 +197,7 @@ mod tests {
   use source::CacheInfo;
   use source::MemoryLoader;
   use source::NpmResolvePkgReqsResult;
+  use source::ResolutionKind;
   use source::Source;
   use std::cell::RefCell;
   use std::collections::BTreeMap;
@@ -1924,6 +1925,7 @@ export const foo = 'bar';"#,
             line: 0,
             character: 36
           },
+          kind: None,
         }
       }
     );
@@ -1978,6 +1980,7 @@ export const foo = 'bar';"#,
             line: 0,
             character: 33
           },
+          kind: Some(ResolutionKind::Esm),
         }
       }
     );
@@ -2102,6 +2105,7 @@ export const foo = 'bar';"#,
             specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
             start: Position::zeroed(),
             end: Position::zeroed(),
+            kind: None,
           }),
         ),
       )],
@@ -2130,6 +2134,7 @@ export const foo = 'bar';"#,
           specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
           start: Position::zeroed(),
           end: Position::zeroed(),
+          kind: None,
         }
       }
     );
@@ -3305,6 +3310,7 @@ export const foo = 'bar';"#,
               specifier: specifier.clone(),
               start: Position::new(2, 22),
               end: Position::new(2, 30),
+              kind: Some(ResolutionKind::Esm),
             },
           })),
           maybe_type: Resolution::Ok(Box::new(ResolutionResolved {
@@ -3313,6 +3319,7 @@ export const foo = 'bar';"#,
               specifier: specifier.clone(),
               start: Position::new(1, 19),
               end: Position::new(1, 29),
+              kind: Some(ResolutionKind::Esm),
             },
           })),
           maybe_deno_types_specifier: Some("./a.d.ts".to_string()),
@@ -3323,6 +3330,7 @@ export const foo = 'bar';"#,
               specifier: specifier.clone(),
               start: Position::new(2, 22),
               end: Position::new(2, 30),
+              kind: Some(ResolutionKind::Esm),
             },
             is_dynamic: false,
             attributes: Default::default(),
@@ -3740,11 +3748,13 @@ export function a(a) {
     assert_eq!(
       json!(actual),
       json!({
+        "kind": "esm",
         "dependencies": [
           {
             "specifier": "./types.d.ts",
             "type": {
               "specifier": "file:///a/types.d.ts",
+              "kind": "esm",
               "span": {
                 "start": {
                   "line": 4,
@@ -3761,6 +3771,7 @@ export function a(a) {
             "specifier": "./other.ts",
             "type": {
               "specifier": "file:///a/other.ts",
+              "kind": "esm",
               "span": {
                 "start": {
                   "line": 5,
@@ -3774,7 +3785,6 @@ export function a(a) {
             }
           }
         ],
-        "kind": "esm",
         "mediaType": "JavaScript",
         "size": 137,
         "specifier": "file:///a/test.js"
@@ -4422,6 +4432,7 @@ export function a(a: A): B {
                   "specifier": "./a",
                   "code": {
                     "specifier": "file:///a/a.js",
+                    "kind": "esm",
                     "span": {
                       "start": {
                         "line": 1,
@@ -4435,6 +4446,7 @@ export function a(a: A): B {
                   },
                   "type": {
                     "specifier": "file:///a/a.d.ts",
+                    "kind": "esm",
                     "span": {
                       "start": {
                         "line": 1,
@@ -4491,6 +4503,7 @@ export function a(a: A): B {
                   "specifier": "./a",
                   "code": {
                     "specifier": "file:///a/a.js",
+                    "kind": "esm",
                     "span": {
                       "start": {
                         "line": 1,

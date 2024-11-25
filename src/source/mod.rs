@@ -366,7 +366,7 @@ pub enum ResolveError {
 }
 
 /// The kind of resolution currently being done by deno_graph.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ResolutionMode {
   /// Resolving for code that will be executed.
   Execution,
@@ -378,6 +378,15 @@ impl ResolutionMode {
   pub fn is_types(&self) -> bool {
     *self == ResolutionMode::Types
   }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ResolutionKind {
+  /// Resolving as an ES module.
+  Esm,
+  /// Resolving as a CJS module.
+  Cjs,
 }
 
 /// A trait which allows the module graph to resolve specifiers and type only

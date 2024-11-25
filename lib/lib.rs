@@ -371,6 +371,7 @@ mod tests {
           specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
           start: Position::zeroed(),
           end: Position::zeroed(),
+          kind: None,
         })
       })
     );

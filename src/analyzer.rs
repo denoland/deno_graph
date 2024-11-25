@@ -18,6 +18,7 @@ use serde::Serializer;
 
 use crate::ast::DENO_TYPES_RE;
 use crate::graph::Position;
+use crate::source::ResolutionKind;
 use crate::DefaultModuleAnalyzer;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize)]
@@ -199,10 +200,48 @@ pub struct SpecifierWithRange {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub enum TypeScriptTypesResolutionMode {
+  Require,
+  Import,
+}
+
+impl TypeScriptTypesResolutionMode {
+  pub fn from_str(text: &str) -> Option<Self> {
+    match text {
+      "import" => Some(Self::Import),
+      "require" => Some(Self::Require),
+      _ => None,
+    }
+  }
+
+  pub fn as_resolution_kind(&self) -> ResolutionKind {
+    match self {
+      Self::Require => ResolutionKind::Cjs,
+      Self::Import => ResolutionKind::Esm,
+    }
+  }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 #[serde(tag = "type")]
 pub enum TypeScriptReference {
   Path(SpecifierWithRange),
-  Types(SpecifierWithRange),
+  Types {
+    #[serde(flatten)]
+    specifier: SpecifierWithRange,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    resolution_mode: Option<TypeScriptTypesResolutionMode>,
+  },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JsDocImportInfo {
+  #[serde(flatten)]
+  pub specifier: SpecifierWithRange,
+  #[serde(skip_serializing_if = "Option::is_none", default)]
+  pub resolution_mode: Option<TypeScriptTypesResolutionMode>,
 }
 
 /// Information about JS/TS module.
@@ -231,7 +270,7 @@ pub struct ModuleInfo {
   /// Type imports in JSDoc comment blocks (e.g. `{import("./types.d.ts").Type}`)
   /// or `@import { SomeType } from "npm:some-module"`.
   #[serde(skip_serializing_if = "Vec::is_empty", default)]
-  pub jsdoc_imports: Vec<SpecifierWithRange>,
+  pub jsdoc_imports: Vec<JsDocImportInfo>,
 }
 
 pub fn module_graph_1_to_2(module_info: &mut serde_json::Value) {
@@ -481,13 +520,36 @@ mod test {
             end: Position::zeroed(),
           },
         }),
-        TypeScriptReference::Types(SpecifierWithRange {
-          text: "b".to_string(),
-          range: PositionRange {
-            start: Position::zeroed(),
-            end: Position::zeroed(),
+        TypeScriptReference::Types {
+          specifier: SpecifierWithRange {
+            text: "b".to_string(),
+            range: PositionRange {
+              start: Position::zeroed(),
+              end: Position::zeroed(),
+            },
           },
-        }),
+          resolution_mode: None,
+        },
+        TypeScriptReference::Types {
+          specifier: SpecifierWithRange {
+            text: "node".to_string(),
+            range: PositionRange {
+              start: Position::zeroed(),
+              end: Position::zeroed(),
+            },
+          },
+          resolution_mode: Some(TypeScriptTypesResolutionMode::Require),
+        },
+        TypeScriptReference::Types {
+          specifier: SpecifierWithRange {
+            text: "node-esm".to_string(),
+            range: PositionRange {
+              start: Position::zeroed(),
+              end: Position::zeroed(),
+            },
+          },
+          resolution_mode: Some(TypeScriptTypesResolutionMode::Import),
+        },
       ]),
       self_types_specifier: None,
       jsx_import_source: None,
@@ -507,6 +569,16 @@ mod test {
           "type": "types",
           "text": "b",
           "range": [[0, 0], [0, 0]],
+        }, {
+          "type": "types",
+          "text": "node",
+          "range": [[0, 0], [0, 0]],
+          "resolutionMode": "require",
+        }, {
+          "type": "types",
+          "text": "node-esm",
+          "range": [[0, 0], [0, 0]],
+          "resolutionMode": "import",
         }]
       }),
     );
@@ -611,13 +683,38 @@ mod test {
       self_types_specifier: None,
       jsx_import_source: None,
       jsx_import_source_types: None,
-      jsdoc_imports: Vec::from([SpecifierWithRange {
-        text: "a".to_string(),
-        range: PositionRange {
-          start: Position::zeroed(),
-          end: Position::zeroed(),
+      jsdoc_imports: Vec::from([
+        JsDocImportInfo {
+          specifier: SpecifierWithRange {
+            text: "a".to_string(),
+            range: PositionRange {
+              start: Position::zeroed(),
+              end: Position::zeroed(),
+            },
+          },
+          resolution_mode: None,
         },
-      }]),
+        JsDocImportInfo {
+          specifier: SpecifierWithRange {
+            text: "b".to_string(),
+            range: PositionRange {
+              start: Position::zeroed(),
+              end: Position::zeroed(),
+            },
+          },
+          resolution_mode: Some(TypeScriptTypesResolutionMode::Import),
+        },
+        JsDocImportInfo {
+          specifier: SpecifierWithRange {
+            text: "c".to_string(),
+            range: PositionRange {
+              start: Position::zeroed(),
+              end: Position::zeroed(),
+            },
+          },
+          resolution_mode: Some(TypeScriptTypesResolutionMode::Require),
+        },
+      ]),
     };
     run_serialization_test(
       &module_info,
@@ -627,6 +724,14 @@ mod test {
         "jsdocImports": [{
           "text": "a",
           "range": [[0, 0], [0, 0]],
+        }, {
+          "text": "b",
+          "range": [[0, 0], [0, 0]],
+          "resolutionMode": "import",
+        }, {
+          "text": "c",
+          "range": [[0, 0], [0, 0]],
+          "resolutionMode": "require",
         }]
       }),
     );
