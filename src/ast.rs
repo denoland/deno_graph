@@ -710,23 +710,16 @@ fn analyze_jsdoc_imports(
     let js_docs = comment
       .text
       .match_indices("{")
-      .map(|(i, _)| {
+      .filter_map(|(i, _)| {
         parse_jsdoc_dynamic_import(&comment.text[i..])
           .ok()
           .map(|(_input, jsdoc)| (i, jsdoc))
       })
-      .flatten()
-      .chain(
-        comment
-          .text
-          .match_indices("@import")
-          .map(|(i, _)| {
-            parse_jsdoc_import_decl(&comment.text[i..])
-              .ok()
-              .map(|(_input, jsdoc)| (i, jsdoc))
-          })
-          .flatten(),
-      );
+      .chain(comment.text.match_indices("@import").filter_map(|(i, _)| {
+        parse_jsdoc_import_decl(&comment.text[i..])
+          .ok()
+          .map(|(_input, jsdoc)| (i, jsdoc))
+      }));
     for (byte_index, js_doc) in js_docs {
       deps.push(JsDocImportInfo {
         specifier: SpecifierWithRange {
