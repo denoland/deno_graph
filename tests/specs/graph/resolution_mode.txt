@@ -1,0 +1,133 @@
+# mod.ts
+export type * from "./declarations.d.ts";
+
+# declarations.d.ts
+import type { Test } from "./a.d.ts" with {
+  "resolution-mode": "import"
+};
+export type { Test };
+export type { Test2 } from "./b.d.ts" with {
+  "resolution-mode": "require"
+};
+// this one won't have a resolution mode because we're in a .d.ts file
+export type { Test3 } from "./c.d.ts";
+
+# a.d.ts
+export class Test {}
+
+# b.d.ts
+export class Test2 {}
+
+# c.d.ts
+export class Test3 {}
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "size": 21,
+      "mediaType": "Dts",
+      "specifier": "file:///a.d.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 22,
+      "mediaType": "Dts",
+      "specifier": "file:///b.d.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 22,
+      "mediaType": "Dts",
+      "specifier": "file:///c.d.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./a.d.ts",
+          "type": {
+            "specifier": "file:///a.d.ts",
+            "mode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 26
+              },
+              "end": {
+                "line": 0,
+                "character": 36
+              }
+            }
+          }
+        },
+        {
+          "specifier": "./b.d.ts",
+          "type": {
+            "specifier": "file:///b.d.ts",
+            "mode": "require",
+            "span": {
+              "start": {
+                "line": 4,
+                "character": 27
+              },
+              "end": {
+                "line": 4,
+                "character": 37
+              }
+            }
+          }
+        },
+        {
+          "specifier": "./c.d.ts",
+          "type": {
+            "specifier": "file:///c.d.ts",
+            "span": {
+              "start": {
+                "line": 8,
+                "character": 27
+              },
+              "end": {
+                "line": 8,
+                "character": 37
+              }
+            }
+          }
+        }
+      ],
+      "size": 288,
+      "mediaType": "Dts",
+      "specifier": "file:///declarations.d.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./declarations.d.ts",
+          "type": {
+            "specifier": "file:///declarations.d.ts",
+            "mode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 19
+              },
+              "end": {
+                "line": 0,
+                "character": 40
+              }
+            }
+          }
+        }
+      ],
+      "size": 42,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}
