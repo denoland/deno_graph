@@ -18,6 +18,7 @@ module.exports.test = {};
           "specifier": "https://deno.land/file.cjs",
           "code": {
             "specifier": "https://deno.land/file.cjs",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 0,

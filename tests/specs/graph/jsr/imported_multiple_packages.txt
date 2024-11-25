@@ -54,6 +54,7 @@ import "jsr:@scope/c";
           "specifier": "jsr:@scope/c",
           "code": {
             "specifier": "jsr:@scope/c",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -84,6 +85,7 @@ import "jsr:@scope/c";
           "specifier": "jsr:@scope/a",
           "code": {
             "specifier": "jsr:@scope/a",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -108,6 +110,7 @@ import "jsr:@scope/c";
           "specifier": "jsr:@scope/a",
           "code": {
             "specifier": "jsr:@scope/a",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -124,6 +127,7 @@ import "jsr:@scope/c";
           "specifier": "jsr:@scope/b",
           "code": {
             "specifier": "jsr:@scope/b",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 1,

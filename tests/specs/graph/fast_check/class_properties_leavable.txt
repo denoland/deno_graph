@@ -34,6 +34,7 @@ import 'jsr:@scope/a'
           "specifier": "jsr:@scope/a",
           "code": {
             "specifier": "jsr:@scope/a",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -64,6 +65,7 @@ import 'jsr:@scope/a'
           "specifier": "./b.ts",
           "type": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/b.ts",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -103,6 +105,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     "./b.ts": {
       "type": {
         "specifier": "https://jsr.io/@scope/a/1.0.0/b.ts",
+        "mode": "import",
         "span": {
           "start": {
             "line": 0,

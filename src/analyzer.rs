@@ -18,7 +18,7 @@ use serde::Serializer;
 
 use crate::ast::DENO_TYPES_RE;
 use crate::graph::Position;
-use crate::source::ResolutionKind;
+use crate::source::ResolutionMode;
 use crate::DefaultModuleAnalyzer;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize)]
@@ -214,10 +214,10 @@ impl TypeScriptTypesResolutionMode {
     }
   }
 
-  pub fn as_resolution_kind(&self) -> ResolutionKind {
+  pub fn as_deno_graph(&self) -> ResolutionMode {
     match self {
-      Self::Require => ResolutionKind::Cjs,
-      Self::Import => ResolutionKind::Esm,
+      Self::Require => ResolutionMode::Require,
+      Self::Import => ResolutionMode::Import,
     }
   }
 }
@@ -227,6 +227,7 @@ impl TypeScriptTypesResolutionMode {
 #[serde(tag = "type")]
 pub enum TypeScriptReference {
   Path(SpecifierWithRange),
+  #[serde(rename_all = "camelCase")]
   Types {
     #[serde(flatten)]
     specifier: SpecifierWithRange,

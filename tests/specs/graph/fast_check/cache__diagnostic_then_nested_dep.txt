@@ -60,6 +60,7 @@ import 'jsr:@scope/a'
           "specifier": "jsr:@scope/a",
           "code": {
             "specifier": "jsr:@scope/a",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -84,6 +85,7 @@ import 'jsr:@scope/a'
           "specifier": "jsr:@scope/b@1",
           "code": {
             "specifier": "jsr:@scope/b@1",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 1,
@@ -100,6 +102,7 @@ import 'jsr:@scope/a'
           "specifier": "jsr:@scope/c@1",
           "code": {
             "specifier": "jsr:@scope/c@1",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 6,
@@ -124,6 +127,7 @@ import 'jsr:@scope/a'
           "specifier": "./a.ts",
           "code": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 4,

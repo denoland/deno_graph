@@ -21,6 +21,7 @@ import 'jsr:@scope/a@1.0.1/mod.ts';
           "specifier": "jsr:@scope/a@1.0.1/mod.ts",
           "code": {
             "specifier": "jsr:@scope/a@1.0.1/mod.ts",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 0,

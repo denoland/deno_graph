@@ -135,7 +135,7 @@ pub struct Range {
   #[serde(default = "Position::zeroed")]
   pub end: Position,
   #[serde(default, skip_serializing)]
-  pub kind: Option<ResolutionKind>,
+  pub mode: Option<ResolutionMode>,
 }
 
 impl fmt::Display for Range {
@@ -154,13 +154,13 @@ impl Range {
   pub(crate) fn from_position_range(
     specifier: ModuleSpecifier,
     range: PositionRange,
-    kind: Option<ResolutionKind>,
+    kind: Option<ResolutionMode>,
   ) -> Range {
     Range {
       specifier,
       start: range.start,
       end: range.end,
-      kind,
+      mode: kind,
     }
   }
 
@@ -348,10 +348,10 @@ pub enum ModuleGraphError {
 }
 
 impl ModuleGraphError {
-  fn for_resolution_mode(mode: ResolutionMode, error: ResolutionError) -> Self {
-    match mode {
-      ResolutionMode::Execution => Self::ResolutionError(error),
-      ResolutionMode::Types => Self::TypesResolutionError(error),
+  fn for_resolution_kind(kind: ResolutionKind, error: ResolutionError) -> Self {
+    match kind {
+      ResolutionKind::Execution => Self::ResolutionError(error),
+      ResolutionKind::Types => Self::TypesResolutionError(error),
     }
   }
 
@@ -760,7 +760,7 @@ impl Dependency {
         resolve(
           specifier,
           r.clone(),
-          ResolutionMode::Execution,
+          ResolutionKind::Execution,
           jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
@@ -777,7 +777,7 @@ impl Dependency {
             .as_deref()
             .unwrap_or(specifier),
           r.clone(),
-          ResolutionMode::Types,
+          ResolutionKind::Types,
           jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
@@ -816,7 +816,7 @@ impl TypesDependency {
         resolve(
           &self.specifier,
           r.clone(),
-          ResolutionMode::Types,
+          ResolutionKind::Types,
           jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
@@ -1155,12 +1155,12 @@ impl GraphImport {
           specifier: referrer.clone(),
           start: Position::zeroed(),
           end: Position::zeroed(),
-          kind: None,
+          mode: None,
         };
         let maybe_type = resolve(
           &import,
           referrer_range,
-          ResolutionMode::Types,
+          ResolutionKind::Types,
           jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
@@ -1475,7 +1475,7 @@ impl<'a> ModuleGraphErrorIterator<'a> {
   fn check_resolution(
     &self,
     module: &JsModule,
-    mode: ResolutionMode,
+    kind: ResolutionKind,
     specifier_text: &str,
     resolution: &Resolution,
     is_dynamic: bool,
@@ -1485,8 +1485,8 @@ impl<'a> ModuleGraphErrorIterator<'a> {
         let referrer_scheme = module.specifier.scheme();
         let specifier_scheme = resolved.specifier.scheme();
         if referrer_scheme == "https" && specifier_scheme == "http" {
-          Some(ModuleGraphError::for_resolution_mode(
-            mode,
+          Some(ModuleGraphError::for_resolution_kind(
+            kind,
             ResolutionError::InvalidDowngrade {
               specifier: resolved.specifier.clone(),
               range: resolved.range.clone(),
@@ -1496,8 +1496,8 @@ impl<'a> ModuleGraphErrorIterator<'a> {
           && matches!(specifier_scheme, "file")
           && specifier_text.to_lowercase().starts_with("file://")
         {
-          Some(ModuleGraphError::for_resolution_mode(
-            mode,
+          Some(ModuleGraphError::for_resolution_kind(
+            kind,
             ResolutionError::InvalidLocalImport {
               specifier: resolved.specifier.clone(),
               range: resolved.range.clone(),
@@ -1533,7 +1533,7 @@ impl<'a> ModuleGraphErrorIterator<'a> {
         }
       }
       Resolution::Err(err) => {
-        Some(ModuleGraphError::for_resolution_mode(mode, *err.clone()))
+        Some(ModuleGraphError::for_resolution_kind(kind, *err.clone()))
       }
       Resolution::None => None,
     }
@@ -1556,7 +1556,7 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
               if let Some(dep) = module.maybe_types_dependency.as_ref() {
                 if let Some(err) = self.check_resolution(
                   module,
-                  ResolutionMode::Types,
+                  ResolutionKind::Types,
                   &dep.specifier,
                   &dep.dependency,
                   false,
@@ -1577,7 +1577,7 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
               if follow_dynamic || !dep.is_dynamic {
                 if let Some(err) = self.check_resolution(
                   module,
-                  ResolutionMode::Execution,
+                  ResolutionKind::Execution,
                   specifier_text,
                   &dep.maybe_code,
                   dep.is_dynamic,
@@ -1587,7 +1587,7 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
                 if check_types {
                   if let Some(err) = self.check_resolution(
                     module,
-                    ResolutionMode::Types,
+                    ResolutionKind::Types,
                     specifier_text,
                     &dep.maybe_type,
                     dep.is_dynamic,
@@ -2115,18 +2115,18 @@ impl ModuleGraph {
 fn resolve(
   specifier_text: &str,
   referrer_range: Range,
-  mode: ResolutionMode,
+  resolution_kind: ResolutionKind,
   jsr_url_provider: &dyn JsrUrlProvider,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> Resolution {
   let response = if let Some(resolver) = maybe_resolver {
-    resolver.resolve(specifier_text, &referrer_range, mode)
+    resolver.resolve(specifier_text, &referrer_range, resolution_kind)
   } else {
     resolve_import(specifier_text, &referrer_range.specifier)
       .map_err(|err| err.into())
   };
-  if mode.is_types() {
+  if resolution_kind.is_types() {
     if let Ok(resolved_url) = &response {
       if let Some(package_nv) = jsr_url_provider.package_url_to_nv(resolved_url)
       {
@@ -2511,7 +2511,7 @@ pub(crate) fn parse_js_module_from_module_info(
         dependency: resolve(
           &specifier.text,
           range.clone(),
-          ResolutionMode::Types,
+          ResolutionKind::Types,
           jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
@@ -2535,7 +2535,7 @@ pub(crate) fn parse_js_module_from_module_info(
             dep.maybe_type = resolve(
               &specifier.text,
               range.clone(),
-              ResolutionMode::Types,
+              ResolutionKind::Types,
               jsr_url_provider,
               maybe_resolver,
               maybe_npm_resolver,
@@ -2560,15 +2560,12 @@ pub(crate) fn parse_js_module_from_module_info(
           let range = Range::from_position_range(
             module.specifier.clone(),
             specifier.range,
-            mode.map(|mode| match mode {
-              TypeScriptTypesResolutionMode::Require => ResolutionKind::Cjs,
-              TypeScriptTypesResolutionMode::Import => ResolutionKind::Esm,
-            }),
+            mode.map(|mode| mode.as_deno_graph()),
           );
           let dep_resolution = resolve(
             &specifier.text,
             range.clone(),
-            ResolutionMode::Types,
+            ResolutionKind::Types,
             jsr_url_provider,
             maybe_resolver,
             maybe_npm_resolver,
@@ -2654,7 +2651,7 @@ pub(crate) fn parse_js_module_from_module_info(
         dep.maybe_code = resolve(
           &specifier_text,
           range.clone(),
-          ResolutionMode::Execution,
+          ResolutionKind::Execution,
           jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
@@ -2688,7 +2685,7 @@ pub(crate) fn parse_js_module_from_module_info(
           dep.maybe_type = resolve(
             &specifier_text,
             range,
-            ResolutionMode::Types,
+            ResolutionKind::Types,
             jsr_url_provider,
             maybe_resolver,
             maybe_npm_resolver,
@@ -2698,7 +2695,7 @@ pub(crate) fn parse_js_module_from_module_info(
           let types_resolution = resolve(
             &specifier_text,
             range.clone(),
-            ResolutionMode::Types,
+            ResolutionKind::Types,
             jsr_url_provider,
             maybe_resolver,
             maybe_npm_resolver,
@@ -2733,13 +2730,13 @@ pub(crate) fn parse_js_module_from_module_info(
         specifier.range,
         jsdoc_import
           .resolution_mode
-          .map(|mode| mode.as_resolution_kind()),
+          .map(|mode| mode.as_deno_graph()),
       );
       if dep.maybe_type.is_none() {
         dep.maybe_type = resolve(
           &specifier.text,
           specifier_range.clone(),
-          ResolutionMode::Types,
+          ResolutionKind::Types,
           jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
@@ -2763,14 +2760,14 @@ pub(crate) fn parse_js_module_from_module_info(
           specifier: module.specifier.clone(),
           start: Position::zeroed(),
           end: Position::zeroed(),
-          kind: None,
+          mode: None,
         };
         module.maybe_types_dependency = Some(TypesDependency {
           specifier: types_header.to_string(),
           dependency: resolve(
             types_header,
             range,
-            ResolutionMode::Types,
+            ResolutionKind::Types,
             jsr_url_provider,
             maybe_resolver,
             maybe_npm_resolver,
@@ -2800,7 +2797,7 @@ pub(crate) fn parse_js_module_from_module_info(
                   specifier,
                   start: Position::zeroed(),
                   end: Position::zeroed(),
-                  kind: None,
+                  mode: None,
                 }),
               })),
             })
@@ -2816,7 +2813,7 @@ pub(crate) fn parse_js_module_from_module_info(
                   specifier: module.specifier.clone(),
                   start: Position::zeroed(),
                   end: Position::zeroed(),
-                  kind: None,
+                  mode: None,
                 },
               },
             )),
@@ -2909,14 +2906,14 @@ fn fill_module_dependencies(
                 .and_then(|s| {
                   TypeScriptTypesResolutionMode::from_str(s.as_str())
                 })
-                .map(|m| m.as_resolution_kind())
+                .map(|m| m.as_deno_graph())
             })
             .flatten()
             .or_else(|| {
               if media_type.is_declaration() {
                 None
               } else {
-                Some(ResolutionKind::Esm)
+                Some(ResolutionMode::Import)
               }
             }),
         );
@@ -2965,10 +2962,10 @@ fn fill_module_dependencies(
               if media_type.is_declaration() {
                 None
               } else {
-                Some(ResolutionKind::Esm)
+                Some(ResolutionMode::Import)
               }
             }
-            DynamicDependencyKind::Require => Some(ResolutionKind::Cjs),
+            DynamicDependencyKind::Require => Some(ResolutionMode::Require),
           },
         );
         (
@@ -3008,9 +3005,9 @@ fn fill_module_dependencies(
             Range::from_position_range(
               module_specifier.clone(),
               types_specifier.range,
-              import.specifier_range.kind,
+              import.specifier_range.mode,
             ),
-            ResolutionMode::Types,
+            ResolutionKind::Types,
             jsr_url_provider,
             maybe_resolver,
             maybe_npm_resolver,
@@ -3022,7 +3019,7 @@ fn fill_module_dependencies(
           dep.maybe_type = resolve(
             &import.specifier,
             import.specifier_range.clone(),
-            ResolutionMode::Types,
+            ResolutionKind::Types,
             jsr_url_provider,
             maybe_resolver,
             maybe_npm_resolver,
@@ -3034,7 +3031,7 @@ fn fill_module_dependencies(
         dep.maybe_code = resolve(
           &import.specifier,
           import.specifier_range.clone(),
-          ResolutionMode::Execution,
+          ResolutionKind::Execution,
           jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
@@ -3051,7 +3048,7 @@ fn fill_module_dependencies(
         let maybe_type = resolve(
           &import.specifier,
           import.specifier_range.clone(),
-          ResolutionMode::Types,
+          ResolutionKind::Types,
           jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
@@ -5302,8 +5299,8 @@ impl Serialize for Resolution {
       Resolution::Ok(resolved) => {
         let mut state = serializer.serialize_struct("ResolvedSpecifier", 3)?;
         state.serialize_field("specifier", &resolved.specifier)?;
-        if resolved.range.kind.is_some() {
-          state.serialize_field("kind", &resolved.range.kind)?;
+        if resolved.range.mode.is_some() {
+          state.serialize_field("mode", &resolved.range.mode)?;
         }
         state.serialize_field("span", &resolved.range)?;
         state.end()
@@ -5312,8 +5309,8 @@ impl Serialize for Resolution {
         let mut state = serializer.serialize_struct("ResolvedError", 3)?;
         state.serialize_field("error", &err.to_string())?;
         let range = err.range();
-        if range.kind.is_some() {
-          state.serialize_field("kind", &range.kind)?;
+        if range.mode.is_some() {
+          state.serialize_field("mode", &range.mode)?;
         }
         state.serialize_field("span", range)?;
         state.end()
@@ -5393,7 +5390,7 @@ mod tests {
         line: 1,
         character: 30,
       },
-      kind: None,
+      mode: None,
     };
     assert!(range.includes(&Position {
       line: 1,
@@ -5455,7 +5452,7 @@ mod tests {
             line: 0,
             character: 27,
           },
-          kind: None,
+          mode: None,
         },
       })),
       imports: vec![
@@ -5472,7 +5469,7 @@ mod tests {
               line: 0,
               character: 27,
             },
-            kind: None,
+            mode: None,
           },
           is_dynamic: false,
           attributes: Default::default(),
@@ -5490,7 +5487,7 @@ mod tests {
               line: 1,
               character: 27,
             },
-            kind: None,
+            mode: None,
           },
           is_dynamic: false,
           attributes: Default::default(),
@@ -5513,7 +5510,7 @@ mod tests {
           line: 0,
           character: 27
         },
-        kind: None,
+        mode: None,
       })
     );
     assert_eq!(
@@ -5531,7 +5528,7 @@ mod tests {
           line: 1,
           character: 27
         },
-        kind: None,
+        mode: None,
       })
     );
     assert_eq!(
@@ -5553,7 +5550,7 @@ mod tests {
           specifier: referrer.clone(),
           start: Position::zeroed(),
           end: Position::zeroed(),
-          kind: None,
+          mode: None,
         },
       })),
       maybe_type: Resolution::Ok(Box::new(ResolutionResolved {
@@ -5562,7 +5559,7 @@ mod tests {
           specifier: referrer.clone(),
           start: Position::zeroed(),
           end: Position::zeroed(),
-          kind: None,
+          mode: None,
         },
       })),
       maybe_deno_types_specifier: Some("./b.d.ts".to_string()),
@@ -5579,7 +5576,7 @@ mod tests {
             specifier: referrer.clone(),
             start: Position::zeroed(),
             end: Position::zeroed(),
-            kind: None,
+            mode: None,
           },
         })),
         maybe_type: Resolution::Ok(Box::new(ResolutionResolved {
@@ -5588,7 +5585,7 @@ mod tests {
             specifier: referrer.clone(),
             start: Position::zeroed(),
             end: Position::zeroed(),
-            kind: None,
+            mode: None,
           },
         })),
         maybe_deno_types_specifier: Some("./b.d.ts".to_string()),
@@ -5608,7 +5605,7 @@ mod tests {
           specifier: referrer.clone(),
           start: Position::zeroed(),
           end: Position::zeroed(),
-          kind: None,
+          mode: None,
         },
       })),
     };
@@ -5624,7 +5621,7 @@ mod tests {
             specifier: referrer.clone(),
             start: Position::zeroed(),
             end: Position::zeroed(),
-            kind: None,
+            mode: None,
           },
         })),
       }
@@ -5972,7 +5969,7 @@ mod tests {
             line: 0,
             character: 82,
           },
-          kind: None,
+          mode: Some(ResolutionMode::Import),
         },
         specifier: ModuleSpecifier::parse("http://deno.land/foo.js").unwrap(),
       },
@@ -5991,7 +5988,7 @@ mod tests {
             line: 0,
             character: 48,
           },
-          kind: None,
+          mode: Some(ResolutionMode::Import),
         },
         specifier: ModuleSpecifier::parse("file:///bar.js").unwrap(),
       },
@@ -6011,7 +6008,7 @@ mod tests {
             line: 0,
             character: 23,
           },
-          kind: None,
+          mode: Some(ResolutionMode::Import),
         },
         specifier: ModuleSpecifier::parse("file:///baz.js").unwrap(),
       },
@@ -6153,7 +6150,7 @@ mod tests {
               line: 1,
               character: 52,
             },
-            kind: None,
+            mode: None,
           },
           is_dynamic: false,
           attributes: ImportAttributes::None,
@@ -6171,7 +6168,7 @@ mod tests {
               line: 2,
               character: 53,
             },
-            kind: None,
+            mode: None,
           },
           is_dynamic: false,
           attributes: ImportAttributes::None,
@@ -6189,7 +6186,7 @@ mod tests {
               line: 4,
               character: 39,
             },
-            kind: None,
+            mode: Some(ResolutionMode::Import),
           },
           is_dynamic: false,
           attributes: ImportAttributes::None,
@@ -6207,7 +6204,7 @@ mod tests {
               line: 5,
               character: 45,
             },
-            kind: None,
+            mode: Some(ResolutionMode::Import),
           },
           is_dynamic: true,
           attributes: ImportAttributes::None,
@@ -6225,7 +6222,7 @@ mod tests {
               line: 6,
               character: 45,
             },
-            kind: None,
+            mode: Some(ResolutionMode::Import),
           },
           is_dynamic: true,
           attributes: ImportAttributes::Unknown,
@@ -6243,7 +6240,7 @@ mod tests {
               line: 8,
               character: 52,
             },
-            kind: None,
+            mode: Some(ResolutionMode::Import),
           },
           is_dynamic: false,
           attributes: ImportAttributes::None,
@@ -6265,14 +6262,14 @@ mod tests {
             line: 7,
             character: 41,
           },
-          kind: None,
+          mode: Some(ResolutionMode::Import),
         },
         is_dynamic: false,
         attributes: ImportAttributes::Known(HashMap::from_iter(vec![(
           "type".to_string(),
           ImportAttribute::Known("json".to_string())
         )])),
-      },]
+      }]
     );
   }
 
@@ -6366,14 +6363,14 @@ mod tests {
         &self,
         specifier_text: &str,
         referrer_range: &Range,
-        mode: ResolutionMode,
+        resolution_kind: ResolutionKind,
       ) -> Result<ModuleSpecifier, ResolveError> {
         if specifier_text == "foo/jsx-runtime" {
-          match mode {
-            ResolutionMode::Execution => {
+          match resolution_kind {
+            ResolutionKind::Execution => {
               Ok(ModuleSpecifier::parse("file:///foo/jsx-runtime").unwrap())
             }
-            ResolutionMode::Types => Ok(
+            ResolutionKind::Types => Ok(
               ModuleSpecifier::parse("file:///foo/types/jsx-runtime").unwrap(),
             ),
           }

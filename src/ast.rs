@@ -1559,7 +1559,7 @@ export {};
     fn parse_resolution_mode(
       text: &str,
     ) -> Option<TypeScriptTypesResolutionMode> {
-      parse_jsdoc_import_decl(text)
+      parse_jsdoc_dynamic_import(text)
         .ok()
         .and_then(|v| v.1.resolution_mode)
     }

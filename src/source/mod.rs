@@ -367,26 +367,26 @@ pub enum ResolveError {
 
 /// The kind of resolution currently being done by deno_graph.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum ResolutionMode {
+pub enum ResolutionKind {
   /// Resolving for code that will be executed.
   Execution,
   /// Resolving for code that will be used for type information.
   Types,
 }
 
-impl ResolutionMode {
+impl ResolutionKind {
   pub fn is_types(&self) -> bool {
-    *self == ResolutionMode::Types
+    *self == ResolutionKind::Types
   }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub enum ResolutionKind {
+pub enum ResolutionMode {
   /// Resolving as an ES module.
-  Esm,
+  Import,
   /// Resolving as a CJS module.
-  Cjs,
+  Require,
 }
 
 /// A trait which allows the module graph to resolve specifiers and type only
@@ -421,7 +421,7 @@ pub trait Resolver: fmt::Debug {
     &self,
     specifier_text: &str,
     referrer_range: &Range,
-    _mode: ResolutionMode,
+    _kind: ResolutionKind,
   ) -> Result<ModuleSpecifier, ResolveError> {
     Ok(resolve_import(specifier_text, &referrer_range.specifier)?)
   }
@@ -926,7 +926,7 @@ pub mod tests {
       &self,
       specifier: &str,
       referrer_range: &Range,
-      _mode: ResolutionMode,
+      _resolution_kind: ResolutionKind,
     ) -> Result<ModuleSpecifier, ResolveError> {
       if let Some(map) = self.map.get(&referrer_range.specifier) {
         if let Some(resolved_specifier) = map.get(specifier) {

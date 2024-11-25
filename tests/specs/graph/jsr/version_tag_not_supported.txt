@@ -21,6 +21,7 @@ import 'jsr:@scope/a@tag';
           "specifier": "jsr:@scope/a@tag",
           "code": {
             "specifier": "jsr:@scope/a@tag",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 0,

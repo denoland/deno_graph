@@ -606,7 +606,7 @@ impl deno_graph::source::Resolver for WorkspaceMemberResolver {
     &self,
     specifier_text: &str,
     referrer_range: &deno_graph::Range,
-    _mode: deno_graph::source::ResolutionMode,
+    _mode: deno_graph::source::ResolutionKind,
   ) -> Result<deno_ast::ModuleSpecifier, deno_graph::source::ResolveError> {
     if let Ok(package_ref) = JsrPackageReqReference::from_str(specifier_text) {
       for workspace_member in &self.members {

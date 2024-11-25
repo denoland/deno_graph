@@ -20,6 +20,7 @@ HEADERS: {"location":"./redirect.ts"}
           "specifier": "https://localhost/redirect.ts",
           "code": {
             "specifier": "https://localhost/redirect.ts",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 0,

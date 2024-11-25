@@ -97,6 +97,7 @@ import './c.ts';
           "specifier": "jsr:@scope/a@^1.0",
           "code": {
             "specifier": "jsr:@scope/a@^1.0",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -121,6 +122,7 @@ import './c.ts';
           "specifier": "./b.ts",
           "code": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/b.ts",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 13,
@@ -137,6 +139,7 @@ import './c.ts';
           "specifier": "jsr:@scope/b/export",
           "code": {
             "specifier": "jsr:@scope/b/export",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 5,
@@ -161,6 +164,7 @@ import './c.ts';
           "specifier": "./c.ts",
           "code": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/c.ts",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -191,6 +195,7 @@ import './c.ts';
           "specifier": "./a.ts",
           "code": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 5,
@@ -221,6 +226,7 @@ import './c.ts';
           "specifier": "./inner.ts",
           "code": {
             "specifier": "https://jsr.io/@scope/b/9.0.0/inner.ts",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 5,

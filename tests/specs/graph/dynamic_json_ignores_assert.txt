@@ -23,6 +23,7 @@ const a = await import("./a.json");
           "specifier": "./a.json",
           "code": {
             "specifier": "file:///a.json",
+            "mode": "import",
             "span": {
               "start": {
                 "line": 0,

@@ -14,7 +14,7 @@ use deno_graph::source::LoadFuture;
 use deno_graph::source::LoadOptions;
 use deno_graph::source::Loader;
 use deno_graph::source::NullFileSystem;
-use deno_graph::source::ResolutionMode;
+use deno_graph::source::ResolutionKind;
 use deno_graph::source::ResolveError;
 use deno_graph::source::Resolver;
 use deno_graph::source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
@@ -160,7 +160,7 @@ impl Resolver for JsResolver {
     &self,
     specifier: &str,
     referrer_range: &Range,
-    _mode: ResolutionMode,
+    _kind: ResolutionKind,
   ) -> Result<ModuleSpecifier, ResolveError> {
     if let Some(resolve) = &self.maybe_resolve {
       let this = JsValue::null();
@@ -371,7 +371,7 @@ mod tests {
           specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
           start: Position::zeroed(),
           end: Position::zeroed(),
-          kind: None,
+          mode: None,
         })
       })
     );
