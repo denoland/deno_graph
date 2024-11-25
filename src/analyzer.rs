@@ -21,9 +21,11 @@ use crate::graph::Position;
 use crate::source::ResolutionMode;
 use crate::DefaultModuleAnalyzer;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Hash)]
 pub struct PositionRange {
+  #[serde(default = "Position::zeroed")]
   pub start: Position,
+  #[serde(default = "Position::zeroed")]
   pub end: Position,
 }
 
@@ -33,6 +35,11 @@ impl PositionRange {
       start: Position::zeroed(),
       end: Position::zeroed(),
     }
+  }
+
+  /// Determines if a given position is within the range.
+  pub fn includes(&self, position: Position) -> bool {
+    (position >= self.start) && (position <= self.end)
   }
 
   pub fn from_source_range(

@@ -1283,9 +1283,8 @@ console.log(a);
       module_name: &str,
       range: &Range,
     ) {
-      let Range {
-        specifier, start, ..
-      } = range;
+      let specifier = &range.specifier;
+      let start = range.range.start;
       let line = start.line + 1;
       let column = start.character;
       log::warn!("Warning: Resolving \"{module_name}\" as \"node:{module_name}\" at {specifier}:{line}:{column}. If you want to use a built-in Node module, add a \"node:\" prefix.");
@@ -1921,13 +1920,15 @@ export const foo = 'bar';"#,
         specifier: ModuleSpecifier::parse("file:///test01.d.ts").unwrap(),
         range: Range {
           specifier: ModuleSpecifier::parse("file:///test01.js").unwrap(),
-          start: Position {
-            line: 0,
-            character: 21
-          },
-          end: Position {
-            line: 0,
-            character: 36
+          range: PositionRange {
+            start: Position {
+              line: 0,
+              character: 21
+            },
+            end: Position {
+              line: 0,
+              character: 36
+            },
           },
           mode: None,
         }
@@ -1976,13 +1977,15 @@ export const foo = 'bar';"#,
         specifier: ModuleSpecifier::parse("file:///test01.d.ts").unwrap(),
         range: Range {
           specifier: ModuleSpecifier::parse("file:///test01.js").unwrap(),
-          start: Position {
-            line: 0,
-            character: 18
-          },
-          end: Position {
-            line: 0,
-            character: 33
+          range: PositionRange {
+            start: Position {
+              line: 0,
+              character: 18
+            },
+            end: Position {
+              line: 0,
+              character: 33
+            },
           },
           mode: None,
         }
@@ -2107,8 +2110,7 @@ export const foo = 'bar';"#,
           "file:///a.d.ts",
           Some(Range {
             specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
-            start: Position::zeroed(),
-            end: Position::zeroed(),
+            range: PositionRange::zeroed(),
             mode: None,
           }),
         ),
@@ -2136,8 +2138,7 @@ export const foo = 'bar';"#,
         specifier: ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
         range: Range {
           specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
-          start: Position::zeroed(),
-          end: Position::zeroed(),
+          range: PositionRange::zeroed(),
           mode: None,
         }
       }
@@ -3332,8 +3333,10 @@ export const foo = 'bar';"#,
             specifier: ModuleSpecifier::parse("file:///a/a.js").unwrap(),
             range: Range {
               specifier: specifier.clone(),
-              start: Position::new(2, 22),
-              end: Position::new(2, 30),
+              range: PositionRange {
+                start: Position::new(2, 22),
+                end: Position::new(2, 30),
+              },
               mode: Some(ResolutionMode::Import),
             },
           })),
@@ -3341,8 +3344,10 @@ export const foo = 'bar';"#,
             specifier: ModuleSpecifier::parse("file:///a/a.d.ts").unwrap(),
             range: Range {
               specifier: specifier.clone(),
-              start: Position::new(1, 19),
-              end: Position::new(1, 29),
+              range: PositionRange {
+                start: Position::new(1, 19),
+                end: Position::new(1, 29),
+              },
               mode: Some(ResolutionMode::Import),
             },
           })),
@@ -3352,8 +3357,10 @@ export const foo = 'bar';"#,
             kind: ImportKind::Es,
             specifier_range: Range {
               specifier: specifier.clone(),
-              start: Position::new(2, 22),
-              end: Position::new(2, 30),
+              range: PositionRange {
+                start: Position::new(2, 22),
+                end: Position::new(2, 30),
+              },
               mode: Some(ResolutionMode::Import),
             },
             is_dynamic: false,

@@ -350,7 +350,7 @@ pub async fn js_parse_module(
 mod tests {
   use super::*;
 
-  use deno_graph::Position;
+  use deno_graph::PositionRange;
   use serde_json::from_value;
   use serde_json::json;
 
@@ -369,8 +369,7 @@ mod tests {
         types: ModuleSpecifier::parse("https://deno.land/x/mod.d.ts").unwrap(),
         source: Some(Range {
           specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
-          start: Position::zeroed(),
-          end: Position::zeroed(),
+          range: PositionRange::zeroed(),
           mode: None,
         })
       })

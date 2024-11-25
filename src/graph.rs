@@ -82,6 +82,12 @@ pub struct Position {
   pub character: usize,
 }
 
+impl std::fmt::Display for Position {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}:{}", self.line + 1, self.character + 1)
+  }
+}
+
 impl PartialOrd for Position {
   fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
     Some(self.cmp(other))
@@ -130,23 +136,25 @@ impl Position {
 pub struct Range {
   #[serde(skip_serializing)]
   pub specifier: ModuleSpecifier,
-  #[serde(default = "Position::zeroed")]
-  pub start: Position,
-  #[serde(default = "Position::zeroed")]
-  pub end: Position,
+  #[serde(flatten, serialize_with = "serialize_position")]
+  pub range: PositionRange,
   #[serde(default, skip_serializing)]
   pub mode: Option<ResolutionMode>,
 }
 
+fn serialize_position<S: Serializer>(
+  range: &PositionRange,
+  serializer: S,
+) -> Result<S::Ok, S::Error> {
+  let mut seq = serializer.serialize_struct("PositionRange", 2)?;
+  seq.serialize_field("start", &range.start)?;
+  seq.serialize_field("end", &range.end)?;
+  seq.end()
+}
+
 impl fmt::Display for Range {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(
-      f,
-      "{}:{}:{}",
-      self.specifier,
-      self.start.line + 1,
-      self.start.character + 1
-    )
+    write!(f, "{}:{}", self.specifier, self.range.start)
   }
 }
 
@@ -158,15 +166,14 @@ impl Range {
   ) -> Range {
     Range {
       specifier,
-      start: range.start,
-      end: range.end,
+      range,
       mode: kind,
     }
   }
 
   /// Determines if a given position is within the range.
-  pub fn includes(&self, position: &Position) -> bool {
-    (position >= &self.start) && (position <= &self.end)
+  pub fn includes(&self, position: Position) -> bool {
+    self.range.includes(position)
   }
 }
 
@@ -584,7 +591,7 @@ impl Resolution {
     }
   }
 
-  pub fn includes(&self, position: &Position) -> Option<&Range> {
+  pub fn includes(&self, position: Position) -> Option<&Range> {
     match self {
       Self::Ok(resolution) if resolution.range.includes(position) => {
         Some(&resolution.range)
@@ -733,7 +740,7 @@ impl Dependency {
   /// Check to see if the position falls within the range of the code or types
   /// entry for the dependency, returning a reference to the range if true,
   /// otherwise none.
-  pub fn includes(&self, position: &Position) -> Option<&Range> {
+  pub fn includes(&self, position: Position) -> Option<&Range> {
     for import in &self.imports {
       if import.specifier_range.includes(position) {
         return Some(&import.specifier_range);
@@ -1153,8 +1160,7 @@ impl GraphImport {
       .map(|import| {
         let referrer_range = Range {
           specifier: referrer.clone(),
-          start: Position::zeroed(),
-          end: Position::zeroed(),
+          range: PositionRange::zeroed(),
           mode: None,
         };
         let maybe_type = resolve(
@@ -2758,8 +2764,7 @@ pub(crate) fn parse_js_module_from_module_info(
       if let Some(types_header) = headers.get("x-typescript-types") {
         let range = Range {
           specifier: module.specifier.clone(),
-          start: Position::zeroed(),
-          end: Position::zeroed(),
+          range: PositionRange::zeroed(),
           mode: None,
         };
         module.maybe_types_dependency = Some(TypesDependency {
@@ -2795,8 +2800,7 @@ pub(crate) fn parse_js_module_from_module_info(
                 specifier: specifier.clone(),
                 range: maybe_range.unwrap_or_else(|| Range {
                   specifier,
-                  start: Position::zeroed(),
-                  end: Position::zeroed(),
+                  range: PositionRange::zeroed(),
                   mode: None,
                 }),
               })),
@@ -2811,8 +2815,7 @@ pub(crate) fn parse_js_module_from_module_info(
                 specifier: module.specifier.to_string(),
                 range: Range {
                   specifier: module.specifier.clone(),
-                  start: Position::zeroed(),
-                  end: Position::zeroed(),
+                  range: PositionRange::zeroed(),
                   mode: None,
                 },
               },
@@ -5380,8 +5383,7 @@ mod tests {
 
   #[test]
   fn test_range_includes() {
-    let range = Range {
-      specifier: ModuleSpecifier::parse("file:///a.ts").unwrap(),
+    let range = PositionRange {
       start: Position {
         line: 1,
         character: 20,
@@ -5390,25 +5392,24 @@ mod tests {
         line: 1,
         character: 30,
       },
-      mode: None,
     };
-    assert!(range.includes(&Position {
+    assert!(range.includes(Position {
       line: 1,
       character: 20
     }));
-    assert!(range.includes(&Position {
+    assert!(range.includes(Position {
       line: 1,
       character: 25
     }));
-    assert!(range.includes(&Position {
+    assert!(range.includes(Position {
       line: 1,
       character: 30
     }));
-    assert!(!range.includes(&Position {
+    assert!(!range.includes(Position {
       line: 0,
       character: 25
     }));
-    assert!(!range.includes(&Position {
+    assert!(!range.includes(Position {
       line: 2,
       character: 25
     }));
@@ -5444,13 +5445,15 @@ mod tests {
         specifier: ModuleSpecifier::parse("file:///b.ts").unwrap(),
         range: Range {
           specifier: specifier.clone(),
-          start: Position {
-            line: 0,
-            character: 19,
-          },
-          end: Position {
-            line: 0,
-            character: 27,
+          range: PositionRange {
+            start: Position {
+              line: 0,
+              character: 19,
+            },
+            end: Position {
+              line: 0,
+              character: 27,
+            },
           },
           mode: None,
         },
@@ -5461,13 +5464,15 @@ mod tests {
           kind: ImportKind::Es,
           specifier_range: Range {
             specifier: specifier.clone(),
-            start: Position {
-              line: 0,
-              character: 19,
-            },
-            end: Position {
-              line: 0,
-              character: 27,
+            range: PositionRange {
+              start: Position {
+                line: 0,
+                character: 19,
+              },
+              end: Position {
+                line: 0,
+                character: 27,
+              },
             },
             mode: None,
           },
@@ -5479,13 +5484,15 @@ mod tests {
           kind: ImportKind::Es,
           specifier_range: Range {
             specifier: specifier.clone(),
-            start: Position {
-              line: 1,
-              character: 19,
-            },
-            end: Position {
-              line: 1,
-              character: 27,
+            range: PositionRange {
+              start: Position {
+                line: 1,
+                character: 19,
+              },
+              end: Position {
+                line: 1,
+                character: 27,
+              },
             },
             mode: None,
           },
@@ -5496,43 +5503,47 @@ mod tests {
       ..Default::default()
     };
     assert_eq!(
-      dependency.includes(&Position {
+      dependency.includes(Position {
         line: 0,
         character: 21,
       }),
       Some(&Range {
         specifier: specifier.clone(),
-        start: Position {
-          line: 0,
-          character: 19
-        },
-        end: Position {
-          line: 0,
-          character: 27
+        range: PositionRange {
+          start: Position {
+            line: 0,
+            character: 19
+          },
+          end: Position {
+            line: 0,
+            character: 27
+          },
         },
         mode: None,
       })
     );
     assert_eq!(
-      dependency.includes(&Position {
+      dependency.includes(Position {
         line: 1,
         character: 21,
       }),
       Some(&Range {
         specifier,
-        start: Position {
-          line: 1,
-          character: 19
-        },
-        end: Position {
-          line: 1,
-          character: 27
+        range: PositionRange {
+          start: Position {
+            line: 1,
+            character: 19
+          },
+          end: Position {
+            line: 1,
+            character: 27
+          },
         },
         mode: None,
       })
     );
     assert_eq!(
-      dependency.includes(&Position {
+      dependency.includes(Position {
         line: 0,
         character: 18,
       }),
@@ -5548,8 +5559,7 @@ mod tests {
         specifier: ModuleSpecifier::parse("file:///wrong.ts").unwrap(),
         range: Range {
           specifier: referrer.clone(),
-          start: Position::zeroed(),
-          end: Position::zeroed(),
+          range: PositionRange::zeroed(),
           mode: None,
         },
       })),
@@ -5557,8 +5567,7 @@ mod tests {
         specifier: ModuleSpecifier::parse("file:///wrong.ts").unwrap(),
         range: Range {
           specifier: referrer.clone(),
-          start: Position::zeroed(),
-          end: Position::zeroed(),
+          range: PositionRange::zeroed(),
           mode: None,
         },
       })),
@@ -5574,8 +5583,7 @@ mod tests {
           specifier: ModuleSpecifier::parse("file:///a/b.ts").unwrap(),
           range: Range {
             specifier: referrer.clone(),
-            start: Position::zeroed(),
-            end: Position::zeroed(),
+            range: PositionRange::zeroed(),
             mode: None,
           },
         })),
@@ -5583,8 +5591,7 @@ mod tests {
           specifier: ModuleSpecifier::parse("file:///a/b.d.ts").unwrap(),
           range: Range {
             specifier: referrer.clone(),
-            start: Position::zeroed(),
-            end: Position::zeroed(),
+            range: PositionRange::zeroed(),
             mode: None,
           },
         })),
@@ -5603,8 +5610,7 @@ mod tests {
         specifier: ModuleSpecifier::parse("file:///wrong.ts").unwrap(),
         range: Range {
           specifier: referrer.clone(),
-          start: Position::zeroed(),
-          end: Position::zeroed(),
+          range: PositionRange::zeroed(),
           mode: None,
         },
       })),
@@ -5619,8 +5625,7 @@ mod tests {
           specifier: ModuleSpecifier::parse("file:///a/main.d.ts").unwrap(),
           range: Range {
             specifier: referrer.clone(),
-            start: Position::zeroed(),
-            end: Position::zeroed(),
+            range: PositionRange::zeroed(),
             mode: None,
           },
         })),
@@ -5961,13 +5966,15 @@ mod tests {
         range: Range {
           specifier: ModuleSpecifier::parse("https://deno.land/foo.js")
             .unwrap(),
-          start: Position {
-            line: 0,
-            character: 57,
-          },
-          end: Position {
-            line: 0,
-            character: 82,
+          range: PositionRange {
+            start: Position {
+              line: 0,
+              character: 57,
+            },
+            end: Position {
+              line: 0,
+              character: 82,
+            },
           },
           mode: Some(ResolutionMode::Import),
         },
@@ -5980,13 +5987,15 @@ mod tests {
         range: Range {
           specifier: ModuleSpecifier::parse("https://deno.land/foo.js")
             .unwrap(),
-          start: Position {
-            line: 0,
-            character: 32,
-          },
-          end: Position {
-            line: 0,
-            character: 48,
+          range: PositionRange {
+            start: Position {
+              line: 0,
+              character: 32,
+            },
+            end: Position {
+              line: 0,
+              character: 48,
+            },
           },
           mode: Some(ResolutionMode::Import),
         },
@@ -6000,13 +6009,15 @@ mod tests {
         range: Range {
           specifier: ModuleSpecifier::parse("https://deno.land/foo.js")
             .unwrap(),
-          start: Position {
-            line: 0,
-            character: 7,
-          },
-          end: Position {
-            line: 0,
-            character: 23,
+          range: PositionRange {
+            start: Position {
+              line: 0,
+              character: 7,
+            },
+            end: Position {
+              line: 0,
+              character: 23,
+            },
           },
           mode: Some(ResolutionMode::Import),
         },
@@ -6142,13 +6153,15 @@ mod tests {
           kind: ImportKind::TsReferencePath,
           specifier_range: Range {
             specifier: Url::parse("file:///foo.ts").unwrap(),
-            start: Position {
-              line: 1,
-              character: 36
-            },
-            end: Position {
-              line: 1,
-              character: 52,
+            range: PositionRange {
+              start: Position {
+                line: 1,
+                character: 36
+              },
+              end: Position {
+                line: 1,
+                character: 52,
+              },
             },
             mode: None,
           },
@@ -6160,13 +6173,15 @@ mod tests {
           kind: ImportKind::TsReferenceTypes,
           specifier_range: Range {
             specifier: Url::parse("file:///foo.ts").unwrap(),
-            start: Position {
-              line: 2,
-              character: 37,
-            },
-            end: Position {
-              line: 2,
-              character: 53,
+            range: PositionRange {
+              start: Position {
+                line: 2,
+                character: 37,
+              },
+              end: Position {
+                line: 2,
+                character: 53,
+              },
             },
             mode: None,
           },
@@ -6178,13 +6193,15 @@ mod tests {
           kind: ImportKind::Es,
           specifier_range: Range {
             specifier: Url::parse("file:///foo.ts").unwrap(),
-            start: Position {
-              line: 4,
-              character: 23,
-            },
-            end: Position {
-              line: 4,
-              character: 39,
+            range: PositionRange {
+              start: Position {
+                line: 4,
+                character: 23,
+              },
+              end: Position {
+                line: 4,
+                character: 39,
+              },
             },
             mode: Some(ResolutionMode::Import),
           },
@@ -6196,13 +6213,15 @@ mod tests {
           kind: ImportKind::Es,
           specifier_range: Range {
             specifier: Url::parse("file:///foo.ts").unwrap(),
-            start: Position {
-              line: 5,
-              character: 29,
-            },
-            end: Position {
-              line: 5,
-              character: 45,
+            range: PositionRange {
+              start: Position {
+                line: 5,
+                character: 29,
+              },
+              end: Position {
+                line: 5,
+                character: 45,
+              },
             },
             mode: Some(ResolutionMode::Import),
           },
@@ -6214,13 +6233,15 @@ mod tests {
           kind: ImportKind::Es,
           specifier_range: Range {
             specifier: Url::parse("file:///foo.ts").unwrap(),
-            start: Position {
-              line: 6,
-              character: 29,
-            },
-            end: Position {
-              line: 6,
-              character: 45,
+            range: PositionRange {
+              start: Position {
+                line: 6,
+                character: 29,
+              },
+              end: Position {
+                line: 6,
+                character: 45,
+              },
             },
             mode: Some(ResolutionMode::Import),
           },
@@ -6232,13 +6253,15 @@ mod tests {
           kind: ImportKind::TsType,
           specifier_range: Range {
             specifier: Url::parse("file:///foo.ts").unwrap(),
-            start: Position {
-              line: 8,
-              character: 36,
-            },
-            end: Position {
-              line: 8,
-              character: 52,
+            range: PositionRange {
+              start: Position {
+                line: 8,
+                character: 36,
+              },
+              end: Position {
+                line: 8,
+                character: 52,
+              },
             },
             mode: Some(ResolutionMode::Import),
           },
@@ -6254,13 +6277,15 @@ mod tests {
         kind: ImportKind::Es,
         specifier_range: Range {
           specifier: Url::parse("file:///foo.ts").unwrap(),
-          start: Position {
-            line: 7,
-            character: 23,
-          },
-          end: Position {
-            line: 7,
-            character: 41,
+          range: PositionRange {
+            start: Position {
+              line: 7,
+              character: 23,
+            },
+            end: Position {
+              line: 7,
+              character: 41,
+            },
           },
           mode: Some(ResolutionMode::Import),
         },
