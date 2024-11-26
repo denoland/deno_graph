@@ -47,13 +47,13 @@ jobs:
 
       - name: Clippy
         if: contains(matrix.os, 'ubuntu')
-        run: cargo clippy --locked --all-features --all-targets -- -D clippy::all
+        run: cargo clippy --verbose --locked --all-features --all-targets -- -D clippy::all
 
       - name: Cargo Build
         run: cargo build --locked --all-features --all-targets --verbose
 
       - name: Cargo Test
-        run: cargo test --locked --all-features --all-targets
+        run: cargo test --verbose --locked --all-features --all-targets
 
         # ensure we build with no default features, but only bother testing on linux
       - name: Cargo Build (no-default-features)
