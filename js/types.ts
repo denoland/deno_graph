@@ -81,7 +81,8 @@ export interface ResolvedDependency {
    * resolvable in the module graph. If there was an error, `error` will be set
    * and this will be undefined. */
   specifier?: string;
-  mode?: "import" | "require";
+  /** Resolution mode used to resolve the dependency. */
+  resolutionMode?: "import" | "require";
   /** Any error encountered when trying to resolved the specifier. If this is
    * defined, `specifier` will be undefined. */
   error?: string;
