@@ -76,6 +76,7 @@ console.log(1);
           "specifier": "jsr:@scope/a",
           "code": {
             "specifier": "jsr:@scope/a",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -92,6 +93,7 @@ console.log(1);
           "specifier": "jsr:@scope/c@3.0.0",
           "code": {
             "specifier": "jsr:@scope/c@3.0.0",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 1,
@@ -116,6 +118,7 @@ console.log(1);
           "specifier": "jsr:@scope/b@2/sub",
           "code": {
             "specifier": "jsr:@scope/b@2/sub",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -140,6 +143,7 @@ console.log(1);
           "specifier": "jsr:@scope/c@3",
           "code": {
             "specifier": "jsr:@scope/c@3",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 1,

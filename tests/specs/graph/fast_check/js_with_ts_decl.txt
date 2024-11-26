@@ -32,6 +32,7 @@ import 'jsr:@scope/a'
           "specifier": "jsr:@scope/a",
           "code": {
             "specifier": "jsr:@scope/a",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -56,6 +57,7 @@ import 'jsr:@scope/a'
           "specifier": "./random.js",
           "code": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/random.js",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -115,6 +117,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     "./random.d.ts": {
       "code": {
         "specifier": "https://jsr.io/@scope/a/1.0.0/random.d.ts",
+        "resolutionMode": "import",
         "span": {
           "start": {
             "line": 0,

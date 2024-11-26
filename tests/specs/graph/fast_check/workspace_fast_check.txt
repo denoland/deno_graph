@@ -57,6 +57,7 @@ class Private {
           "specifier": "jsr:@scope/b",
           "code": {
             "specifier": "file:///mod.ts",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -73,6 +74,7 @@ class Private {
           "specifier": "jsr:@scope/c",
           "code": {
             "specifier": "jsr:@scope/c",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 1,
@@ -110,6 +112,7 @@ Fast check file:///mod.ts:
     "jsr:@scope/c": {
       "code": {
         "specifier": "jsr:@scope/c",
+        "resolutionMode": "import",
         "span": {
           "start": {
             "line": 1,

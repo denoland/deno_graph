@@ -4,12 +4,14 @@ use crate::analyzer::DependencyDescriptor;
 use crate::analyzer::DynamicArgument;
 use crate::analyzer::DynamicDependencyDescriptor;
 use crate::analyzer::DynamicTemplatePart;
+use crate::analyzer::JsDocImportInfo;
 use crate::analyzer::ModuleAnalyzer;
 use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::StaticDependencyDescriptor;
 use crate::analyzer::TypeScriptReference;
+use crate::analyzer::TypeScriptTypesResolutionMode;
 use crate::graph::Position;
 use crate::module_specifier::ModuleSpecifier;
 
@@ -31,10 +33,6 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-/// Matches a JSDoc import type reference (`{import("./example.js")}`
-static JSDOC_DYNAMIC_IMPORT_RE: Lazy<Regex> = Lazy::new(|| {
-  Regex::new(r#"\{[^}]*import\(['"]([^'"]+)['"]\)[^}]*}"#).unwrap()
-});
 /// Matches the `@jsxImportSource` pragma.
 static JSX_IMPORT_SOURCE_RE: Lazy<Regex> =
   Lazy::new(|| Regex::new(r"(?i)^[\s*]*@jsxImportSource\s+(\S+)").unwrap());
@@ -53,6 +51,10 @@ static PATH_REFERENCE_RE: Lazy<Regex> =
 /// a dependency.
 static TYPES_REFERENCE_RE: Lazy<Regex> =
   Lazy::new(|| Regex::new(r#"(?i)\stypes\s*=\s*["']([^"']*)["']"#).unwrap());
+/// Ex. `resolution-mode="require"` in `/// <reference types="pkg" resolution-mode="require" />`
+static RESOLUTION_MODE_RE: Lazy<Regex> = Lazy::new(|| {
+  Regex::new(r#"(?i)\sresolution-mode\s*=\s*["']([^"']*)["']"#).unwrap()
+});
 /// Matches the `@ts-self-types` pragma.
 static TS_SELF_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
   Regex::new(r#"(?i)^\s*@ts-self-types\s*=\s*["']([^"']+)["']"#).unwrap()
@@ -530,15 +532,22 @@ fn analyze_ts_references(
           TYPES_REFERENCE_RE.captures(&comment.text)
         {
           let m = captures.get(1).unwrap();
-          references.push(TypeScriptReference::Types(SpecifierWithRange {
-            text: m.as_str().to_string(),
-            range: comment_source_to_position_range(
-              comment_start,
-              m.range(),
-              text_info,
-              false,
-            ),
-          }));
+          let resolution_mode = RESOLUTION_MODE_RE
+            .captures(&comment.text)
+            .and_then(|m| m.get(1))
+            .and_then(|m| TypeScriptTypesResolutionMode::from_str(m.as_str()));
+          references.push(TypeScriptReference::Types {
+            specifier: SpecifierWithRange {
+              text: m.as_str().to_string(),
+              range: comment_source_to_position_range(
+                comment_start,
+                m.range(),
+                text_info,
+                false,
+              ),
+            },
+            resolution_mode,
+          });
         }
       }
     }
@@ -680,7 +689,7 @@ fn analyze_jsdoc_imports(
   media_type: MediaType,
   text_info: &SourceTextInfo,
   comments: &MultiThreadedComments,
-) -> Vec<SpecifierWithRange> {
+) -> Vec<JsDocImportInfo> {
   // Analyze any JSDoc type imports
   // We only analyze these on JavaScript types of modules, since they are
   // ignored by TypeScript when type checking anyway and really shouldn't be
@@ -697,42 +706,45 @@ fn analyze_jsdoc_imports(
     if comment.kind != CommentKind::Block || !comment.text.starts_with('*') {
       continue;
     }
-    for captures in JSDOC_DYNAMIC_IMPORT_RE.captures_iter(&comment.text) {
-      if let Some(m) = captures.get(1) {
-        deps.push(SpecifierWithRange {
-          text: m.as_str().to_string(),
-          range: comment_source_to_position_range(
-            comment.range().start,
-            m.range(),
-            text_info,
-            false,
-          ),
-        });
-      }
-    }
 
-    for (i, _) in comment.text.match_indices("@import") {
-      if let Ok((_, js_doc)) = parse_jsdoc_import_decl(&comment.text[i..]) {
-        deps.push(SpecifierWithRange {
+    let js_docs = comment
+      .text
+      .match_indices("{")
+      .filter_map(|(i, _)| {
+        parse_jsdoc_dynamic_import(&comment.text[i..])
+          .ok()
+          .map(|(_input, jsdoc)| (i, jsdoc))
+      })
+      .chain(comment.text.match_indices("@import").filter_map(|(i, _)| {
+        parse_jsdoc_import_decl(&comment.text[i..])
+          .ok()
+          .map(|(_input, jsdoc)| (i, jsdoc))
+      }));
+    for (byte_index, js_doc) in js_docs {
+      deps.push(JsDocImportInfo {
+        specifier: SpecifierWithRange {
           text: js_doc.specifier,
           range: comment_source_to_position_range(
             comment.range().start,
-            i + js_doc.range.start..i + js_doc.range.end,
+            byte_index + js_doc.specifier_range.start
+              ..byte_index + js_doc.specifier_range.end,
             text_info,
             false,
           ),
-        });
-      }
+        },
+        resolution_mode: js_doc.resolution_mode,
+      });
     }
   }
-  deps.sort_by(|a, b| a.range.start.cmp(&b.range.start));
+  deps.sort_by(|a, b| a.specifier.range.start.cmp(&b.specifier.range.start));
   deps
 }
 
 #[derive(Debug, Clone)]
 struct JsDocImport {
   specifier: String,
-  range: std::ops::Range<usize>,
+  specifier_range: std::ops::Range<usize>,
+  resolution_mode: Option<TypeScriptTypesResolutionMode>,
 }
 
 fn parse_jsdoc_import_decl(input: &str) -> monch::ParseResult<JsDocImport> {
@@ -746,22 +758,24 @@ fn parse_jsdoc_import_decl(input: &str) -> monch::ParseResult<JsDocImport> {
     Ok((input, ()))
   }
 
-  fn skip_ident(input: &str) -> monch::ParseResult<()> {
-    let (input, c) = next_char(input)?;
-    if !c.is_alphabetic() {
-      return Err(monch::ParseError::Backtrace);
-    }
-    map(take_while(|c| !c.is_whitespace()), |_| ())(input)
-  }
-
   fn skip_namespace_import(input: &str) -> monch::ParseResult<()> {
     // * as ns
     let (input, _) = ch('*')(input)?;
     let (input, _) = skip_whitespace(input)?;
     let (input, _) = tag("as")(input)?;
     let (input, _) = whitespace(input)?;
-    let (input, _) = skip_ident(input)?;
+    let (input, _) = parse_ident(input)?;
     Ok((input, ()))
+  }
+
+  fn parse_attributes(
+    input: &str,
+  ) -> ParseResult<Option<TypeScriptTypesResolutionMode>> {
+    let (input, _) = tag("with")(input)?;
+    let (input, _) = skip_whitespace(input)?;
+    let (input, maybe_resolution_mode) =
+      parse_import_attribute_block_for_resolution_mode(input)?;
+    Ok((input, maybe_resolution_mode))
   }
 
   let initial_input = input;
@@ -770,25 +784,145 @@ fn parse_jsdoc_import_decl(input: &str) -> monch::ParseResult<JsDocImport> {
   let (input, _) = or3(
     skip_named_imports,
     terminated(skip_namespace_import, whitespace),
-    terminated(skip_ident, whitespace),
+    terminated(map(parse_ident, |_| ()), whitespace),
   )(input)?;
   let (input, _) = skip_whitespace(input)?;
   let (input, _) = tag("from")(input)?;
   let (input, _) = skip_whitespace(input)?;
-  let (input, open_char) = or(ch('"'), ch('\''))(input)?;
   let start_specifier_input = input;
-  let (input, specifier) = take_while(|c| c != open_char)(input)?;
+  let (input, specifier) = parse_quote(input)?;
   let end_specifier_input = input;
-  let (input, _) = ch(open_char)(input)?;
+  let (input, _) = skip_whitespace(input)?;
+  let (input, maybe_resolution_mode) = maybe(parse_attributes)(input)?;
 
   Ok((
     input,
     JsDocImport {
       specifier: specifier.to_string(),
-      range: initial_input.len() - start_specifier_input.len()
-        ..initial_input.len() - end_specifier_input.len(),
+      specifier_range: initial_input.len() - start_specifier_input.len() + 1
+        ..initial_input.len() - end_specifier_input.len() - 1,
+      resolution_mode: maybe_resolution_mode.flatten(),
     },
   ))
+}
+
+/// Matches a JSDoc import type reference (`{import("./example.js")}`
+fn parse_jsdoc_dynamic_import(input: &str) -> monch::ParseResult<JsDocImport> {
+  fn parse_second_param_obj_with_leading_comma(
+    input: &str,
+  ) -> monch::ParseResult<Option<TypeScriptTypesResolutionMode>> {
+    let (input, _) = ch(',')(input)?;
+    let (input, _) = skip_whitespace(input)?;
+    let (input, _) = ch('{')(input)?;
+    let (input, _) = skip_whitespace(input)?;
+    let (input, _) = tag("with")(input)?;
+    let (input, _) = skip_whitespace(input)?;
+    let (input, _) = ch(':')(input)?;
+    let (input, _) = skip_whitespace(input)?;
+
+    let (input, maybe_resolution_mode) =
+      parse_import_attribute_block_for_resolution_mode(input)?;
+    let (input, _) = skip_whitespace(input)?;
+    let (input, _) = ch('}')(input)?;
+
+    Ok((input, maybe_resolution_mode))
+  }
+
+  // \{[^}]*import\(['"]([^'"]+)['"]\)[^}]*}"
+  use monch::*;
+  let original_input = input;
+  let (mut input, _) = ch('{')(input)?;
+  for (index, c) in input.char_indices() {
+    if c == '}' {
+      return ParseError::backtrace();
+    }
+    input = &original_input[index..];
+    if input.starts_with("import") {
+      break;
+    }
+  }
+  let (input, _) = tag("import")(input)?;
+  let (input, _) = skip_whitespace(input)?;
+  let (input, _) = ch('(')(input)?;
+  let (input, _) = skip_whitespace(input)?;
+  let start_specifier_input = input;
+  let (input, specifier) = parse_quote(input)?;
+  let end_specifier_input = input;
+  let (input, _) = skip_whitespace(input)?;
+  let (input, maybe_resolution_mode) =
+    maybe(parse_second_param_obj_with_leading_comma)(input)?;
+  let (input, _) = skip_whitespace(input)?;
+  let (input, _) = ch(')')(input)?;
+  let (input, _) = take_while(|c| c != '}')(input)?;
+  let (input, _) = ch('}')(input)?;
+
+  Ok((
+    input,
+    JsDocImport {
+      specifier: specifier.to_string(),
+      specifier_range: original_input.len() - start_specifier_input.len() + 1
+        ..original_input.len() - end_specifier_input.len() - 1,
+      resolution_mode: maybe_resolution_mode.flatten(),
+    },
+  ))
+}
+
+fn parse_import_attribute_block_for_resolution_mode(
+  input: &str,
+) -> monch::ParseResult<Option<TypeScriptTypesResolutionMode>> {
+  use monch::*;
+  map(parse_import_attribute_block, |attributes| {
+    attributes
+      .iter()
+      .find(|(key, _)| *key == "resolution-mode")
+      .and_then(|(_, value)| TypeScriptTypesResolutionMode::from_str(value))
+  })(input)
+}
+
+fn parse_import_attribute_block(
+  input: &str,
+) -> monch::ParseResult<Vec<(&str, &str)>> {
+  use monch::*;
+  fn parse_attribute(input: &str) -> ParseResult<(&str, &str)> {
+    let (input, key) = or(parse_quote, parse_ident)(input)?;
+    let (input, _) = skip_whitespace(input)?;
+    let (input, _) = ch(':')(input)?;
+    let (input, _) = skip_whitespace(input)?;
+    let (input, value) = parse_quote(input)?;
+    Ok((input, (key, value)))
+  }
+
+  let (input, _) = ch('{')(input)?;
+  let (input, _) = skip_whitespace(input)?;
+
+  let (input, attributes) = separated_list(
+    parse_attribute,
+    delimited(skip_whitespace, ch(','), skip_whitespace),
+  )(input)?;
+  let (input, _) = skip_whitespace(input)?;
+  let (input, _) = ch('}')(input)?;
+  Ok((input, attributes))
+}
+
+fn parse_ident(input: &str) -> monch::ParseResult<&str> {
+  use monch::*;
+  let start_input = input;
+  let (input, c) = next_char(input)?;
+  if !c.is_alphabetic() {
+    return Err(monch::ParseError::Backtrace);
+  }
+  // good enough for now
+  let (input, _) =
+    take_while(|c| !c.is_whitespace() && c != ':' && c != '-')(input)?;
+  Ok((input, &start_input[..start_input.len() - input.len()]))
+}
+
+fn parse_quote(input: &str) -> monch::ParseResult<&str> {
+  use monch::*;
+  let (input, open_char) = or(ch('"'), ch('\''))(input)?;
+  let (input, text) = take_while(|c| c != open_char)(input)?;
+  let (input, _) = ch(open_char)(input)?;
+  Ok((input, text))
 }
 
 fn comment_source_to_position_range(
@@ -815,6 +949,8 @@ fn comment_source_to_position_range(
 
 #[cfg(test)]
 mod tests {
+  use crate::analyzer::JsDocImportInfo;
+
   use super::*;
   use pretty_assertions::assert_eq;
 
@@ -879,11 +1015,15 @@ mod tests {
           r#""./ref.d.ts""#
         );
       }
-      TypeScriptReference::Types(_) => panic!("expected path"),
+      TypeScriptReference::Types { .. } => panic!("expected path"),
     }
     match &ts_references[1] {
       TypeScriptReference::Path(_) => panic!("expected types"),
-      TypeScriptReference::Types(specifier) => {
+      TypeScriptReference::Types {
+        specifier,
+        resolution_mode: mode,
+      } => {
+        assert_eq!(*mode, None);
         assert_eq!(specifier.text, "./types.d.ts");
         assert_eq!(
           text_info.range_text(&specifier.range.as_source_range(text_info)),
@@ -962,6 +1102,58 @@ mod tests {
     );
 
     assert!(module_info.self_types_specifier.is_none());
+  }
+
+  #[test]
+  fn test_parse_resolution_mode() {
+    let specifier =
+      ModuleSpecifier::parse("file:///a/test.mts").expect("bad specifier");
+    let source = r#"
+    /// <reference types="./types.d.ts" resolution-mode="require" />
+    /// <reference types="node" resolution-mode="import" />
+    /// <reference types="other" resolution-mode="asdf" />
+    "#;
+    let parsed_source = DefaultEsParser
+      .parse_program(ParseOptions {
+        specifier: &specifier,
+        source: source.into(),
+        media_type: MediaType::Mts,
+        scope_analysis: false,
+      })
+      .unwrap();
+    let module_info = ParserModuleAnalyzer::module_info(&parsed_source);
+    let ts_references = module_info.ts_references;
+    assert_eq!(ts_references.len(), 3);
+    match &ts_references[0] {
+      TypeScriptReference::Path(_) => unreachable!(),
+      TypeScriptReference::Types {
+        specifier,
+        resolution_mode: mode,
+      } => {
+        assert_eq!(*mode, Some(TypeScriptTypesResolutionMode::Require));
+        assert_eq!(specifier.text, "./types.d.ts");
+      }
+    }
+    match &ts_references[1] {
+      TypeScriptReference::Path(_) => unreachable!(),
+      TypeScriptReference::Types {
+        specifier,
+        resolution_mode: mode,
+      } => {
+        assert_eq!(*mode, Some(TypeScriptTypesResolutionMode::Import));
+        assert_eq!(specifier.text, "node");
+      }
+    }
+    match &ts_references[2] {
+      TypeScriptReference::Path(_) => unreachable!(),
+      TypeScriptReference::Types {
+        specifier,
+        resolution_mode: mode,
+      } => {
+        assert_eq!(*mode, None);
+        assert_eq!(specifier.text, "other");
+      }
+    }
   }
 
   #[test]
@@ -1102,13 +1294,13 @@ function b(c) {
 }
 
 /**
- * @type {Set<import("./e.js").F>}
+ * @type {Set<import("./e.js", { with: { "resolution-mode": "require" } }).F>}
  */
 const f = new Set();
 
 /** @import { SomeType } from "./a.ts" */
 /** @import * as namespace from "./b.ts" */
-/** @import defaultImport from './c.ts' */
+/** @import defaultImport from './c.ts' with { "resolution-mode": "require" } */
 "#;
     let parsed_source = DefaultEsParser
       .parse_program(ParseOptions {
@@ -1124,96 +1316,117 @@ const f = new Set();
     assert_eq!(
       dependencies,
       [
-        SpecifierWithRange {
-          text: "./a.js".to_string(),
-          range: PositionRange {
-            start: Position {
-              line: 6,
-              character: 17
-            },
-            end: Position {
-              line: 6,
-              character: 25
+        JsDocImportInfo {
+          specifier: SpecifierWithRange {
+            text: "./a.js".to_string(),
+            range: PositionRange {
+              start: Position {
+                line: 6,
+                character: 17
+              },
+              end: Position {
+                line: 6,
+                character: 25
+              }
             }
-          }
+          },
+          resolution_mode: None,
         },
-        SpecifierWithRange {
-          text: "./b.js".to_string(),
-          range: PositionRange {
-            start: Position {
-              line: 13,
-              character: 18
-            },
-            end: Position {
-              line: 13,
-              character: 26
+        JsDocImportInfo {
+          specifier: SpecifierWithRange {
+            text: "./b.js".to_string(),
+            range: PositionRange {
+              start: Position {
+                line: 13,
+                character: 18
+              },
+              end: Position {
+                line: 13,
+                character: 26
+              }
             }
-          }
+          },
+          resolution_mode: None,
         },
-        SpecifierWithRange {
-          text: "./d.js".to_string(),
-          range: PositionRange {
-            start: Position {
-              line: 14,
-              character: 20
-            },
-            end: Position {
-              line: 14,
-              character: 28
+        JsDocImportInfo {
+          specifier: SpecifierWithRange {
+            text: "./d.js".to_string(),
+            range: PositionRange {
+              start: Position {
+                line: 14,
+                character: 20
+              },
+              end: Position {
+                line: 14,
+                character: 28
+              }
             }
-          }
+          },
+          resolution_mode: None,
         },
-        SpecifierWithRange {
-          text: "./e.js".to_string(),
-          range: PositionRange {
-            start: Position {
-              line: 21,
-              character: 21
-            },
-            end: Position {
-              line: 21,
-              character: 29
+        JsDocImportInfo {
+          specifier: SpecifierWithRange {
+            text: "./e.js".to_string(),
+            range: PositionRange {
+              start: Position {
+                line: 21,
+                character: 21
+              },
+              end: Position {
+                line: 21,
+                character: 29
+              }
             }
-          }
+          },
+          resolution_mode: Some(TypeScriptTypesResolutionMode::Require),
         },
-        SpecifierWithRange {
-          text: "./a.ts".to_string(),
-          range: PositionRange {
-            start: Position {
-              line: 25,
-              character: 30,
-            },
-            end: Position {
-              line: 25,
-              character: 38,
+        JsDocImportInfo {
+          specifier: SpecifierWithRange {
+            text: "./a.ts".to_string(),
+            range: PositionRange {
+              start: Position {
+                line: 25,
+                character: 30,
+              },
+              end: Position {
+                line: 25,
+                character: 38,
+              },
             },
           },
+          resolution_mode: None,
         },
-        SpecifierWithRange {
-          text: "./b.ts".to_string(),
-          range: PositionRange {
-            start: Position {
-              line: 26,
-              character: 32,
-            },
-            end: Position {
-              line: 26,
-              character: 40,
+        JsDocImportInfo {
+          specifier: SpecifierWithRange {
+            text: "./b.ts".to_string(),
+            range: PositionRange {
+              start: Position {
+                line: 26,
+                character: 32,
+              },
+              end: Position {
+                line: 26,
+                character: 40,
+              },
             },
           },
+          resolution_mode: None,
         },
-        SpecifierWithRange {
-          text: "./c.ts".to_string(),
-          range: PositionRange {
-            start: Position {
-              line: 27,
-              character: 31,
-            },
-            end: Position {
-              line: 27,
-              character: 39,
+        JsDocImportInfo {
+          specifier: SpecifierWithRange {
+            text: "./c.ts".to_string(),
+            range: PositionRange {
+              start: Position {
+                line: 27,
+                character: 31,
+              },
+              end: Position {
+                line: 27,
+                character: 39,
+              },
             },
           },
+          resolution_mode: Some(TypeScriptTypesResolutionMode::Require),
         }
       ]
     );
@@ -1292,6 +1505,14 @@ export {};
 
   #[test]
   fn test_parse_jsdoc_import_decl() {
+    fn parse_resolution_mode(
+      text: &str,
+    ) -> Option<TypeScriptTypesResolutionMode> {
+      parse_jsdoc_import_decl(text)
+        .ok()
+        .and_then(|v| v.1.resolution_mode)
+    }
+
     // named imports
     assert!(
       parse_jsdoc_import_decl("@import { SomeType } from \"./a.ts\"").is_ok()
@@ -1310,5 +1531,45 @@ export {};
     // mixing quotes (invalid)
     assert!(parse_jsdoc_import_decl("@import test from \"./a.ts'").is_err());
     assert!(parse_jsdoc_import_decl("@import test from './a.ts\"").is_err());
+    assert_eq!(
+      parse_resolution_mode("@import { SomeType } from \"./a.ts\" with { 'resolution-mode': 'import' }"),
+      Some(TypeScriptTypesResolutionMode::Import)
+    );
+    assert_eq!(
+      parse_resolution_mode(
+        "@import v from 'test' with { 'resolution-mode': \"require\" }"
+      ),
+      Some(TypeScriptTypesResolutionMode::Require)
+    );
+    assert_eq!(
+      parse_resolution_mode("@import v from 'test' with { type: 'other', 'resolution-mode': \"require\" }"),
+      Some(TypeScriptTypesResolutionMode::Require)
+    );
+  }
+
+  #[test]
+  fn test_parse_jsdoc_dynamic_import() {
+    fn parse_resolution_mode(
+      text: &str,
+    ) -> Option<TypeScriptTypesResolutionMode> {
+      parse_jsdoc_dynamic_import(text)
+        .ok()
+        .and_then(|v| v.1.resolution_mode)
+    }
+
+    assert!(parse_jsdoc_dynamic_import("{ import('testing') }").is_ok());
+    assert!(parse_jsdoc_dynamic_import("{ Test<import('testing')> }").is_ok());
+    assert_eq!(
+      parse_resolution_mode(
+        r#"{Set<import("./e.js", { with: { "resolution-mode": "require" } }).F>}"#
+      ),
+      Some(TypeScriptTypesResolutionMode::Require)
+    );
+    assert_eq!(
+      parse_resolution_mode(
+        r#"{import("a", { with: { type: "test", "resolution-mode": "import" } })}"#
+      ),
+      Some(TypeScriptTypesResolutionMode::Import)
+    );
   }
 }

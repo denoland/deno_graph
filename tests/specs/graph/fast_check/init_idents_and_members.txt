@@ -64,6 +64,7 @@ import 'jsr:@scope/b'
           "specifier": "jsr:@scope/a",
           "code": {
             "specifier": "jsr:@scope/a",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -80,6 +81,7 @@ import 'jsr:@scope/b'
           "specifier": "jsr:@scope/b",
           "code": {
             "specifier": "jsr:@scope/b",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 1,

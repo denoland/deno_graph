@@ -191,6 +191,7 @@ Deno.test({
             {
               "specifier": "./b.js",
               "code": {
+                "resolutionMode": "import",
                 "specifier": "file:///a/b.js",
                 "span": {
                   "start": {
@@ -270,6 +271,7 @@ Deno.test({
               "specifier": "./deno.json",
               "code": {
                 "specifier": "file:///a/deno.json",
+                "resolutionMode": "import",
                 "span": {
                   "start": {
                     "line": 0,
@@ -365,6 +367,7 @@ Deno.test({
               "specifier": "./b.js",
               "code": {
                 "specifier": "file:///a/b.js",
+                "resolutionMode": "import",
                 "span": {
                   "start": {
                     "line": 0,
@@ -461,6 +464,7 @@ Deno.test({
               "specifier": "builtin:fs",
               "code": {
                 "specifier": "builtin:fs",
+                "resolutionMode": "import",
                 "span": {
                   "start": {
                     "line": 0,
@@ -477,6 +481,7 @@ Deno.test({
               "specifier": "https://example.com/bundle",
               "code": {
                 "specifier": "https://example.com/bundle",
+                "resolutionMode": "import",
                 "span": {
                   "start": {
                     "line": 1,
@@ -553,6 +558,7 @@ Deno.test({
       "dependencies": [{
         "specifier": "./a.ts",
         "code": {
+          "resolutionMode": "import",
           "specifier": "file:///a/a.ts",
           "span": {
             "start": { "line": 2, "character": 26 },
@@ -563,6 +569,7 @@ Deno.test({
         "specifier": "./b.ts",
         "code": {
           "specifier": "file:///a/b.ts",
+          "resolutionMode": "import",
           "span": {
             "start": { "line": 3, "character": 27 },
             "end": { "line": 3, "character": 35 },
@@ -572,6 +579,7 @@ Deno.test({
         "specifier": "./c.ts",
         "code": {
           "specifier": "file:///a/c.ts",
+          "resolutionMode": "import",
           "span": {
             "start": { "line": 4, "character": 26 },
             "end": { "line": 4, "character": 34 },
@@ -581,6 +589,7 @@ Deno.test({
         "specifier": "./d.ts",
         "code": {
           "specifier": "file:///a/d.ts",
+          "resolutionMode": "import",
           "span": {
             "start": { "line": 5, "character": 31 },
             "end": { "line": 5, "character": 39 },
@@ -745,6 +754,7 @@ Deno.test({
           "specifier": "./a.json",
           "code": {
             "specifier": "file:///a/a.json",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 1,
@@ -762,6 +772,7 @@ Deno.test({
           "specifier": "./b.json",
           "code": {
             "specifier": "file:///a/b.json",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 2,
@@ -916,6 +927,7 @@ Deno.test({
             "specifier": "jsr:@denotest/a",
             "code": {
               "specifier": "jsr:@denotest/a",
+              "resolutionMode": "import",
               "span": {
                 "start": {
                   "character": 7,

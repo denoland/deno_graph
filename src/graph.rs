@@ -8,6 +8,7 @@ use crate::analyzer::ModuleInfo;
 use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
+use crate::analyzer::TypeScriptTypesResolutionMode;
 #[cfg(feature = "fast_check")]
 use crate::fast_check::FastCheckDtsModule;
 use crate::jsr::JsrMetadataStore;
@@ -29,6 +30,7 @@ use crate::rt::Executor;
 
 use crate::source::*;
 
+use deno_ast::dep::DynamicDependencyKind;
 use deno_ast::dep::ImportAttributes;
 use deno_ast::dep::StaticDependencyKind;
 use deno_ast::LineAndColumnIndex;
@@ -80,6 +82,12 @@ pub struct Position {
   pub character: usize,
 }
 
+impl std::fmt::Display for Position {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}:{}", self.line + 1, self.character + 1)
+  }
+}
+
 impl PartialOrd for Position {
   fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
     Some(self.cmp(other))
@@ -128,39 +136,32 @@ impl Position {
 pub struct Range {
   #[serde(skip_serializing)]
   pub specifier: ModuleSpecifier,
-  #[serde(default = "Position::zeroed")]
-  pub start: Position,
-  #[serde(default = "Position::zeroed")]
-  pub end: Position,
+  #[serde(flatten, serialize_with = "serialize_position")]
+  pub range: PositionRange,
+  #[serde(default, skip_serializing)]
+  pub resolution_mode: Option<ResolutionMode>,
+}
+
+fn serialize_position<S: Serializer>(
+  range: &PositionRange,
+  serializer: S,
+) -> Result<S::Ok, S::Error> {
+  let mut seq = serializer.serialize_struct("PositionRange", 2)?;
+  seq.serialize_field("start", &range.start)?;
+  seq.serialize_field("end", &range.end)?;
+  seq.end()
 }
 
 impl fmt::Display for Range {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(
-      f,
-      "{}:{}:{}",
-      self.specifier,
-      self.start.line + 1,
-      self.start.character + 1
-    )
+    write!(f, "{}:{}", self.specifier, self.range.start)
   }
 }
 
 impl Range {
-  pub(crate) fn from_position_range(
-    specifier: ModuleSpecifier,
-    range: PositionRange,
-  ) -> Range {
-    Range {
-      specifier,
-      start: range.start,
-      end: range.end,
-    }
-  }
-
   /// Determines if a given position is within the range.
-  pub fn includes(&self, position: &Position) -> bool {
-    (position >= &self.start) && (position <= &self.end)
+  pub fn includes(&self, position: Position) -> bool {
+    self.range.includes(position)
   }
 }
 
@@ -342,10 +343,10 @@ pub enum ModuleGraphError {
 }
 
 impl ModuleGraphError {
-  fn for_resolution_mode(mode: ResolutionMode, error: ResolutionError) -> Self {
-    match mode {
-      ResolutionMode::Execution => Self::ResolutionError(error),
-      ResolutionMode::Types => Self::TypesResolutionError(error),
+  fn for_resolution_kind(kind: ResolutionKind, error: ResolutionError) -> Self {
+    match kind {
+      ResolutionKind::Execution => Self::ResolutionError(error),
+      ResolutionKind::Types => Self::TypesResolutionError(error),
     }
   }
 
@@ -578,7 +579,7 @@ impl Resolution {
     }
   }
 
-  pub fn includes(&self, position: &Position) -> Option<&Range> {
+  pub fn includes(&self, position: Position) -> Option<&Range> {
     match self {
       Self::Ok(resolution) if resolution.range.includes(position) => {
         Some(&resolution.range)
@@ -643,6 +644,8 @@ fn is_false(v: &bool) -> bool {
 pub enum ImportKind {
   /// `import`/`export`
   Es,
+  /// `require`
+  Require,
   /// `import type`/`export type`
   TsType,
   /// `/// <reference path="..." />`
@@ -658,7 +661,9 @@ pub enum ImportKind {
 impl ImportKind {
   pub fn is_runtime(&self) -> bool {
     match self {
-      ImportKind::Es | ImportKind::JsxImportSource => true,
+      ImportKind::Es | ImportKind::Require | ImportKind::JsxImportSource => {
+        true
+      }
       ImportKind::TsType
       | ImportKind::TsReferencePath
       | ImportKind::TsReferenceTypes
@@ -723,7 +728,7 @@ impl Dependency {
   /// Check to see if the position falls within the range of the code or types
   /// entry for the dependency, returning a reference to the range if true,
   /// otherwise none.
-  pub fn includes(&self, position: &Position) -> Option<&Range> {
+  pub fn includes(&self, position: Position) -> Option<&Range> {
     for import in &self.imports {
       if import.specifier_range.includes(position) {
         return Some(&import.specifier_range);
@@ -750,7 +755,7 @@ impl Dependency {
         resolve(
           specifier,
           r.clone(),
-          ResolutionMode::Execution,
+          ResolutionKind::Execution,
           jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
@@ -767,7 +772,7 @@ impl Dependency {
             .as_deref()
             .unwrap_or(specifier),
           r.clone(),
-          ResolutionMode::Types,
+          ResolutionKind::Types,
           jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
@@ -806,7 +811,7 @@ impl TypesDependency {
         resolve(
           &self.specifier,
           r.clone(),
-          ResolutionMode::Types,
+          ResolutionKind::Types,
           jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
@@ -1143,13 +1148,13 @@ impl GraphImport {
       .map(|import| {
         let referrer_range = Range {
           specifier: referrer.clone(),
-          start: Position::zeroed(),
-          end: Position::zeroed(),
+          range: PositionRange::zeroed(),
+          resolution_mode: None,
         };
         let maybe_type = resolve(
           &import,
           referrer_range,
-          ResolutionMode::Types,
+          ResolutionKind::Types,
           jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
@@ -1464,7 +1469,7 @@ impl<'a> ModuleGraphErrorIterator<'a> {
   fn check_resolution(
     &self,
     module: &JsModule,
-    mode: ResolutionMode,
+    kind: ResolutionKind,
     specifier_text: &str,
     resolution: &Resolution,
     is_dynamic: bool,
@@ -1474,8 +1479,8 @@ impl<'a> ModuleGraphErrorIterator<'a> {
         let referrer_scheme = module.specifier.scheme();
         let specifier_scheme = resolved.specifier.scheme();
         if referrer_scheme == "https" && specifier_scheme == "http" {
-          Some(ModuleGraphError::for_resolution_mode(
-            mode,
+          Some(ModuleGraphError::for_resolution_kind(
+            kind,
             ResolutionError::InvalidDowngrade {
               specifier: resolved.specifier.clone(),
               range: resolved.range.clone(),
@@ -1485,8 +1490,8 @@ impl<'a> ModuleGraphErrorIterator<'a> {
           && matches!(specifier_scheme, "file")
           && specifier_text.to_lowercase().starts_with("file://")
         {
-          Some(ModuleGraphError::for_resolution_mode(
-            mode,
+          Some(ModuleGraphError::for_resolution_kind(
+            kind,
             ResolutionError::InvalidLocalImport {
               specifier: resolved.specifier.clone(),
               range: resolved.range.clone(),
@@ -1522,7 +1527,7 @@ impl<'a> ModuleGraphErrorIterator<'a> {
         }
       }
       Resolution::Err(err) => {
-        Some(ModuleGraphError::for_resolution_mode(mode, *err.clone()))
+        Some(ModuleGraphError::for_resolution_kind(kind, *err.clone()))
       }
       Resolution::None => None,
     }
@@ -1545,7 +1550,7 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
               if let Some(dep) = module.maybe_types_dependency.as_ref() {
                 if let Some(err) = self.check_resolution(
                   module,
-                  ResolutionMode::Types,
+                  ResolutionKind::Types,
                   &dep.specifier,
                   &dep.dependency,
                   false,
@@ -1566,7 +1571,7 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
               if follow_dynamic || !dep.is_dynamic {
                 if let Some(err) = self.check_resolution(
                   module,
-                  ResolutionMode::Execution,
+                  ResolutionKind::Execution,
                   specifier_text,
                   &dep.maybe_code,
                   dep.is_dynamic,
@@ -1576,7 +1581,7 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
                 if check_types {
                   if let Some(err) = self.check_resolution(
                     module,
-                    ResolutionMode::Types,
+                    ResolutionKind::Types,
                     specifier_text,
                     &dep.maybe_type,
                     dep.is_dynamic,
@@ -1769,6 +1774,7 @@ impl ModuleGraph {
             Default::default();
           fill_module_dependencies(
             GraphKind::TypesOnly,
+            module.media_type,
             match Arc::try_unwrap(fast_check_module.module_info) {
               Ok(module_info) => module_info.dependencies,
               Err(module_info) => module_info.dependencies.clone(),
@@ -2103,18 +2109,18 @@ impl ModuleGraph {
 fn resolve(
   specifier_text: &str,
   referrer_range: Range,
-  mode: ResolutionMode,
+  resolution_kind: ResolutionKind,
   jsr_url_provider: &dyn JsrUrlProvider,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> Resolution {
   let response = if let Some(resolver) = maybe_resolver {
-    resolver.resolve(specifier_text, &referrer_range, mode)
+    resolver.resolve(specifier_text, &referrer_range, resolution_kind)
   } else {
     resolve_import(specifier_text, &referrer_range.specifier)
       .map_err(|err| err.into())
   };
-  if mode.is_types() {
+  if resolution_kind.is_types() {
     if let Ok(resolved_url) = &response {
       if let Some(package_nv) = jsr_url_provider.package_url_to_nv(resolved_url)
       {
@@ -2489,14 +2495,17 @@ pub(crate) fn parse_js_module_from_module_info(
   // Analyze the TypeScript triple-slash references and self types specifier
   if graph_kind.include_types() {
     if let Some(specifier) = module_info.self_types_specifier.as_ref() {
-      let range =
-        Range::from_position_range(module.specifier.clone(), specifier.range);
+      let range = Range {
+        specifier: module.specifier.clone(),
+        range: specifier.range,
+        resolution_mode: None,
+      };
       module.maybe_types_dependency = Some(TypesDependency {
         specifier: specifier.text.clone(),
         dependency: resolve(
           &specifier.text,
           range.clone(),
-          ResolutionMode::Types,
+          ResolutionKind::Types,
           jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
@@ -2511,15 +2520,16 @@ pub(crate) fn parse_js_module_from_module_info(
             .dependencies
             .entry(specifier.text.clone())
             .or_default();
-          let range = Range::from_position_range(
-            module.specifier.clone(),
-            specifier.range,
-          );
+          let range = Range {
+            specifier: module.specifier.clone(),
+            range: specifier.range,
+            resolution_mode: None,
+          };
           if dep.maybe_type.is_none() {
             dep.maybe_type = resolve(
               &specifier.text,
               range.clone(),
-              ResolutionMode::Types,
+              ResolutionKind::Types,
               jsr_url_provider,
               maybe_resolver,
               maybe_npm_resolver,
@@ -2533,19 +2543,23 @@ pub(crate) fn parse_js_module_from_module_info(
             attributes: Default::default(),
           });
         }
-        TypeScriptReference::Types(specifier) => {
+        TypeScriptReference::Types {
+          specifier,
+          resolution_mode: mode,
+        } => {
           let is_untyped = !module.media_type.is_typed();
           if is_untyped && module.maybe_types_dependency.is_some() {
             continue; // early exit if we already have a types dependency
           }
-          let range = Range::from_position_range(
-            module.specifier.clone(),
-            specifier.range,
-          );
+          let range = Range {
+            specifier: module.specifier.clone(),
+            range: specifier.range,
+            resolution_mode: mode.map(|mode| mode.as_deno_graph()),
+          };
           let dep_resolution = resolve(
             &specifier.text,
             range.clone(),
-            ResolutionMode::Types,
+            ResolutionKind::Types,
             jsr_url_provider,
             maybe_resolver,
             maybe_npm_resolver,
@@ -2622,15 +2636,16 @@ pub(crate) fn parse_js_module_from_module_info(
         .dependencies
         .entry(specifier_text.clone())
         .or_default();
-      let range = Range::from_position_range(
-        module.specifier.clone(),
-        import_source.range,
-      );
+      let range = Range {
+        specifier: module.specifier.clone(),
+        range: import_source.range,
+        resolution_mode: None,
+      };
       if dep.maybe_code.is_none() {
         dep.maybe_code = resolve(
           &specifier_text,
           range.clone(),
-          ResolutionMode::Execution,
+          ResolutionKind::Execution,
           jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
@@ -2656,14 +2671,15 @@ pub(crate) fn parse_js_module_from_module_info(
             "{}/{}",
             import_source_types.text, jsx_import_source_module
           );
-          let range = Range::from_position_range(
-            module.specifier.clone(),
-            import_source_types.range,
-          );
+          let range = Range {
+            specifier: module.specifier.clone(),
+            range: import_source_types.range,
+            resolution_mode: None,
+          };
           dep.maybe_type = resolve(
             &specifier_text,
             range,
-            ResolutionMode::Types,
+            ResolutionKind::Types,
             jsr_url_provider,
             maybe_resolver,
             maybe_npm_resolver,
@@ -2673,7 +2689,7 @@ pub(crate) fn parse_js_module_from_module_info(
           let types_resolution = resolve(
             &specifier_text,
             range.clone(),
-            ResolutionMode::Types,
+            ResolutionKind::Types,
             jsr_url_provider,
             maybe_resolver,
             maybe_npm_resolver,
@@ -2697,18 +2713,24 @@ pub(crate) fn parse_js_module_from_module_info(
 
   // Analyze any JSDoc type imports
   if graph_kind.include_types() {
-    for specifier in module_info.jsdoc_imports {
+    for jsdoc_import in module_info.jsdoc_imports {
+      let specifier = jsdoc_import.specifier;
       let dep = module
         .dependencies
         .entry(specifier.text.clone())
         .or_default();
-      let specifier_range =
-        Range::from_position_range(module.specifier.clone(), specifier.range);
+      let specifier_range = Range {
+        specifier: module.specifier.clone(),
+        range: specifier.range,
+        resolution_mode: jsdoc_import
+          .resolution_mode
+          .map(|mode| mode.as_deno_graph()),
+      };
       if dep.maybe_type.is_none() {
         dep.maybe_type = resolve(
           &specifier.text,
           specifier_range.clone(),
-          ResolutionMode::Types,
+          ResolutionKind::Types,
           jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
@@ -2730,15 +2752,15 @@ pub(crate) fn parse_js_module_from_module_info(
       if let Some(types_header) = headers.get("x-typescript-types") {
         let range = Range {
           specifier: module.specifier.clone(),
-          start: Position::zeroed(),
-          end: Position::zeroed(),
+          range: PositionRange::zeroed(),
+          resolution_mode: None,
         };
         module.maybe_types_dependency = Some(TypesDependency {
           specifier: types_header.to_string(),
           dependency: resolve(
             types_header,
             range,
-            ResolutionMode::Types,
+            ResolutionKind::Types,
             jsr_url_provider,
             maybe_resolver,
             maybe_npm_resolver,
@@ -2766,8 +2788,8 @@ pub(crate) fn parse_js_module_from_module_info(
                 specifier: specifier.clone(),
                 range: maybe_range.unwrap_or_else(|| Range {
                   specifier,
-                  start: Position::zeroed(),
-                  end: Position::zeroed(),
+                  range: PositionRange::zeroed(),
+                  resolution_mode: None,
                 }),
               })),
             })
@@ -2781,8 +2803,8 @@ pub(crate) fn parse_js_module_from_module_info(
                 specifier: module.specifier.to_string(),
                 range: Range {
                   specifier: module.specifier.clone(),
-                  start: Position::zeroed(),
-                  end: Position::zeroed(),
+                  range: PositionRange::zeroed(),
+                  resolution_mode: None,
                 },
               },
             )),
@@ -2794,6 +2816,7 @@ pub(crate) fn parse_js_module_from_module_info(
   // Analyze ES dependencies
   fill_module_dependencies(
     graph_kind,
+    module.media_type,
     module_info.dependencies,
     &module.specifier,
     &mut module.dependencies,
@@ -2828,6 +2851,7 @@ fn parse_wasm_module_from_module_info(
   };
   fill_module_dependencies(
     graph_kind,
+    MediaType::Wasm,
     module_info.dependencies,
     &module.specifier,
     &mut module.dependencies,
@@ -2842,6 +2866,7 @@ fn parse_wasm_module_from_module_info(
 #[allow(clippy::too_many_arguments)]
 fn fill_module_dependencies(
   graph_kind: GraphKind,
+  media_type: MediaType,
   dependencies: Vec<DependencyDescriptor>,
   module_specifier: &ModuleSpecifier,
   module_dependencies: &mut IndexMap<String, Dependency>,
@@ -2860,10 +2885,38 @@ fn fill_module_dependencies(
         if is_import_or_export_type && !graph_kind.include_types() {
           continue; // skip
         }
-        let specifier_range = Range::from_position_range(
-          module_specifier.clone(),
-          desc.specifier_range,
-        );
+        let is_types = is_import_or_export_type || media_type.is_declaration();
+        let specifier_range = Range {
+          specifier: module_specifier.clone(),
+          range: desc.specifier_range,
+          resolution_mode: match desc.kind {
+            StaticDependencyKind::Import
+            | StaticDependencyKind::Export
+            | StaticDependencyKind::ImportType
+            | StaticDependencyKind::ExportType => is_types
+              .then(|| {
+                desc
+                  .import_attributes
+                  .get("resolution-mode")
+                  .and_then(|s| {
+                    TypeScriptTypesResolutionMode::from_str(s.as_str())
+                  })
+                  .map(|m| m.as_deno_graph())
+              })
+              .flatten()
+              .or_else(|| {
+                if media_type.is_declaration() {
+                  None
+                } else {
+                  Some(ResolutionMode::Import)
+                }
+              }),
+            StaticDependencyKind::ImportEquals
+            | StaticDependencyKind::ExportEquals => {
+              Some(ResolutionMode::Require)
+            }
+          },
+        };
         (
           vec![Import {
             specifier: desc.specifier,
@@ -2901,16 +2954,29 @@ fn fill_module_dependencies(
           }
           _ => continue,
         };
-        let specifier_range = Range::from_position_range(
-          module_specifier.clone(),
-          desc.argument_range,
-        );
+        let specifier_range = Range {
+          specifier: module_specifier.clone(),
+          range: desc.argument_range,
+          resolution_mode: match desc.kind {
+            DynamicDependencyKind::Import => {
+              if media_type.is_declaration() {
+                None
+              } else {
+                Some(ResolutionMode::Import)
+              }
+            }
+            DynamicDependencyKind::Require => Some(ResolutionMode::Require),
+          },
+        };
         (
           specifiers
             .into_iter()
             .map(|specifier| Import {
               specifier,
-              kind: ImportKind::Es,
+              kind: match desc.kind {
+                DynamicDependencyKind::Import => ImportKind::Es,
+                DynamicDependencyKind::Require => ImportKind::Require,
+              },
               specifier_range: specifier_range.clone(),
               is_dynamic: true,
               attributes: import_attributes.clone(),
@@ -2936,11 +3002,12 @@ fn fill_module_dependencies(
           dep.maybe_deno_types_specifier = Some(types_specifier.text.clone());
           dep.maybe_type = resolve(
             &types_specifier.text,
-            Range::from_position_range(
-              module_specifier.clone(),
-              types_specifier.range,
-            ),
-            ResolutionMode::Types,
+            Range {
+              specifier: module_specifier.clone(),
+              range: types_specifier.range,
+              resolution_mode: import.specifier_range.resolution_mode,
+            },
+            ResolutionKind::Types,
             jsr_url_provider,
             maybe_resolver,
             maybe_npm_resolver,
@@ -2952,7 +3019,7 @@ fn fill_module_dependencies(
           dep.maybe_type = resolve(
             &import.specifier,
             import.specifier_range.clone(),
-            ResolutionMode::Types,
+            ResolutionKind::Types,
             jsr_url_provider,
             maybe_resolver,
             maybe_npm_resolver,
@@ -2964,7 +3031,7 @@ fn fill_module_dependencies(
         dep.maybe_code = resolve(
           &import.specifier,
           import.specifier_range.clone(),
-          ResolutionMode::Execution,
+          ResolutionKind::Execution,
           jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
@@ -2981,7 +3048,7 @@ fn fill_module_dependencies(
         let maybe_type = resolve(
           &import.specifier,
           import.specifier_range.clone(),
-          ResolutionMode::Types,
+          ResolutionKind::Types,
           jsr_url_provider,
           maybe_resolver,
           maybe_npm_resolver,
@@ -5230,15 +5297,25 @@ impl Serialize for Resolution {
   {
     match self {
       Resolution::Ok(resolved) => {
-        let mut state = serializer.serialize_struct("ResolvedSpecifier", 2)?;
+        let mut state = serializer.serialize_struct("ResolvedSpecifier", 3)?;
         state.serialize_field("specifier", &resolved.specifier)?;
+        if resolved.range.resolution_mode.is_some() {
+          state.serialize_field(
+            "resolutionMode",
+            &resolved.range.resolution_mode,
+          )?;
+        }
         state.serialize_field("span", &resolved.range)?;
         state.end()
       }
       Resolution::Err(err) => {
-        let mut state = serializer.serialize_struct("ResolvedError", 2)?;
+        let mut state = serializer.serialize_struct("ResolvedError", 3)?;
         state.serialize_field("error", &err.to_string())?;
-        state.serialize_field("span", err.range())?;
+        let range = err.range();
+        if range.resolution_mode.is_some() {
+          state.serialize_field("resolutionMode", &range.resolution_mode)?;
+        }
+        state.serialize_field("span", range)?;
         state.end()
       }
       Resolution::None => {
@@ -5306,8 +5383,7 @@ mod tests {
 
   #[test]
   fn test_range_includes() {
-    let range = Range {
-      specifier: ModuleSpecifier::parse("file:///a.ts").unwrap(),
+    let range = PositionRange {
       start: Position {
         line: 1,
         character: 20,
@@ -5317,23 +5393,23 @@ mod tests {
         character: 30,
       },
     };
-    assert!(range.includes(&Position {
+    assert!(range.includes(Position {
       line: 1,
       character: 20
     }));
-    assert!(range.includes(&Position {
+    assert!(range.includes(Position {
       line: 1,
       character: 25
     }));
-    assert!(range.includes(&Position {
+    assert!(range.includes(Position {
       line: 1,
       character: 30
     }));
-    assert!(!range.includes(&Position {
+    assert!(!range.includes(Position {
       line: 0,
       character: 25
     }));
-    assert!(!range.includes(&Position {
+    assert!(!range.includes(Position {
       line: 2,
       character: 25
     }));
@@ -5369,14 +5445,17 @@ mod tests {
         specifier: ModuleSpecifier::parse("file:///b.ts").unwrap(),
         range: Range {
           specifier: specifier.clone(),
-          start: Position {
-            line: 0,
-            character: 19,
+          range: PositionRange {
+            start: Position {
+              line: 0,
+              character: 19,
+            },
+            end: Position {
+              line: 0,
+              character: 27,
+            },
           },
-          end: Position {
-            line: 0,
-            character: 27,
-          },
+          resolution_mode: None,
         },
       })),
       imports: vec![
@@ -5385,14 +5464,17 @@ mod tests {
           kind: ImportKind::Es,
           specifier_range: Range {
             specifier: specifier.clone(),
-            start: Position {
-              line: 0,
-              character: 19,
+            range: PositionRange {
+              start: Position {
+                line: 0,
+                character: 19,
+              },
+              end: Position {
+                line: 0,
+                character: 27,
+              },
             },
-            end: Position {
-              line: 0,
-              character: 27,
-            },
+            resolution_mode: None,
           },
           is_dynamic: false,
           attributes: Default::default(),
@@ -5402,14 +5484,17 @@ mod tests {
           kind: ImportKind::Es,
           specifier_range: Range {
             specifier: specifier.clone(),
-            start: Position {
-              line: 1,
-              character: 19,
+            range: PositionRange {
+              start: Position {
+                line: 1,
+                character: 19,
+              },
+              end: Position {
+                line: 1,
+                character: 27,
+              },
             },
-            end: Position {
-              line: 1,
-              character: 27,
-            },
+            resolution_mode: None,
           },
           is_dynamic: false,
           attributes: Default::default(),
@@ -5418,41 +5503,47 @@ mod tests {
       ..Default::default()
     };
     assert_eq!(
-      dependency.includes(&Position {
+      dependency.includes(Position {
         line: 0,
         character: 21,
       }),
       Some(&Range {
         specifier: specifier.clone(),
-        start: Position {
-          line: 0,
-          character: 19
+        range: PositionRange {
+          start: Position {
+            line: 0,
+            character: 19
+          },
+          end: Position {
+            line: 0,
+            character: 27
+          },
         },
-        end: Position {
-          line: 0,
-          character: 27
-        },
+        resolution_mode: None,
       })
     );
     assert_eq!(
-      dependency.includes(&Position {
+      dependency.includes(Position {
         line: 1,
         character: 21,
       }),
       Some(&Range {
         specifier,
-        start: Position {
-          line: 1,
-          character: 19
+        range: PositionRange {
+          start: Position {
+            line: 1,
+            character: 19
+          },
+          end: Position {
+            line: 1,
+            character: 27
+          },
         },
-        end: Position {
-          line: 1,
-          character: 27
-        },
+        resolution_mode: None,
       })
     );
     assert_eq!(
-      dependency.includes(&Position {
+      dependency.includes(Position {
         line: 0,
         character: 18,
       }),
@@ -5468,16 +5559,16 @@ mod tests {
         specifier: ModuleSpecifier::parse("file:///wrong.ts").unwrap(),
         range: Range {
           specifier: referrer.clone(),
-          start: Position::zeroed(),
-          end: Position::zeroed(),
+          range: PositionRange::zeroed(),
+          resolution_mode: None,
         },
       })),
       maybe_type: Resolution::Ok(Box::new(ResolutionResolved {
         specifier: ModuleSpecifier::parse("file:///wrong.ts").unwrap(),
         range: Range {
           specifier: referrer.clone(),
-          start: Position::zeroed(),
-          end: Position::zeroed(),
+          range: PositionRange::zeroed(),
+          resolution_mode: None,
         },
       })),
       maybe_deno_types_specifier: Some("./b.d.ts".to_string()),
@@ -5492,16 +5583,16 @@ mod tests {
           specifier: ModuleSpecifier::parse("file:///a/b.ts").unwrap(),
           range: Range {
             specifier: referrer.clone(),
-            start: Position::zeroed(),
-            end: Position::zeroed(),
+            range: PositionRange::zeroed(),
+            resolution_mode: None,
           },
         })),
         maybe_type: Resolution::Ok(Box::new(ResolutionResolved {
           specifier: ModuleSpecifier::parse("file:///a/b.d.ts").unwrap(),
           range: Range {
             specifier: referrer.clone(),
-            start: Position::zeroed(),
-            end: Position::zeroed(),
+            range: PositionRange::zeroed(),
+            resolution_mode: None,
           },
         })),
         maybe_deno_types_specifier: Some("./b.d.ts".to_string()),
@@ -5519,8 +5610,8 @@ mod tests {
         specifier: ModuleSpecifier::parse("file:///wrong.ts").unwrap(),
         range: Range {
           specifier: referrer.clone(),
-          start: Position::zeroed(),
-          end: Position::zeroed(),
+          range: PositionRange::zeroed(),
+          resolution_mode: None,
         },
       })),
     };
@@ -5534,8 +5625,8 @@ mod tests {
           specifier: ModuleSpecifier::parse("file:///a/main.d.ts").unwrap(),
           range: Range {
             specifier: referrer.clone(),
-            start: Position::zeroed(),
-            end: Position::zeroed(),
+            range: PositionRange::zeroed(),
+            resolution_mode: None,
           },
         })),
       }
@@ -5875,14 +5966,17 @@ mod tests {
         range: Range {
           specifier: ModuleSpecifier::parse("https://deno.land/foo.js")
             .unwrap(),
-          start: Position {
-            line: 0,
-            character: 57,
+          range: PositionRange {
+            start: Position {
+              line: 0,
+              character: 57,
+            },
+            end: Position {
+              line: 0,
+              character: 82,
+            },
           },
-          end: Position {
-            line: 0,
-            character: 82,
-          },
+          resolution_mode: Some(ResolutionMode::Import),
         },
         specifier: ModuleSpecifier::parse("http://deno.land/foo.js").unwrap(),
       },
@@ -5893,14 +5987,17 @@ mod tests {
         range: Range {
           specifier: ModuleSpecifier::parse("https://deno.land/foo.js")
             .unwrap(),
-          start: Position {
-            line: 0,
-            character: 32,
+          range: PositionRange {
+            start: Position {
+              line: 0,
+              character: 32,
+            },
+            end: Position {
+              line: 0,
+              character: 48,
+            },
           },
-          end: Position {
-            line: 0,
-            character: 48,
-          },
+          resolution_mode: Some(ResolutionMode::Import),
         },
         specifier: ModuleSpecifier::parse("file:///bar.js").unwrap(),
       },
@@ -5912,14 +6009,17 @@ mod tests {
         range: Range {
           specifier: ModuleSpecifier::parse("https://deno.land/foo.js")
             .unwrap(),
-          start: Position {
-            line: 0,
-            character: 7,
+          range: PositionRange {
+            start: Position {
+              line: 0,
+              character: 7,
+            },
+            end: Position {
+              line: 0,
+              character: 23,
+            },
           },
-          end: Position {
-            line: 0,
-            character: 23,
-          },
+          resolution_mode: Some(ResolutionMode::Import),
         },
         specifier: ModuleSpecifier::parse("file:///baz.js").unwrap(),
       },
@@ -6053,14 +6153,17 @@ mod tests {
           kind: ImportKind::TsReferencePath,
           specifier_range: Range {
             specifier: Url::parse("file:///foo.ts").unwrap(),
-            start: Position {
-              line: 1,
-              character: 36
+            range: PositionRange {
+              start: Position {
+                line: 1,
+                character: 36
+              },
+              end: Position {
+                line: 1,
+                character: 52,
+              },
             },
-            end: Position {
-              line: 1,
-              character: 52,
-            },
+            resolution_mode: None,
           },
           is_dynamic: false,
           attributes: ImportAttributes::None,
@@ -6070,14 +6173,17 @@ mod tests {
           kind: ImportKind::TsReferenceTypes,
           specifier_range: Range {
             specifier: Url::parse("file:///foo.ts").unwrap(),
-            start: Position {
-              line: 2,
-              character: 37,
+            range: PositionRange {
+              start: Position {
+                line: 2,
+                character: 37,
+              },
+              end: Position {
+                line: 2,
+                character: 53,
+              },
             },
-            end: Position {
-              line: 2,
-              character: 53,
-            },
+            resolution_mode: None,
           },
           is_dynamic: false,
           attributes: ImportAttributes::None,
@@ -6087,14 +6193,17 @@ mod tests {
           kind: ImportKind::Es,
           specifier_range: Range {
             specifier: Url::parse("file:///foo.ts").unwrap(),
-            start: Position {
-              line: 4,
-              character: 23,
+            range: PositionRange {
+              start: Position {
+                line: 4,
+                character: 23,
+              },
+              end: Position {
+                line: 4,
+                character: 39,
+              },
             },
-            end: Position {
-              line: 4,
-              character: 39,
-            },
+            resolution_mode: Some(ResolutionMode::Import),
           },
           is_dynamic: false,
           attributes: ImportAttributes::None,
@@ -6104,14 +6213,17 @@ mod tests {
           kind: ImportKind::Es,
           specifier_range: Range {
             specifier: Url::parse("file:///foo.ts").unwrap(),
-            start: Position {
-              line: 5,
-              character: 29,
+            range: PositionRange {
+              start: Position {
+                line: 5,
+                character: 29,
+              },
+              end: Position {
+                line: 5,
+                character: 45,
+              },
             },
-            end: Position {
-              line: 5,
-              character: 45,
-            },
+            resolution_mode: Some(ResolutionMode::Import),
           },
           is_dynamic: true,
           attributes: ImportAttributes::None,
@@ -6121,14 +6233,17 @@ mod tests {
           kind: ImportKind::Es,
           specifier_range: Range {
             specifier: Url::parse("file:///foo.ts").unwrap(),
-            start: Position {
-              line: 6,
-              character: 29,
+            range: PositionRange {
+              start: Position {
+                line: 6,
+                character: 29,
+              },
+              end: Position {
+                line: 6,
+                character: 45,
+              },
             },
-            end: Position {
-              line: 6,
-              character: 45,
-            },
+            resolution_mode: Some(ResolutionMode::Import),
           },
           is_dynamic: true,
           attributes: ImportAttributes::Unknown,
@@ -6138,14 +6253,17 @@ mod tests {
           kind: ImportKind::TsType,
           specifier_range: Range {
             specifier: Url::parse("file:///foo.ts").unwrap(),
-            start: Position {
-              line: 8,
-              character: 36,
+            range: PositionRange {
+              start: Position {
+                line: 8,
+                character: 36,
+              },
+              end: Position {
+                line: 8,
+                character: 52,
+              },
             },
-            end: Position {
-              line: 8,
-              character: 52,
-            },
+            resolution_mode: Some(ResolutionMode::Import),
           },
           is_dynamic: false,
           attributes: ImportAttributes::None,
@@ -6159,21 +6277,24 @@ mod tests {
         kind: ImportKind::Es,
         specifier_range: Range {
           specifier: Url::parse("file:///foo.ts").unwrap(),
-          start: Position {
-            line: 7,
-            character: 23,
+          range: PositionRange {
+            start: Position {
+              line: 7,
+              character: 23,
+            },
+            end: Position {
+              line: 7,
+              character: 41,
+            },
           },
-          end: Position {
-            line: 7,
-            character: 41,
-          },
+          resolution_mode: Some(ResolutionMode::Import),
         },
         is_dynamic: false,
         attributes: ImportAttributes::Known(HashMap::from_iter(vec![(
           "type".to_string(),
           ImportAttribute::Known("json".to_string())
         )])),
-      },]
+      }]
     );
   }
 
@@ -6267,14 +6388,14 @@ mod tests {
         &self,
         specifier_text: &str,
         referrer_range: &Range,
-        mode: ResolutionMode,
+        resolution_kind: ResolutionKind,
       ) -> Result<ModuleSpecifier, ResolveError> {
         if specifier_text == "foo/jsx-runtime" {
-          match mode {
-            ResolutionMode::Execution => {
+          match resolution_kind {
+            ResolutionKind::Execution => {
               Ok(ModuleSpecifier::parse("file:///foo/jsx-runtime").unwrap())
             }
-            ResolutionMode::Types => Ok(
+            ResolutionKind::Types => Ok(
               ModuleSpecifier::parse("file:///foo/types/jsx-runtime").unwrap(),
             ),
           }

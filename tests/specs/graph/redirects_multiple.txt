@@ -30,6 +30,7 @@ console.log('hi');
           "specifier": "https://localhost/redirect.ts",
           "code": {
             "specifier": "https://localhost/redirect.ts",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -46,6 +47,7 @@ console.log('hi');
           "specifier": "https://localhost/other_redirect.ts",
           "code": {
             "specifier": "https://localhost/other_redirect.ts",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 1,

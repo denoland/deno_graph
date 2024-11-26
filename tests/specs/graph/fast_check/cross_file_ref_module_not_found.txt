@@ -40,6 +40,7 @@ import 'jsr:@scope/a'
           "specifier": "jsr:@scope/a",
           "code": {
             "specifier": "jsr:@scope/a",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -70,6 +71,7 @@ import 'jsr:@scope/a'
           "specifier": "./a.ts",
           "code": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -94,6 +96,7 @@ import 'jsr:@scope/a'
           "specifier": "./b.ts",
           "code": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/b.ts",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -110,6 +113,7 @@ import 'jsr:@scope/a'
           "specifier": "./a.ts",
           "code": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 1,

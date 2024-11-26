@@ -35,6 +35,7 @@ import "jsr:@scope/a@^1.0";
           "specifier": "jsr:@scope/a@^1.0",
           "code": {
             "specifier": "jsr:@scope/a@^1.0",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
