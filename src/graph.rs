@@ -5300,7 +5300,10 @@ impl Serialize for Resolution {
         let mut state = serializer.serialize_struct("ResolvedSpecifier", 3)?;
         state.serialize_field("specifier", &resolved.specifier)?;
         if resolved.range.resolution_mode.is_some() {
-          state.serialize_field("mode", &resolved.range.resolution_mode)?;
+          state.serialize_field(
+            "resolutionMode",
+            &resolved.range.resolution_mode,
+          )?;
         }
         state.serialize_field("span", &resolved.range)?;
         state.end()
@@ -5310,7 +5313,7 @@ impl Serialize for Resolution {
         state.serialize_field("error", &err.to_string())?;
         let range = err.range();
         if range.resolution_mode.is_some() {
-          state.serialize_field("mode", &range.resolution_mode)?;
+          state.serialize_field("resolutionMode", &range.resolution_mode)?;
         }
         state.serialize_field("span", range)?;
         state.end()
