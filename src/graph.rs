@@ -159,18 +159,6 @@ impl fmt::Display for Range {
 }
 
 impl Range {
-  pub(crate) fn from_position_range(
-    specifier: ModuleSpecifier,
-    range: PositionRange,
-    kind: Option<ResolutionMode>,
-  ) -> Range {
-    Range {
-      specifier,
-      range,
-      mode: kind,
-    }
-  }
-
   /// Determines if a given position is within the range.
   pub fn includes(&self, position: Position) -> bool {
     self.range.includes(position)
@@ -2507,11 +2495,11 @@ pub(crate) fn parse_js_module_from_module_info(
   // Analyze the TypeScript triple-slash references and self types specifier
   if graph_kind.include_types() {
     if let Some(specifier) = module_info.self_types_specifier.as_ref() {
-      let range = Range::from_position_range(
-        module.specifier.clone(),
-        specifier.range,
-        None,
-      );
+      let range = Range {
+        specifier: module.specifier.clone(),
+        range: specifier.range,
+        mode: None,
+      };
       module.maybe_types_dependency = Some(TypesDependency {
         specifier: specifier.text.clone(),
         dependency: resolve(
@@ -2532,11 +2520,11 @@ pub(crate) fn parse_js_module_from_module_info(
             .dependencies
             .entry(specifier.text.clone())
             .or_default();
-          let range = Range::from_position_range(
-            module.specifier.clone(),
-            specifier.range,
-            None,
-          );
+          let range = Range {
+            specifier: module.specifier.clone(),
+            range: specifier.range,
+            mode: None,
+          };
           if dep.maybe_type.is_none() {
             dep.maybe_type = resolve(
               &specifier.text,
@@ -2563,11 +2551,11 @@ pub(crate) fn parse_js_module_from_module_info(
           if is_untyped && module.maybe_types_dependency.is_some() {
             continue; // early exit if we already have a types dependency
           }
-          let range = Range::from_position_range(
-            module.specifier.clone(),
-            specifier.range,
-            mode.map(|mode| mode.as_deno_graph()),
-          );
+          let range = Range {
+            specifier: module.specifier.clone(),
+            range: specifier.range,
+            mode: mode.map(|mode| mode.as_deno_graph()),
+          };
           let dep_resolution = resolve(
             &specifier.text,
             range.clone(),
@@ -2648,11 +2636,11 @@ pub(crate) fn parse_js_module_from_module_info(
         .dependencies
         .entry(specifier_text.clone())
         .or_default();
-      let range = Range::from_position_range(
-        module.specifier.clone(),
-        import_source.range,
-        None,
-      );
+      let range = Range {
+        specifier: module.specifier.clone(),
+        range: import_source.range,
+        mode: None,
+      };
       if dep.maybe_code.is_none() {
         dep.maybe_code = resolve(
           &specifier_text,
@@ -2683,11 +2671,11 @@ pub(crate) fn parse_js_module_from_module_info(
             "{}/{}",
             import_source_types.text, jsx_import_source_module
           );
-          let range = Range::from_position_range(
-            module.specifier.clone(),
-            import_source_types.range,
-            None,
-          );
+          let range = Range {
+            specifier: module.specifier.clone(),
+            range: import_source_types.range,
+            mode: None,
+          };
           dep.maybe_type = resolve(
             &specifier_text,
             range,
@@ -2731,13 +2719,13 @@ pub(crate) fn parse_js_module_from_module_info(
         .dependencies
         .entry(specifier.text.clone())
         .or_default();
-      let specifier_range = Range::from_position_range(
-        module.specifier.clone(),
-        specifier.range,
-        jsdoc_import
+      let specifier_range = Range {
+        specifier: module.specifier.clone(),
+        range: specifier.range,
+        mode: jsdoc_import
           .resolution_mode
           .map(|mode| mode.as_deno_graph()),
-      );
+      };
       if dep.maybe_type.is_none() {
         dep.maybe_type = resolve(
           &specifier.text,
@@ -2898,28 +2886,37 @@ fn fill_module_dependencies(
           continue; // skip
         }
         let is_types = is_import_or_export_type || media_type.is_declaration();
-        let specifier_range = Range::from_position_range(
-          module_specifier.clone(),
-          desc.specifier_range,
-          is_types
-            .then(|| {
-              desc
-                .import_attributes
-                .get("resolution-mode")
-                .and_then(|s| {
-                  TypeScriptTypesResolutionMode::from_str(s.as_str())
-                })
-                .map(|m| m.as_deno_graph())
-            })
-            .flatten()
-            .or_else(|| {
-              if media_type.is_declaration() {
-                None
-              } else {
-                Some(ResolutionMode::Import)
-              }
-            }),
-        );
+        let specifier_range = Range {
+          specifier: module_specifier.clone(),
+          range: desc.specifier_range,
+          mode: match desc.kind {
+            StaticDependencyKind::Import
+            | StaticDependencyKind::Export
+            | StaticDependencyKind::ImportType
+            | StaticDependencyKind::ExportType => is_types
+              .then(|| {
+                desc
+                  .import_attributes
+                  .get("resolution-mode")
+                  .and_then(|s| {
+                    TypeScriptTypesResolutionMode::from_str(s.as_str())
+                  })
+                  .map(|m| m.as_deno_graph())
+              })
+              .flatten()
+              .or_else(|| {
+                if media_type.is_declaration() {
+                  None
+                } else {
+                  Some(ResolutionMode::Import)
+                }
+              }),
+            StaticDependencyKind::ImportEquals
+            | StaticDependencyKind::ExportEquals => {
+              Some(ResolutionMode::Require)
+            }
+          },
+        };
         (
           vec![Import {
             specifier: desc.specifier,
@@ -2957,10 +2954,10 @@ fn fill_module_dependencies(
           }
           _ => continue,
         };
-        let specifier_range = Range::from_position_range(
-          module_specifier.clone(),
-          desc.argument_range,
-          match desc.kind {
+        let specifier_range = Range {
+          specifier: module_specifier.clone(),
+          range: desc.argument_range,
+          mode: match desc.kind {
             DynamicDependencyKind::Import => {
               if media_type.is_declaration() {
                 None
@@ -2970,7 +2967,7 @@ fn fill_module_dependencies(
             }
             DynamicDependencyKind::Require => Some(ResolutionMode::Require),
           },
-        );
+        };
         (
           specifiers
             .into_iter()
@@ -3005,11 +3002,11 @@ fn fill_module_dependencies(
           dep.maybe_deno_types_specifier = Some(types_specifier.text.clone());
           dep.maybe_type = resolve(
             &types_specifier.text,
-            Range::from_position_range(
-              module_specifier.clone(),
-              types_specifier.range,
-              import.specifier_range.mode,
-            ),
+            Range {
+              specifier: module_specifier.clone(),
+              range: types_specifier.range,
+              mode: import.specifier_range.mode,
+            },
             ResolutionKind::Types,
             jsr_url_provider,
             maybe_resolver,
