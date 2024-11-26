@@ -842,7 +842,7 @@ console.log(a);
                 "specifier": "./deno.json",
                 "code": {
                   "specifier": "file:///a/deno.json",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 0,
@@ -1359,7 +1359,7 @@ console.log(a);
               "specifier": "path",
               "code": {
                 "specifier": "node:path",
-                "mode": "import",
+                "resolutionMode": "import",
                 "span": {
                   "start": {
                     "line": 0,
@@ -1569,7 +1569,7 @@ console.log(a);
                 "specifier": "./b.ts",
                 "code": {
                   "specifier": "file:///b.ts",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 0,
@@ -1930,7 +1930,7 @@ export const foo = 'bar';"#,
               character: 36
             },
           },
-          mode: None,
+          resolution_mode: None,
         }
       }
     );
@@ -1987,7 +1987,7 @@ export const foo = 'bar';"#,
               character: 33
             },
           },
-          mode: None,
+          resolution_mode: None,
         }
       }
     );
@@ -2111,7 +2111,7 @@ export const foo = 'bar';"#,
           Some(Range {
             specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
             range: PositionRange::zeroed(),
-            mode: None,
+            resolution_mode: None,
           }),
         ),
       )],
@@ -2139,7 +2139,7 @@ export const foo = 'bar';"#,
         range: Range {
           specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
           range: PositionRange::zeroed(),
-          mode: None,
+          resolution_mode: None,
         }
       }
     );
@@ -2241,7 +2241,7 @@ export const foo = 'bar';"#,
                 "specifier": "./a.json",
                 "code": {
                   "specifier": "file:///a/a.json",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 1,
@@ -2259,7 +2259,7 @@ export const foo = 'bar';"#,
                 "specifier": "./b.json",
                 "code": {
                   "specifier": "file:///a/b.json",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 2,
@@ -2278,7 +2278,7 @@ export const foo = 'bar';"#,
                 "specifier": "./c.json",
                 "code": {
                   "specifier": "file:///a/c.json",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 3,
@@ -2296,7 +2296,7 @@ export const foo = 'bar';"#,
                 "specifier": "./d.json",
                 "code": {
                   "specifier": "file:///a/d.json",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 5,
@@ -2373,7 +2373,7 @@ export const foo = 'bar';"#,
                 "specifier": "./a.json",
                 "code": {
                   "specifier": "file:///a/a.json",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 1,
@@ -2501,7 +2501,7 @@ export const foo = 'bar';"#,
                 "specifier": "./a.json",
                 "code": {
                   "specifier": "file:///a/a.json",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 1,
@@ -2518,7 +2518,7 @@ export const foo = 'bar';"#,
                 "specifier": "./b.json",
                 "code": {
                   "specifier": "file:///a/b.json",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 2,
@@ -2536,7 +2536,7 @@ export const foo = 'bar';"#,
                 "specifier": "./c.js",
                 "code": {
                   "specifier": "file:///a/c.js",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 3,
@@ -2554,7 +2554,7 @@ export const foo = 'bar';"#,
                 "specifier": "./d.json",
                 "code": {
                   "specifier": "file:///a/d.json",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 4,
@@ -2572,7 +2572,7 @@ export const foo = 'bar';"#,
                 "specifier": "./e.wasm",
                 "code": {
                   "specifier": "file:///a/e.wasm",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 5,
@@ -2844,7 +2844,7 @@ export const foo = 'bar';"#,
                 "specifier": "./a.js",
                 "type": {
                   "specifier": "file:///a/a.d.ts",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 1,
@@ -2861,7 +2861,7 @@ export const foo = 'bar';"#,
                 "specifier": "./b.d.ts",
                 "type": {
                   "specifier": "file:///a/b.d.ts",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 3,
@@ -2878,7 +2878,7 @@ export const foo = 'bar';"#,
                 "specifier": "https://example.com/c",
                 "code": {
                   "specifier": "https://example.com/c",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 4,
@@ -2895,7 +2895,7 @@ export const foo = 'bar';"#,
                 "specifier": "./d.js",
                 "code": {
                   "specifier": "file:///a/d.js",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 5,
@@ -3073,7 +3073,7 @@ export const foo = 'bar';"#,
                 "specifier": "./a.js",
                 "code": {
                   "specifier": "file:///a/a.js",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 2,
@@ -3090,7 +3090,7 @@ export const foo = 'bar';"#,
                 "specifier": "https://example.com/c",
                 "code": {
                   "specifier": "https://example.com/c",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 4,
@@ -3107,7 +3107,7 @@ export const foo = 'bar';"#,
                 "specifier": "./d.js",
                 "code": {
                   "specifier": "file:///a/d.js",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 5,
@@ -3132,7 +3132,7 @@ export const foo = 'bar';"#,
                 "specifier": "./c.js",
                 "code": {
                   "specifier": "https://example.com/c.js",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 0,
@@ -3209,7 +3209,7 @@ export const foo = 'bar';"#,
                 "specifier": "builtin:fs",
                 "code": {
                   "specifier": "builtin:fs",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 1,
@@ -3226,7 +3226,7 @@ export const foo = 'bar';"#,
                 "specifier": "https://example.com/bundle",
                 "code": {
                   "specifier": "https://example.com/bundle",
-                  "mode": "import",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 2,
@@ -3337,7 +3337,7 @@ export const foo = 'bar';"#,
                 start: Position::new(2, 22),
                 end: Position::new(2, 30),
               },
-              mode: Some(ResolutionMode::Import),
+              resolution_mode: Some(ResolutionMode::Import),
             },
           })),
           maybe_type: Resolution::Ok(Box::new(ResolutionResolved {
@@ -3348,7 +3348,7 @@ export const foo = 'bar';"#,
                 start: Position::new(1, 19),
                 end: Position::new(1, 29),
               },
-              mode: Some(ResolutionMode::Import),
+              resolution_mode: Some(ResolutionMode::Import),
             },
           })),
           maybe_deno_types_specifier: Some("./a.d.ts".to_string()),
@@ -3361,7 +3361,7 @@ export const foo = 'bar';"#,
                 start: Position::new(2, 22),
                 end: Position::new(2, 30),
               },
-              mode: Some(ResolutionMode::Import),
+              resolution_mode: Some(ResolutionMode::Import),
             },
             is_dynamic: false,
             attributes: Default::default(),
@@ -3404,7 +3404,7 @@ export const foo = 'bar';"#,
             "specifier": "./a.json",
             "code": {
               "specifier": "file:///a/a.json",
-              "mode": "import",
+              "resolutionMode": "import",
               "span": {
                 "start": {
                   "line": 1,
@@ -3422,7 +3422,7 @@ export const foo = 'bar';"#,
             "specifier": "./b.json",
             "code": {
               "specifier": "file:///a/b.json",
-              "mode": "import",
+              "resolutionMode": "import",
               "span": {
                 "start": {
                   "line": 2,
@@ -4463,7 +4463,7 @@ export function a(a: A): B {
                   "specifier": "./a",
                   "code": {
                     "specifier": "file:///a/a.js",
-                    "mode": "import",
+                    "resolutionMode": "import",
                     "span": {
                       "start": {
                         "line": 1,
@@ -4477,7 +4477,7 @@ export function a(a: A): B {
                   },
                   "type": {
                     "specifier": "file:///a/a.d.ts",
-                    "mode": "import",
+                    "resolutionMode": "import",
                     "span": {
                       "start": {
                         "line": 1,
@@ -4534,7 +4534,7 @@ export function a(a: A): B {
                   "specifier": "./a",
                   "code": {
                     "specifier": "file:///a/a.js",
-                    "mode": "import",
+                    "resolutionMode": "import",
                     "span": {
                       "start": {
                         "line": 1,

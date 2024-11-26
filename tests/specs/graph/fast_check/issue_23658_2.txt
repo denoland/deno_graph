@@ -39,7 +39,7 @@ import 'jsr:@scope/a'
           "specifier": "jsr:@scope/a",
           "code": {
             "specifier": "jsr:@scope/a",
-            "mode": "import",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -76,7 +76,7 @@ import 'jsr:@scope/a'
           "specifier": "./base.ts",
           "code": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/base.ts",
-            "mode": "import",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -93,7 +93,7 @@ import 'jsr:@scope/a'
           "specifier": "./interface.ts",
           "type": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/interface.ts",
-            "mode": "import",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 1,
@@ -141,7 +141,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     "./base.ts": {
       "code": {
         "specifier": "https://jsr.io/@scope/a/1.0.0/base.ts",
-        "mode": "import",
+        "resolutionMode": "import",
         "span": {
           "start": {
             "line": 0,
@@ -157,7 +157,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     "./interface.ts": {
       "type": {
         "specifier": "https://jsr.io/@scope/a/1.0.0/interface.ts",
-        "mode": "import",
+        "resolutionMode": "import",
         "span": {
           "start": {
             "line": 1,

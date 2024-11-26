@@ -31,7 +31,7 @@ import 'jsr:@scope/a/non_existent' // invalid export
           "specifier": "jsr:@scope/a/non_existent",
           "code": {
             "specifier": "jsr:@scope/a/non_existent",
-            "mode": "import",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,

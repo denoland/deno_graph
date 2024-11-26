@@ -44,7 +44,7 @@ import 'jsr:@scope/a/c'
           "specifier": "jsr:@scope/a",
           "code": {
             "specifier": "jsr:@scope/a",
-            "mode": "import",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 4,
@@ -61,7 +61,7 @@ import 'jsr:@scope/a/c'
           "specifier": "jsr:@scope/a/c",
           "code": {
             "specifier": "jsr:@scope/a/c",
-            "mode": "import",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 5,
@@ -104,7 +104,7 @@ import 'jsr:@scope/a/c'
           "specifier": "./a.ts",
           "code": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts",
-            "mode": "import",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -121,7 +121,7 @@ import 'jsr:@scope/a/c'
           "specifier": "./b.ts",
           "code": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/b.ts",
-            "mode": "import",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 1,
@@ -138,7 +138,7 @@ import 'jsr:@scope/a/c'
           "specifier": "./c.ts",
           "code": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/c.ts",
-            "mode": "import",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 2,

@@ -370,7 +370,7 @@ mod tests {
         source: Some(Range {
           specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
           range: PositionRange::zeroed(),
-          mode: None,
+          resolution_mode: None,
         })
       })
     );

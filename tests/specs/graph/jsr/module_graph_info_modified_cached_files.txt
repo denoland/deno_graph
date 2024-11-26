@@ -104,7 +104,7 @@ import 'jsr:@scope/b';
           "specifier": "jsr:@scope/a@^1.0",
           "code": {
             "specifier": "jsr:@scope/a@^1.0",
-            "mode": "import",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -129,7 +129,7 @@ import 'jsr:@scope/b';
           "specifier": "./b.ts",
           "code": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/b.ts",
-            "mode": "import",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -154,7 +154,7 @@ import 'jsr:@scope/b';
           "specifier": "./c.ts",
           "code": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/c.ts",
-            "mode": "import",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 13,
@@ -179,7 +179,7 @@ import 'jsr:@scope/b';
           "specifier": "jsr:@scope/b",
           "code": {
             "specifier": "jsr:@scope/b",
-            "mode": "import",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -204,7 +204,7 @@ import 'jsr:@scope/b';
           "specifier": "./a.ts",
           "code": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts",
-            "mode": "import",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,

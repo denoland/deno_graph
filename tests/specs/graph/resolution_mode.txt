@@ -52,7 +52,7 @@ export class Test3 {}
           "specifier": "./a.d.ts",
           "type": {
             "specifier": "file:///a.d.ts",
-            "mode": "import",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -69,7 +69,7 @@ export class Test3 {}
           "specifier": "./b.d.ts",
           "type": {
             "specifier": "file:///b.d.ts",
-            "mode": "require",
+            "resolutionMode": "require",
             "span": {
               "start": {
                 "line": 4,
@@ -110,7 +110,7 @@ export class Test3 {}
           "specifier": "./declarations.d.ts",
           "type": {
             "specifier": "file:///declarations.d.ts",
-            "mode": "import",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,

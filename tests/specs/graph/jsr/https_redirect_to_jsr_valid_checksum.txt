@@ -29,7 +29,7 @@ import "https://deno.land/example.ts";
           "specifier": "https://deno.land/example.ts",
           "code": {
             "specifier": "https://deno.land/example.ts",
-            "mode": "import",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,

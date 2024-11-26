@@ -28,7 +28,7 @@ import 'jsr:@scope/a'
           "specifier": "jsr:@scope/a",
           "code": {
             "specifier": "jsr:@scope/a",
-            "mode": "import",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -75,7 +75,7 @@ import 'jsr:@scope/a'
           "specifier": "./a.js",
           "code": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/a.js",
-            "mode": "import",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -118,7 +118,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     "./a.js": {
       "code": {
         "specifier": "https://jsr.io/@scope/a/1.0.0/a.js",
-        "mode": "import",
+        "resolutionMode": "import",
         "span": {
           "start": {
             "line": 0,
