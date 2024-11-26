@@ -340,13 +340,14 @@ dependencies = [
 
 [[package]]
 name = "deno_ast"
-version = "0.43.2"
+version = "0.44.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cbbf350300650502744d50bdd31eca7ea094c25216758a5a02a2b5ac66e62cf9"
+checksum = "eebc7aaabfdb3ddcad32aee1b62d250149dc8b35dfbdccbb125df2bdc62da952"
 dependencies = [
  "base64 0.21.7",
+ "deno_error",
  "deno_media_type",
- "deno_terminal",
+ "deno_terminal 0.2.0",
  "dprint-swc-ext",
  "once_cell",
  "percent-encoding",
@@ -374,7 +375,7 @@ dependencies = [
  "swc_visit",
  "swc_visit_macros",
  "text_lines",
- "thiserror 1.0.63",
+ "thiserror 2.0.3",
  "unicode-width",
  "url",
 ]
@@ -410,7 +411,7 @@ dependencies = [
  "data-url",
  "deno_ast",
  "deno_semver",
- "deno_terminal",
+ "deno_terminal 0.1.1",
  "deno_unsync",
  "encoding_rs",
  "env_logger",
@@ -483,6 +484,16 @@ name = "deno_terminal"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7e6337d4e7f375f8b986409a76fbeecfa4bd8a1343e63355729ae4befa058eaf"
+dependencies = [
+ "once_cell",
+ "termcolor",
+]
+
+[[package]]
+name = "deno_terminal"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "daef12499e89ee99e51ad6000a91f600d3937fb028ad4918af76810c5bc9e0d5"
 dependencies = [
  "once_cell",
  "termcolor",
@@ -608,7 +619,7 @@ checksum = "05b23dcc1b671771c6f59fdace6da685735c925f859733e8fd07fba6cae6462a"
 dependencies = [
  "anyhow",
  "crossbeam-channel",
- "deno_terminal",
+ "deno_terminal 0.1.1",
  "parking_lot",
  "regex",
  "thiserror 1.0.63",

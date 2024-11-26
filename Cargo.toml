@@ -41,7 +41,7 @@ harness = false
 anyhow = "1.0.43"
 async-trait = "0.1.68"
 data-url = "0.3.0"
-deno_ast = { version = "0.43.2", features = ["dep_analysis", "emit"] }
+deno_ast = { version = "0.44.0", features = ["dep_analysis", "emit"] }
 deno_unsync.workspace = true
 deno_semver = "0.6.0"
 encoding_rs = "0.8.33"
