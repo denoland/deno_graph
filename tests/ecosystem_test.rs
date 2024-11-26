@@ -2,7 +2,6 @@ use std::collections::HashSet;
 use std::io::Write as _;
 use std::path::PathBuf;
 
-use anyhow::Context;
 use deno_ast::diagnostics::Diagnostic;
 use deno_ast::MediaType;
 use deno_graph::source::LoadResponse;
@@ -179,16 +178,17 @@ impl deno_graph::source::Loader for Loader<'_> {
             specifier: specifier.clone(),
           })),
           Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
-          Err(err) => Err(anyhow::Error::from(err)),
+          Err(err) => Err(deno_graph::source::LoadError::Other(
+            std::sync::Arc::new(err),
+          )),
         }
       }
       "data" => deno_graph::source::load_data_url(specifier),
       "jsr" | "npm" | "node" => Ok(Some(LoadResponse::External {
         specifier: specifier.clone(),
       })),
-      _ => Err(anyhow::anyhow!(
-        "Unsupported scheme: {}",
-        specifier.scheme()
+      _ => Err(deno_graph::source::LoadError::UnsupportedScheme(
+        specifier.scheme().to_string(),
       )),
     };
     async move { res }.boxed()
@@ -375,9 +375,7 @@ async fn test_version(
         if let Some(fcm) = module.fast_check_module() {
           let path =
             format!("{}{}", tmpdir_path.display(), module.specifier.path());
-          std::fs::write(&path, fcm.source.as_bytes())
-            .with_context(|| format!("failed writing {}", path))
-            .unwrap();
+          std::fs::write(&path, fcm.source.as_bytes()).unwrap();
         }
       }
     }
