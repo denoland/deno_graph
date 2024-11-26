@@ -31,6 +31,7 @@ pub use analyzer::DependencyDescriptor;
 pub use analyzer::DynamicArgument;
 pub use analyzer::DynamicDependencyDescriptor;
 pub use analyzer::DynamicTemplatePart;
+pub use analyzer::JsDocImportInfo;
 pub use analyzer::ModuleAnalyzer;
 pub use analyzer::ModuleInfo;
 pub use analyzer::PositionRange;
@@ -87,6 +88,7 @@ pub use graph::ResolutionError;
 pub use graph::ResolutionResolved;
 pub use graph::TypesDependency;
 pub use graph::WalkOptions;
+pub use graph::WasmModule;
 #[cfg(feature = "fast_check")]
 pub use graph::WorkspaceFastCheckOption;
 pub use graph::WorkspaceMember;
@@ -184,7 +186,7 @@ mod tests {
   use crate::graph::ImportKind;
   use crate::graph::ResolutionResolved;
   use crate::source::NullFileSystem;
-  use crate::source::ResolutionMode;
+  use crate::source::ResolutionKind;
 
   use super::*;
   use async_trait::async_trait;
@@ -196,6 +198,7 @@ mod tests {
   use source::CacheInfo;
   use source::MemoryLoader;
   use source::NpmResolvePkgReqsResult;
+  use source::ResolutionMode;
   use source::Source;
   use std::cell::RefCell;
   use std::collections::BTreeMap;
@@ -839,6 +842,7 @@ console.log(a);
                 "specifier": "./deno.json",
                 "code": {
                   "specifier": "file:///a/deno.json",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 0,
@@ -1279,9 +1283,8 @@ console.log(a);
       module_name: &str,
       range: &Range,
     ) {
-      let Range {
-        specifier, start, ..
-      } = range;
+      let specifier = &range.specifier;
+      let start = range.range.start;
       let line = start.line + 1;
       let column = start.character;
       log::warn!("Warning: Resolving \"{module_name}\" as \"node:{module_name}\" at {specifier}:{line}:{column}. If you want to use a built-in Node module, add a \"node:\" prefix.");
@@ -1319,7 +1322,7 @@ console.log(a);
       &self,
       specifier_text: &str,
       referrer_range: &Range,
-      _mode: ResolutionMode,
+      _kind: ResolutionKind,
     ) -> Result<deno_ast::ModuleSpecifier, source::ResolveError> {
       use import_map::ImportMapError;
       Err(source::ResolveError::Other(
@@ -1356,6 +1359,7 @@ console.log(a);
               "specifier": "path",
               "code": {
                 "specifier": "node:path",
+                "resolutionMode": "import",
                 "span": {
                   "start": {
                     "line": 0,
@@ -1565,6 +1569,7 @@ console.log(a);
                 "specifier": "./b.ts",
                 "code": {
                   "specifier": "file:///b.ts",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 0,
@@ -1915,14 +1920,17 @@ export const foo = 'bar';"#,
         specifier: ModuleSpecifier::parse("file:///test01.d.ts").unwrap(),
         range: Range {
           specifier: ModuleSpecifier::parse("file:///test01.js").unwrap(),
-          start: Position {
-            line: 0,
-            character: 21
+          range: PositionRange {
+            start: Position {
+              line: 0,
+              character: 21
+            },
+            end: Position {
+              line: 0,
+              character: 36
+            },
           },
-          end: Position {
-            line: 0,
-            character: 36
-          },
+          resolution_mode: None,
         }
       }
     );
@@ -1969,14 +1977,17 @@ export const foo = 'bar';"#,
         specifier: ModuleSpecifier::parse("file:///test01.d.ts").unwrap(),
         range: Range {
           specifier: ModuleSpecifier::parse("file:///test01.js").unwrap(),
-          start: Position {
-            line: 0,
-            character: 18
+          range: PositionRange {
+            start: Position {
+              line: 0,
+              character: 18
+            },
+            end: Position {
+              line: 0,
+              character: 33
+            },
           },
-          end: Position {
-            line: 0,
-            character: 33
-          },
+          resolution_mode: None,
         }
       }
     );
@@ -2099,8 +2110,8 @@ export const foo = 'bar';"#,
           "file:///a.d.ts",
           Some(Range {
             specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
-            start: Position::zeroed(),
-            end: Position::zeroed(),
+            range: PositionRange::zeroed(),
+            resolution_mode: None,
           }),
         ),
       )],
@@ -2127,8 +2138,8 @@ export const foo = 'bar';"#,
         specifier: ModuleSpecifier::parse("file:///a.d.ts").unwrap(),
         range: Range {
           specifier: ModuleSpecifier::parse("file:///package.json").unwrap(),
-          start: Position::zeroed(),
-          end: Position::zeroed(),
+          range: PositionRange::zeroed(),
+          resolution_mode: None,
         }
       }
     );
@@ -2230,6 +2241,7 @@ export const foo = 'bar';"#,
                 "specifier": "./a.json",
                 "code": {
                   "specifier": "file:///a/a.json",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 1,
@@ -2247,6 +2259,7 @@ export const foo = 'bar';"#,
                 "specifier": "./b.json",
                 "code": {
                   "specifier": "file:///a/b.json",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 2,
@@ -2265,6 +2278,7 @@ export const foo = 'bar';"#,
                 "specifier": "./c.json",
                 "code": {
                   "specifier": "file:///a/c.json",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 3,
@@ -2282,6 +2296,7 @@ export const foo = 'bar';"#,
                 "specifier": "./d.json",
                 "code": {
                   "specifier": "file:///a/d.json",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 5,
@@ -2358,6 +2373,7 @@ export const foo = 'bar';"#,
                 "specifier": "./a.json",
                 "code": {
                   "specifier": "file:///a/a.json",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 1,
@@ -2477,7 +2493,7 @@ export const foo = 'bar';"#,
           },
           {
             "specifier": "file:///a/e.wasm",
-            "error": "Expected a JavaScript or TypeScript module, but identified a Wasm module. Importing these types of modules is currently not supported.\n  Specifier: file:///a/e.wasm"
+            "error": "The Wasm module could not be parsed: not a Wasm module\n  Specifier: file:///a/e.wasm"
           },
           {
             "dependencies": [
@@ -2485,6 +2501,7 @@ export const foo = 'bar';"#,
                 "specifier": "./a.json",
                 "code": {
                   "specifier": "file:///a/a.json",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 1,
@@ -2501,6 +2518,7 @@ export const foo = 'bar';"#,
                 "specifier": "./b.json",
                 "code": {
                   "specifier": "file:///a/b.json",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 2,
@@ -2518,6 +2536,7 @@ export const foo = 'bar';"#,
                 "specifier": "./c.js",
                 "code": {
                   "specifier": "file:///a/c.js",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 3,
@@ -2535,6 +2554,7 @@ export const foo = 'bar';"#,
                 "specifier": "./d.json",
                 "code": {
                   "specifier": "file:///a/d.json",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 4,
@@ -2552,6 +2572,7 @@ export const foo = 'bar';"#,
                 "specifier": "./e.wasm",
                 "code": {
                   "specifier": "file:///a/e.wasm",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 5,
@@ -2823,6 +2844,7 @@ export const foo = 'bar';"#,
                 "specifier": "./a.js",
                 "type": {
                   "specifier": "file:///a/a.d.ts",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 1,
@@ -2839,6 +2861,7 @@ export const foo = 'bar';"#,
                 "specifier": "./b.d.ts",
                 "type": {
                   "specifier": "file:///a/b.d.ts",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 3,
@@ -2855,6 +2878,7 @@ export const foo = 'bar';"#,
                 "specifier": "https://example.com/c",
                 "code": {
                   "specifier": "https://example.com/c",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 4,
@@ -2871,6 +2895,7 @@ export const foo = 'bar';"#,
                 "specifier": "./d.js",
                 "code": {
                   "specifier": "file:///a/d.js",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 5,
@@ -3048,6 +3073,7 @@ export const foo = 'bar';"#,
                 "specifier": "./a.js",
                 "code": {
                   "specifier": "file:///a/a.js",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 2,
@@ -3064,6 +3090,7 @@ export const foo = 'bar';"#,
                 "specifier": "https://example.com/c",
                 "code": {
                   "specifier": "https://example.com/c",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 4,
@@ -3080,6 +3107,7 @@ export const foo = 'bar';"#,
                 "specifier": "./d.js",
                 "code": {
                   "specifier": "file:///a/d.js",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 5,
@@ -3104,6 +3132,7 @@ export const foo = 'bar';"#,
                 "specifier": "./c.js",
                 "code": {
                   "specifier": "https://example.com/c.js",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 0,
@@ -3180,6 +3209,7 @@ export const foo = 'bar';"#,
                 "specifier": "builtin:fs",
                 "code": {
                   "specifier": "builtin:fs",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 1,
@@ -3196,6 +3226,7 @@ export const foo = 'bar';"#,
                 "specifier": "https://example.com/bundle",
                 "code": {
                   "specifier": "https://example.com/bundle",
+                  "resolutionMode": "import",
                   "span": {
                     "start": {
                       "line": 2,
@@ -3302,16 +3333,22 @@ export const foo = 'bar';"#,
             specifier: ModuleSpecifier::parse("file:///a/a.js").unwrap(),
             range: Range {
               specifier: specifier.clone(),
-              start: Position::new(2, 22),
-              end: Position::new(2, 30),
+              range: PositionRange {
+                start: Position::new(2, 22),
+                end: Position::new(2, 30),
+              },
+              resolution_mode: Some(ResolutionMode::Import),
             },
           })),
           maybe_type: Resolution::Ok(Box::new(ResolutionResolved {
             specifier: ModuleSpecifier::parse("file:///a/a.d.ts").unwrap(),
             range: Range {
               specifier: specifier.clone(),
-              start: Position::new(1, 19),
-              end: Position::new(1, 29),
+              range: PositionRange {
+                start: Position::new(1, 19),
+                end: Position::new(1, 29),
+              },
+              resolution_mode: Some(ResolutionMode::Import),
             },
           })),
           maybe_deno_types_specifier: Some("./a.d.ts".to_string()),
@@ -3320,8 +3357,11 @@ export const foo = 'bar';"#,
             kind: ImportKind::Es,
             specifier_range: Range {
               specifier: specifier.clone(),
-              start: Position::new(2, 22),
-              end: Position::new(2, 30),
+              range: PositionRange {
+                start: Position::new(2, 22),
+                end: Position::new(2, 30),
+              },
+              resolution_mode: Some(ResolutionMode::Import),
             },
             is_dynamic: false,
             attributes: Default::default(),
@@ -3358,11 +3398,13 @@ export const foo = 'bar';"#,
     assert_eq!(
       json!(actual),
       json!({
+        "kind": "esm",
         "dependencies": [
           {
             "specifier": "./a.json",
             "code": {
               "specifier": "file:///a/a.json",
+              "resolutionMode": "import",
               "span": {
                 "start": {
                   "line": 1,
@@ -3380,6 +3422,7 @@ export const foo = 'bar';"#,
             "specifier": "./b.json",
             "code": {
               "specifier": "file:///a/b.json",
+              "resolutionMode": "import",
               "span": {
                 "start": {
                   "line": 2,
@@ -3395,7 +3438,6 @@ export const foo = 'bar';"#,
             "assertionType": "json"
           }
         ],
-        "kind": "esm",
         "mediaType": "TypeScript",
         "size": 119,
         "specifier": "file:///a/test01.ts"
@@ -3739,6 +3781,7 @@ export function a(a) {
     assert_eq!(
       json!(actual),
       json!({
+        "kind": "esm",
         "dependencies": [
           {
             "specifier": "./types.d.ts",
@@ -3773,7 +3816,6 @@ export function a(a) {
             }
           }
         ],
-        "kind": "esm",
         "mediaType": "JavaScript",
         "size": 137,
         "specifier": "file:///a/test.js"
@@ -4338,11 +4380,11 @@ export function a(a: A): B {
         &self,
         specifier_text: &str,
         referrer_range: &Range,
-        mode: ResolutionMode,
+        resolution_kind: ResolutionKind,
       ) -> Result<ModuleSpecifier, crate::source::ResolveError> {
-        let specifier_text = match mode {
-          ResolutionMode::Types => format!("{}.d.ts", specifier_text),
-          ResolutionMode::Execution => format!("{}.js", specifier_text),
+        let specifier_text = match resolution_kind {
+          ResolutionKind::Types => format!("{}.d.ts", specifier_text),
+          ResolutionKind::Execution => format!("{}.js", specifier_text),
         };
         Ok(resolve_import(&specifier_text, &referrer_range.specifier)?)
       }
@@ -4421,6 +4463,7 @@ export function a(a: A): B {
                   "specifier": "./a",
                   "code": {
                     "specifier": "file:///a/a.js",
+                    "resolutionMode": "import",
                     "span": {
                       "start": {
                         "line": 1,
@@ -4434,6 +4477,7 @@ export function a(a: A): B {
                   },
                   "type": {
                     "specifier": "file:///a/a.d.ts",
+                    "resolutionMode": "import",
                     "span": {
                       "start": {
                         "line": 1,
@@ -4490,6 +4534,7 @@ export function a(a: A): B {
                   "specifier": "./a",
                   "code": {
                     "specifier": "file:///a/a.js",
+                    "resolutionMode": "import",
                     "span": {
                       "start": {
                         "line": 1,
@@ -4525,13 +4570,13 @@ export function a(a: A): B {
         &self,
         specifier_text: &str,
         referrer_range: &Range,
-        mode: ResolutionMode,
+        resolution_kind: ResolutionKind,
       ) -> Result<ModuleSpecifier, crate::source::ResolveError> {
-        match mode {
-          ResolutionMode::Execution => {
+        match resolution_kind {
+          ResolutionKind::Execution => {
             Ok(resolve_import(specifier_text, &referrer_range.specifier)?)
           }
-          ResolutionMode::Types => Err(crate::source::ResolveError::Other(
+          ResolutionKind::Types => Err(crate::source::ResolveError::Other(
             anyhow::anyhow!("Failed."),
           )),
         }

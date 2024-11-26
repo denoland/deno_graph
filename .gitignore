@@ -1,5 +1,6 @@
 /target
 /npm
+.vs
 .vscode
 js/deno_graph_wasm_bg.wasm
 js/deno_graph_wasm.generated.d.ts

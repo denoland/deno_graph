@@ -21,6 +21,7 @@ export class Test {}
           "specifier": "./file.cjs",
           "code": {
             "specifier": "file:///file.cjs",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,

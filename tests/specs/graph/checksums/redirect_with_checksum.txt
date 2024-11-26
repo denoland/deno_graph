@@ -25,6 +25,7 @@ import 'https://localhost/mod.ts'
           "specifier": "https://localhost/mod.ts",
           "code": {
             "specifier": "https://localhost/mod.ts",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
