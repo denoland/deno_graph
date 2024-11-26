@@ -41,9 +41,9 @@ harness = false
 anyhow = "1.0.43"
 async-trait = "0.1.68"
 data-url = "0.3.0"
-deno_ast = { version = "0.44.0", features = ["dep_analysis", "emit"] }
+deno_ast = { version = "0.43.2", features = ["dep_analysis", "emit"] }
 deno_unsync.workspace = true
-deno_semver = "0.6.0"
+deno_semver = "0.5.13"
 encoding_rs = "0.8.33"
 futures = "0.3.26"
 import_map = "0.20.0"
@@ -56,7 +56,7 @@ regex = "1.10.2"
 serde = { version = "1.0.130", features = ["derive", "rc"] }
 serde_json = { version = "1.0.67", features = ["preserve_order"] }
 sha2 = "^0.10.0"
-thiserror = "2.0.3"
+thiserror = "1.0.24"
 twox-hash = { version = "1.6.3", optional = true }
 url = { version = "2.2.2", features = ["serde"] }
 wasm_dep_analyzer = "0.1.0"
