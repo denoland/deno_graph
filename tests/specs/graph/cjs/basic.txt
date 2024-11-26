@@ -35,6 +35,7 @@ module.exports = 5;
           "specifier": "./final.js",
           "code": {
             "specifier": "file:///final.js",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -51,6 +52,7 @@ module.exports = 5;
           "specifier": "node:module",
           "code": {
             "specifier": "node:module",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 1,
@@ -67,6 +69,7 @@ module.exports = 5;
           "specifier": "./final_cjs.cjs",
           "code": {
             "specifier": "file:///final_cjs.cjs",
+            "resolutionMode": "require",
             "span": {
               "start": {
                 "line": 5,
@@ -92,6 +95,7 @@ module.exports = 5;
           "specifier": "./other.cjs",
           "code": {
             "specifier": "file:///other.cjs",
+            "resolutionMode": "require",
             "span": {
               "start": {
                 "line": 0,
@@ -129,6 +133,7 @@ module.exports = 5;
           "specifier": "./file.cjs",
           "code": {
             "specifier": "file:///file.cjs",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -153,6 +158,7 @@ module.exports = 5;
           "specifier": "./esm.js",
           "code": {
             "specifier": "file:///esm.js",
+            "resolutionMode": "require",
             "span": {
               "start": {
                 "line": 0,

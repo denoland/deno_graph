@@ -34,6 +34,7 @@ console.log(Test);
           "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts",
           "code": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
@@ -47,6 +48,7 @@ console.log(Test);
           },
           "type": {
             "error": "Importing JSR packages via HTTPS specifiers for type checking is not supported for performance reasons. If you would like types, import via a `jsr:` specifier instead or else use a non-statically analyzable dynamic import.\n  Importing: https://jsr.io/@scope/a/1.0.0/mod.ts",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,

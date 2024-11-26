@@ -26,6 +26,7 @@ await import("jsr:@scope/a");
           "specifier": "jsr:@scope/a",
           "code": {
             "specifier": "jsr:@scope/a",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,

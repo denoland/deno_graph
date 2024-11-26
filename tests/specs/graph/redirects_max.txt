@@ -50,6 +50,7 @@ console.log('hi');
           "specifier": "https://localhost/redirect.ts",
           "code": {
             "specifier": "https://localhost/redirect.ts",
+            "resolutionMode": "import",
             "span": {
               "start": {
                 "line": 0,
