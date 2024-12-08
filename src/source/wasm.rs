@@ -1,7 +1,5 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
-use std::borrow::Cow;
-
 use indexmap::IndexSet;
 use string_capacity::StringBuilder;
 use wasm_dep_analyzer::ValueType;
@@ -42,21 +40,10 @@ fn wasm_module_deps_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
       && deno_ast::swc::ast::Ident::verify_symbol(export_name).is_ok()
   }
 
-  let mut internal_names_count = 0;
-  let export_names = wasm_deps
+  let is_valid_export_ident_per_export = wasm_deps
     .exports
     .iter()
-    .map(|export| {
-      let has_valid_export_ident = is_valid_ident(export.name);
-      if has_valid_export_ident {
-        Cow::Borrowed(export.name)
-      } else {
-        let export_name =
-          format!("__deno_wasm_export_{}__", internal_names_count);
-        internal_names_count += 1;
-        Cow::Owned(export_name)
-      }
-    })
+    .map(|export| is_valid_ident(export.name))
     .collect::<Vec<_>>();
   let unique_import_modules = wasm_deps
     .imports
@@ -72,14 +59,27 @@ fn wasm_module_deps_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
     }
 
     for (i, export) in wasm_deps.exports.iter().enumerate() {
-      let export_name = &export_names[i];
-      let has_valid_export_ident = matches!(export_name, Cow::Borrowed(_));
+      let has_valid_export_ident = is_valid_export_ident_per_export[i];
       if has_valid_export_ident {
         builder.append("export ");
       }
+      fn write_export_name<'a>(
+        builder: &mut StringBuilder<'a>,
+        export: &'a wasm_dep_analyzer::Export<'a>,
+        has_valid_export_ident: bool,
+        index: usize,
+      ) {
+        if has_valid_export_ident {
+          builder.append(export.name);
+        } else {
+          builder.append("__deno_wasm_export_");
+          builder.append(index);
+          builder.append("__");
+        }
+      }
       let mut add_var = |type_text: &'static str| {
         builder.append("declare const ");
-        builder.append(export_name);
+        write_export_name(builder, export, has_valid_export_ident, i);
         builder.append(": ");
         builder.append(type_text);
         builder.append(";\n");
@@ -90,7 +90,7 @@ fn wasm_module_deps_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
           match function_signature {
             Ok(signature) => {
               builder.append("declare function ");
-              builder.append(export_name);
+              write_export_name(builder, export, has_valid_export_ident, i);
               builder.append('(');
               for (i, param) in signature.params.iter().enumerate() {
                 if i > 0 {
@@ -131,7 +131,7 @@ fn wasm_module_deps_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
 
       if !has_valid_export_ident {
         builder.append("export { ");
-        builder.append(export_name);
+        write_export_name(builder, export, has_valid_export_ident, i);
         builder.append(" as \"");
         builder.append(export.name);
         builder.append("\" };\n");
@@ -237,10 +237,10 @@ export declare const name5: WebAssembly.Memory;
 export declare const name6: number;
 export declare const name7: unknown;
 export declare const name8: unknown;
-declare const __deno_wasm_export_1__: unknown;
-export { __deno_wasm_export_1__ as \"name9--\" };
-declare const __deno_wasm_export_2__: unknown;
-export { __deno_wasm_export_2__ as \"default\" };
+declare const __deno_wasm_export_8__: unknown;
+export { __deno_wasm_export_8__ as \"name9--\" };
+declare const __deno_wasm_export_9__: unknown;
+export { __deno_wasm_export_9__ as \"default\" };
 "
     );
   }
