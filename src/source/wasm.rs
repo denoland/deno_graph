@@ -1,8 +1,9 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
 use std::borrow::Cow;
-use std::collections::HashSet;
 
+use indexmap::IndexSet;
+use string_capacity::StringBuilder;
 use wasm_dep_analyzer::ValueType;
 
 pub fn wasm_module_to_dts(
@@ -41,87 +42,103 @@ fn wasm_module_deps_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
       && deno_ast::swc::ast::Ident::verify_symbol(export_name).is_ok()
   }
 
-  let mut text = String::new();
   let mut internal_names_count = 0;
-
-  let mut seen_modules = HashSet::with_capacity(wasm_deps.imports.len());
-  for import in &wasm_deps.imports {
-    if seen_modules.insert(&import.module) {
-      text.push_str(&format!("import \"{}\";\n", import.module));
-    }
-  }
-
-  for export in &wasm_deps.exports {
-    let has_valid_export_ident = is_valid_ident(export.name);
-    let export_name = if has_valid_export_ident {
-      Cow::Borrowed(export.name)
-    } else {
-      let export_name =
-        format!("__deno_wasm_export_{}__", internal_names_count);
-      internal_names_count += 1;
-      Cow::Owned(export_name)
-    };
-    if has_valid_export_ident {
-      text.push_str("export ");
-    }
-    let mut add_var = |type_text: &str| {
-      text.push_str("declare const ");
-      text.push_str(&export_name);
-      text.push_str(": ");
-      text.push_str(type_text);
-      text.push_str(";\n");
-    };
-
-    match &export.export_type {
-      wasm_dep_analyzer::ExportType::Function(function_signature) => {
-        match function_signature {
-          Ok(signature) => {
-            text.push_str("declare function ");
-            text.push_str(&export_name);
-            text.push('(');
-            for (i, param) in signature.params.iter().enumerate() {
-              if i > 0 {
-                text.push_str(", ");
-              }
-              text.push_str("arg");
-              text.push_str(i.to_string().as_str());
-              text.push_str(": ");
-              text.push_str(value_type_to_ts_type(*param, TypePosition::Input));
-            }
-            text.push_str("): ");
-            text.push_str(
-              signature
-                .returns
-                .first()
-                .map(|t| value_type_to_ts_type(*t, TypePosition::Output))
-                .unwrap_or("void"),
-            );
-            text.push_str(";\n");
-          }
-          Err(_) => add_var("unknown"),
-        }
+  let export_names = wasm_deps
+    .exports
+    .iter()
+    .map(|export| {
+      let has_valid_export_ident = is_valid_ident(export.name);
+      if has_valid_export_ident {
+        Cow::Borrowed(export.name)
+      } else {
+        let export_name =
+          format!("__deno_wasm_export_{}__", internal_names_count);
+        internal_names_count += 1;
+        Cow::Owned(export_name)
       }
-      wasm_dep_analyzer::ExportType::Table => add_var("WebAssembly.Table"),
-      wasm_dep_analyzer::ExportType::Memory => add_var("WebAssembly.Memory"),
-      wasm_dep_analyzer::ExportType::Global(global_type) => match global_type {
-        Ok(global_type) => add_var(value_type_to_ts_type(
-          global_type.value_type,
-          TypePosition::Output,
-        )),
-        Err(_) => add_var("unknown"),
-      },
-      wasm_dep_analyzer::ExportType::Tag
-      | wasm_dep_analyzer::ExportType::Unknown => add_var("unknown"),
+    })
+    .collect::<Vec<_>>();
+  let unique_import_modules = wasm_deps
+    .imports
+    .iter()
+    .map(|import| import.module)
+    .collect::<IndexSet<_>>();
+
+  StringBuilder::build(|builder| {
+    for import_module in &unique_import_modules {
+      builder.append("import \"");
+      builder.append(import_module);
+      builder.append("\";\n");
     }
 
-    if !has_valid_export_ident {
-      text.push_str(&format!(
-        "export {{ {} as \"{}\" }};\n",
-        export_name, export.name
-      ));
+    for (i, export) in wasm_deps.exports.iter().enumerate() {
+      let export_name = &export_names[i];
+      let has_valid_export_ident = matches!(export_name, Cow::Borrowed(_));
+      if has_valid_export_ident {
+        builder.append("export ");
+      }
+      let mut add_var = |type_text: &'static str| {
+        builder.append("declare const ");
+        builder.append(export_name);
+        builder.append(": ");
+        builder.append(type_text);
+        builder.append(";\n");
+      };
+
+      match &export.export_type {
+        wasm_dep_analyzer::ExportType::Function(function_signature) => {
+          match function_signature {
+            Ok(signature) => {
+              builder.append("declare function ");
+              builder.append(export_name);
+              builder.append('(');
+              for (i, param) in signature.params.iter().enumerate() {
+                if i > 0 {
+                  builder.append(", ");
+                }
+                builder.append("arg");
+                builder.append(i);
+                builder.append(": ");
+                builder
+                  .append(value_type_to_ts_type(*param, TypePosition::Input));
+              }
+              builder.append("): ");
+              builder.append(
+                signature
+                  .returns
+                  .first()
+                  .map(|t| value_type_to_ts_type(*t, TypePosition::Output))
+                  .unwrap_or("void"),
+              );
+              builder.append(";\n");
+            }
+            Err(_) => add_var("unknown"),
+          }
+        }
+        wasm_dep_analyzer::ExportType::Table => add_var("WebAssembly.Table"),
+        wasm_dep_analyzer::ExportType::Memory => add_var("WebAssembly.Memory"),
+        wasm_dep_analyzer::ExportType::Global(global_type) => match global_type
+        {
+          Ok(global_type) => add_var(value_type_to_ts_type(
+            global_type.value_type,
+            TypePosition::Output,
+          )),
+          Err(_) => add_var("unknown"),
+        },
+        wasm_dep_analyzer::ExportType::Tag
+        | wasm_dep_analyzer::ExportType::Unknown => add_var("unknown"),
+      }
+
+      if !has_valid_export_ident {
+        builder.append("export { ");
+        builder.append(export_name);
+        builder.append(" as \"");
+        builder.append(export.name);
+        builder.append("\" };\n");
+      }
     }
-  }
-  text
+  })
+  .unwrap()
 }
 
 #[cfg(test)]

@@ -40,6 +40,7 @@ harness = false
 [dependencies]
 anyhow = "1.0.43"
 async-trait = "0.1.68"
+string_capacity = "0.1.1"
 data-url = "0.3.0"
 deno_ast = { version = "0.44.0", features = ["dep_analysis", "emit"] }
 deno_unsync.workspace = true

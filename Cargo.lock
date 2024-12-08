@@ -444,6 +444,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "string_capacity",
  "tempfile",
  "thiserror 2.0.3",
  "tokio",
@@ -1956,6 +1957,15 @@ name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
+
+[[package]]
+name = "string_capacity"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b25ef89e41dd5754f2650af68dbeee6c099bde9a77072f8e29cf9769a7c67821"
+dependencies = [
+ "itoa",
+]
 
 [[package]]
 name = "string_enum"
