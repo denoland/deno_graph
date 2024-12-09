@@ -16,6 +16,16 @@ use serde::Serialize;
 use crate::analyzer::module_graph_1_to_2;
 use crate::ModuleInfo;
 
+pub trait JsrVersionResolver {
+  fn resolve_package_version<'a>(
+    &self,
+    package_info: &'a JsrPackageInfo,
+    package_req: &PackageReq,
+  ) -> Option<&'a Version>;
+
+  fn force_fetch_metadata<'a>(&self, package_name: &str) -> bool;
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct JsrPackageInfo {
   pub versions: HashMap<Version, JsrPackageInfoVersion>,
