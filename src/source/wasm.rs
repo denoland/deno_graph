@@ -1,7 +1,7 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
+use capacity_builder::StringBuilder;
 use indexmap::IndexSet;
-use string_capacity::StringBuilder;
 use wasm_dep_analyzer::ValueType;
 
 pub fn wasm_module_to_dts(
