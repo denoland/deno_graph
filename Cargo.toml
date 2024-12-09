@@ -42,7 +42,7 @@ anyhow = "1.0.43"
 async-trait = "0.1.68"
 data-url = "0.3.0"
 deno_ast = { version = "0.44.0", features = ["dep_analysis", "emit"] }
-deno_media_type = "0.2.1"
+deno_media_type = "0.2.2"
 deno_unsync.workspace = true
 deno_semver = "0.6.0"
 encoding_rs = "0.8.33"
@@ -80,6 +80,3 @@ codegen-units = 1
 incremental = true
 lto = true
 opt-level = "z"
-
-[patch.crates-io]
-deno_media_type = { path = "../deno_media_type" }
