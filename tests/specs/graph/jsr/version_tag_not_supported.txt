@@ -41,7 +41,7 @@ import 'jsr:@scope/a@tag';
     },
     {
       "specifier": "jsr:@scope/a@tag",
-      "error": "Version tag not supported in jsr specifiers."
+      "error": "Version tag not supported in jsr specifiers ('tag')."
     }
   ],
   "redirects": {}

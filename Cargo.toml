@@ -1,6 +1,6 @@
 [package]
 name = "deno_graph"
-version = "0.85.1"
+version = "0.86.3"
 edition = "2021"
 description = "Module graph analysis for deno"
 homepage = "https://deno.land/"
@@ -41,6 +41,7 @@ harness = false
 
 [dependencies]
 async-trait = "0.1.68"
+capacity_builder = "0.1.0"
 data-url = "0.3.0"
 deno_ast = { version = "0.44.0", features = ["dep_analysis", "emit"] }
 deno_unsync.workspace = true

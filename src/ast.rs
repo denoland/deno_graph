@@ -832,13 +832,16 @@ fn parse_jsdoc_dynamic_import(input: &str) -> monch::ParseResult<JsDocImport> {
   use monch::*;
   let original_input = input;
   let (mut input, _) = ch('{')(input)?;
-  for (index, c) in input.char_indices() {
-    if c == '}' {
-      return ParseError::backtrace();
-    }
-    input = &original_input[index..];
-    if input.starts_with("import") {
-      break;
+  {
+    let original_input = input;
+    for (index, c) in input.char_indices() {
+      if c == '}' {
+        return ParseError::backtrace();
+      }
+      input = &original_input[index..];
+      if input.starts_with("import") {
+        break;
+      }
     }
   }
   let (input, _) = tag("import")(input)?;
@@ -1559,6 +1562,7 @@ export {};
 
     assert!(parse_jsdoc_dynamic_import("{ import('testing') }").is_ok());
     assert!(parse_jsdoc_dynamic_import("{ Test<import('testing')> }").is_ok());
+    assert!(parse_jsdoc_dynamic_import("{ * // … test }").is_err());
     assert_eq!(
       parse_resolution_mode(
         r#"{Set<import("./e.js", { with: { "resolution-mode": "require" } }).F>}"#

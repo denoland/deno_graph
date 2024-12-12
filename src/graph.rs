@@ -51,6 +51,7 @@ use deno_semver::package::PackageReq;
 use deno_semver::package::PackageReqReferenceParseError;
 use deno_semver::RangeSetOrTag;
 use deno_semver::Version;
+use deno_semver::VersionReq;
 use futures::future::LocalBoxFuture;
 use futures::stream::FuturesOrdered;
 use futures::stream::FuturesUnordered;
@@ -224,8 +225,14 @@ pub enum JsrLoadError {
 pub enum JsrPackageFormatError {
   #[error(transparent)]
   JsrPackageParseError(PackageReqReferenceParseError),
-  #[error("Version tag not supported in jsr specifiers.")]
-  VersionTagNotSupported,
+  #[error("Version tag not supported in jsr specifiers ('{}').{}",
+    .tag,
+    match .tag.strip_prefix('v').and_then(|v| VersionReq::parse_from_specifier(v).ok().map(|s| s.tag().is_none())).unwrap_or(false) {
+      true => " Remove leading 'v' before version.",
+      false => ""
+    }
+  )]
+  VersionTagNotSupported { tag: String },
 }
 
 #[derive(Debug, Clone, Error, JsError)]
@@ -5098,7 +5105,9 @@ fn validate_jsr_specifier(
   let package_ref = JsrPackageReqReference::from_specifier(specifier)
     .map_err(JsrPackageFormatError::JsrPackageParseError)?;
   match package_ref.req().version_req.inner() {
-    RangeSetOrTag::Tag(_) => Err(JsrPackageFormatError::VersionTagNotSupported),
+    RangeSetOrTag::Tag(tag) => {
+      Err(JsrPackageFormatError::VersionTagNotSupported { tag: tag.clone() })
+    }
     RangeSetOrTag::RangeSet(_) => Ok(package_ref),
   }
 }
@@ -6681,5 +6690,33 @@ mod tests {
       .get(&Url::parse("https://jsr.io/@package/foo/1.0.0/mod.ts").unwrap())
       .unwrap();
     assert!(module.external().is_some());
+  }
+
+  #[test]
+  fn leading_v_version_tag_err() {
+    {
+      let err = JsrPackageFormatError::VersionTagNotSupported {
+        tag: "v1.2".to_string(),
+      };
+      assert_eq!(err.to_string(), "Version tag not supported in jsr specifiers ('v1.2'). Remove leading 'v' before version.");
+    }
+    {
+      let err = JsrPackageFormatError::VersionTagNotSupported {
+        tag: "latest".to_string(),
+      };
+      assert_eq!(
+        err.to_string(),
+        "Version tag not supported in jsr specifiers ('latest')."
+      );
+    }
+    {
+      let err = JsrPackageFormatError::VersionTagNotSupported {
+        tag: "version".to_string(), // not a vversion with a leading 'v'
+      };
+      assert_eq!(
+        err.to_string(),
+        "Version tag not supported in jsr specifiers ('version')."
+      );
+    }
   }
 }
