@@ -44,6 +44,10 @@ export class Baz extends Bar {
   override foo = "";
 }
 
+export class ReadonlyPropConstant {
+  readonly static value = "value";
+}
+
 # mod.ts
 import 'jsr:@scope/a'
 
@@ -80,7 +84,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 867,
+      "size": 941,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -122,6 +126,9 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export class Baz extends Bar {
     declare foo: string;
   }
+  export class ReadonlyPropConstant {
+    declare static readonly value: "value";
+  }
   --- DTS ---
   export declare class RedBlackNode<T> extends BinarySearchNode<T> {
     parent: RedBlackNode<T> | null;
@@ -143,4 +150,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   export declare class Baz extends Bar {
     foo: string;
+  }
+  export declare class ReadonlyPropConstant {
+    static readonly value: "value";
   }

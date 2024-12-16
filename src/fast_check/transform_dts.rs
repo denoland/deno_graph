@@ -11,10 +11,10 @@ use crate::FastCheckDiagnosticRange;
 use super::range_finder::ModulePublicRanges;
 use super::swc_helpers::any_type_ann;
 use super::swc_helpers::maybe_lit_to_ts_type;
-use super::swc_helpers::maybe_lit_to_ts_type_const;
 use super::swc_helpers::ts_readonly;
 use super::swc_helpers::ts_tuple_element;
 use super::swc_helpers::type_ann;
+use super::swc_helpers::DeclMutabilityKind;
 
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum FastCheckDtsDiagnostic {
@@ -419,13 +419,13 @@ impl<'a> FastCheckDtsTransformer<'a> {
           members,
         }))
       }
-      Expr::Lit(lit) => {
-        if as_const {
-          maybe_lit_to_ts_type_const(&lit)
-        } else {
-          maybe_lit_to_ts_type(&lit)
-        }
-      }
+      Expr::Lit(lit) => maybe_lit_to_ts_type(
+        &lit,
+        match as_const {
+          true => DeclMutabilityKind::Const,
+          false => DeclMutabilityKind::Mutable,
+        },
+      ),
       Expr::TsConstAssertion(ts_const) => {
         self.expr_to_ts_type(*ts_const.expr, true, true)
       }

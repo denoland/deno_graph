@@ -109,7 +109,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     Value1 = "a",
     Value2 = "b"
   }
-  const value: number = {} as never;
+  const value: 10 = {} as never;
   export enum EnumWithNonConstInits {
     Value1 = new Public1().test,
     Value2 = new Public2().asdf * value + NonExportedEnum.Value
@@ -145,7 +145,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     Value1 = "a",
     Value2 = "b"
   }
-  declare const value: number;
+  declare const value: 10;
   export declare enum EnumWithNonConstInits {
     Value1,
     Value2

@@ -179,28 +179,39 @@ pub fn ts_tuple_element(ts_type: TsType) -> TsTupleElement {
   }
 }
 
-pub fn maybe_lit_to_ts_type_const(lit: &Lit) -> Option<TsType> {
-  match lit {
-    Lit::Str(lit_str) => Some(ts_lit_type(TsLit::Str(lit_str.clone()))),
-    Lit::Bool(lit_bool) => Some(ts_lit_type(TsLit::Bool(*lit_bool))),
-    Lit::Null(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNullKeyword)),
-    Lit::Num(lit_num) => Some(ts_lit_type(TsLit::Number(lit_num.clone()))),
-    Lit::BigInt(lit_bigint) => {
-      Some(ts_lit_type(TsLit::BigInt(lit_bigint.clone())))
-    }
-    Lit::Regex(_) => Some(regex_type()),
-    Lit::JSXText(_) => None,
-  }
+pub enum DeclMutabilityKind {
+  Const,
+  Mutable,
 }
 
-pub fn maybe_lit_to_ts_type(lit: &Lit) -> Option<TsType> {
-  match lit {
-    Lit::Str(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsStringKeyword)),
-    Lit::Bool(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsBooleanKeyword)),
-    Lit::Null(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNullKeyword)),
-    Lit::Num(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNumberKeyword)),
-    Lit::BigInt(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsBigIntKeyword)),
-    Lit::Regex(_) => Some(regex_type()),
-    Lit::JSXText(_) => None,
+pub fn maybe_lit_to_ts_type(
+  lit: &Lit,
+  decl_kind: DeclMutabilityKind,
+) -> Option<TsType> {
+  match decl_kind {
+    DeclMutabilityKind::Const => match lit {
+      Lit::Str(lit_str) => Some(ts_lit_type(TsLit::Str(lit_str.clone()))),
+      Lit::Bool(lit_bool) => Some(ts_lit_type(TsLit::Bool(*lit_bool))),
+      Lit::Null(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNullKeyword)),
+      Lit::Num(lit_num) => Some(ts_lit_type(TsLit::Number(lit_num.clone()))),
+      Lit::BigInt(lit_bigint) => {
+        Some(ts_lit_type(TsLit::BigInt(lit_bigint.clone())))
+      }
+      Lit::Regex(_) => Some(regex_type()),
+      Lit::JSXText(_) => None,
+    },
+    DeclMutabilityKind::Mutable => match lit {
+      Lit::Str(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsStringKeyword)),
+      Lit::Bool(_) => {
+        Some(ts_keyword_type(TsKeywordTypeKind::TsBooleanKeyword))
+      }
+      Lit::Null(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNullKeyword)),
+      Lit::Num(_) => Some(ts_keyword_type(TsKeywordTypeKind::TsNumberKeyword)),
+      Lit::BigInt(_) => {
+        Some(ts_keyword_type(TsKeywordTypeKind::TsBigIntKeyword))
+      }
+      Lit::Regex(_) => Some(regex_type()),
+      Lit::JSXText(_) => None,
+    },
   }
 }
