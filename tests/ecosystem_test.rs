@@ -256,7 +256,7 @@ async fn test_version(
   let workspace_members = vec![WorkspaceMember {
     base: Url::parse("file:///").unwrap(),
     exports: version_meta.exports.clone(),
-    name: format!("@{scope}/{name}"),
+    name: format!("@{scope}/{name}").into(),
     version: Some(deno_semver::Version::parse_standard(version).unwrap()),
   }];
 

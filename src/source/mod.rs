@@ -17,6 +17,7 @@ use anyhow::Error;
 use data_url::DataUrl;
 use deno_ast::ModuleSpecifier;
 use deno_semver::package::PackageReq;
+use deno_semver::StackString;
 use futures::future;
 use futures::future::LocalBoxFuture;
 use once_cell::sync::Lazy;
@@ -352,7 +353,14 @@ pub fn recommended_registry_package_url_to_nv(
   let name = parts.next()?;
   let version = parts.next()?;
   Some(PackageNv {
-    name: format!("{}/{}", scope, name),
+    name: {
+      capacity_builder::StringBuilder::<StackString>::build(|builder| {
+        builder.append(scope);
+        builder.append('/');
+        builder.append(name);
+      })
+      .unwrap()
+    },
     version: deno_semver::Version::parse_standard(version).ok()?,
   })
 }

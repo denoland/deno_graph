@@ -48,6 +48,8 @@ use deno_semver::package::PackageNvReference;
 use deno_semver::package::PackageReq;
 use deno_semver::package::PackageReqReferenceParseError;
 use deno_semver::RangeSetOrTag;
+use deno_semver::SmallStackString;
+use deno_semver::StackString;
 use deno_semver::Version;
 use deno_semver::VersionReq;
 use futures::future::LocalBoxFuture;
@@ -213,7 +215,7 @@ pub enum JsrPackageFormatError {
       false => ""
     }
   )]
-  VersionTagNotSupported { tag: String },
+  VersionTagNotSupported { tag: SmallStackString },
 }
 
 #[derive(Debug, Clone, Error)]
@@ -839,7 +841,7 @@ fn is_media_type_unknown(media_type: &MediaType) -> bool {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WorkspaceMember {
   pub base: Url,
-  pub name: String,
+  pub name: StackString,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub version: Option<Version>,
   pub exports: IndexMap<String, String>,
@@ -3388,7 +3390,7 @@ pub(crate) struct AttributeTypeWithRange {
 
 #[derive(Debug, Default)]
 struct PendingNpmState {
-  requested_registry_info_loads: HashSet<String>,
+  requested_registry_info_loads: HashSet<StackString>,
   pending_resolutions: Vec<PendingNpmResolutionItem>,
 }
 
@@ -5181,7 +5183,7 @@ impl<'a> NpmSpecifierResolver<'a> {
               self.add_nv_for_item(
                 item.specifier.clone(),
                 pkg_nv.clone(),
-                item.package_ref.sub_path().map(ToOwned::to_owned),
+                item.package_ref.sub_path().map(|s| s.clone()),
               );
             }
             Err(err) => {
@@ -5242,7 +5244,7 @@ impl<'a> NpmSpecifierResolver<'a> {
     &mut self,
     specifier: ModuleSpecifier,
     pkg_nv: PackageNv,
-    sub_path: Option<String>,
+    sub_path: Option<SmallStackString>,
   ) {
     let pkg_id_ref = NpmPackageNvReference::new(PackageNvReference {
       nv: pkg_nv.clone(),
@@ -6501,7 +6503,7 @@ mod tests {
     let workspace_members = vec![WorkspaceMember {
       base: Url::parse("file:///").unwrap(),
       exports: exports.clone(),
-      name: "@foo/bar".to_string(),
+      name: "@foo/bar".into(),
       version: Some(Version::parse_standard("1.0.0").unwrap()),
     }];
     let mut test_loader = MemoryLoader::default();
@@ -6571,7 +6573,7 @@ mod tests {
     let workspace_members = vec![WorkspaceMember {
       base: Url::parse("file:///").unwrap(),
       exports: exports.clone(),
-      name: "@foo/bar".to_string(),
+      name: "@foo/bar".into(),
       version: Some(Version::parse_standard("1.0.0").unwrap()),
     }];
     let mut test_loader = MemoryLoader::default();
@@ -6652,14 +6654,13 @@ mod tests {
   #[test]
   fn leading_v_version_tag_err() {
     {
-      let err = JsrPackageFormatError::VersionTagNotSupported {
-        tag: "v1.2".to_string(),
-      };
+      let err =
+        JsrPackageFormatError::VersionTagNotSupported { tag: "v1.2".into() };
       assert_eq!(err.to_string(), "Version tag not supported in jsr specifiers ('v1.2'). Remove leading 'v' before version.");
     }
     {
       let err = JsrPackageFormatError::VersionTagNotSupported {
-        tag: "latest".to_string(),
+        tag: "latest".into(),
       };
       assert_eq!(
         err.to_string(),
@@ -6668,7 +6669,7 @@ mod tests {
     }
     {
       let err = JsrPackageFormatError::VersionTagNotSupported {
-        tag: "version".to_string(), // not a vversion with a leading 'v'
+        tag: "version".into(), // not a vversion with a leading 'v'
       };
       assert_eq!(
         err.to_string(),
