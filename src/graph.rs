@@ -47,6 +47,7 @@ use deno_semver::package::PackageNv;
 use deno_semver::package::PackageNvReference;
 use deno_semver::package::PackageReq;
 use deno_semver::package::PackageReqReferenceParseError;
+use deno_semver::package::PackageSubPath;
 use deno_semver::RangeSetOrTag;
 use deno_semver::SmallStackString;
 use deno_semver::StackString;
@@ -5183,7 +5184,7 @@ impl<'a> NpmSpecifierResolver<'a> {
               self.add_nv_for_item(
                 item.specifier.clone(),
                 pkg_nv.clone(),
-                item.package_ref.sub_path().map(|s| s.clone()),
+                item.package_ref.sub_path().map(PackageSubPath::from_str),
               );
             }
             Err(err) => {
