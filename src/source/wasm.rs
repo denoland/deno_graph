@@ -54,7 +54,7 @@ fn wasm_module_deps_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
   StringBuilder::build(|builder| {
     for import_module in &unique_import_modules {
       builder.append("import \"");
-      builder.append(import_module);
+      builder.append(*import_module);
       builder.append("\";\n");
     }
 
