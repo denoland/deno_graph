@@ -506,9 +506,9 @@ dependencies = [
 
 [[package]]
 name = "deno_semver"
-version = "0.7.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a21aae482ce4a88e8a9f4746f4f93a3069709d297a7a5593bf984f221792d012"
+checksum = "4775271f9b5602482698f76d24ea9ed8ba27af7f587a7e9a876916300c542435"
 dependencies = [
  "capacity_builder",
  "deno_error",
