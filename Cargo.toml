@@ -44,7 +44,7 @@ capacity_builder = "0.5.0"
 data-url = "0.3.0"
 deno_ast = { version = "0.44.0", features = ["dep_analysis", "emit"] }
 deno_unsync.workspace = true
-deno_semver = "0.6.1"
+deno_semver = "0.7.0"
 encoding_rs = "0.8.33"
 futures = "0.3.26"
 import_map = "0.20.0"
@@ -80,7 +80,3 @@ codegen-units = 1
 incremental = true
 lto = true
 opt-level = "z"
-
-[patch.crates-io]
-#deno_semver = { git = "https://github.com/dsherret/deno_semver.git", branch = "perf_stack_strings" }
-deno_semver = { path = "../deno_semver" }
