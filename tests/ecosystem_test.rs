@@ -288,6 +288,7 @@ async fn test_version(
         passthrough_jsr_specifiers: true,
         executor: Default::default(),
         imports: vec![],
+        jsr_version_resolver: None,
       },
     )
     .await;
