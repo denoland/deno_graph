@@ -193,6 +193,7 @@ mod tests {
 
   use super::*;
   use async_trait::async_trait;
+  use deno_error::JsErrorBox;
   use indexmap::IndexMap;
   use indexmap::IndexSet;
   use pretty_assertions::assert_eq;
@@ -4583,9 +4584,9 @@ export function a(a: A): B {
           ResolutionKind::Execution => {
             Ok(resolve_import(specifier_text, &referrer_range.specifier)?)
           }
-          ResolutionKind::Types => {
-            Err(source::ResolveError::Other(Box::new(FailedError)))
-          }
+          ResolutionKind::Types => Err(source::ResolveError::Other(
+            JsErrorBox::from_err(FailedError),
+          )),
         }
       }
     }

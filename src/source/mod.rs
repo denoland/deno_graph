@@ -392,14 +392,8 @@ pub enum ResolveError {
   #[error(transparent)]
   ImportMap(#[from] import_map::ImportMapError),
   #[class(inherit)]
-  #[error("{0}")]
-  Other(Box<dyn JsErrorClass>),
-}
-
-impl<T: JsErrorClass> From<Box<T>> for ResolveError {
-  fn from(value: Box<T>) -> Self {
-    Self::Other(value)
-  }
+  #[error(transparent)]
+  Other(#[from] deno_error::JsErrorBox),
 }
 
 /// The kind of resolution currently being done by deno_graph.

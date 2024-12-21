@@ -4782,7 +4782,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               load_specifier.clone(),
               maybe_range.cloned(),
               if maybe_version_info.is_some() {
-                JsrLoadError::ContentChecksumIntegrity(err).into()
+                ModuleLoadError::Jsr(JsrLoadError::ContentChecksumIntegrity(
+                  err,
+                ))
               } else {
                 ModuleLoadError::HttpsChecksumIntegrity(err)
               },

@@ -252,6 +252,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a12916984aab3fa6e39d655a33e09c0071eb36d6ab3aea5c2d78551f1df6d952"
 
 [[package]]
+name = "capacity_builder"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab97838e07d98bdddf1e7e191ffe3c718cba7477c0b6607fdfb96ecd696202df"
+dependencies = [
+ "itoa",
+]
+
+[[package]]
 name = "cc"
 version = "1.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -392,22 +401,19 @@ dependencies = [
 
 [[package]]
 name = "deno_error"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17093059f04120895ee7bad790f074b1e4a0aa7c68511dbe8355ad0b092a4910"
+version = "0.5.2"
 dependencies = [
  "deno_error_macro",
  "libc",
  "serde",
  "serde_json",
+ "thiserror 2.0.3",
  "url",
 ]
 
 [[package]]
 name = "deno_error_macro"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c3a5d888391b76dc9b53e35651d2d11086fa05110beba167f08294920dd9059"
+version = "0.5.2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -416,10 +422,11 @@ dependencies = [
 
 [[package]]
 name = "deno_graph"
-version = "0.85.1"
+version = "0.86.3"
 dependencies = [
  "async-trait",
  "bincode",
+ "capacity_builder",
  "data-url",
  "deno_ast",
  "deno_error",
@@ -1142,9 +1149,9 @@ checksum = "7943c866cc5cd64cbc25b2e01621d07fa8eb2a1a23160ee81ce38704e97b8ecf"
 
 [[package]]
 name = "itoa"
-version = "1.0.11"
+version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49f1f14873335454500d59611f1cf4a4b0f786f9ac11f4312a78e4cf2566695b"
+checksum = "d75a2a4b1b190afb6f5425f10f6a8f959d2ea0b9c2b1d79553551850539e4674"
 
 [[package]]
 name = "js-sys"
