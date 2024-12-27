@@ -23,7 +23,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use sys_traits::boxed::BoxedFsDirEntry;
 use sys_traits::boxed::FsReadDirBoxed;
-use sys_traits::FsReadDirImpl;
+use sys_traits::BaseFsReadDir;
 use thiserror::Error;
 use url::Url;
 
@@ -40,10 +40,10 @@ pub type FileSystem = dyn FsReadDirBoxed;
 
 pub struct NullFileSystem;
 
-impl FsReadDirImpl for NullFileSystem {
+impl BaseFsReadDir for NullFileSystem {
   type ReadDirEntry = BoxedFsDirEntry;
 
-  fn fs_read_dir_impl(
+  fn base_fs_read_dir(
     &self,
     _path: &Path,
   ) -> std::io::Result<
