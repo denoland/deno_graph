@@ -1,5 +1,7 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
+#![allow(clippy::disallowed_methods)]
+
 // todo(dsherret): move the integration-like tests to this file because it
 // helps ensure we're testing the public API and ensures we export types
 // out of deno_graph that should be public
@@ -23,6 +25,9 @@ use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use pretty_assertions::assert_eq;
+use sys_traits::impls::InMemorySys;
+use sys_traits::FsCreateDirAll;
+use sys_traits::FsWrite;
 use url::Url;
 
 use crate::helpers::TestBuilder;
@@ -310,19 +315,33 @@ async fn test_dynamic_imports_with_template_arg() {
     expected_specifiers: Vec<&str>,
   ) {
     let mut loader = MemoryLoader::default();
-    let mut file_system = MemoryFileSystem::default();
+    let sys = InMemorySys::default();
     for (specifier, text) in &files {
-      file_system.add_file(ModuleSpecifier::parse(specifier).unwrap());
+      let specifier = if cfg!(windows) {
+        specifier.replace("file:///", "file:///C:/")
+      } else {
+        specifier.to_string()
+      };
+      let specifier = ModuleSpecifier::parse(&specifier).unwrap();
+      let path = deno_path_util::url_to_file_path(&specifier).unwrap();
+      sys.fs_create_dir_all(path.parent().unwrap()).unwrap();
+      sys.fs_write(&path, text).unwrap();
       loader.add_source_with_text(specifier, text);
     }
-    loader.add_source_with_text("file:///dev/main.ts", code);
+
+    let entrypoint = if cfg!(windows) {
+      "file:///C:/dev/main.ts"
+    } else {
+      "file:///dev/main.ts"
+    };
+    loader.add_source_with_text(entrypoint, code);
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
-        vec![Url::parse("file:///dev/main.ts").unwrap()],
+        vec![Url::parse(entrypoint).unwrap()],
         &loader,
         BuildOptions {
-          file_system: &file_system,
+          file_system: &sys,
           ..Default::default()
         },
       )
@@ -331,7 +350,13 @@ async fn test_dynamic_imports_with_template_arg() {
 
     let specifiers = graph
       .specifiers()
-      .map(|s| s.0.to_string())
+      .map(|s| {
+        if cfg!(windows) {
+          s.0.as_str().replace("file:///C:/", "file:///")
+        } else {
+          s.0.to_string()
+        }
+      })
       .filter(|s| s != "file:///dev/main.ts")
       .collect::<Vec<_>>();
     assert_eq!(specifiers, expected_specifiers);
@@ -433,7 +458,11 @@ await import(`./a/${test}`);
 
   // file specifiers
   run_test(
-    "await import(`file:///dev/other/${test}`);",
+    if cfg!(windows) {
+      "await import(`file:///C:/dev/other/${test}`);"
+    } else {
+      "await import(`file:///dev/other/${test}`);"
+    },
     vec![("file:///dev/other/mod.ts", ""), ("file:///dev/b.ts", "")],
     vec!["file:///dev/other/mod.ts"],
   )

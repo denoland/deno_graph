@@ -1,3 +1,7 @@
+// Copyright 2018-2024 the Deno authors. MIT license.
+
+#![allow(clippy::disallowed_methods)]
+
 use std::collections::HashSet;
 use std::io::Write as _;
 use std::path::PathBuf;

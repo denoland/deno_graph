@@ -2467,6 +2467,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72001c0d1b690f17bb18ea7960821389199fd59ce6784f883fc76d0f3fbb6236"
 dependencies = [
  "js-sys",
+ "parking_lot",
  "wasm-bindgen",
 ]
 
