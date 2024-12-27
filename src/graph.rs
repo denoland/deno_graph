@@ -73,7 +73,10 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::fmt;
+use std::path::Path;
 use std::sync::Arc;
+use sys_traits::FileType;
+use sys_traits::FsDirEntry;
 use thiserror::Error;
 use url::Url;
 use wasm::wasm_module_to_dts;
@@ -1207,7 +1210,6 @@ pub struct BuildFastCheckTypeGraphOptions<'a> {
   pub workspace_fast_check: WorkspaceFastCheckOption<'a>,
 }
 
-#[derive(Default)]
 pub struct BuildOptions<'a> {
   pub is_dynamic: bool,
   /// Additional imports that should be brought into the scope of
@@ -1217,7 +1219,7 @@ pub struct BuildOptions<'a> {
   pub imports: Vec<ReferrerImports>,
   pub executor: &'a dyn Executor,
   pub locker: Option<&'a mut dyn Locker>,
-  pub file_system: &'a dyn FileSystem,
+  pub file_system: &'a FileSystem,
   pub jsr_url_provider: &'a dyn JsrUrlProvider,
   /// Whether to pass through JSR specifiers to the resolver instead of
   /// resolving them. This is useful in cases where you want to mark JSR
@@ -1227,6 +1229,24 @@ pub struct BuildOptions<'a> {
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   pub reporter: Option<&'a dyn Reporter>,
   pub resolver: Option<&'a dyn Resolver>,
+}
+
+impl<'a> Default for BuildOptions<'a> {
+  fn default() -> Self {
+    Self {
+      is_dynamic: false,
+      imports: Default::default(),
+      executor: Default::default(),
+      locker: None,
+      file_system: &NullFileSystem,
+      jsr_url_provider: Default::default(),
+      passthrough_jsr_specifiers: false,
+      module_analyzer: Default::default(),
+      npm_resolver: None,
+      reporter: None,
+      resolver: None,
+    }
+  }
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -2433,7 +2453,7 @@ pub(crate) struct ParseModuleOptions {
 /// With the provided information, parse a module and return its "module slot"
 #[allow(clippy::result_large_err)]
 pub(crate) fn parse_module(
-  file_system: &dyn FileSystem,
+  file_system: &FileSystem,
   jsr_url_provider: &dyn JsrUrlProvider,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
@@ -2493,7 +2513,7 @@ pub(crate) fn parse_js_module_from_module_info(
   maybe_headers: Option<&HashMap<String, String>>,
   module_info: ModuleInfo,
   source: Arc<str>,
-  file_system: &dyn FileSystem,
+  file_system: &FileSystem,
   jsr_url_provider: &dyn JsrUrlProvider,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
@@ -2847,7 +2867,7 @@ fn parse_wasm_module_from_module_info(
   module_info: ModuleInfo,
   source: Arc<[u8]>,
   source_dts: Arc<str>,
-  file_system: &dyn FileSystem,
+  file_system: &FileSystem,
   jsr_url_provider: &dyn JsrUrlProvider,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
@@ -2880,7 +2900,7 @@ fn fill_module_dependencies(
   dependencies: Vec<DependencyDescriptor>,
   module_specifier: &ModuleSpecifier,
   module_dependencies: &mut IndexMap<String, Dependency>,
-  file_system: &dyn FileSystem,
+  file_system: &FileSystem,
   jsr_url_provider: &dyn JsrUrlProvider,
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
@@ -3079,7 +3099,7 @@ fn analyze_dynamic_arg_template_parts(
   referrer: &Url,
   referrer_range: &PositionRange,
   import_attributes: &ImportAttributes,
-  file_system: &dyn FileSystem,
+  file_system: &FileSystem,
 ) -> Vec<String> {
   fn resolve_initial_dir_path(
     parts: &[DynamicTemplatePart],
@@ -3169,18 +3189,58 @@ fn analyze_dynamic_arg_template_parts(
   if is_fs_root_specifier(&dir_path) {
     return specifiers;
   }
+  let Ok(dir_path) = deno_path_util::url_to_file_path(&dir_path) else {
+    return specifiers;
+  };
   let mut pending_dirs = VecDeque::from([dir_path]);
+  let handle_err = |path: &Path, err: &std::io::Error| {
+    if matches!(
+      err.kind(),
+      std::io::ErrorKind::PermissionDenied | std::io::ErrorKind::NotFound
+    ) {
+      return;
+    }
+    // For now, errors are swallowed and not stored in the graph.
+    // If we decide to represent these in the graph, we'll need to
+    // figure out what to do with errors like directory errors.
+    // Additionally, take note that these are dynamic import errors,
+    // so they shouldn't be eagerly surfaced.
+    log::warn!(
+      "Graph failed resolving '{}'. {:#}\n    at {}:{}:{}",
+      path.display(),
+      err,
+      referrer,
+      referrer_range.start.line + 1,
+      referrer_range.start.character + 1,
+    );
+  };
   while let Some(dir_path) = pending_dirs.pop_front() {
-    let entries = file_system.read_dir(&dir_path);
+    let entries = match file_system.fs_read_dir_boxed(&dir_path) {
+      Ok(entries) => entries,
+      Err(err) => {
+        handle_err(&dir_path, &err);
+        continue;
+      }
+    };
     for entry in entries {
-      match entry.kind {
-        DirEntryKind::File => {
-          let url = &entry.url;
-          if matching_media_types.contains(&MediaType::from_specifier(url)) {
-            if url == referrer {
+      let entry = match entry {
+        Ok(entry) => entry,
+        Err(err) => {
+          handle_err(&dir_path, &err);
+          continue;
+        }
+      };
+      let path = entry.path();
+      match entry.file_type() {
+        Ok(FileType::File) => {
+          let Ok(url) = deno_path_util::url_from_file_path(&path) else {
+            continue;
+          };
+          if matching_media_types.contains(&MediaType::from_specifier(&url)) {
+            if url == *referrer {
               continue; // found itself, so skip
             }
-            if let Some(specifier) = referrer.make_relative(url) {
+            if let Some(specifier) = referrer.make_relative(&url) {
               let specifier = if !specifier.starts_with("../") {
                 format!("./{}", specifier)
               } else {
@@ -3210,38 +3270,25 @@ fn analyze_dynamic_arg_template_parts(
             }
           }
         }
-        DirEntryKind::Dir => {
+        Ok(FileType::Dir) => {
           // ignore hidden directories and any node_modules/vendor folders
-          let is_allowed_dir = entry
-            .url
-            .path()
-            .rsplit('/')
-            .find(|c| !c.is_empty())
+          let is_allowed_dir = path
+            .file_name()
             .map(|c| {
-              !c.starts_with('.') && c != "node_modules" && c != "vendor"
+              !c.to_string_lossy().starts_with('.')
+                && c != "node_modules"
+                && c != "vendor"
             })
             .unwrap_or(true);
           if is_allowed_dir {
-            pending_dirs.push_back(entry.url);
+            pending_dirs.push_back(path.into_owned());
           }
         }
-        DirEntryKind::Symlink => {
+        Ok(_) => {
           // ignore
         }
-        DirEntryKind::Error(err) => {
-          // For now, errors are swallowed and not stored in the graph.
-          // If we decide to represent these in the graph, we'll need to
-          // figure out what to do with errors like directory errors.
-          // Additionally, take note that these are dynamic import errors,
-          // so they shouldn't be eagerly surfaced.
-          log::warn!(
-            "Graph failed resolving '{}'. {:#}\n    at {}:{}:{}",
-            entry.url,
-            err,
-            referrer,
-            referrer_range.start.line + 1,
-            referrer_range.start.character + 1,
-          );
+        Err(err) => {
+          handle_err(&path, &err);
         }
       };
     }
@@ -3466,7 +3513,7 @@ impl FillPassMode {
 struct Builder<'a, 'graph> {
   in_dynamic_branch: bool,
   was_dynamic_root: bool,
-  file_system: &'a dyn FileSystem,
+  file_system: &'a FileSystem,
   jsr_url_provider: &'a dyn JsrUrlProvider,
   passthrough_jsr_specifiers: bool,
   loader: &'a dyn Loader,

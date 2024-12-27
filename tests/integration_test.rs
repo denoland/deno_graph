@@ -14,7 +14,6 @@ use deno_graph::source::CacheSetting;
 use deno_graph::source::LoadFuture;
 use deno_graph::source::LoadOptions;
 use deno_graph::source::LoadResponse;
-use deno_graph::source::MemoryFileSystem;
 use deno_graph::source::MemoryLoader;
 use deno_graph::BuildOptions;
 use deno_graph::FillFromLockfileOptions;

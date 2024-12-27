@@ -273,7 +273,7 @@ pub async fn js_create_graph(
       BuildOptions {
         is_dynamic: false,
         resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
-        file_system: &NullFileSystem,
+        file_system: &sys_traits::impls::RealSys,
         jsr_url_provider: Default::default(),
         npm_resolver: None,
         locker: None,
