@@ -45,7 +45,7 @@ capacity_builder = "0.5.0"
 data-url = "0.3.0"
 deno_ast = { version = "0.44.0", features = ["dep_analysis", "emit"] }
 deno_unsync.workspace = true
-deno_path_util = "0.2.2"
+deno_path_util = "0.3.0"
 deno_semver = "0.7.1"
 encoding_rs = "0.8.33"
 futures = "0.3.26"
@@ -85,5 +85,3 @@ incremental = true
 lto = true
 opt-level = "z"
 
-[patch.crates-io]
-deno_path_util = { git = "https://github.com/denoland/deno_path_util", branch = "refactor_use_sys_traits" }
