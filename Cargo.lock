@@ -448,6 +448,7 @@ dependencies = [
  "capacity_builder",
  "data-url",
  "deno_ast",
+ "deno_path_util",
  "deno_semver",
  "deno_terminal 0.1.1",
  "deno_unsync",
@@ -467,6 +468,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "sys_traits",
  "tempfile",
  "thiserror 2.0.3",
  "tokio",
@@ -489,6 +491,7 @@ dependencies = [
  "serde",
  "serde-wasm-bindgen",
  "serde_json",
+ "sys_traits",
  "wasm-bindgen",
  "wasm-bindgen-futures",
 ]
@@ -501,6 +504,19 @@ checksum = "7fcf552fbdedbe81c89705349d7d2485c7051382b000dfddbdbf7fc25931cf83"
 dependencies = [
  "data-url",
  "serde",
+ "url",
+]
+
+[[package]]
+name = "deno_path_util"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "420e8211aaba7fde83ccaa9a5dad855c3b940ed988d70c95159acd600a70dc87"
+dependencies = [
+ "deno_error",
+ "percent-encoding",
+ "sys_traits",
+ "thiserror 2.0.3",
  "url",
 ]
 
@@ -2443,6 +2459,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.89",
+]
+
+[[package]]
+name = "sys_traits"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72001c0d1b690f17bb18ea7960821389199fd59ce6784f883fc76d0f3fbb6236"
+dependencies = [
+ "js-sys",
+ "parking_lot",
+ "wasm-bindgen",
 ]
 
 [[package]]

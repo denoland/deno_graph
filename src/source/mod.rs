@@ -1,5 +1,32 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
+use std::borrow::Cow;
+use std::collections::HashMap;
+use std::fmt;
+use std::path::Path;
+use std::path::PathBuf;
+use std::sync::Arc;
+
+use anyhow::anyhow;
+use anyhow::Error;
+use async_trait::async_trait;
+use data_url::DataUrl;
+use deno_ast::MediaType;
+use deno_ast::ModuleSpecifier;
+use deno_semver::package::PackageNv;
+use deno_semver::package::PackageReq;
+use deno_semver::StackString;
+use futures::future;
+use futures::future::LocalBoxFuture;
+use once_cell::sync::Lazy;
+use serde::Deserialize;
+use serde::Serialize;
+use sys_traits::boxed::BoxedFsDirEntry;
+use sys_traits::boxed::FsReadDirBoxed;
+use sys_traits::BaseFsReadDir;
+use thiserror::Error;
+use url::Url;
+
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::packages::JsrPackageInfo;
@@ -8,31 +35,24 @@ use crate::text_encoding;
 use crate::ModuleInfo;
 use crate::NpmLoadError;
 use crate::SpecifierError;
-use async_trait::async_trait;
-use deno_ast::MediaType;
-use deno_semver::package::PackageNv;
 
-use anyhow::anyhow;
-use anyhow::Error;
-use data_url::DataUrl;
-use deno_ast::ModuleSpecifier;
-use deno_semver::package::PackageReq;
-use deno_semver::StackString;
-use futures::future;
-use futures::future::LocalBoxFuture;
-use once_cell::sync::Lazy;
-use serde::Deserialize;
-use serde::Serialize;
-use std::borrow::Cow;
-use std::collections::HashMap;
-use std::fmt;
-use std::path::PathBuf;
-use std::sync::Arc;
-use thiserror::Error;
-use url::Url;
+pub type FileSystem = dyn FsReadDirBoxed;
 
-mod file_system;
-pub use file_system::*;
+pub struct NullFileSystem;
+
+impl BaseFsReadDir for NullFileSystem {
+  type ReadDirEntry = BoxedFsDirEntry;
+
+  fn base_fs_read_dir(
+    &self,
+    _path: &Path,
+  ) -> std::io::Result<
+    Box<dyn Iterator<Item = std::io::Result<Self::ReadDirEntry>>>,
+  > {
+    Ok(Box::new(std::iter::empty()))
+  }
+}
+
 pub mod wasm;
 
 pub const DEFAULT_JSX_IMPORT_SOURCE_MODULE: &str = "jsx-runtime";
