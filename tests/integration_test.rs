@@ -711,7 +711,7 @@ async fn test_wasm_math_with_import() {
     deno_graph::Module::Wasm(wasm_module) => {
       assert_eq!(
         wasm_module.source_dts.to_string(),
-        "import \"./math.ts\";
+        "import { \"js_add\" as __deno_wasm_import_0__, \"js_subtract\" as __deno_wasm_import_1__ } from \"./math.ts\";
 export declare const memory: WebAssembly.Memory;
 export declare function add(arg0: number, arg1: number): number;
 export declare function subtract(arg0: number, arg1: number): number;
