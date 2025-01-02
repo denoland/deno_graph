@@ -55,6 +55,8 @@ fn wasm_module_deps_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
     let mut count = 0;
     for (import_module, named_imports) in &unique_import_modules {
       builder.append("import { ");
+      // we add the named imports in order to cause a type checking error if
+      // the importing module does not have it as an export
       for (i, named_import) in named_imports.iter().enumerate() {
         if i > 0 {
           builder.append(", ");
