@@ -12,6 +12,7 @@ use futures::FutureExt;
 use crate::graph::JsrLoadError;
 use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
+use crate::packages::JsrVersionResolver;
 use crate::rt::spawn;
 use crate::rt::JoinHandle;
 use crate::source::CacheSetting;
@@ -37,6 +38,7 @@ pub struct JsrMetadataStoreServices<'a> {
   pub loader: &'a dyn Loader,
   pub executor: &'a dyn Executor,
   pub jsr_url_provider: &'a dyn JsrUrlProvider,
+  pub jsr_version_resolver: Option<&'a dyn JsrVersionResolver>,
 }
 
 #[derive(Debug, Default)]
@@ -82,6 +84,16 @@ impl JsrMetadataStore {
       .url()
       .join(&format!("{}/meta.json", package_name))
       .unwrap();
+    let cache_setting =
+      if let Some(version_resolver) = services.jsr_version_resolver {
+        if version_resolver.force_fetch_metadata(package_name) {
+          CacheSetting::Reload
+        } else {
+          cache_setting
+        }
+      } else {
+        cache_setting
+      };
     let fut = self.load_data(
       specifier,
       services,
