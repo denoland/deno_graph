@@ -1,5 +1,7 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
+#![allow(clippy::disallowed_methods)]
+
 use std::collections::BTreeMap;
 use std::panic::AssertUnwindSafe;
 

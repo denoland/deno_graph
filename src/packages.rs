@@ -8,6 +8,7 @@ use std::collections::HashSet;
 use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
+use deno_semver::StackString;
 use deno_semver::Version;
 use deno_semver::VersionReq;
 use serde::Deserialize;
@@ -115,7 +116,7 @@ pub struct PackageSpecifiers {
   #[serde(flatten)]
   package_reqs: BTreeMap<PackageReq, PackageNv>,
   #[serde(skip_serializing)]
-  packages_by_name: HashMap<String, Vec<PackageNv>>,
+  packages_by_name: HashMap<StackString, Vec<PackageNv>>,
   #[serde(skip_serializing)]
   packages: BTreeMap<PackageNv, PackageNvInfo>,
   /// Cache for packages that have a referrer outside JSR.

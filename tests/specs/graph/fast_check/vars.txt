@@ -170,7 +170,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export const inferred9: [...string] = {} as never;
   export const inferred10: (1 | 2n)[] = {} as never;
   export const inferred11: (keyof string)[] = {} as never;
-  export const inferred12: number = {} as never;
+  export const inferred12: 1 = {} as never;
   --- DTS ---
   declare const public1: Public1;
   export { public1 };
@@ -214,4 +214,4 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export declare const inferred9: [...string];
   export declare const inferred10: (1 | 2n)[];
   export declare const inferred11: (keyof string)[];
-  export declare const inferred12: number;
+  export declare const inferred12: 1;

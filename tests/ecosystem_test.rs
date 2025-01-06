@@ -1,3 +1,7 @@
+// Copyright 2018-2024 the Deno authors. MIT license.
+
+#![allow(clippy::disallowed_methods)]
+
 use std::collections::HashSet;
 use std::io::Write as _;
 use std::path::PathBuf;
@@ -14,6 +18,7 @@ use deno_graph::ModuleGraph;
 use deno_graph::WorkspaceFastCheckOption;
 use deno_graph::WorkspaceMember;
 use deno_semver::package::PackageNv;
+use deno_semver::StackString;
 use file_test_runner::collection::strategies::TestPerFileCollectionStrategy;
 use file_test_runner::collection::CollectedCategoryOrTest;
 use file_test_runner::collection::CollectedTest;
@@ -256,7 +261,7 @@ async fn test_version(
   let workspace_members = vec![WorkspaceMember {
     base: Url::parse("file:///").unwrap(),
     exports: version_meta.exports.clone(),
-    name: format!("@{scope}/{name}"),
+    name: StackString::from_string(format!("@{scope}/{name}")),
     version: Some(deno_semver::Version::parse_standard(version).unwrap()),
   }];
 

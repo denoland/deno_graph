@@ -1,7 +1,7 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
 use capacity_builder::StringBuilder;
-use indexmap::IndexSet;
+use indexmap::IndexMap;
 use wasm_dep_analyzer::ValueType;
 
 pub fn wasm_module_to_dts(
@@ -45,16 +45,31 @@ fn wasm_module_deps_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
     .iter()
     .map(|export| is_valid_ident(export.name))
     .collect::<Vec<_>>();
-  let unique_import_modules = wasm_deps
-    .imports
-    .iter()
-    .map(|import| import.module)
-    .collect::<IndexSet<_>>();
-
+  let mut unique_import_modules: IndexMap<&str, Vec<&str>> =
+    IndexMap::with_capacity(wasm_deps.imports.len());
+  for import in &wasm_deps.imports {
+    let entry = unique_import_modules.entry(import.module).or_default();
+    entry.push(import.name);
+  }
   StringBuilder::build(|builder| {
-    for import_module in &unique_import_modules {
-      builder.append("import \"");
-      builder.append(import_module);
+    let mut count = 0;
+    for (import_module, named_imports) in &unique_import_modules {
+      builder.append("import { ");
+      // we add the named imports in order to cause a type checking error if
+      // the importing module does not have it as an export
+      for (i, named_import) in named_imports.iter().enumerate() {
+        if i > 0 {
+          builder.append(", ");
+        }
+        builder.append('"');
+        builder.append(*named_import);
+        builder.append("\" as __deno_wasm_import_");
+        builder.append(count);
+        builder.append("__");
+        count += 1;
+      }
+      builder.append(" } from \"");
+      builder.append(*import_module);
       builder.append("\";\n");
     }
 
@@ -146,6 +161,7 @@ mod test {
   use pretty_assertions::assert_eq;
   use wasm_dep_analyzer::Export;
   use wasm_dep_analyzer::FunctionSignature;
+  use wasm_dep_analyzer::Import;
   use wasm_dep_analyzer::WasmDeps;
 
   use super::*;
@@ -153,7 +169,23 @@ mod test {
   #[test]
   fn test_output() {
     let text = wasm_module_deps_to_dts(&WasmDeps {
-      imports: vec![],
+      imports: vec![
+        Import {
+          name: "name1",
+          module: "./mod.ts",
+          import_type: wasm_dep_analyzer::ImportType::Function(0),
+        },
+        Import {
+          name: "name1",
+          module: "./other.ts",
+          import_type: wasm_dep_analyzer::ImportType::Function(0),
+        },
+        Import {
+          name: "name2",
+          module: "./mod.ts",
+          import_type: wasm_dep_analyzer::ImportType::Function(0),
+        },
+      ],
       exports: vec![
         Export {
           name: "name--1",
@@ -228,7 +260,9 @@ mod test {
     });
     assert_eq!(
       text,
-      "declare function __deno_wasm_export_0__(): void;
+      "import { \"name1\" as __deno_wasm_import_0__, \"name2\" as __deno_wasm_import_1__ } from \"./mod.ts\";
+import { \"name1\" as __deno_wasm_import_2__ } from \"./other.ts\";
+declare function __deno_wasm_export_0__(): void;
 export { __deno_wasm_export_0__ as \"name--1\" };
 export declare function name2(arg0: number, arg1: bigint | number): bigint;
 export declare const name3: unknown;

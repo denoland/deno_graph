@@ -41,6 +41,7 @@ use super::swc_helpers::is_void_type;
 use super::swc_helpers::maybe_lit_to_ts_type;
 use super::swc_helpers::new_ident;
 use super::swc_helpers::ts_keyword_type;
+use super::swc_helpers::DeclMutabilityKind;
 use super::swc_helpers::ReturnStatementAnalysis;
 use super::transform_dts::FastCheckDtsDiagnostic;
 use super::transform_dts::FastCheckDtsTransformer;
@@ -858,14 +859,20 @@ impl<'a> FastCheckTransformer<'a> {
                         _ => None,
                       };
                       explicit_type_ann.or_else(|| {
-                        self.maybe_infer_type_from_expr(&assign.right).map(
-                          |type_ann| {
+                        self
+                          .maybe_infer_type_from_expr(
+                            &assign.right,
+                            match prop.readonly {
+                              true => DeclMutabilityKind::Const,
+                              false => DeclMutabilityKind::Mutable,
+                            },
+                          )
+                          .map(|type_ann| {
                             Box::new(TsTypeAnn {
                               span: DUMMY_SP,
                               type_ann: Box::new(type_ann),
                             })
-                          },
-                        )
+                          })
                       })
                     }
                   }
@@ -1006,10 +1013,15 @@ impl<'a> FastCheckTransformer<'a> {
           return Ok(true);
         }
         if n.type_ann.is_none() {
-          let inferred_type = n
-            .value
-            .as_ref()
-            .and_then(|e| self.maybe_infer_type_from_expr(e));
+          let inferred_type = n.value.as_ref().and_then(|e| {
+            self.maybe_infer_type_from_expr(
+              e,
+              match n.readonly {
+                true => DeclMutabilityKind::Const,
+                false => DeclMutabilityKind::Mutable,
+              },
+            )
+          });
           match inferred_type {
             Some(t) => {
               n.type_ann = Some(Box::new(TsTypeAnn {
@@ -1056,10 +1068,9 @@ impl<'a> FastCheckTransformer<'a> {
         } else if let Some(type_ann) = n.type_ann.clone() {
           type_ann
         } else {
-          let inferred_type = n
-            .value
-            .as_ref()
-            .and_then(|e| self.maybe_infer_type_from_expr(e));
+          let inferred_type = n.value.as_ref().and_then(|e| {
+            self.maybe_infer_type_from_expr(e, DeclMutabilityKind::Mutable)
+          });
           match inferred_type {
             Some(t) => Box::new(TsTypeAnn {
               span: DUMMY_SP,
@@ -1244,7 +1255,8 @@ impl<'a> FastCheckTransformer<'a> {
           )?;
         }
         BlockStmtOrExpr::Expr(expr) => {
-          let inferred_type = self.maybe_infer_type_from_expr(expr);
+          let inferred_type =
+            self.maybe_infer_type_from_expr(expr, DeclMutabilityKind::Mutable);
           match inferred_type {
             Some(t) => {
               let mut return_type = Box::new(t);
@@ -1370,7 +1382,10 @@ impl<'a> FastCheckTransformer<'a> {
       Pat::Assign(assign) => match &mut *assign.left {
         Pat::Ident(ident) => {
           if ident.type_ann.is_none() {
-            let inferred_type = self.maybe_infer_type_from_expr(&assign.right);
+            let inferred_type = self.maybe_infer_type_from_expr(
+              &assign.right,
+              DeclMutabilityKind::Mutable,
+            );
             match inferred_type {
               Some(t) => {
                 ident.type_ann = Some(Box::new(TsTypeAnn {
@@ -1491,7 +1506,7 @@ impl<'a> FastCheckTransformer<'a> {
     // don't need to do anything for ambient decls
     if !is_ambient {
       for decl in &mut n.decls {
-        self.transform_var_declarator(decl)?;
+        self.transform_var_declarator(n.kind, decl)?;
       }
     }
 
@@ -1500,15 +1515,23 @@ impl<'a> FastCheckTransformer<'a> {
 
   fn transform_var_declarator(
     &mut self,
+    decl_kind: VarDeclKind,
     n: &mut VarDeclarator,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
     match &mut n.name {
       Pat::Ident(ident) => {
         if ident.type_ann.is_none() {
-          let inferred_type = n
-            .init
-            .as_ref()
-            .and_then(|e| self.maybe_infer_type_from_expr(e));
+          let inferred_type = n.init.as_ref().and_then(|e| {
+            self.maybe_infer_type_from_expr(
+              e,
+              match decl_kind {
+                VarDeclKind::Var | VarDeclKind::Let => {
+                  DeclMutabilityKind::Mutable
+                }
+                VarDeclKind::Const => DeclMutabilityKind::Const,
+              },
+            )
+          });
           match inferred_type {
             Some(t) => {
               ident.type_ann = Some(Box::new(TsTypeAnn {
@@ -1719,8 +1742,8 @@ impl<'a> FastCheckTransformer<'a> {
           }
         }
         is_leavable
-    },
-      Expr::Object(n) =>  {
+      },
+      Expr::Object(n) => {
         let mut is_leavable = true;
         for prop in &mut n.props {
           is_leavable = match prop {
@@ -1817,11 +1840,15 @@ impl<'a> FastCheckTransformer<'a> {
     Ok(is_leavable)
   }
 
-  fn maybe_infer_type_from_expr(&self, expr: &Expr) -> Option<TsType> {
+  fn maybe_infer_type_from_expr(
+    &self,
+    expr: &Expr,
+    decl_kind: DeclMutabilityKind,
+  ) -> Option<TsType> {
     match expr {
       Expr::TsTypeAssertion(n) => infer_simple_type_from_type(&n.type_ann),
       Expr::TsAs(n) => infer_simple_type_from_type(&n.type_ann),
-      Expr::Lit(lit) => maybe_lit_to_ts_type(lit),
+      Expr::Lit(lit) => maybe_lit_to_ts_type(lit, decl_kind),
       Expr::Call(call_expr) => {
         if self.is_call_expr_symbol_create(call_expr) {
           Some(TsType::TsTypeOperator(TsTypeOperator {
@@ -1837,7 +1864,7 @@ impl<'a> FastCheckTransformer<'a> {
           None
         }
       }
-      Expr::Paren(n) => self.maybe_infer_type_from_expr(&n.expr),
+      Expr::Paren(n) => self.maybe_infer_type_from_expr(&n.expr, decl_kind),
       Expr::This(_)
       | Expr::Array(_)
       | Expr::Object(_)
