@@ -102,27 +102,12 @@ pub enum LoadResponse {
 
 #[derive(Debug, Error, deno_error::JsError)]
 pub enum LoadError {
-  #[class(type)]
-  #[error("Unsupported scheme: {0}")]
-  UnsupportedScheme(String),
   #[class(inherit)]
   #[error(transparent)]
   ChecksumIntegrity(#[from] ChecksumIntegrityError),
   #[class(inherit)]
   #[error(transparent)]
-  JsonParse(#[from] serde_json::Error),
-  #[class(inherit)]
-  #[error(transparent)]
-  DataUrl(std::io::Error),
-  #[class(inherit)]
-  #[error(transparent)]
   Other(Arc<dyn JsErrorClass>),
-}
-
-impl<T: JsErrorClass> From<Arc<T>> for LoadError {
-  fn from(value: Arc<T>) -> Self {
-    Self::Other(value)
-  }
 }
 
 pub type LoadResult = Result<Option<LoadResponse>, LoadError>;
@@ -558,8 +543,8 @@ pub trait NpmResolver: fmt::Debug {
 
 pub fn load_data_url(
   specifier: &ModuleSpecifier,
-) -> Result<Option<LoadResponse>, LoadError> {
-  let data_url = RawDataUrl::parse(specifier).map_err(LoadError::DataUrl)?;
+) -> Result<Option<LoadResponse>, std::io::Error> {
+  let data_url = RawDataUrl::parse(specifier)?;
   let (bytes, headers) = data_url.into_bytes_and_headers();
   Ok(Some(LoadResponse::Module {
     specifier: specifier.clone(),
@@ -786,7 +771,9 @@ impl Loader for MemoryLoader {
     let response = match self.sources.get(specifier) {
       Some(Ok(response)) => Ok(Some(response.clone())),
       Some(Err(err)) => Err(LoadError::Other(err.clone())),
-      None if specifier.scheme() == "data" => load_data_url(specifier),
+      None if specifier.scheme() == "data" => {
+        load_data_url(specifier).map_err(|e| LoadError::Other(Arc::new(e)))
+      }
       _ => Ok(None),
     };
     Box::pin(future::ready(response))

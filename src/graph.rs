@@ -201,7 +201,7 @@ pub enum JsrLoadError {
   PackageVersionNotFound(Box<PackageNv>),
   #[class(generic)] // TODO: maybe inherit?
   #[error("JSR package version manifest for '{}' failed to load: {:#}", .0, .1)]
-  PackageVersionManifestLoad(Box<PackageNv>, Arc<LoadError>),
+  PackageVersionManifestLoad(Box<PackageNv>, Arc<dyn JsErrorClass>),
   #[class(inherit)]
   #[error("JSR package version manifest for '{}' failed to load: {:#}", .0, .1)]
   PackageVersionManifestChecksumIntegrity(

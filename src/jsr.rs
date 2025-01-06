@@ -163,9 +163,9 @@ impl JsrMetadataStore {
                 err,
               )
             }
-            err => JsrLoadError::PackageVersionManifestLoad(
+            LoadError::Other(err) => JsrLoadError::PackageVersionManifestLoad(
               Box::new(package_nv),
-              Arc::new(err),
+              err,
             ),
           }
         }
@@ -210,7 +210,7 @@ impl JsrMetadataStore {
         match data {
           Some(LoadResponse::Module { content, .. }) => {
             handle_content(&content)
-              .map_err(|e| create_failed_load_err(e.into()))
+              .map_err(|e| create_failed_load_err(LoadError::Other(Arc::new(e))))
           }
           Some(LoadResponse::Redirect { specifier }) => {
             Err(JsrLoadError::RedirectInPackage(specifier))

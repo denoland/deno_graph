@@ -5,6 +5,7 @@
 use std::collections::HashSet;
 use std::io::Write as _;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use deno_ast::diagnostics::Diagnostic;
 use deno_ast::MediaType;
@@ -29,6 +30,7 @@ use indexmap::IndexMap;
 use serde::Deserialize;
 use std::fmt::Write;
 use tempfile::tempdir;
+use thiserror::Error;
 use url::Url;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -156,6 +158,11 @@ struct VersionMeta {
   exports: IndexMap<String, String>,
 }
 
+#[derive(Debug, Clone, Deserialize, Error, deno_error::JsError)]
+#[class(type)]
+#[error("Unsupported scheme: {0}")]
+struct UnsupportedScheme(String);
+
 struct Loader<'a> {
   scope: &'a str,
   name: &'a str,
@@ -188,13 +195,14 @@ impl deno_graph::source::Loader for Loader<'_> {
           )),
         }
       }
-      "data" => deno_graph::source::load_data_url(specifier),
+      "data" => deno_graph::source::load_data_url(specifier)
+        .map_err(|e| deno_graph::source::LoadError::Other(Arc::new(e))),
       "jsr" | "npm" | "node" => Ok(Some(LoadResponse::External {
         specifier: specifier.clone(),
       })),
-      _ => Err(deno_graph::source::LoadError::UnsupportedScheme(
-        specifier.scheme().to_string(),
-      )),
+      _ => Err(deno_graph::source::LoadError::Other(Arc::new(
+        UnsupportedScheme(specifier.scheme().to_string()),
+      ))),
     };
     async move { res }.boxed()
   }
