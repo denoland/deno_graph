@@ -209,8 +209,9 @@ impl JsrMetadataStore {
         };
         match data {
           Some(LoadResponse::Module { content, .. }) => {
-            handle_content(&content)
-              .map_err(|e| create_failed_load_err(LoadError::Other(Arc::new(e))))
+            handle_content(&content).map_err(|e| {
+              create_failed_load_err(LoadError::Other(Arc::new(e)))
+            })
           }
           Some(LoadResponse::Redirect { specifier }) => {
             Err(JsrLoadError::RedirectInPackage(specifier))
