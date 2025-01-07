@@ -1,0 +1,119 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/add.ts
+export const add = (a:bigint,b:bigint):bigint => { return a + b};
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+import { add } from "./add.ts";
+
+export const useFn = (
+    ...[a, b, fn = add]: [bigint, bigint, (a: bigint, b: bigint) => bigint]
+  ): bigint => {
+    return fn(a, b);
+  }
+
+export function useFn2(...[a, b, fn = add]: [bigint, bigint, (a: bigint, b: bigint) => bigint]): bigint {
+  return fn(a, b);
+}
+
+export function useFn3(...{ a }: { a: number, b: number }): bigint {
+  return fn(a, b);
+}
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 66,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/add.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./add.ts",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/add.ts",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 20
+              },
+              "end": {
+                "line": 0,
+                "character": 30
+              }
+            }
+          }
+        }
+      ],
+      "size": 393,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a@*": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {}
+  export const useFn = (...[]: [bigint, bigint, (a: bigint, b: bigint) => bigint]): bigint =>({} as never);
+  export function useFn2(...[]: [bigint, bigint, (a: bigint, b: bigint) => bigint]): bigint {
+    return {} as never;
+  }
+  export function useFn3(...{}: {
+    a: number;
+    b: number;
+  }): bigint {
+    return {} as never;
+  }
+  --- DTS ---
+  export declare const useFn: (...[]: [bigint, bigint, (a: bigint, b: bigint) => bigint]) => bigint;
+  export declare function useFn2(...[]: [bigint, bigint, (a: bigint, b: bigint) => bigint]): bigint;
+  export declare function useFn3(...{}: {
+    a: number;
+    b: number;
+  }): bigint;

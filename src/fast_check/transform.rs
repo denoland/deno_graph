@@ -1467,6 +1467,20 @@ impl<'a> FastCheckTransformer<'a> {
           self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
             range: self.source_range_to_range(p.range()),
           })?;
+        } else {
+          match &mut *p.arg {
+            Pat::Array(array_pat) => {
+              array_pat.elems.clear();
+            }
+            Pat::Object(object_pat) => {
+              object_pat.props.clear();
+            }
+            Pat::Rest(_) | Pat::Expr(_) | Pat::Assign(_) => {
+              // shouldn't happen, so just make it an empty object
+              p.arg = Box::new(Pat::Expr(empty_obj_lit_expr()));
+            }
+            Pat::Invalid(_) | Pat::Ident(_) => {}
+          };
         }
       }
       Pat::Array(p) => {
