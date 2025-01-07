@@ -10,6 +10,11 @@ gcch/libsch/0.0.2
 -- stdout --
 
 -- stderr --
-error: Module not found "file://<tmpdir>/src/types/arrays".
+error: TS2307 [ERROR]: Cannot find module 'file://<tmpdir>/src/types/arrays'.
     at file://<tmpdir>/src/index.ts:3:20
+
+TS2307 [ERROR]: Cannot find module 'file://<tmpdir>/src/types/numbers'.
+    at file://<tmpdir>/src/index.ts:4:20
+
+Found 2 errors.
 
