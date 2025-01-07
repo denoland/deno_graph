@@ -10,6 +10,6 @@ rehype-pretty/transformers/0.1.0
 -- stdout --
 
 -- stderr --
-error: Module not found "file://<tmpdir>/src/shiki".
+error: TS2307 [ERROR]: Cannot find module 'file://<tmpdir>/src/shiki'.
     at file://<tmpdir>/src/copy-button.ts:1:39
 
