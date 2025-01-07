@@ -6,6 +6,7 @@
 #![deny(clippy::disallowed_types)]
 #![deny(clippy::unnecessary_wraps)]
 
+use deno_error::JsErrorBox;
 use deno_graph::resolve_import;
 use deno_graph::source::load_data_url;
 use deno_graph::source::CacheInfo;
@@ -90,7 +91,11 @@ impl Loader for JsLoader {
     }
 
     if specifier.scheme() == "data" {
-      Box::pin(future::ready(load_data_url(specifier)))
+      Box::pin(future::ready(load_data_url(specifier).map_err(|err| {
+        deno_graph::source::LoadError::Other(Arc::new(JsErrorBox::from_err(
+          err,
+        )))
+      })))
     } else {
       let specifier = specifier.clone();
       let context = JsValue::null();
@@ -114,7 +119,11 @@ impl Loader for JsLoader {
         };
         response
           .map(|value| serde_wasm_bindgen::from_value(value).unwrap())
-          .map_err(|_| Arc::new(WasmError::Load).into())
+          .map_err(|_| {
+            deno_graph::source::LoadError::Other(Arc::new(
+              JsErrorBox::from_err(WasmError::Load),
+            ))
+          })
       };
       Box::pin(f)
     }
@@ -182,12 +191,17 @@ impl Resolver for JsResolver {
       let arg2 = JsValue::from(referrer_range.specifier.to_string());
       let value = match resolve.call2(&this, &arg1, &arg2) {
         Ok(value) => value,
-        Err(_) => return Err(Box::new(WasmError::JavaScriptResolve).into()),
+        Err(_) => {
+          return Err(JsErrorBox::from_err(WasmError::JavaScriptResolve).into())
+        }
       };
       let value: String = match serde_wasm_bindgen::from_value(value) {
         Ok(value) => value,
         Err(err) => {
-          return Err(Box::new(WasmError::Deserialize(err.to_string())).into())
+          return Err(
+            JsErrorBox::from_err(WasmError::Deserialize(err.to_string()))
+              .into(),
+          )
         }
       };
       ModuleSpecifier::parse(&value)
@@ -207,10 +221,11 @@ impl Resolver for JsResolver {
       let arg1 = JsValue::from(specifier.to_string());
       let value = resolve_types
         .call1(&this, &arg1)
-        .map_err(|_| Box::new(WasmError::JavaScriptResolveTypes))?;
+        .map_err(|_| JsErrorBox::from_err(WasmError::JavaScriptResolveTypes))?;
       let result: Option<JsResolveTypesResponse> =
-        serde_wasm_bindgen::from_value(value)
-          .map_err(|err| Box::new(WasmError::Deserialize(err.to_string())))?;
+        serde_wasm_bindgen::from_value(value).map_err(|err| {
+          JsErrorBox::from_err(WasmError::Deserialize(err.to_string()))
+        })?;
       Ok(result.map(|v| (v.types, v.source)))
     } else {
       Ok(None)
