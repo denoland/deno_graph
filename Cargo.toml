@@ -44,6 +44,7 @@ async-trait = "0.1.68"
 capacity_builder = "0.5.0"
 data-url = "0.3.0"
 deno_ast = { version = "0.44.0", features = ["dep_analysis", "emit"] }
+deno_media_type = "0.2.3"
 deno_unsync.workspace = true
 deno_path_util = "0.3.0"
 deno_semver = "0.7.1"
