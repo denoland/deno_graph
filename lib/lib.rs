@@ -273,6 +273,10 @@ pub async fn js_create_graph(
       BuildOptions {
         is_dynamic: false,
         resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
+        // todo(dsherret): actually implement this for Wasm users
+        // and don't just use a RealSys here as it would be better
+        // to have a way for users to provide their own file system
+        // via the JS API.
         file_system: &NullFileSystem,
         jsr_url_provider: Default::default(),
         npm_resolver: None,

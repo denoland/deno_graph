@@ -1,6 +1,6 @@
 [package]
 name = "deno_graph"
-version = "0.86.3"
+version = "0.86.7"
 edition = "2021"
 description = "Module graph analysis for deno"
 homepage = "https://deno.land/"
@@ -14,6 +14,7 @@ members = ["lib"]
 
 [workspace.dependencies]
 deno_unsync = { version = "0.4.0", default-features = false }
+sys_traits = "0.1.0"
 
 [lib]
 name = "deno_graph"
@@ -40,11 +41,13 @@ harness = false
 [dependencies]
 anyhow = "1.0.43"
 async-trait = "0.1.68"
+capacity_builder = "0.5.0"
 data-url = "0.3.0"
 deno_ast = { version = "0.44.0", features = ["dep_analysis", "emit"] }
 deno_media_type = "0.2.2"
 deno_unsync.workspace = true
-deno_semver = "0.6.0"
+deno_path_util = "0.3.0"
+deno_semver = "0.7.1"
 encoding_rs = "0.8.33"
 futures = "0.3.26"
 import_map = "0.20.0"
@@ -57,6 +60,7 @@ regex = "1.10.2"
 serde = { version = "1.0.130", features = ["derive", "rc"] }
 serde_json = { version = "1.0.67", features = ["preserve_order"] }
 sha2 = "^0.10.0"
+sys_traits.workspace = true
 thiserror = "2.0.3"
 twox-hash = { version = "1.6.3", optional = true }
 url = { version = "2.2.2", features = ["serde"] }
@@ -74,6 +78,7 @@ tempfile = "3.4.0"
 tokio = { version = "1.10.1", features = ["macros", "rt-multi-thread", "sync"] }
 deno_terminal = "0.1.1"
 env_logger = "0.11.3"
+sys_traits = { workspace = true, features = ["memory"] }
 
 [profile.release]
 codegen-units = 1

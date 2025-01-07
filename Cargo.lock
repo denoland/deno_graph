@@ -248,6 +248,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ac0150caa2ae65ca5bd83f25c7de183dea78d4d366469f148435e2acfbad0da"
 
 [[package]]
+name = "capacity_builder"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f2d24a6dcf0cd402a21b65d35340f3a49ff3475dc5fdac91d22d2733e6641c6"
+dependencies = [
+ "capacity_builder_macros",
+ "ecow",
+ "hipstr",
+ "itoa",
+]
+
+[[package]]
+name = "capacity_builder_macros"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b4a6cae9efc04cc6cbb8faf338d2c497c165c83e74509cf4dbedea948bbf6e5"
+dependencies = [
+ "quote",
+ "syn 2.0.89",
+]
+
+[[package]]
 name = "cc"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -418,14 +440,15 @@ dependencies = [
 
 [[package]]
 name = "deno_graph"
-version = "0.86.3"
+version = "0.86.7"
 dependencies = [
  "anyhow",
  "async-trait",
  "bincode",
+ "capacity_builder",
  "data-url",
  "deno_ast",
- "deno_media_type",
+ "deno_path_util",
  "deno_semver",
  "deno_terminal 0.1.1",
  "deno_unsync",
@@ -445,6 +468,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "sys_traits",
  "tempfile",
  "thiserror 2.0.3",
  "tokio",
@@ -467,15 +491,16 @@ dependencies = [
  "serde",
  "serde-wasm-bindgen",
  "serde_json",
+ "sys_traits",
  "wasm-bindgen",
  "wasm-bindgen-futures",
 ]
 
 [[package]]
 name = "deno_media_type"
-version = "0.2.2"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eaa135b8a9febc9a51c16258e294e268a1276750780d69e46edb31cced2826e4"
+checksum = "7fcf552fbdedbe81c89705349d7d2485c7051382b000dfddbdbf7fc25931cf83"
 dependencies = [
  "data-url",
  "serde",
@@ -483,12 +508,28 @@ dependencies = [
 ]
 
 [[package]]
-name = "deno_semver"
-version = "0.6.0"
+name = "deno_path_util"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4756be7351289726087408984db18b9eb5e0186907673f39f858d119d0162071"
+checksum = "420e8211aaba7fde83ccaa9a5dad855c3b940ed988d70c95159acd600a70dc87"
 dependencies = [
  "deno_error",
+ "percent-encoding",
+ "sys_traits",
+ "thiserror 2.0.3",
+ "url",
+]
+
+[[package]]
+name = "deno_semver"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4775271f9b5602482698f76d24ea9ed8ba27af7f587a7e9a876916300c542435"
+dependencies = [
+ "capacity_builder",
+ "deno_error",
+ "ecow",
+ "hipstr",
  "monch",
  "once_cell",
  "serde",
@@ -566,6 +607,15 @@ dependencies = [
  "swc_ecma_ast",
  "swc_ecma_parser",
  "text_lines",
+]
+
+[[package]]
+name = "ecow"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e42fc0a93992b20c58b99e59d61eaf1635a25bfbe49e4275c34ba0aee98119ba"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -838,6 +888,17 @@ name = "hermit-abi"
 version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d231dfb89cfffdbc30e7fc41579ed6066ad03abda9e567ccafae602b97ec5024"
+
+[[package]]
+name = "hipstr"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97971ffc85d4c98de12e2608e992a43f5294ebb625fdb045b27c731b64c4c6d6"
+dependencies = [
+ "serde",
+ "serde_bytes",
+ "sptr",
+]
 
 [[package]]
 name = "hstr"
@@ -1794,6 +1855,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_bytes"
+version = "0.11.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "387cc504cb06bb40a96c8e04e951fe01854cf6bc921053c954e4a606d9675c6a"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "serde_derive"
 version = "1.0.215"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1932,6 +2002,12 @@ name = "spin"
 version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
+
+[[package]]
+name = "sptr"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b9b39299b249ad65f3b7e96443bad61c02ca5cd3589f46cb6d610a0fd6c0d6a"
 
 [[package]]
 name = "stable_deref_trait"
@@ -2383,6 +2459,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.89",
+]
+
+[[package]]
+name = "sys_traits"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72001c0d1b690f17bb18ea7960821389199fd59ce6784f883fc76d0f3fbb6236"
+dependencies = [
+ "js-sys",
+ "parking_lot",
+ "wasm-bindgen",
 ]
 
 [[package]]
