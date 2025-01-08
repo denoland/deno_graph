@@ -308,6 +308,77 @@ async fn test_jsr_version_not_found_then_found() {
 }
 
 #[tokio::test]
+async fn test_jsr_wasm_module() {
+  #[derive(Default)]
+  struct TestLoader;
+
+  impl deno_graph::source::Loader for TestLoader {
+    fn load(
+      &self,
+      specifier: &ModuleSpecifier,
+      options: LoadOptions,
+    ) -> LoadFuture {
+      assert!(!options.is_dynamic);
+      let specifier = specifier.clone();
+      match specifier.as_str() {
+        "file:///main.ts" => Box::pin(async move {
+          Ok(Some(LoadResponse::Module {
+            specifier: specifier.clone(),
+            maybe_headers: None,
+            content: b"import 'jsr:@scope/a@1".to_vec().into(),
+          }))
+        }),
+        "https://jsr.io/@scope/a/meta.json" => Box::pin(async move {
+          Ok(Some(LoadResponse::Module {
+            specifier: specifier.clone(),
+            maybe_headers: None,
+            content: br#"{ "versions": { "1.0.0": {} } }"#.to_vec().into(),
+          }))
+        }),
+        "https://jsr.io/@scope/a/1.0.0_meta.json" => Box::pin(async move {
+          Ok(Some(LoadResponse::Module {
+            specifier: specifier.clone(),
+            maybe_headers: None,
+            content: br#"{
+                "exports": { ".": "./math.wasm" },
+                "manifest": {
+                  "/math.wasm": {
+                    "size": 123,
+                    "checksum": "sha256-b8059cfb1ea623e79efbf432db31595df213c99c6534c58bec9d5f5e069344df"
+                  }
+                }
+              }"#
+              .to_vec()
+              .into(),
+          }))
+        }),
+        "https://jsr.io/@scope/a/1.2.0/math.wasm" => Box::pin(async move {
+          Ok(Some(LoadResponse::Module {
+            specifier: specifier.clone(),
+            maybe_headers: None,
+            content: std::fs::read("./testdata/math.wasm").unwrap().into(),
+          }))
+        }),
+        _ => unreachable!(),
+      }
+    }
+  }
+
+  {
+    let loader = TestLoader::default();
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///main.ts").unwrap()],
+        &loader,
+        Default::default(),
+      )
+      .await;
+    graph.valid().unwrap();
+  }
+}
+
+#[tokio::test]
 async fn test_dynamic_imports_with_template_arg() {
   async fn run_test(
     code: &str,

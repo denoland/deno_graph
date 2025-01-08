@@ -2409,7 +2409,12 @@ pub(crate) async fn parse_module_source_and_info(
       }
     }
     MediaType::Wasm => {
-      let source_dts_result = wasm_module_to_dts(&opts.content);
+      // TODO(#561): temporary hack until a larger refactor can be done
+      let source_dts_result = if opts.content.is_empty() {
+        Ok(String::new())
+      } else {
+        wasm_module_to_dts(&opts.content)
+      };
       match source_dts_result {
         Ok(source_dts) => {
           let source_dts: Arc<str> = source_dts.into();
