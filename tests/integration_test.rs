@@ -309,7 +309,6 @@ async fn test_jsr_version_not_found_then_found() {
 
 #[tokio::test]
 async fn test_jsr_wasm_module() {
-  #[derive(Default)]
   struct TestLoader;
 
   impl deno_graph::source::Loader for TestLoader {
@@ -359,7 +358,7 @@ async fn test_jsr_wasm_module() {
         }),
         "https://jsr.io/@scope/a/1.0.0/math.wasm" => Box::pin(async move {
           if options.cache_setting == CacheSetting::Only {
-            return Ok(None);
+            Ok(None)
           } else {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
@@ -376,7 +375,7 @@ async fn test_jsr_wasm_module() {
   }
 
   {
-    let loader = TestLoader::default();
+    let loader = TestLoader;
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
