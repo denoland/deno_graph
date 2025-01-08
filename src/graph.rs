@@ -38,6 +38,8 @@ use deno_ast::MediaType;
 use deno_ast::ParseDiagnostic;
 use deno_ast::SourcePos;
 use deno_ast::SourceTextInfo;
+use deno_error::JsError;
+use deno_error::JsErrorClass;
 use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::jsr::JsrPackageNvReference;
 use deno_semver::jsr::JsrPackageReqReference;
@@ -172,43 +174,60 @@ impl Range {
   }
 }
 
-#[derive(Debug, Clone, Error)]
+#[derive(Debug, Clone, Error, JsError)]
 pub enum JsrLoadError {
+  #[class(type)]
   #[error(
     "Unsupported checksum in JSR package manifest. Maybe try upgrading deno?"
   )]
   UnsupportedManifestChecksum,
+  #[class(inherit)]
   #[error(transparent)]
   ContentChecksumIntegrity(ChecksumIntegrityError),
+  #[class(generic)]
   #[error("Loader should never return an external specifier for a jsr: specifier content load.")]
   ContentLoadExternalSpecifier,
+  #[class(inherit)]
   #[error(transparent)]
-  ContentLoad(Arc<anyhow::Error>),
+  ContentLoad(Arc<LoadError>),
+  #[class(inherit)]
   #[error("JSR package manifest for '{}' failed to load. {:#}", .0, .1)]
-  PackageManifestLoad(String, Arc<anyhow::Error>),
+  PackageManifestLoad(String, #[inherit] Arc<LoadError>),
+  #[class("NotFound")]
   #[error("JSR package not found: {}", .0)]
   PackageNotFound(String),
+  #[class("NotFound")]
   #[error("JSR package version not found: {}", .0)]
-  PackageVersionNotFound(PackageNv),
+  PackageVersionNotFound(Box<PackageNv>),
+  #[class(inherit)]
   #[error("JSR package version manifest for '{}' failed to load: {:#}", .0, .1)]
-  PackageVersionManifestLoad(PackageNv, Arc<anyhow::Error>),
+  PackageVersionManifestLoad(Box<PackageNv>, #[inherit] Arc<dyn JsErrorClass>),
+  #[class(inherit)]
   #[error("JSR package version manifest for '{}' failed to load: {:#}", .0, .1)]
-  PackageVersionManifestChecksumIntegrity(PackageNv, ChecksumIntegrityError),
+  PackageVersionManifestChecksumIntegrity(
+    Box<PackageNv>,
+    #[inherit] ChecksumIntegrityError,
+  ),
+  #[class(inherit)]
   #[error(transparent)]
   PackageFormat(JsrPackageFormatError),
+  #[class("NotFound")]
   #[error("Could not find version of '{}' that matches specified version constraint '{}'", .0.name, .0.version_req)]
   PackageReqNotFound(PackageReq),
+  #[class(generic)]
   #[error("Redirects in the JSR registry are not supported (redirected to '{}')", .0)]
   RedirectInPackage(ModuleSpecifier),
+  #[class("NotFound")]
   #[error("Unknown export '{}' for '{}'.\n  Package exports:\n{}", export_name, .nv, .exports.iter().map(|e| format!(" * {}", e)).collect::<Vec<_>>().join("\n"))]
   UnknownExport {
-    nv: PackageNv,
+    nv: Box<PackageNv>,
     export_name: String,
     exports: Vec<String>,
   },
 }
 
-#[derive(Error, Debug, Clone)]
+#[derive(Error, Debug, Clone, JsError)]
+#[class(type)]
 pub enum JsrPackageFormatError {
   #[error(transparent)]
   JsrPackageParseError(PackageReqReferenceParseError),
@@ -222,50 +241,69 @@ pub enum JsrPackageFormatError {
   VersionTagNotSupported { tag: SmallStackString },
 }
 
-#[derive(Debug, Clone, Error)]
+#[derive(Debug, Clone, Error, JsError)]
 pub enum NpmLoadError {
+  #[class(type)]
   #[error("npm specifiers are not supported in this environment")]
   NotSupportedEnvironment,
+  #[class(inherit)]
   #[error(transparent)]
-  PackageReqResolution(Arc<anyhow::Error>),
+  PackageReqResolution(Arc<dyn JsErrorClass>),
+  #[class(inherit)]
   #[error(transparent)]
   PackageReqReferenceParse(PackageReqReferenceParseError),
+  #[class(inherit)]
   #[error(transparent)]
-  RegistryInfo(Arc<anyhow::Error>),
+  RegistryInfo(Arc<dyn JsErrorClass>),
 }
 
-#[derive(Debug, Error, Clone)]
+#[derive(Debug, Error, Clone, JsError)]
 pub enum ModuleLoadError {
+  #[class(inherit)]
   #[error(transparent)]
   HttpsChecksumIntegrity(ChecksumIntegrityError),
+  #[class(inherit)]
   #[error(transparent)]
   Decode(Arc<std::io::Error>),
+  #[class(inherit)]
   #[error(transparent)]
-  Loader(Arc<anyhow::Error>),
+  Loader(Arc<LoadError>),
+  #[class(inherit)]
   #[error(transparent)]
   Jsr(#[from] JsrLoadError),
+  #[class(inherit)]
   #[error(transparent)]
   NodeUnknownBuiltinModule(#[from] UnknownBuiltInNodeModuleError),
+  #[class(inherit)]
   #[error(transparent)]
   Npm(#[from] NpmLoadError),
+  #[class(generic)]
   #[error("Too many redirects.")]
   TooManyRedirects,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsError)]
 pub enum ModuleError {
-  LoadingErr(ModuleSpecifier, Option<Range>, ModuleLoadError),
+  #[class(inherit)]
+  LoadingErr(ModuleSpecifier, Option<Range>, #[inherit] ModuleLoadError),
+  #[class("NotFound")]
   Missing(ModuleSpecifier, Option<Range>),
+  #[class("NotFound")]
   MissingDynamic(ModuleSpecifier, Range),
-  ParseErr(ModuleSpecifier, deno_ast::ParseDiagnostic),
-  WasmParseErr(ModuleSpecifier, wasm_dep_analyzer::ParseError),
+  #[class(inherit)]
+  ParseErr(ModuleSpecifier, #[inherit] ParseDiagnostic),
+  #[class(inherit)]
+  WasmParseErr(ModuleSpecifier, #[inherit] wasm_dep_analyzer::ParseError),
+  #[class(type)]
   UnsupportedMediaType(ModuleSpecifier, MediaType, Option<Range>),
+  #[class(syntax)]
   InvalidTypeAssertion {
     specifier: ModuleSpecifier,
     range: Range,
     actual_media_type: MediaType,
     expected_media_type: MediaType,
   },
+  #[class(type)]
   UnsupportedImportAttributeType {
     specifier: ModuleSpecifier,
     range: Range,
@@ -348,10 +386,13 @@ impl fmt::Display for ModuleError {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsError)]
 pub enum ModuleGraphError {
+  #[class(inherit)]
   ModuleError(ModuleError),
+  #[class(inherit)]
   ResolutionError(ResolutionError),
+  #[class(inherit)]
   TypesResolutionError(ResolutionError),
 }
 
@@ -411,7 +452,8 @@ impl fmt::Display for ModuleGraphError {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsError)]
+#[class(type)]
 pub enum ResolutionError {
   InvalidDowngrade {
     specifier: ModuleSpecifier,
@@ -1671,7 +1713,7 @@ pub struct ModuleGraph {
   /// The result of resolving all npm dependencies of non-dynamic
   /// npm specifiers in the graph.
   #[serde(skip_serializing)]
-  pub npm_dep_graph_result: Result<(), Arc<anyhow::Error>>,
+  pub npm_dep_graph_result: Result<(), Arc<dyn JsErrorClass>>,
 }
 
 impl ModuleGraph {
@@ -2169,12 +2211,18 @@ fn resolve(
   }
   if let Some(npm_resolver) = maybe_npm_resolver {
     if npm_resolver.enables_bare_builtin_node_module() {
-      use import_map::ImportMapError;
+      use import_map::ImportMapErrorKind;
       use ResolveError::*;
       use SpecifierError::*;
       let res_ref = response.as_ref();
       if matches!(res_ref, Err(Specifier(ImportPrefixMissing { .. })))
-        || matches!(res_ref, Err(Other(e)) if matches!(e.downcast_ref::<ImportMapError>(), Some(&ImportMapError::UnmappedBareSpecifier(_, _))))
+        || matches!(
+          res_ref,
+          Err(ImportMap(error)) if matches!(
+            error.as_kind(),
+            ImportMapErrorKind::UnmappedBareSpecifier(_, _)
+          )
+        )
       {
         if let Ok(specifier) =
           ModuleSpecifier::parse(&format!("node:{}", specifier_text))
@@ -2458,15 +2506,15 @@ pub(crate) fn parse_module(
   maybe_resolver: Option<&dyn Resolver>,
   maybe_npm_resolver: Option<&dyn NpmResolver>,
   options: ParseModuleOptions,
-) -> Result<Module, ModuleError> {
+) -> Module {
   match options.module_source_and_info {
     ModuleSourceAndInfo::Json { specifier, source } => {
-      Ok(Module::Json(JsonModule {
+      Module::Json(JsonModule {
         maybe_cache_info: None,
         source,
         media_type: MediaType::Json,
         specifier,
-      }))
+      })
     }
     ModuleSourceAndInfo::Js {
       specifier,
@@ -2474,7 +2522,7 @@ pub(crate) fn parse_module(
       source,
       maybe_headers,
       module_info,
-    } => Ok(Module::Js(parse_js_module_from_module_info(
+    } => Module::Js(parse_js_module_from_module_info(
       options.graph_kind,
       specifier,
       media_type,
@@ -2485,13 +2533,13 @@ pub(crate) fn parse_module(
       jsr_url_provider,
       maybe_resolver,
       maybe_npm_resolver,
-    ))),
+    )),
     ModuleSourceAndInfo::Wasm {
       specifier,
       source,
       source_dts,
       module_info,
-    } => Ok(Module::Wasm(parse_wasm_module_from_module_info(
+    } => Module::Wasm(parse_wasm_module_from_module_info(
       options.graph_kind,
       specifier,
       *module_info,
@@ -2501,7 +2549,7 @@ pub(crate) fn parse_module(
       jsr_url_provider,
       maybe_resolver,
       maybe_npm_resolver,
-    ))),
+    )),
   }
 }
 
@@ -3858,7 +3906,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   resolution_item.maybe_range,
                   JsrLoadError::UnknownExport {
                     export_name: export_name.to_string(),
-                    nv: resolution_item.nv_ref.into_inner().nv,
+                    nv: Box::new(resolution_item.nv_ref.into_inner().nv),
                     exports: version_info
                       .exports()
                       .map(|(k, _)| k.to_string())
@@ -4792,24 +4840,24 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             load_specifier.clone(),
             maybe_range.cloned(),
           )),
-          Err(err) => match err.downcast::<ChecksumIntegrityError>() {
-            // try to return the context of a checksum integrity error
-            // so that it can be more easily enhanced
-            Ok(err) => Err(ModuleError::LoadingErr(
+          Err(LoadError::ChecksumIntegrity(err)) => {
+            Err(ModuleError::LoadingErr(
               load_specifier.clone(),
               maybe_range.cloned(),
               if maybe_version_info.is_some() {
-                JsrLoadError::ContentChecksumIntegrity(err).into()
+                ModuleLoadError::Jsr(JsrLoadError::ContentChecksumIntegrity(
+                  err,
+                ))
               } else {
                 ModuleLoadError::HttpsChecksumIntegrity(err)
               },
-            )),
-            Err(err) => Err(ModuleError::LoadingErr(
-              load_specifier.clone(),
-              maybe_range.cloned(),
-              ModuleLoadError::Loader(Arc::new(err)),
-            )),
-          },
+            ))
+          }
+          Err(err) => Err(ModuleError::LoadingErr(
+            load_specifier.clone(),
+            maybe_range.cloned(),
+            ModuleLoadError::Loader(Arc::new(err)),
+          )),
         }
       }
 
@@ -4978,7 +5026,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     module_source_and_info: ModuleSourceAndInfo,
     maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) -> ModuleSlot {
-    let parse_module_result = parse_module(
+    let module = parse_module(
       self.file_system,
       self.jsr_url_provider,
       self.resolver,
@@ -4989,10 +5037,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       },
     );
 
-    let mut module_slot = match parse_module_result {
-      Ok(module) => ModuleSlot::Module(module),
-      Err(err) => ModuleSlot::Err(err),
-    };
+    let mut module_slot = ModuleSlot::Module(module);
 
     match &mut module_slot {
       ModuleSlot::Module(Module::Js(module)) => {
@@ -5137,7 +5182,7 @@ fn validate_jsr_specifier(
 struct NpmSpecifierBuildPendingInfo {
   found_pkg_nvs: IndexSet<PackageNv>,
   module_slots: HashMap<ModuleSpecifier, ModuleSlot>,
-  dependencies_resolution: Option<Result<(), Arc<anyhow::Error>>>,
+  dependencies_resolution: Option<Result<(), Arc<dyn JsErrorClass>>>,
   redirects: HashMap<ModuleSpecifier, ModuleSpecifier>,
 }
 

@@ -5,8 +5,8 @@
 use std::collections::HashSet;
 use std::io::Write as _;
 use std::path::PathBuf;
+use std::sync::Arc;
 
-use anyhow::Context;
 use deno_ast::diagnostics::Diagnostic;
 use deno_ast::MediaType;
 use deno_graph::source::LoadResponse;
@@ -30,6 +30,7 @@ use indexmap::IndexMap;
 use serde::Deserialize;
 use std::fmt::Write;
 use tempfile::tempdir;
+use thiserror::Error;
 use url::Url;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -157,6 +158,11 @@ struct VersionMeta {
   exports: IndexMap<String, String>,
 }
 
+#[derive(Debug, Clone, Deserialize, Error, deno_error::JsError)]
+#[class(type)]
+#[error("Unsupported scheme: {0}")]
+struct UnsupportedScheme(String);
+
 struct Loader<'a> {
   scope: &'a str,
   name: &'a str,
@@ -184,17 +190,19 @@ impl deno_graph::source::Loader for Loader<'_> {
             specifier: specifier.clone(),
           })),
           Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
-          Err(err) => Err(anyhow::Error::from(err)),
+          Err(err) => Err(deno_graph::source::LoadError::Other(
+            std::sync::Arc::new(err),
+          )),
         }
       }
-      "data" => deno_graph::source::load_data_url(specifier),
+      "data" => deno_graph::source::load_data_url(specifier)
+        .map_err(|e| deno_graph::source::LoadError::Other(Arc::new(e))),
       "jsr" | "npm" | "node" => Ok(Some(LoadResponse::External {
         specifier: specifier.clone(),
       })),
-      _ => Err(anyhow::anyhow!(
-        "Unsupported scheme: {}",
-        specifier.scheme()
-      )),
+      _ => Err(deno_graph::source::LoadError::Other(Arc::new(
+        UnsupportedScheme(specifier.scheme().to_string()),
+      ))),
     };
     async move { res }.boxed()
   }
@@ -380,9 +388,7 @@ async fn test_version(
         if let Some(fcm) = module.fast_check_module() {
           let path =
             format!("{}{}", tmpdir_path.display(), module.specifier.path());
-          std::fs::write(&path, fcm.source.as_bytes())
-            .with_context(|| format!("failed writing {}", path))
-            .unwrap();
+          std::fs::write(&path, fcm.source.as_bytes()).unwrap();
         }
       }
     }

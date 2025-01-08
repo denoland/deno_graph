@@ -47,19 +47,13 @@ impl FastCheckDtsDiagnostic {
     }
   }
 
-  pub fn range(&self) -> Option<&FastCheckDiagnosticRange> {
+  pub fn range(&self) -> &FastCheckDiagnosticRange {
     match self {
-      FastCheckDtsDiagnostic::UnableToInferType { range } => Some(range),
-      FastCheckDtsDiagnostic::UnableToInferTypeFallbackAny { range } => {
-        Some(range)
-      }
-      FastCheckDtsDiagnostic::UnableToInferTypeFromProp { range } => {
-        Some(range)
-      }
-      FastCheckDtsDiagnostic::UnableToInferTypeFromSpread { range } => {
-        Some(range)
-      }
-      FastCheckDtsDiagnostic::UnsupportedUsing { range } => Some(range),
+      FastCheckDtsDiagnostic::UnableToInferType { range } => range,
+      FastCheckDtsDiagnostic::UnableToInferTypeFallbackAny { range } => range,
+      FastCheckDtsDiagnostic::UnableToInferTypeFromProp { range } => range,
+      FastCheckDtsDiagnostic::UnableToInferTypeFromSpread { range } => range,
+      FastCheckDtsDiagnostic::UnsupportedUsing { range } => range,
     }
   }
 }
@@ -756,14 +750,14 @@ impl<'a> FastCheckDtsTransformer<'a> {
     expr: Expr,
     as_const: bool,
     as_readonly: bool,
-  ) -> Option<Box<TsTypeAnn>> {
+  ) -> Box<TsTypeAnn> {
     if let Some(ts_type) =
       self.expr_to_ts_type(expr.clone(), as_const, as_readonly)
     {
-      Some(type_ann(ts_type))
+      type_ann(ts_type)
     } else {
       self.mark_diagnostic_any_fallback(expr.range());
-      Some(any_type_ann())
+      any_type_ann()
     }
   }
 
@@ -915,11 +909,11 @@ impl<'a> FastCheckDtsTransformer<'a> {
     match &mut *assign_pat.left {
       Pat::Ident(ident) => {
         if ident.type_ann.is_none() {
-          ident.type_ann = self.infer_expr_fallback_any(
+          ident.type_ann = Some(self.infer_expr_fallback_any(
             *assign_pat.right.clone(),
             false,
             false,
-          );
+          ));
         }
 
         ident.optional = true;
@@ -927,11 +921,11 @@ impl<'a> FastCheckDtsTransformer<'a> {
       }
       Pat::Array(arr_pat) => {
         if arr_pat.type_ann.is_none() {
-          arr_pat.type_ann = self.infer_expr_fallback_any(
+          arr_pat.type_ann = Some(self.infer_expr_fallback_any(
             *assign_pat.right.clone(),
             false,
             false,
-          );
+          ));
         }
 
         arr_pat.optional = true;
@@ -939,11 +933,11 @@ impl<'a> FastCheckDtsTransformer<'a> {
       }
       Pat::Object(obj_pat) => {
         if obj_pat.type_ann.is_none() {
-          obj_pat.type_ann = self.infer_expr_fallback_any(
+          obj_pat.type_ann = Some(self.infer_expr_fallback_any(
             *assign_pat.right.clone(),
             false,
             false,
-          );
+          ));
         }
 
         obj_pat.optional = true;

@@ -3,6 +3,7 @@
 #![deny(clippy::print_stderr)]
 #![deny(clippy::print_stdout)]
 #![deny(clippy::unused_async)]
+#![deny(clippy::unnecessary_wraps)]
 
 mod analyzer;
 mod ast;
@@ -141,7 +142,7 @@ pub async fn parse_module(
     },
   )
   .await?;
-  graph::parse_module(
+  let module = graph::parse_module(
     options.file_system,
     options.jsr_url_provider,
     options.maybe_resolver,
@@ -150,7 +151,9 @@ pub async fn parse_module(
       graph_kind: options.graph_kind,
       module_source_and_info,
     },
-  )
+  );
+
+  Ok(module)
 }
 
 pub struct ParseModuleFromAstOptions<'a> {
@@ -190,6 +193,7 @@ mod tests {
 
   use super::*;
   use async_trait::async_trait;
+  use deno_error::JsErrorBox;
   use indexmap::IndexMap;
   use indexmap::IndexSet;
   use pretty_assertions::assert_eq;
@@ -1269,8 +1273,7 @@ console.log(a);
     fn resolve_builtin_node_module(
       &self,
       specifier: &deno_ast::ModuleSpecifier,
-    ) -> anyhow::Result<Option<String>, source::UnknownBuiltInNodeModuleError>
-    {
+    ) -> Result<Option<String>, source::UnknownBuiltInNodeModuleError> {
       if specifier.to_string() == "node:path" {
         Ok(Some("path".to_string()))
       } else {
@@ -1324,13 +1327,13 @@ console.log(a);
       referrer_range: &Range,
       _kind: ResolutionKind,
     ) -> Result<deno_ast::ModuleSpecifier, source::ResolveError> {
-      use import_map::ImportMapError;
-      Err(source::ResolveError::Other(
-        ImportMapError::UnmappedBareSpecifier(
+      use import_map::ImportMapErrorKind;
+      Err(source::ResolveError::ImportMap(
+        ImportMapErrorKind::UnmappedBareSpecifier(
           specifier_text.to_string(),
           Some(referrer_range.specifier.to_string()),
         )
-        .into(),
+        .into_box(),
       ))
     }
 
@@ -4375,13 +4378,13 @@ export function a(a: A): B {
     #[derive(Debug)]
     struct ExtResolver;
 
-    impl crate::source::Resolver for ExtResolver {
+    impl Resolver for ExtResolver {
       fn resolve(
         &self,
         specifier_text: &str,
         referrer_range: &Range,
         resolution_kind: ResolutionKind,
-      ) -> Result<ModuleSpecifier, crate::source::ResolveError> {
+      ) -> Result<ModuleSpecifier, source::ResolveError> {
         let specifier_text = match resolution_kind {
           ResolutionKind::Types => format!("{}.d.ts", specifier_text),
           ResolutionKind::Execution => format!("{}.js", specifier_text),
@@ -4565,19 +4568,24 @@ export function a(a: A): B {
     #[derive(Debug)]
     struct FailForTypesResolver;
 
-    impl crate::source::Resolver for FailForTypesResolver {
+    #[derive(Debug, thiserror::Error, deno_error::JsError)]
+    #[class(generic)]
+    #[error("Failed.")]
+    struct FailedError;
+
+    impl Resolver for FailForTypesResolver {
       fn resolve(
         &self,
         specifier_text: &str,
         referrer_range: &Range,
         resolution_kind: ResolutionKind,
-      ) -> Result<ModuleSpecifier, crate::source::ResolveError> {
+      ) -> Result<ModuleSpecifier, source::ResolveError> {
         match resolution_kind {
           ResolutionKind::Execution => {
             Ok(resolve_import(specifier_text, &referrer_range.specifier)?)
           }
-          ResolutionKind::Types => Err(crate::source::ResolveError::Other(
-            anyhow::anyhow!("Failed."),
+          ResolutionKind::Types => Err(source::ResolveError::Other(
+            JsErrorBox::from_err(FailedError),
           )),
         }
       }

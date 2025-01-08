@@ -7,12 +7,11 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use anyhow::anyhow;
-use anyhow::Error;
 use async_trait::async_trait;
 use data_url::DataUrl;
 use deno_ast::MediaType;
 use deno_ast::ModuleSpecifier;
+use deno_error::JsErrorClass;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use deno_semver::StackString;
@@ -101,7 +100,17 @@ pub enum LoadResponse {
   },
 }
 
-pub type LoadResult = Result<Option<LoadResponse>, anyhow::Error>;
+#[derive(Debug, Error, deno_error::JsError)]
+pub enum LoadError {
+  #[class(inherit)]
+  #[error(transparent)]
+  ChecksumIntegrity(#[from] ChecksumIntegrityError),
+  #[class(inherit)]
+  #[error(transparent)]
+  Other(Arc<dyn JsErrorClass>),
+}
+
+pub type LoadResult = Result<Option<LoadResponse>, LoadError>;
 pub type LoadFuture = LocalBoxFuture<'static, LoadResult>;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -137,8 +146,10 @@ impl CacheSetting {
 pub static DEFAULT_JSR_URL: Lazy<Url> =
   Lazy::new(|| Url::parse("https://jsr.io").unwrap());
 
-#[derive(Debug, Clone, Error)]
-#[error("Integrity check failed.\n\nActual: {}\nExpected: {}", .actual, .expected)]
+#[derive(Debug, Clone, Error, deno_error::JsError)]
+#[class(generic)]
+#[error("Integrity check failed.\n\nActual: {}\nExpected: {}", .actual, .expected
+)]
 pub struct ChecksumIntegrityError {
   pub actual: String,
   pub expected: String,
@@ -385,12 +396,17 @@ pub fn recommended_registry_package_url_to_nv(
   })
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, deno_error::JsError)]
 pub enum ResolveError {
+  #[class(type)]
   #[error(transparent)]
   Specifier(#[from] SpecifierError),
+  #[class(inherit)]
   #[error(transparent)]
-  Other(#[from] anyhow::Error),
+  ImportMap(#[from] import_map::ImportMapError),
+  #[class(inherit)]
+  #[error(transparent)]
+  Other(#[from] deno_error::JsErrorBox),
 }
 
 /// The kind of resolution currently being done by deno_graph.
@@ -469,7 +485,8 @@ pub trait Resolver: fmt::Debug {
   }
 }
 
-#[derive(Error, Debug, Clone)]
+#[derive(Error, Debug, Clone, deno_error::JsError)]
+#[class("NotFound")]
 #[error("Unknown built-in \"node:\" module: {module_name}")]
 pub struct UnknownBuiltInNodeModuleError {
   /// Name of the invalid module.
@@ -486,7 +503,7 @@ pub struct NpmResolvePkgReqsResult {
   /// were resolved to NVs.
   ///
   /// Don't run dependency graph resolution if there are any individual failures.
-  pub dep_graph_result: Result<(), Arc<anyhow::Error>>,
+  pub dep_graph_result: Result<(), Arc<dyn JsErrorClass>>,
 }
 
 #[async_trait(?Send)]
@@ -526,7 +543,7 @@ pub trait NpmResolver: fmt::Debug {
 
 pub fn load_data_url(
   specifier: &ModuleSpecifier,
-) -> Result<Option<LoadResponse>, anyhow::Error> {
+) -> Result<Option<LoadResponse>, std::io::Error> {
   let data_url = RawDataUrl::parse(specifier)?;
   let (bytes, headers) = data_url.into_bytes_and_headers();
   Ok(Some(LoadResponse::Module {
@@ -601,7 +618,8 @@ fn get_mime_type_charset(mime_type: &str) -> Option<&str> {
 /// ahead of time. This is useful for testing or
 #[derive(Default)]
 pub struct MemoryLoader {
-  sources: HashMap<ModuleSpecifier, Result<LoadResponse, Error>>,
+  sources:
+    HashMap<ModuleSpecifier, Result<LoadResponse, Arc<dyn JsErrorClass>>>,
   cache_info: HashMap<ModuleSpecifier, CacheInfo>,
 }
 
@@ -613,11 +631,11 @@ pub enum Source<S> {
   },
   Redirect(S),
   External(S),
-  Err(Error),
+  Err(Arc<dyn JsErrorClass>),
 }
 
 impl<S: AsRef<str>> Source<S> {
-  fn into_result(self) -> Result<LoadResponse, Error> {
+  fn into_result(self) -> Result<LoadResponse, Arc<dyn JsErrorClass>> {
     match self {
       Source::Module {
         specifier,
@@ -752,8 +770,10 @@ impl Loader for MemoryLoader {
   ) -> LoadFuture {
     let response = match self.sources.get(specifier) {
       Some(Ok(response)) => Ok(Some(response.clone())),
-      Some(Err(err)) => Err(anyhow!("{}", err)),
-      None if specifier.scheme() == "data" => load_data_url(specifier),
+      Some(Err(err)) => Err(LoadError::Other(err.clone())),
+      None if specifier.scheme() == "data" => {
+        load_data_url(specifier).map_err(|e| LoadError::Other(Arc::new(e)))
+      }
       _ => Ok(None),
     };
     Box::pin(future::ready(response))
