@@ -187,21 +187,21 @@ pub enum JsrLoadError {
   #[class(generic)]
   #[error("Loader should never return an external specifier for a jsr: specifier content load.")]
   ContentLoadExternalSpecifier,
-  #[class(generic)] // TODO: maybe inherit?
+  #[class(inherit)]
   #[error(transparent)]
   ContentLoad(Arc<LoadError>),
-  #[class(generic)] // TODO: maybe inherit?
+  #[class(inherit)]
   #[error("JSR package manifest for '{}' failed to load. {:#}", .0, .1)]
-  PackageManifestLoad(String, Arc<LoadError>),
+  PackageManifestLoad(String, #[inherit] Arc<LoadError>),
   #[class("NotFound")]
   #[error("JSR package not found: {}", .0)]
   PackageNotFound(String),
   #[class("NotFound")]
   #[error("JSR package version not found: {}", .0)]
   PackageVersionNotFound(Box<PackageNv>),
-  #[class(generic)] // TODO: maybe inherit?
+  #[class(inherit)]
   #[error("JSR package version manifest for '{}' failed to load: {:#}", .0, .1)]
-  PackageVersionManifestLoad(Box<PackageNv>, Arc<dyn JsErrorClass>),
+  PackageVersionManifestLoad(Box<PackageNv>, #[inherit] Arc<dyn JsErrorClass>),
   #[class(inherit)]
   #[error("JSR package version manifest for '{}' failed to load: {:#}", .0, .1)]
   PackageVersionManifestChecksumIntegrity(
@@ -262,7 +262,7 @@ pub enum ModuleLoadError {
   #[class(inherit)]
   #[error(transparent)]
   HttpsChecksumIntegrity(ChecksumIntegrityError),
-  #[class(type)] // TODO: maybe inherit?
+  #[class(inherit)]
   #[error(transparent)]
   Decode(Arc<std::io::Error>),
   #[class(inherit)]
