@@ -346,18 +346,29 @@ async fn test_jsr_wasm_module() {
                     "size": 123,
                     "checksum": "sha256-b8059cfb1ea623e79efbf432db31595df213c99c6534c58bec9d5f5e069344df"
                   }
+                },
+                "moduleGraph2": {
+                  "/math.wasm": {
+                    "dependencies": []
+                  }
                 }
               }"#
               .to_vec()
               .into(),
           }))
         }),
-        "https://jsr.io/@scope/a/1.2.0/math.wasm" => Box::pin(async move {
-          Ok(Some(LoadResponse::Module {
-            specifier: specifier.clone(),
-            maybe_headers: None,
-            content: std::fs::read("./testdata/math.wasm").unwrap().into(),
-          }))
+        "https://jsr.io/@scope/a/1.0.0/math.wasm" => Box::pin(async move {
+          if options.cache_setting == CacheSetting::Only {
+            return Ok(None);
+          } else {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: std::fs::read("./tests/testdata/math.wasm")
+                .unwrap()
+                .into(),
+            }))
+          }
         }),
         _ => unreachable!(),
       }
