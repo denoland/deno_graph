@@ -4277,7 +4277,20 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     ParseModuleAndSourceInfoOptions {
                       specifier: requested_specifier.clone(),
                       maybe_headers: Default::default(),
-                      content: Arc::new([]) as Arc<[u8]>, // we'll load the content later
+                      // we'll load the content later
+                      content: if MediaType::from_specifier(
+                        &requested_specifier,
+                      ) == MediaType::Wasm
+                      {
+                        // TODO(#561): temporary hack until a larger refactor can be done
+                        Arc::new([
+                          // minimum allowed wasm module
+                          0x00, 0x61, 0x73, 0x6D, 0x01, 0x00, 0x00, 0x00, 0x0A,
+                          0x01, 0x00,
+                        ])
+                      } else {
+                        Arc::new([]) as Arc<[u8]>
+                      },
                       maybe_attribute_type: maybe_attribute_type.as_ref(),
                       maybe_referrer: maybe_range.as_ref(),
                       is_root,
