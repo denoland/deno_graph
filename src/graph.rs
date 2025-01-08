@@ -25,6 +25,7 @@ use crate::module_specifier::SpecifierError;
 use crate::packages::resolve_version;
 use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
+use crate::packages::JsrVersionResolver;
 use crate::packages::PackageSpecifiers;
 use crate::rt::Executor;
 
@@ -1271,6 +1272,7 @@ pub struct BuildOptions<'a> {
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   pub reporter: Option<&'a dyn Reporter>,
   pub resolver: Option<&'a dyn Resolver>,
+  pub jsr_version_resolver: Option<&'a dyn JsrVersionResolver>,
 }
 
 impl<'a> Default for BuildOptions<'a> {
@@ -3575,6 +3577,7 @@ struct Builder<'a, 'graph> {
   fill_pass_mode: FillPassMode,
   executor: &'a dyn Executor,
   resolved_roots: BTreeSet<ModuleSpecifier>,
+  jsr_version_resolver: Option<&'a dyn JsrVersionResolver>,
 }
 
 impl<'a, 'graph> Builder<'a, 'graph> {
@@ -3605,6 +3608,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       fill_pass_mode,
       executor: options.executor,
       resolved_roots: Default::default(),
+      jsr_version_resolver: options.jsr_version_resolver,
     };
     builder.fill(roots, options.imports).await;
   }
@@ -3813,6 +3817,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     executor: self.executor,
                     jsr_url_provider: self.jsr_url_provider,
                     loader: self.loader,
+                    jsr_version_resolver: self.jsr_version_resolver,
                   },
                 );
                 pending_resolutions.push_front(pending_resolution);
@@ -4123,6 +4128,25 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     package_info: &JsrPackageInfo,
     package_req: &PackageReq,
   ) -> Option<Version> {
+    if let Some(version_resolver) = self.jsr_version_resolver {
+      let version =
+        version_resolver.resolve_package_version(package_info, package_req);
+      if let Some(version) = version {
+        let is_yanked = package_info
+          .versions
+          .get(version)
+          .map(|i| i.yanked)
+          .unwrap_or(false);
+        let version = version.clone();
+        if is_yanked {
+          self.graph.packages.add_used_yanked_package(PackageNv {
+            name: package_req.name.clone(),
+            version: version.clone(),
+          });
+        }
+        return Some(version);
+      }
+    }
     // 1. try to resolve with the list of existing versions
     if let Some(existing_versions) =
       self.graph.packages.versions_by_name(&package_req.name)
@@ -4900,6 +4924,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         executor: self.executor,
         jsr_url_provider: self.jsr_url_provider,
         loader: self.loader,
+        jsr_version_resolver: self.jsr_version_resolver,
       },
     );
   }
@@ -4913,6 +4938,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         executor: self.executor,
         jsr_url_provider: self.jsr_url_provider,
         loader: self.loader,
+        jsr_version_resolver: self.jsr_version_resolver,
       },
     );
   }
