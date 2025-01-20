@@ -441,7 +441,10 @@ pub trait Resolver: fmt::Debug {
   /// configured. If this method returns `Some` and a JSX file is encountered
   /// that does not have an import source specified as a pragma, this import
   /// source will be used instead.
-  fn default_jsx_import_source(&self) -> Option<String> {
+  fn default_jsx_import_source(
+    &self,
+    _referrer: &ModuleSpecifier,
+  ) -> Option<String> {
     None
   }
 
@@ -449,13 +452,16 @@ pub trait Resolver: fmt::Debug {
   /// is configured. If this method returns `Some` and a JSX file is encountered
   /// that does not have an types import source specified as a pragma, this
   /// types import source will be used instead.
-  fn default_jsx_import_source_types(&self) -> Option<String> {
+  fn default_jsx_import_source_types(
+    &self,
+    _referrer: &ModuleSpecifier,
+  ) -> Option<String> {
     None
   }
 
   /// An optional method which returns the JSX import source module which will
   /// be appended to any JSX import source pragmas identified.
-  fn jsx_import_source_module(&self) -> &str {
+  fn jsx_import_source_module(&self, _referrer: &ModuleSpecifier) -> &str {
     DEFAULT_JSX_IMPORT_SOURCE_MODULE
   }
 

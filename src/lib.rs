@@ -204,6 +204,7 @@ mod tests {
   use source::NpmResolvePkgReqsResult;
   use source::ResolutionMode;
   use source::Source;
+  use source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
   use std::cell::RefCell;
   use std::collections::BTreeMap;
 
@@ -1313,11 +1314,14 @@ console.log(a);
   struct MockImportMapResolver {}
 
   impl Resolver for MockImportMapResolver {
-    fn default_jsx_import_source(&self) -> Option<String> {
+    fn default_jsx_import_source(
+      &self,
+      _referrer: &ModuleSpecifier,
+    ) -> Option<String> {
       None
     }
 
-    fn jsx_import_source_module(&self) -> &str {
+    fn jsx_import_source_module(&self, _referrer: &ModuleSpecifier) -> &str {
       source::DEFAULT_JSX_IMPORT_SOURCE_MODULE
     }
 
@@ -3536,7 +3540,10 @@ export const foo = 'bar';"#,
     #[derive(Debug)]
     struct R;
     impl Resolver for R {
-      fn default_jsx_import_source(&self) -> Option<String> {
+      fn default_jsx_import_source(
+        &self,
+        _referrer: &ModuleSpecifier,
+      ) -> Option<String> {
         Some("https://example.com/preact".into())
       }
     }
@@ -3587,7 +3594,10 @@ export const foo = 'bar';"#,
     #[derive(Debug)]
     struct R;
     impl Resolver for R {
-      fn default_jsx_import_source_types(&self) -> Option<String> {
+      fn default_jsx_import_source_types(
+        &self,
+        _referrer: &ModuleSpecifier,
+      ) -> Option<String> {
         Some("https://example.com/preact-types".into())
       }
     }
@@ -3634,7 +3644,14 @@ export const foo = 'bar';"#,
     #[derive(Debug)]
     struct R;
     impl Resolver for R {
-      fn default_jsx_import_source(&self) -> Option<String> {
+      fn default_jsx_import_source(
+        &self,
+        referrer: &ModuleSpecifier,
+      ) -> Option<String> {
+        assert_eq!(
+          referrer,
+          &ModuleSpecifier::parse("file:///a/test01.tsx").unwrap()
+        );
         Some("https://example.com/preact".into())
       }
     }
@@ -3679,12 +3696,34 @@ export const foo = 'bar';"#,
     #[derive(Debug)]
     struct R;
     impl Resolver for R {
-      fn default_jsx_import_source(&self) -> Option<String> {
+      fn default_jsx_import_source(
+        &self,
+        referrer: &ModuleSpecifier,
+      ) -> Option<String> {
+        assert_eq!(
+          referrer,
+          &ModuleSpecifier::parse("file:///a/test01.tsx").unwrap()
+        );
         Some("https://example.com/preact".into())
       }
 
-      fn default_jsx_import_source_types(&self) -> Option<String> {
+      fn default_jsx_import_source_types(
+        &self,
+        referrer: &ModuleSpecifier,
+      ) -> Option<String> {
+        assert_eq!(
+          referrer,
+          &ModuleSpecifier::parse("file:///a/test01.tsx").unwrap()
+        );
         Some("https://example.com/preact-types".into())
+      }
+
+      fn jsx_import_source_module(&self, referrer: &ModuleSpecifier) -> &str {
+        assert_eq!(
+          referrer,
+          &ModuleSpecifier::parse("file:///a/test01.tsx").unwrap()
+        );
+        DEFAULT_JSX_IMPORT_SOURCE_MODULE
       }
     }
 
