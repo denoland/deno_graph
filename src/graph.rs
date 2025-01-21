@@ -33,6 +33,7 @@ use crate::source::*;
 use deno_ast::dep::DynamicDependencyKind;
 use deno_ast::dep::ImportAttributes;
 use deno_ast::dep::StaticDependencyKind;
+use deno_ast::encoding::detect_charset;
 use deno_ast::LineAndColumnIndex;
 use deno_ast::MediaType;
 use deno_ast::ParseDiagnostic;
@@ -2377,10 +2378,12 @@ pub(crate) async fn parse_module_source_and_info(
         Some("json")
       ))
   {
-    return match crate::source::decode_source(
-      &opts.specifier,
+    let charset = maybe_charset.unwrap_or_else(|| {
+      detect_charset(&opts.specifier, opts.content.as_ref())
+    });
+    return match deno_media_type::encoding::decode_arc_source(
+      charset,
       opts.content,
-      maybe_charset,
     ) {
       Ok(text) => Ok(ModuleSourceAndInfo::Json {
         specifier: opts.specifier,
@@ -5395,10 +5398,13 @@ impl<'a> NpmSpecifierResolver<'a> {
 
 fn new_source_with_text(
   specifier: &ModuleSpecifier,
-  text: Arc<[u8]>,
+  bytes: Arc<[u8]>,
   maybe_charset: Option<&str>,
 ) -> Result<Arc<str>, Box<ModuleError>> {
-  crate::source::decode_source(specifier, text, maybe_charset).map_err(|err| {
+  let charset = maybe_charset.unwrap_or_else(|| {
+    deno_media_type::encoding::detect_charset(specifier, bytes.as_ref())
+  });
+  deno_media_type::encoding::decode_arc_source(charset, bytes).map_err(|err| {
     Box::new(ModuleError::LoadingErr(
       specifier.clone(),
       None,

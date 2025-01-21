@@ -1,6 +1,5 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
-use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
 use std::path::Path;
@@ -8,7 +7,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use data_url::DataUrl;
+use deno_ast::data_url::RawDataUrl;
 use deno_ast::MediaType;
 use deno_ast::ModuleSpecifier;
 use deno_error::JsErrorClass;
@@ -30,7 +29,6 @@ use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
-use crate::text_encoding;
 use crate::ModuleInfo;
 use crate::NpmLoadError;
 use crate::SpecifierError;
@@ -551,73 +549,13 @@ pub fn load_data_url(
   specifier: &ModuleSpecifier,
 ) -> Result<Option<LoadResponse>, std::io::Error> {
   let data_url = RawDataUrl::parse(specifier)?;
-  let (bytes, headers) = data_url.into_bytes_and_headers();
+  let (bytes, mime_type) = data_url.into_bytes_and_mime_type();
+  let headers = HashMap::from([("content-type".to_string(), mime_type)]);
   Ok(Some(LoadResponse::Module {
     specifier: specifier.clone(),
     maybe_headers: Some(headers),
     content: Arc::from(bytes),
   }))
-}
-
-#[derive(Debug, Clone)]
-pub struct RawDataUrl {
-  pub mime_type: String,
-  pub bytes: Vec<u8>,
-}
-
-impl RawDataUrl {
-  pub fn parse(specifier: &ModuleSpecifier) -> Result<Self, std::io::Error> {
-    use std::io::Error;
-    use std::io::ErrorKind;
-
-    fn unable_to_decode() -> Error {
-      Error::new(ErrorKind::InvalidData, "Unable to decode data url.")
-    }
-
-    let url =
-      DataUrl::process(specifier.as_str()).map_err(|_| unable_to_decode())?;
-    let (bytes, _) = url.decode_to_vec().map_err(|_| unable_to_decode())?;
-    Ok(RawDataUrl {
-      mime_type: url.mime_type().to_string(),
-      bytes,
-    })
-  }
-
-  pub fn charset(&self) -> Option<&str> {
-    get_mime_type_charset(&self.mime_type)
-  }
-
-  pub fn media_type(&self) -> MediaType {
-    let mut content_types = self.mime_type.split(';');
-    let Some(content_type) = content_types.next() else {
-      return MediaType::Unknown;
-    };
-    MediaType::from_content_type(
-      // this data url will be ignored when resolving the MediaType
-      // as in this rare case the MediaType is determined solely based
-      // on the provided content type
-      &ModuleSpecifier::parse("data:image/png;base64,").unwrap(),
-      content_type,
-    )
-  }
-
-  pub fn decode(self) -> Result<String, std::io::Error> {
-    let charset = get_mime_type_charset(&self.mime_type).unwrap_or("utf-8");
-    decode_owned_source_with_charset(self.bytes, charset)
-  }
-
-  pub fn into_bytes_and_headers(self) -> (Vec<u8>, HashMap<String, String>) {
-    let headers = HashMap::from([("content-type".to_string(), self.mime_type)]);
-    (self.bytes, headers)
-  }
-}
-
-fn get_mime_type_charset(mime_type: &str) -> Option<&str> {
-  mime_type
-    .split(';')
-    .skip(1)
-    .map(str::trim)
-    .find_map(|s| s.strip_prefix("charset="))
 }
 
 /// An implementation of the loader attribute where the responses are provided
@@ -838,100 +776,6 @@ pub fn resolve_media_type_and_charset_from_content_type<'a>(
   }
 }
 
-/// Decodes the source bytes into a string handling any encoding rules
-/// where the bytes may be from a remote module, file module, or other.
-pub fn decode_owned_source(
-  specifier: &ModuleSpecifier,
-  bytes: Vec<u8>,
-  maybe_charset: Option<&str>,
-) -> Result<String, std::io::Error> {
-  let charset = maybe_charset.unwrap_or_else(|| {
-    if specifier.scheme() == "file" {
-      text_encoding::detect_charset(&bytes)
-    } else {
-      "utf-8"
-    }
-  });
-  decode_owned_source_with_charset(bytes, charset)
-}
-
-/// Decodes the source bytes into a string handling any encoding rules
-/// where the source is a `file:` specifier.
-pub fn decode_owned_file_source(
-  bytes: Vec<u8>,
-) -> Result<String, std::io::Error> {
-  let charset = text_encoding::detect_charset(&bytes);
-  decode_owned_source_with_charset(bytes, charset)
-}
-
-fn decode_owned_source_with_charset(
-  bytes: Vec<u8>,
-  charset: &str,
-) -> Result<String, std::io::Error> {
-  match text_encoding::convert_to_utf8(&bytes, charset)? {
-    Cow::Borrowed(text) => {
-      if text.starts_with(text_encoding::BOM_CHAR) {
-        Ok(text[text_encoding::BOM_CHAR.len_utf8()..].to_string())
-      } else {
-        Ok(
-          // SAFETY: we know it's a valid utf-8 string at this point
-          unsafe { String::from_utf8_unchecked(bytes) },
-        )
-      }
-    }
-    Cow::Owned(mut text) => {
-      text_encoding::strip_bom_mut(&mut text);
-      Ok(text)
-    }
-  }
-}
-
-/// Decodes the source bytes into a string handling any encoding rules
-/// for local vs remote files and dealing with the charset.
-pub fn decode_source(
-  specifier: &ModuleSpecifier,
-  bytes: Arc<[u8]>,
-  maybe_charset: Option<&str>,
-) -> Result<Arc<str>, std::io::Error> {
-  let charset = maybe_charset.unwrap_or_else(|| {
-    if specifier.scheme() == "file" {
-      text_encoding::detect_charset(bytes.as_ref())
-    } else {
-      "utf-8"
-    }
-  });
-  decode_with_charset(bytes, charset)
-}
-
-fn decode_with_charset(
-  bytes: Arc<[u8]>,
-  charset: &str,
-) -> Result<Arc<str>, std::io::Error> {
-  let text = match text_encoding::convert_to_utf8(bytes.as_ref(), charset)? {
-    Cow::Borrowed(text) => {
-      if text.starts_with(text_encoding::BOM_CHAR) {
-        text[text_encoding::BOM_CHAR.len_utf8()..].to_string()
-      } else {
-        return Ok(
-          // SAFETY: we know it's a valid utf-8 string at this point
-          unsafe {
-            let raw_ptr = Arc::into_raw(bytes);
-            Arc::from_raw(std::mem::transmute::<*const [u8], *const str>(
-              raw_ptr,
-            ))
-          },
-        );
-      }
-    }
-    Cow::Owned(mut text) => {
-      text_encoding::strip_bom_mut(&mut text);
-      text
-    }
-  };
-  let text: Arc<str> = Arc::from(text);
-  Ok(text)
-}
-
 #[cfg(test)]
 pub mod tests {
   use super::*;
@@ -1013,99 +857,5 @@ pub mod tests {
           .unwrap()
       }
     );
-  }
-
-  #[test]
-  fn test_parse_valid_data_url() {
-    let valid_data_url = "data:text/plain;base64,SGVsbG8sIFdvcmxkIQ==";
-    let specifier = ModuleSpecifier::parse(valid_data_url).unwrap();
-    let raw_data_url = RawDataUrl::parse(&specifier).unwrap();
-    assert_eq!(raw_data_url.mime_type, "text/plain");
-    assert_eq!(raw_data_url.bytes, b"Hello, World!");
-  }
-
-  #[test]
-  fn test_charset_with_valid_mime_type() {
-    let raw_data_url = RawDataUrl {
-      mime_type: "text/plain; charset=utf-8".to_string(),
-      bytes: vec![],
-    };
-    assert_eq!(raw_data_url.charset(), Some("utf-8"));
-  }
-
-  #[test]
-  fn test_charset_with_no_charset_in_mime_type() {
-    let raw_data_url = RawDataUrl {
-      mime_type: "text/plain".to_string(),
-      bytes: vec![],
-    };
-    assert_eq!(raw_data_url.charset(), None);
-  }
-
-  #[test]
-  fn test_media_type_with_known_type() {
-    let raw_data_url = RawDataUrl {
-      mime_type: "application/javascript;charset=utf-8".to_string(),
-      bytes: vec![],
-    };
-    assert_eq!(raw_data_url.media_type(), MediaType::JavaScript);
-  }
-
-  #[test]
-  fn test_media_type_with_unknown_type() {
-    let raw_data_url = RawDataUrl {
-      mime_type: "unknown/unknown".to_string(),
-      bytes: vec![],
-    };
-    assert_eq!(raw_data_url.media_type(), MediaType::Unknown);
-  }
-
-  #[test]
-  fn test_decode_with_valid_charset() {
-    let raw_data_url = RawDataUrl {
-      mime_type: "text/plain; charset=utf-8".to_string(),
-      bytes: "Hello, World!".as_bytes().to_vec(),
-    };
-    assert_eq!(raw_data_url.decode().unwrap(), "Hello, World!");
-  }
-
-  #[test]
-  fn test_decode_with_invalid_charset() {
-    let raw_data_url = RawDataUrl {
-      mime_type: "text/plain; charset=invalid-charset".to_string(),
-      bytes: vec![],
-    };
-    assert!(raw_data_url.decode().is_err());
-  }
-
-  #[test]
-  fn test_into_bytes_and_headers() {
-    let raw_data_url = RawDataUrl {
-      mime_type: "text/plain; charset=utf-8".to_string(),
-      bytes: "Hello, World!".as_bytes().to_vec(),
-    };
-    let (bytes, headers) = raw_data_url.into_bytes_and_headers();
-    assert_eq!(bytes, "Hello, World!".as_bytes());
-    assert_eq!(
-      headers.get("content-type").unwrap(),
-      "text/plain; charset=utf-8"
-    );
-  }
-
-  #[test]
-  fn test_decode_owned_with_bom() {
-    let text = decode_owned_file_source(
-      format!("{}{}", text_encoding::BOM_CHAR, "Hello").into_bytes(),
-    )
-    .unwrap();
-    assert_eq!(text, "Hello");
-  }
-
-  #[test]
-  fn test_decode_with_charset_with_bom() {
-    let bytes = format!("{}{}", text_encoding::BOM_CHAR, "Hello").into_bytes();
-    let charset = "utf-8";
-    let text = decode_with_charset(Arc::from(bytes), charset).unwrap();
-    assert_eq!(text.as_ref(), "Hello");
   }
 }

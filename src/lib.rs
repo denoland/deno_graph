@@ -18,7 +18,6 @@ pub mod symbols;
 mod fast_check;
 pub mod packages;
 pub mod source;
-mod text_encoding;
 
 use source::FileSystem;
 use source::JsrUrlProvider;
