@@ -2694,7 +2694,7 @@ pub(crate) fn parse_js_module_from_module_info(
     let has_jsx_import_source_pragma = module_info.jsx_import_source.is_some();
     let res = module_info.jsx_import_source.or_else(|| {
       maybe_resolver.and_then(|r| {
-        r.default_jsx_import_source()
+        r.default_jsx_import_source(&module.specifier)
           .map(|import_source| SpecifierWithRange {
             text: import_source,
             range: PositionRange {
@@ -2706,7 +2706,7 @@ pub(crate) fn parse_js_module_from_module_info(
     });
     if let Some(import_source) = res {
       let jsx_import_source_module = maybe_resolver
-        .map(|r| r.jsx_import_source_module())
+        .map(|r| r.jsx_import_source_module(&module.specifier))
         .unwrap_or(DEFAULT_JSX_IMPORT_SOURCE_MODULE);
       let specifier_text =
         format!("{}/{}", import_source.text, jsx_import_source_module);
@@ -2733,15 +2733,15 @@ pub(crate) fn parse_js_module_from_module_info(
         let mut types_res = module_info.jsx_import_source_types;
         if types_res.is_none() && !has_jsx_import_source_pragma {
           types_res = maybe_resolver.and_then(|r| {
-            r.default_jsx_import_source_types().map(|import_source| {
-              SpecifierWithRange {
+            r.default_jsx_import_source_types(&module.specifier).map(
+              |import_source| SpecifierWithRange {
                 text: import_source,
                 range: PositionRange {
                   start: Position::zeroed(),
                   end: Position::zeroed(),
                 },
-              }
-            })
+              },
+            )
           });
         }
         if let Some(import_source_types) = types_res {

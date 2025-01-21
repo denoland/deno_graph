@@ -164,15 +164,21 @@ struct JsResolveTypesResponse {
 }
 
 impl Resolver for JsResolver {
-  fn default_jsx_import_source(&self) -> Option<String> {
+  fn default_jsx_import_source(
+    &self,
+    _referrer: &ModuleSpecifier,
+  ) -> Option<String> {
     self.maybe_default_jsx_import_source.clone()
   }
 
-  fn default_jsx_import_source_types(&self) -> Option<String> {
+  fn default_jsx_import_source_types(
+    &self,
+    _referrer: &ModuleSpecifier,
+  ) -> Option<String> {
     self.maybe_default_jsx_import_source_types.clone()
   }
 
-  fn jsx_import_source_module(&self) -> &str {
+  fn jsx_import_source_module(&self, _referrer: &ModuleSpecifier) -> &str {
     self
       .maybe_jsx_import_source_module
       .as_deref()
