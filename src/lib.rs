@@ -61,6 +61,8 @@ pub use fast_check::FastCheckModule;
 #[cfg(feature = "fast_check")]
 pub use graph::BuildFastCheckTypeGraphOptions;
 pub use graph::BuildOptions;
+pub use graph::CheckJsOption;
+pub use graph::CheckJsResolver;
 pub use graph::Dependency;
 pub use graph::ExternalModule;
 pub use graph::FastCheckTypeModule;
@@ -189,6 +191,8 @@ mod tests {
   use crate::graph::ResolutionResolved;
   use crate::source::NullFileSystem;
   use crate::source::ResolutionKind;
+
+  use self::graph::CheckJsOption;
 
   use super::*;
   use async_trait::async_trait;
@@ -4171,7 +4175,7 @@ export function a(a: A): B {
     let result = graph.walk(
       roots.iter(),
       WalkOptions {
-        check_js: true,
+        check_js: CheckJsOption::True,
         follow_dynamic: true,
         kind: GraphKind::All,
         prefer_fast_check_graph: true,
@@ -4200,7 +4204,7 @@ export function a(a: A): B {
     let result = graph.walk(
       roots.iter(),
       WalkOptions {
-        check_js: false,
+        check_js: CheckJsOption::False,
         follow_dynamic: false,
         kind: GraphKind::CodeOnly,
         prefer_fast_check_graph: true,
@@ -4224,7 +4228,7 @@ export function a(a: A): B {
     let result = graph.walk(
       roots.iter(),
       WalkOptions {
-        check_js: false,
+        check_js: CheckJsOption::False,
         follow_dynamic: true,
         kind: GraphKind::CodeOnly,
         prefer_fast_check_graph: true,
@@ -4250,7 +4254,7 @@ export function a(a: A): B {
     let result = graph.walk(
       roots.iter(),
       WalkOptions {
-        check_js: true,
+        check_js: CheckJsOption::True,
         follow_dynamic: false,
         kind: GraphKind::CodeOnly,
         prefer_fast_check_graph: true,
@@ -4275,7 +4279,7 @@ export function a(a: A): B {
     let result = graph.walk(
       roots.iter(),
       WalkOptions {
-        check_js: false,
+        check_js: CheckJsOption::False,
         follow_dynamic: false,
         kind: GraphKind::All,
         prefer_fast_check_graph: true,
@@ -4303,7 +4307,7 @@ export function a(a: A): B {
     let result = graph.walk(
       roots.iter(),
       WalkOptions {
-        check_js: false,
+        check_js: CheckJsOption::False,
         follow_dynamic: false,
         kind: GraphKind::TypesOnly,
         prefer_fast_check_graph: true,
@@ -4328,7 +4332,7 @@ export function a(a: A): B {
     let result = graph.walk(
       roots.iter(),
       WalkOptions {
-        check_js: true,
+        check_js: CheckJsOption::True,
         follow_dynamic: false,
         kind: GraphKind::TypesOnly,
         prefer_fast_check_graph: true,
@@ -4356,7 +4360,7 @@ export function a(a: A): B {
       let mut iterator = graph.walk(
         roots.iter(),
         WalkOptions {
-          check_js: true,
+          check_js: CheckJsOption::True,
           follow_dynamic: false,
           kind: GraphKind::All,
           prefer_fast_check_graph: false,
@@ -4380,7 +4384,7 @@ export function a(a: A): B {
       let mut iterator = graph.walk(
         roots.iter(),
         WalkOptions {
-          check_js: true,
+          check_js: CheckJsOption::True,
           follow_dynamic: false,
           kind: GraphKind::All,
           prefer_fast_check_graph: false,
@@ -4671,7 +4675,7 @@ export function a(a: A): B {
       .walk(
         graph.roots.iter(),
         WalkOptions {
-          check_js: true,
+          check_js: CheckJsOption::True,
           kind: GraphKind::TypesOnly,
           follow_dynamic: false,
           prefer_fast_check_graph: true,
