@@ -61,6 +61,8 @@ pub use fast_check::FastCheckModule;
 #[cfg(feature = "fast_check")]
 pub use graph::BuildFastCheckTypeGraphOptions;
 pub use graph::BuildOptions;
+pub use graph::CheckJsOption;
+pub use graph::CheckJsResolver;
 pub use graph::Dependency;
 pub use graph::ExternalModule;
 pub use graph::FastCheckTypeModule;
