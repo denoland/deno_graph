@@ -1299,10 +1299,33 @@ pub enum ModuleEntryRef<'a> {
   Redirect(&'a ModuleSpecifier),
 }
 
+pub trait CheckJsResolver: std::fmt::Debug {
+  fn resolve(&self, specifier: &ModuleSpecifier) -> bool;
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum CheckJsOption<'a> {
+  True,
+  False,
+  Custom(&'a dyn CheckJsResolver),
+}
+
+impl<'a> CheckJsOption<'a> {
+  pub fn resolve(&self, specifier: &ModuleSpecifier) -> bool {
+    match self {
+      CheckJsOption::True => true,
+      CheckJsOption::False => false,
+      CheckJsOption::Custom(check_js_resolver) => {
+        check_js_resolver.resolve(specifier)
+      }
+    }
+  }
+}
+
 #[derive(Debug, Clone)]
-pub struct WalkOptions {
+pub struct WalkOptions<'a> {
   /// Whether to walk js modules when `kind` is `GraphKind::TypesOnly`.
-  pub check_js: bool,
+  pub check_js: CheckJsOption<'a>,
   pub follow_dynamic: bool,
   /// Part of the graph to walk.
   pub kind: GraphKind,
@@ -1324,22 +1347,22 @@ pub struct FillFromLockfileOptions<
   pub package_specifiers: TPackageSpecifiersIter,
 }
 
-pub struct ModuleEntryIterator<'a> {
+pub struct ModuleEntryIterator<'a, 'options> {
   graph: &'a ModuleGraph,
   seen: HashSet<&'a ModuleSpecifier>,
   visiting: VecDeque<&'a ModuleSpecifier>,
   follow_dynamic: bool,
   kind: GraphKind,
-  check_js: bool,
+  check_js: CheckJsOption<'options>,
   prefer_fast_check_graph: bool,
   previous_module: Option<ModuleEntryRef<'a>>,
 }
 
-impl<'a> ModuleEntryIterator<'a> {
+impl<'a, 'options> ModuleEntryIterator<'a, 'options> {
   fn new(
     graph: &'a ModuleGraph,
     roots: impl Iterator<Item = &'a ModuleSpecifier>,
-    options: WalkOptions,
+    options: WalkOptions<'options>,
   ) -> Self {
     let mut seen =
       HashSet::<&'a ModuleSpecifier>::with_capacity(graph.specifiers_count());
@@ -1385,7 +1408,7 @@ impl<'a> ModuleEntryIterator<'a> {
   /// An iterator over all the errors found when walking this iterator.
   ///
   /// This can be useful in scenarios where you want to filter or ignore an error.
-  pub fn errors(self) -> ModuleGraphErrorIterator<'a> {
+  pub fn errors(self) -> ModuleGraphErrorIterator<'a, 'options> {
     ModuleGraphErrorIterator::new(self)
   }
 
@@ -1405,15 +1428,27 @@ impl<'a> ModuleEntryIterator<'a> {
   }
 
   /// Gets if the specified media type can be type checked.
-  fn is_checkable(&self, media_type: MediaType) -> bool {
-    self.check_js
-      || !matches!(
-        media_type,
-        MediaType::JavaScript
-          | MediaType::Mjs
-          | MediaType::Cjs
-          | MediaType::Jsx
-      )
+  fn is_checkable(
+    &self,
+    specifier: &ModuleSpecifier,
+    media_type: MediaType,
+  ) -> bool {
+    match media_type {
+      MediaType::TypeScript
+      | MediaType::Mts
+      | MediaType::Cts
+      | MediaType::Dts
+      | MediaType::Dmts
+      | MediaType::Dcts
+      | MediaType::Tsx
+      | MediaType::Json
+      | MediaType::Wasm => true,
+      MediaType::Css | MediaType::SourceMap | MediaType::Unknown => false,
+      MediaType::JavaScript
+      | MediaType::Jsx
+      | MediaType::Mjs
+      | MediaType::Cjs => self.check_js.resolve(specifier),
+    }
   }
 
   fn analyze_module_deps(
@@ -1441,15 +1476,15 @@ impl<'a> ModuleEntryIterator<'a> {
   }
 }
 
-impl<'a> Iterator for ModuleEntryIterator<'a> {
+impl<'a, 'options> Iterator for ModuleEntryIterator<'a, 'options> {
   type Item = (&'a ModuleSpecifier, ModuleEntryRef<'a>);
 
   fn next(&mut self) -> Option<Self::Item> {
     match self.previous_module.take() {
       Some(ModuleEntryRef::Module(module)) => match module {
         Module::Js(module) => {
-          let check_types =
-            self.kind.include_types() && self.is_checkable(module.media_type);
+          let check_types = self.kind.include_types()
+            && self.is_checkable(&module.specifier, module.media_type);
           let module_deps = if check_types && self.prefer_fast_check_graph {
             module.dependencies_prefer_fast_check()
           } else {
@@ -1497,7 +1532,7 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
                       continue; // skip visiting the code module
                     }
                   } else if self.kind == GraphKind::TypesOnly
-                    && !self.is_checkable(module.media_type)
+                    && !self.is_checkable(&module.specifier, module.media_type)
                   {
                     continue; // skip visiting
                   }
@@ -1526,13 +1561,13 @@ impl<'a> Iterator for ModuleEntryIterator<'a> {
   }
 }
 
-pub struct ModuleGraphErrorIterator<'a> {
-  iterator: ModuleEntryIterator<'a>,
+pub struct ModuleGraphErrorIterator<'a, 'options> {
+  iterator: ModuleEntryIterator<'a, 'options>,
   next_errors: Vec<ModuleGraphError>,
 }
 
-impl<'a> ModuleGraphErrorIterator<'a> {
-  pub fn new(iterator: ModuleEntryIterator<'a>) -> Self {
+impl<'a, 'options> ModuleGraphErrorIterator<'a, 'options> {
+  pub fn new(iterator: ModuleEntryIterator<'a, 'options>) -> Self {
     Self {
       iterator,
       next_errors: Default::default(),
@@ -1607,7 +1642,7 @@ impl<'a> ModuleGraphErrorIterator<'a> {
   }
 }
 
-impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
+impl<'a, 'options> Iterator for ModuleGraphErrorIterator<'a, 'options> {
   type Item = ModuleGraphError;
 
   fn next(&mut self) -> Option<Self::Item> {
@@ -1634,7 +1669,9 @@ impl<'a> Iterator for ModuleGraphErrorIterator<'a> {
             }
 
             let check_types = kind.include_types()
-              && self.iterator.is_checkable(module.media_type);
+              && self
+                .iterator
+                .is_checkable(&module.specifier, module.media_type);
             let module_deps = if check_types && prefer_fast_check_graph {
               module.dependencies_prefer_fast_check()
             } else {
@@ -1886,7 +1923,7 @@ impl ModuleGraph {
       WalkOptions {
         follow_dynamic: true,
         kind: self.graph_kind,
-        check_js: true,
+        check_js: CheckJsOption::True,
         prefer_fast_check_graph: false,
       },
     );
@@ -1921,11 +1958,11 @@ impl ModuleGraph {
   }
 
   /// Iterates over all the module entries in the module graph searching from the provided roots.
-  pub fn walk<'a>(
+  pub fn walk<'a, 'options>(
     &'a self,
     roots: impl Iterator<Item = &'a ModuleSpecifier>,
-    options: WalkOptions,
-  ) -> ModuleEntryIterator<'a> {
+    options: WalkOptions<'options>,
+  ) -> ModuleEntryIterator<'a, 'options> {
     ModuleEntryIterator::new(self, roots, options)
   }
 
@@ -2159,7 +2196,7 @@ impl ModuleGraph {
       .walk(
         self.roots.iter(),
         WalkOptions {
-          check_js: true,
+          check_js: CheckJsOption::True,
           kind: GraphKind::CodeOnly,
           follow_dynamic: false,
           prefer_fast_check_graph: false,
@@ -5915,7 +5952,7 @@ mod tests {
         WalkOptions {
           follow_dynamic: false,
           kind: GraphKind::All,
-          check_js: true,
+          check_js: CheckJsOption::True,
           prefer_fast_check_graph: false,
         },
       )
@@ -5930,7 +5967,7 @@ mod tests {
         WalkOptions {
           follow_dynamic: true,
           kind: GraphKind::All,
-          check_js: true,
+          check_js: CheckJsOption::True,
           prefer_fast_check_graph: false,
         },
       )
@@ -6066,7 +6103,7 @@ mod tests {
       .walk(
         roots.iter(),
         WalkOptions {
-          check_js: true,
+          check_js: CheckJsOption::True,
           follow_dynamic: false,
           kind: GraphKind::All,
           prefer_fast_check_graph: false,
@@ -6788,5 +6825,92 @@ mod tests {
         "Version tag not supported in jsr specifiers ('version')."
       );
     }
+  }
+
+  #[tokio::test]
+  async fn check_js_option_custom() {
+    #[derive(Debug)]
+    struct CustomResolver;
+
+    impl CheckJsResolver for CustomResolver {
+      fn resolve(&self, specifier: &ModuleSpecifier) -> bool {
+        if specifier.as_str() == "file:///true.js" {
+          true
+        } else {
+          false
+        }
+      }
+    }
+
+    struct TestLoader;
+    impl Loader for TestLoader {
+      fn load(
+        &self,
+        specifier: &ModuleSpecifier,
+        _options: LoadOptions,
+      ) -> LoadFuture {
+        let specifier = specifier.clone();
+        match specifier.as_str() {
+          "file:///valid.js" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: b"export {}".to_vec().into(),
+            }))
+          }),
+          "file:///true.js" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: b"// @ts-types='invalid'\nimport {} from './valid.js';"
+                .to_vec()
+                .into(),
+            }))
+          }),
+          "file:///false.js" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              // the 'invalid' shouldn't be visited here
+              content: b"// @ts-types='invalid'\nimport {} from './valid.js';"
+                .to_vec()
+                .into(),
+            }))
+          }),
+          "file:///main.ts" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: b"import './true.js'; import './false.js'"
+                .to_vec()
+                .into(),
+            }))
+          }),
+          _ => unreachable!(),
+        }
+      }
+    }
+    let loader = TestLoader;
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    let roots = vec![Url::parse("file:///main.ts").unwrap()];
+    graph
+      .build(roots.clone(), &loader, Default::default())
+      .await;
+    assert_eq!(graph.specifiers_count(), 4);
+    let errors = graph
+      .walk(
+        roots.iter(),
+        WalkOptions {
+          check_js: CheckJsOption::Custom(&CustomResolver),
+          follow_dynamic: false,
+          kind: GraphKind::All,
+          prefer_fast_check_graph: false,
+        },
+      )
+      .errors()
+      .collect::<Vec<_>>();
+
+    // should only be 1 for true.js and not false.js
+    assert_eq!(errors.len(), 1);
   }
 }
