@@ -6834,11 +6834,7 @@ mod tests {
 
     impl CheckJsResolver for CustomResolver {
       fn resolve(&self, specifier: &ModuleSpecifier) -> bool {
-        if specifier.as_str() == "file:///true.js" {
-          true
-        } else {
-          false
-        }
+        specifier.as_str() == "file:///true.js"
       }
     }
 
