@@ -403,20 +403,4 @@ space-operator/deno-command-rpc/0.10.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-Warning The following packages contained npm lifecycle scripts (preinstall/install/postinstall) that were not executed:
-┠─ npm:bigint-buffer@1.1.5
-┠─ npm:bufferutil@4.0.8
-┠─ npm:utf-8-validate@5.0.10
-┃
-┠─ This may cause the packages to not work correctly.
-┠─ Lifecycle scripts are only supported when using a `node_modules` directory.
-┠─ Enable it in your deno config file:
-┖─ "nodeModulesDir": "auto"
-error: Failed caching 'https://jsr.io/@std/msgpack/0.221.0/encode.ts'.
-    0: Access is denied. (os error 5) (for 'V:/.cache/deno/remote/https/jsr.io/f600fb5519aad53688eb037df58c7575857f30e4c1c918d6c7a88c5495865487')
-    at https://jsr.io/@std/msgpack/0.221.0/mod.ts:4:15
-
+== TYPE CHECK PASSED ==
