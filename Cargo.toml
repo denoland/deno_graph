@@ -16,7 +16,7 @@ members = ["lib"]
 deno_unsync = { version = "0.4.0", default-features = false }
 thiserror = "2"
 deno_error = "0.5.3"
-sys_traits = "0.1.0"
+sys_traits = "0.1.8"
 
 [lib]
 name = "deno_graph"
