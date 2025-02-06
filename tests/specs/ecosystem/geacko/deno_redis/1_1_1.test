@@ -30,6 +30,10 @@ geacko/deno-redis/1.1.1
 -- stdout --
 
 -- stderr --
-error: JSR package version manifest for '@geacko/resp3-parser@1.2.0' failed to load: Failed caching 'https://jsr.io/@geacko/resp3-parser/1.2.0_meta.json'.
-    at file://<tmpdir>/src/client.ts:1:23
+TS2305 [ERROR]: Module '"https://jsr.io/@geacko/resp3-parser/1.2.0/mod.ts"' has no exported member 'Reply'.
+import { Reply } from 'jsr:@geacko/resp3-parser@^1.0.2';
+         ~~~~~
+    at file://<tmpdir>/src/client.ts:1:10
+
+error: Type checking failed.
 

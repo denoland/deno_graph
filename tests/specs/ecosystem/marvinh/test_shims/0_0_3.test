@@ -19,10 +19,4 @@ marvinh/test-shims/0.0.3
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-error: JSR package version manifest for '@std/testing@0.221.0' failed to load: Failed caching 'https://jsr.io/@std/testing/0.221.0_meta.json'.
-    at file://<tmpdir>/src/mod.ts:1:37
-
+== TYPE CHECK PASSED ==
