@@ -13,7 +13,7 @@ bartlomieju/postgres/0.17.2
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'QueryResult'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'QueryResult'.
    */ insertRow(row_data: Uint8Array[]): void {}
       ~~~~~~~~~
     at file://<tmpdir>/query/query.ts:101:7
@@ -24,4 +24,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/query/query.ts:114:7
 
 Found 2 errors.
+
+error: Type checking failed.
 

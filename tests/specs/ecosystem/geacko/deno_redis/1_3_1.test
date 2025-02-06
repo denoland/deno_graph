@@ -26,4 +26,10 @@ geacko/deno-redis/1.3.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: JSR package version manifest for '@geacko/resp3-parser@1.2.0' failed to load: Failed caching 'https://jsr.io/@geacko/resp3-parser/1.2.0_meta.json'.
+    at file://<tmpdir>/src/client.ts:2:28
+

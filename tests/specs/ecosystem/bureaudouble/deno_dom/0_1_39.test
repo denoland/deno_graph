@@ -13,7 +13,7 @@ bureaudouble/deno-dom/0.1.39
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Node'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Node'.
   _shallowClone(): Node {
   ~~~~~~~~~~~~~
     at file://<tmpdir>/src/dom/document.ts:30:3
@@ -94,4 +94,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/src/dom/node.ts:183:7
 
 Found 16 errors.
+
+error: Type checking failed.
 

@@ -13,7 +13,7 @@ tma/sdk/1.4.9
 -- stdout --
 
 -- stderr --
-error: TS2300 [ERROR]: Duplicate identifier 'isVisible'.
+TS2300 [ERROR]: Duplicate identifier 'isVisible'.
   declare private isVisible: any;
                   ~~~~~~~~~
     at file://<tmpdir>/src/components/back-button/BackButton.ts:16:19
@@ -114,4 +114,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/src/navigation/HashNavigator/HashNavigator.ts:38:3
 
 Found 20 errors.
+
+error: Type checking failed.
 

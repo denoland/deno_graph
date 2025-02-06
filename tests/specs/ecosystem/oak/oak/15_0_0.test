@@ -58,7 +58,7 @@ oak/oak/15.0.0
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
     at file://<tmpdir>/application.ts:257:77
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
@@ -73,4 +73,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/application.ts:264:35
 
 Found 4 errors.
+
+error: Type checking failed.
 

@@ -13,7 +13,7 @@ lambdalisue/streamtools/1.0.0
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'PipeOptions'.
+TS2304 [ERROR]: Cannot find name 'PipeOptions'.
  */ export function collect<T>(stream: ReadableStream<T>, options?: PipeOptions): Promise<T[]> {
                                                                     ~~~~~~~~~~~
     at file://<tmpdir>/collect.ts:27:69
@@ -34,4 +34,6 @@ export type WriteAllOptions = PipeOptions & {
     at file://<tmpdir>/write_all.ts:1:31
 
 Found 4 errors.
+
+error: Type checking failed.
 

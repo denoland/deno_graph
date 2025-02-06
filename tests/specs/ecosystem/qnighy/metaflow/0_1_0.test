@@ -9,4 +9,14 @@ qnighy/metaflow/0.1.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2637 [ERROR]: Variance annotations are only supported in type aliases for object, function, constructor, and mapped types.
+export type ErrorUnionPredicate<out E> = ErrorPredicate<E>[];
+                                ~~~~~
+    at file://<tmpdir>/exception.ts:158:33
+
+error: Type checking failed.
+

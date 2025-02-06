@@ -13,7 +13,7 @@ etherpad/live-plugin-manager/0.18.5
 -- stdout --
 
 -- stderr --
-error: TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
 export { IPluginInfo } from "./src/PluginInfo.ts";
          ~~~~~~~~~~~
     at file://<tmpdir>/index.ts:2:10
@@ -64,4 +64,6 @@ TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
     at file://<tmpdir>/src/PluginManager.ts:27:9
 
 Found 10 errors.
+
+error: Type checking failed.
 

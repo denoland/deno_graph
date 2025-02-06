@@ -13,7 +13,7 @@ badrap/valita/0.3.4
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'AbstractType<Output | undefined>'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'AbstractType<Output | undefined>'.
   optional(): Optional<Output> {
   ~~~~~~~~
     at file://<tmpdir>/src/index.ts:281:3
@@ -24,4 +24,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/src/index.ts:357:3
 
 Found 2 errors.
+
+error: Type checking failed.
 

@@ -13,7 +13,7 @@ aralroca/diff-dom-streaming/0.1.3
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'Node'.
+TS2304 [ERROR]: Cannot find name 'Node'.
 type Callback = (node: Node) => void;
                        ~~~~
     at file://<tmpdir>/index.d.ts:1:24
@@ -34,4 +34,6 @@ export default function diff(oldNode: Node, reader: ReadableStreamDefaultReader,
     at file://<tmpdir>/src/index.ts:2:39
 
 Found 4 errors.
+
+error: Type checking failed.
 

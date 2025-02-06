@@ -13,7 +13,7 @@ okikio/transferables/1.0.2
 -- stdout --
 
 -- stderr --
-error: TS7017 [ERROR]: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
+TS7017 [ERROR]: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
  */ export const AudioData = globalThis.AudioData;
                                         ~~~~~~~~~
     at file://<tmpdir>/src/mod.ts:19:41
@@ -46,4 +46,6 @@ TS2749 [ERROR]: 'RTCDataChannel' refers to a value, but is being used as a type 
     at file://<tmpdir>/src/mod.ts:136:191
 
 Found 8 errors.
+
+error: Type checking failed.
 

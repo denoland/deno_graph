@@ -36,8 +36,10 @@ jlarky/react-json-script/0.2.0
 -- stdout --
 
 -- stderr --
-error: TS2503 [ERROR]: Cannot find namespace 'JSX'.
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
  */ export function JsonScript(props: JsonScriptProps): JSX.Element {
                                                         ~~~
     at file://<tmpdir>/index.ts:23:57
+
+error: Type checking failed.
 

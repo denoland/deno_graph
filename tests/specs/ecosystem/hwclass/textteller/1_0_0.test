@@ -56,8 +56,10 @@ hwclass/textteller/1.0.0
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'LitElement'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'LitElement'.
   render(): TemplateResult | undefined {
   ~~~~~~
     at file://<tmpdir>/src/index.ts:17:3
+
+error: Type checking failed.
 

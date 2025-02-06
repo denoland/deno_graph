@@ -13,7 +13,7 @@ crisislab/timeline/0.11.1
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
   container: HTMLElement;
              ~~~~~~~~~~~
     at file://<tmpdir>/src/TimeLine.ts:9:14
@@ -34,4 +34,6 @@ TS2304 [ERROR]: Cannot find name 'CanvasRenderingContext2D'.
     at file://<tmpdir>/src/TimeLine.ts:33:16
 
 Found 4 errors.
+
+error: Type checking failed.
 

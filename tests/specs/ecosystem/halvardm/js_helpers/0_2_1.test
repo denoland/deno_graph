@@ -81,7 +81,7 @@ halvardm/js-helpers/0.2.1
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
   name = this.constructor.name;
   ~~~~
     at file://<tmpdir>/lib/default/cookie.ts:77:3
@@ -99,5 +99,39 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Fetcher'.
     at file://<tmpdir>/lib/default/fetcher.ts:261:7
 
-Found 4 errors.
+TS2416 [ERROR]: Property 'stdout' in type 'FsCommandOutput' is not assignable to the same property in base type 'CommandOutput'.
+  Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'Uint8Array<ArrayBuffer>'.
+    Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+      Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+  get stdout(): Uint8Array {
+      ~~~~~~
+    at file://<tmpdir>/lib/system/tools/FsCommand.ts:40:7
+
+TS2416 [ERROR]: Property 'stderr' in type 'FsCommandOutput' is not assignable to the same property in base type 'CommandOutput'.
+  Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'Uint8Array<ArrayBuffer>'.
+    Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+      Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+  get stderr(): Uint8Array {
+      ~~~~~~
+    at file://<tmpdir>/lib/system/tools/FsCommand.ts:43:7
+
+TS2416 [ERROR]: Property 'stdout' in type 'FsCommandError' is not assignable to the same property in base type 'CommandOutput'.
+  Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'Uint8Array<ArrayBuffer>'.
+    Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+      Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+  get stdout(): Uint8Array {
+      ~~~~~~
+    at file://<tmpdir>/lib/system/tools/FsCommand.ts:68:7
+
+TS2416 [ERROR]: Property 'stderr' in type 'FsCommandError' is not assignable to the same property in base type 'CommandOutput'.
+  Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'Uint8Array<ArrayBuffer>'.
+    Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+      Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+  get stderr(): Uint8Array {
+      ~~~~~~
+    at file://<tmpdir>/lib/system/tools/FsCommand.ts:71:7
+
+Found 8 errors.
+
+error: Type checking failed.
 

@@ -145,7 +145,7 @@ bureaudouble/outils/0.0.1
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'Plugin'.
+TS2304 [ERROR]: Cannot find name 'Plugin'.
   plugins: Plugin[];
            ~~~~~~
     at file://<tmpdir>/createRenderPipe.ts:27:12
@@ -156,4 +156,6 @@ TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you m
     at file://<tmpdir>/createRenderPipe.ts:30:24
 
 Found 2 errors.
+
+error: Type checking failed.
 

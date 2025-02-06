@@ -1133,7 +1133,7 @@ bureaudouble/outils/0.0.62
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
 export const partialTrigger = (node: HTMLElement, {}: {
                                      ~~~~~~~~~~~
     at file://<tmpdir>/fresh/createPartial.ts:1:38
@@ -1144,4 +1144,6 @@ TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you m
     at file://<tmpdir>/fresh/types.ts:72:24
 
 Found 2 errors.
+
+error: Type checking failed.
 

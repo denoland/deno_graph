@@ -13,7 +13,7 @@ orama/minbpe/0.0.2
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'RegexTokenizer'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'RegexTokenizer'.
   _encodeChunk(textBytes: Uint8Array): number[] {
   ~~~~~~~~~~~~
     at file://<tmpdir>/src/gpt4.ts:8:3
@@ -39,4 +39,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/src/gpt4.ts:16:3
 
 Found 5 errors.
+
+error: Type checking failed.
 

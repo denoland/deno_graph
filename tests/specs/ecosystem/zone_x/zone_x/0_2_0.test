@@ -13,7 +13,7 @@ zone-x/zone-x/0.2.0
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'TimeZone'.
+TS2304 [ERROR]: Cannot find name 'TimeZone'.
 export function getUsersTimeZone(): TimeZone {
                                     ~~~~~~~~
     at file://<tmpdir>/src/index.ts:1:37
@@ -24,4 +24,6 @@ export function setUserTimeZone(timeZone: TimeZone): string {
     at file://<tmpdir>/src/index.ts:4:43
 
 Found 2 errors.
+
+error: Type checking failed.
 

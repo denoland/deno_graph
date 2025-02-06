@@ -13,7 +13,7 @@ xeaone/tool/3.6.10
 -- stdout --
 
 -- stderr --
-error: TS1192 [ERROR]: Module '"file://<tmpdir>/access/mod.ts"' has no default export.
+TS1192 [ERROR]: Module '"file://<tmpdir>/access/mod.ts"' has no default export.
 import access from "./access/mod.ts";
        ~~~~~~
     at file://<tmpdir>/index.ts:13:8
@@ -74,4 +74,6 @@ import username from "./username/mod.ts";
     at file://<tmpdir>/index.ts:24:8
 
 Found 12 errors.
+
+error: Type checking failed.
 

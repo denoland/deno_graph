@@ -13,7 +13,7 @@ ayonli/jsext/0.8.7
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, V>'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, V>'.
   get [Symbol.toStringTag](): "BiMap" {
       ~~~~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/collections/BiMap.ts:4:7
@@ -62,4 +62,6 @@ TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
     at file://<tmpdir>/read.ts:79:45
 
 Found 8 errors.
+
+error: Type checking failed.
 

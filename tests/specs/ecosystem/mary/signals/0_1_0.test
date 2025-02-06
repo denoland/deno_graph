@@ -13,7 +13,7 @@ mary/signals/0.1.0
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Signal<T>'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Signal<T>'.
   /** @internal */ _refresh(): boolean {
                    ~~~~~~~~
     at file://<tmpdir>/mod.ts:69:20
@@ -39,4 +39,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/mod.ts:82:10
 
 Found 5 errors.
+
+error: Type checking failed.
 

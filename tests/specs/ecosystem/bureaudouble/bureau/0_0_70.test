@@ -787,7 +787,7 @@ bureaudouble/bureau/0.0.70
 -- stdout --
 
 -- stderr --
-error: TS2503 [ERROR]: Cannot find namespace 'JSX'.
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
 export const CustomInput = ({}: CustomInputProps): JSX.Element =>({} as never);
                                                    ~~~
     at file://<tmpdir>/src/components/CustomInput.tsx:16:52
@@ -991,4 +991,6 @@ TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
     at file://<tmpdir>/src/components/ui/tabs.tsx:9:156
 
 Found 55 errors.
+
+error: Type checking failed.
 

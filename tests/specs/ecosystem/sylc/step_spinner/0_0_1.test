@@ -23,7 +23,7 @@ sylc/step-spinner/0.0.1
 -- stdout --
 
 -- stderr --
-error: TS2377 [ERROR]: Constructors for derived classes must contain a 'super' call.
+TS2377 [ERROR]: Constructors for derived classes must contain a 'super' call.
   constructor(msg: string | SpinnerOptions){}
   ~~~~~~~~~~~
     at file://<tmpdir>/StepSpinner.ts:4:3
@@ -39,4 +39,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/StepSpinner.ts:8:3
 
 Found 3 errors.
+
+error: Type checking failed.
 

@@ -92,8 +92,10 @@ radix-ui-fork/react-checkbox/0.0.7
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
 const Checkbox: React.ForwardRefExoticComponent<Omit<CheckboxProps, "ref"> & React.RefAttributes<HTMLButtonElement>> = {} as never;
                                                                                                  ~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/Checkbox.tsx:15:98
+
+error: Type checking failed.
 

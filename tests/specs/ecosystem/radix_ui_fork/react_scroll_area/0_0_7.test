@@ -92,7 +92,7 @@ radix-ui-fork/react-scroll-area/0.0.7
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
   content: HTMLDivElement | null;
            ~~~~~~~~~~~~~~
     at file://<tmpdir>/src/ScrollArea.tsx:24:12
@@ -108,4 +108,6 @@ TS2304 [ERROR]: Cannot find name 'WheelEvent'.
     at file://<tmpdir>/src/ScrollArea.tsx:92:24
 
 Found 3 errors.
+
+error: Type checking failed.
 

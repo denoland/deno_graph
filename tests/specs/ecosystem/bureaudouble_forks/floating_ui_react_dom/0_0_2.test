@@ -54,7 +54,7 @@ bureaudouble-forks/floating-ui-react-dom/0.0.2
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'Element'.
+TS2304 [ERROR]: Cannot find name 'Element'.
    */ element: React.MutableRefObject<Element | null> | Element | null;
                                       ~~~~~~~
     at file://<tmpdir>/src/arrow.ts:7:39
@@ -95,4 +95,6 @@ TS2304 [ERROR]: Cannot find name 'HTMLElement'.
     at file://<tmpdir>/src/types.ts:53:16
 
 Found 8 errors.
+
+error: Type checking failed.
 

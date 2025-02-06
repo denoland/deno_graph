@@ -93,8 +93,10 @@ radix-ui-fork/react-portal/0.0.4
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
    */ container?: HTMLElement | null;
                   ~~~~~~~~~~~
     at file://<tmpdir>/src/Portal.tsx:9:19
+
+error: Type checking failed.
 

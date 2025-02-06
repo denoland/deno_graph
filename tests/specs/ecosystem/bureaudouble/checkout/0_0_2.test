@@ -63,7 +63,7 @@ bureaudouble/checkout/0.0.2
 -- stdout --
 
 -- stderr --
-error: TS2503 [ERROR]: Cannot find namespace 'Stripe'.
+TS2503 [ERROR]: Cannot find namespace 'Stripe'.
      */ customer: string | Stripe.Customer | Stripe.DeletedCustomer | null;
                            ~~~~~~
     at file://<tmpdir>/types/Checkout/Sessions.d.ts:76:28
@@ -324,4 +324,6 @@ TS2503 [ERROR]: Cannot find namespace 'Stripe'.
     at file://<tmpdir>/types/Products.d.ts:58:30
 
 Found 52 errors.
+
+error: Type checking failed.
 

@@ -61,4 +61,28 @@ mebus/solid/1.0.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2344 [ERROR]: Type 'T[K]' does not satisfy the constraint 'ZodType<any, any, any>'.
+  Type 'T[keyof T]' is not assignable to type 'ZodType<any, any, any>'.
+    Type 'T[string] | T[number] | T[symbol]' is not assignable to type 'ZodType<any, any, any>'.
+      Type 'T[string]' is not assignable to type 'ZodType<any, any, any>'.
+        Type 'Type<any, any, any>' is missing the following properties from type 'ZodType<any, any, any>': _type, _output, _input, _def, and 31 more.
+    [K in keyof T]?: (payload: z.infer<T[K]>) => void | Promise<void>;
+                                       ~~~~
+    at file://<tmpdir>/useMeBus.ts:24:40
+
+TS2344 [ERROR]: Type 'T[keyof T]' does not satisfy the constraint 'ZodType<any, any, any>'.
+  Type 'T[string] | T[number] | T[symbol]' is not assignable to type 'ZodType<any, any, any>'.
+    Type 'T[string]' is not assignable to type 'ZodType<any, any, any>'.
+      Type 'Type<any, any, any>' is missing the following properties from type 'ZodType<any, any, any>': _type, _output, _input, _def, and 31 more.
+}): ((event: keyof T & string, payload: z.infer<T[keyof T]>) => void) =>({} as never);
+                                                ~~~~~~~~~~
+    at file://<tmpdir>/useMeBus.ts:26:49
+
+Found 2 errors.
+
+error: Type checking failed.
+

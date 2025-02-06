@@ -87,7 +87,7 @@ harmony/harmony/2.9.1
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'HarmonyEventEmitter<ClientEvents>'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'HarmonyEventEmitter<ClientEvents>'.
   emit(event: keyof ClientEvents, ...args: any[]): Promise<void> {
   ~~~~
     at file://<tmpdir>/src/client/client.ts:142:3
@@ -558,4 +558,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/src/utils/permissions.ts:12:3
 
 Found 94 errors.
+
+error: Type checking failed.
 

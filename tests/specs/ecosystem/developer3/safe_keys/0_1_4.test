@@ -13,7 +13,7 @@ developer3/safe-keys/0.1.4
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'IDBFactory'.
+TS2304 [ERROR]: Cannot find name 'IDBFactory'.
   indexedDB: IDBFactory;
              ~~~~~~~~~~
     at file://<tmpdir>/dom.ts:11:14
@@ -29,4 +29,6 @@ TS2304 [ERROR]: Cannot find name 'IDBObjectStore'.
     at file://<tmpdir>/dom.ts:26:54
 
 Found 3 errors.
+
+error: Type checking failed.
 

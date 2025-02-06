@@ -59,4 +59,11 @@ bureaudouble/checkout/0.0.15
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: Failed caching 'https://jsr.io/@cross/jwt/0.2.0/src/sign-verify/ecdsa.ts'.
+    0: Access is denied. (os error 5) (for 'V:/.cache/deno/remote/https/jsr.io/7f3fe332e0971dcf1016c859787160b645c3dd74840c95102e5ca0ccfe50b853')
+    at https://jsr.io/@cross/jwt/0.2.0/src/jwt.ts:4:48
+

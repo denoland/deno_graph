@@ -10,7 +10,7 @@ lou/types/2.0.0
 -- stdout --
 
 -- stderr --
-error: TS2307 [ERROR]: Cannot find module 'file://<tmpdir>/src/@lou.codes/constants/empty.js'.
+TS2307 [ERROR]: Cannot find module 'file://<tmpdir>/src/@lou.codes/constants/empty.js'.
     at file://<tmpdir>/src/EmptyArray.ts:1:34
 
 TS2304 [ERROR]: Cannot find name 'HTMLAllCollection'.
@@ -19,4 +19,6 @@ TS2304 [ERROR]: Cannot find name 'HTMLAllCollection'.
     at file://<tmpdir>/src/Falsy.ts:24:39
 
 Found 2 errors.
+
+error: Type checking failed.
 

@@ -13,7 +13,7 @@ flashcard/components/0.0.2
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
 export default class Flashcard extends HTMLElement {
                                        ~~~~~~~~~~~
     at file://<tmpdir>/flashcard.ts:1:40
@@ -39,4 +39,6 @@ TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
     at file://<tmpdir>/flashcard.ts:5:23
 
 Found 5 errors.
+
+error: Type checking failed.
 

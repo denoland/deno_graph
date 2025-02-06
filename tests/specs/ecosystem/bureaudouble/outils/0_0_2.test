@@ -150,7 +150,7 @@ bureaudouble/outils/0.0.2
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'Plugin'.
+TS2304 [ERROR]: Cannot find name 'Plugin'.
   plugins: Plugin[];
            ~~~~~~
     at file://<tmpdir>/createRenderPipe.ts:27:12
@@ -166,4 +166,6 @@ export type QueryFunction<V> = <T extends CompiledQuery<unknown>>(fn: (qb: Kysel
     at file://<tmpdir>/database/createSqliteQueryFunction.ts:7:104
 
 Found 3 errors.
+
+error: Type checking failed.
 

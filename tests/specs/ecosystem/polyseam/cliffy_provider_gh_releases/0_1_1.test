@@ -459,7 +459,7 @@ polyseam/cliffy-provider-gh-releases/0.1.1
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Provider'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Provider'.
   upgrade(options: UpgradeOptions): Promise<void> {
   ~~~~~~~
     at file://<tmpdir>/mod.ts:73:3
@@ -470,4 +470,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/mod.ts:79:3
 
 Found 2 errors.
+
+error: Type checking failed.
 

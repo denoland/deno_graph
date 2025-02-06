@@ -13,7 +13,7 @@ templum/decorators/0.2.0
 -- stdout --
 
 -- stderr --
-error: TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
 export { Retry, RetryConfig, RetryStrategy } from "./execution/retry.ts";
                 ~~~~~~~~~~~
     at file://<tmpdir>/lib/entry.ts:3:17
@@ -29,4 +29,6 @@ export { Cache, CacheKey, CacheConfig } from "./cache/cache.ts";
     at file://<tmpdir>/lib/entry.ts:10:27
 
 Found 3 errors.
+
+error: Type checking failed.
 

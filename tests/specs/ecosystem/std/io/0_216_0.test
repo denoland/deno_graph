@@ -13,7 +13,7 @@ std/io/0.216.0
 -- stdout --
 
 -- stderr --
-error: TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Seeker'.
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Seeker'.
  */ export function readRange(r: Reader & Deno.Seeker, range: ByteRange): Promise<Uint8Array> {
                                                ~~~~~~
     at file://<tmpdir>/read_range.ts:24:48
@@ -24,4 +24,6 @@ TS2694 [ERROR]: Namespace 'Deno' has no exported member 'SeekerSync'.
     at file://<tmpdir>/read_range.ts:43:56
 
 Found 2 errors.
+
+error: Type checking failed.
 

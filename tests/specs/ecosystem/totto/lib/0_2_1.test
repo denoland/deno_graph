@@ -119,8 +119,10 @@ totto/lib/0.2.1
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'AbstractHttpError'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'AbstractHttpError'.
   toResponse(): Response {
   ~~~~~~~~~~
     at file://<tmpdir>/error/http/type.ts:27:3
+
+error: Type checking failed.
 
