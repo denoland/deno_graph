@@ -681,7 +681,7 @@ bureaudouble/outils/0.0.43
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'DOMParserSupportedType'.
+TS2304 [ERROR]: Cannot find name 'DOMParserSupportedType'.
   mimeType?: DOMParserSupportedType;
              ~~~~~~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/createVirtualNode.ts:4:14
@@ -702,4 +702,6 @@ TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you m
     at file://<tmpdir>/fresh/types.ts:72:24
 
 Found 4 errors.
+
+error: Type checking failed.
 

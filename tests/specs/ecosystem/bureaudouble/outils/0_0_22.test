@@ -676,7 +676,7 @@ bureaudouble/outils/0.0.22
 -- stdout --
 
 -- stderr --
-error: TS2536 [ERROR]: Type '0' cannot be used to index type 'InferResult<T>'.
+TS2536 [ERROR]: Type '0' cannot be used to index type 'InferResult<T>'.
 export type QueryFunction<V> = <T extends CompiledQuery<unknown>>(fn: (qb: Kysely<V>) => T) => Promise<InferResult<T>[0][]>;
                                                                                                        ~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/database/sqlite/createQueryFunction.ts:7:104
@@ -687,4 +687,6 @@ TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you m
     at file://<tmpdir>/fresh/types.ts:72:24
 
 Found 2 errors.
+
+error: Type checking failed.
 

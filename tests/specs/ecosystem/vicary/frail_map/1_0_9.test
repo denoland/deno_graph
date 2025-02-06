@@ -13,7 +13,7 @@ vicary/frail-map/1.0.9
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, V>'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, V>'.
    */ get(key: K): V | undefined {
       ~~~
     at file://<tmpdir>/src/FrailMap.ts:25:7
@@ -87,4 +87,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/src/FrailMap.ts:65:7
 
 Found 13 errors.
+
+error: Type checking failed.
 

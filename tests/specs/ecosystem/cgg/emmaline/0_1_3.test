@@ -13,7 +13,7 @@ cgg/emmaline/0.1.3
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLCanvasElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLCanvasElement'.
   canvas: HTMLCanvasElement;
           ~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/animation/gif.ts:5:11
@@ -99,4 +99,6 @@ TS2304 [ERROR]: Cannot find name 'HTMLCanvasElement'.
     at file://<tmpdir>/init.ts:8:12
 
 Found 17 errors.
+
+error: Type checking failed.
 

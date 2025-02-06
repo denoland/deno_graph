@@ -13,7 +13,7 @@ ayonli/jsext/0.8.21
 -- stdout --
 
 -- stderr --
-error: TS2411 [ERROR]: Property '_' of type 'string | number | boolean | (string | number | boolean)[] | undefined' is not assignable to 'string' index type 'string | number | boolean | (string | number | boolean)[]'.
+TS2411 [ERROR]: Property '_' of type 'string | number | boolean | (string | number | boolean)[] | undefined' is not assignable to 'string' index type 'string | number | boolean | (string | number | boolean)[]'.
   _?: string | number | boolean | (string | number | boolean)[];
   ^
     at file://<tmpdir>/cli.ts:50:3
@@ -67,4 +67,6 @@ TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
     at file://<tmpdir>/read.ts:79:45
 
 Found 9 errors.
+
+error: Type checking failed.
 

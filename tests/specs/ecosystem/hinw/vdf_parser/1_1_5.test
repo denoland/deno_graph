@@ -13,8 +13,10 @@ hinw/vdf-parser/1.1.5
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'BufferEncoding'.
+TS2304 [ERROR]: Cannot find name 'BufferEncoding'.
   override _transform(chunk: string, encoding: BufferEncoding, callback: stream.TransformCallback): void {}
                                                ~~~~~~~~~~~~~~
     at file://<tmpdir>/src/parser.ts:126:48
+
+error: Type checking failed.
 

@@ -13,8 +13,10 @@ codehz/mtproto/0.6.0
 -- stdout --
 
 -- stderr --
-error: TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Closer'.
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Closer'.
 export interface Transport extends Deno.Closer {
                                         ~~~~~~
     at file://<tmpdir>/types.ts:13:41
+
+error: Type checking failed.
 

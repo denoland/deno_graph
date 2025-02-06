@@ -13,7 +13,7 @@ fp-utils/result/0.13.0
 -- stdout --
 
 -- stderr --
-error: TS2416 [ERROR]: Property 'flatMap' in type 'Ok<T>' is not assignable to the same property in base type 'Result<T, never>'.
+TS2416 [ERROR]: Property 'flatMap' in type 'Ok<T>' is not assignable to the same property in base type 'Result<T, never>'.
   Types of parameters 'fn' and 'fn' are incompatible.
     Type 'Err<any> | Ok<any>' is not assignable to type 'Result<any, any>'.
       Type 'Err<any>' is not assignable to type 'Result<any, any>'.
@@ -132,4 +132,6 @@ TS2416 [ERROR]: Property 'mapErr' in type 'Err<TError>' is not assignable to the
     at file://<tmpdir>/result.ts:625:32
 
 Found 8 errors.
+
+error: Type checking failed.
 

@@ -10,7 +10,7 @@ ghost/kjua-revived/0.1.0
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'SVGElement'.
+TS2304 [ERROR]: Cannot find name 'SVGElement'.
 export const kjua = (inputOptions: Partial<KjuaOptions>): SVGElement | HTMLCanvasElement | HTMLImageElement =>({} as never);
                                                           ~~~~~~~~~~
     at file://<tmpdir>/src/kjua.ts:2:59
@@ -31,4 +31,6 @@ TS2304 [ERROR]: Cannot find name 'HTMLImageElement'.
     at file://<tmpdir>/src/lib/options.ts:21:10
 
 Found 4 errors.
+
+error: Type checking failed.
 

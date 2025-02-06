@@ -54,7 +54,7 @@ ghjk/dax/0.40.2-alpha-ghjk
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'PipeOptions'.
+TS2304 [ERROR]: Cannot find name 'PipeOptions'.
   stdout(kind: WritableStream<Uint8Array>, options?: PipeOptions): CommandBuilder;
                                                      ~~~~~~~~~~~
     at file://<tmpdir>/src/command.ts:100:54
@@ -85,4 +85,6 @@ TS2304 [ERROR]: Cannot find name 'PipeOptions'.
     at file://<tmpdir>/src/request.ts:217:118
 
 Found 6 errors.
+
+error: Type checking failed.
 

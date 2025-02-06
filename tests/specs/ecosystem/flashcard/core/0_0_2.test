@@ -13,7 +13,7 @@ flashcard/core/0.0.2
 -- stdout --
 
 -- stderr --
-error: TS1192 [ERROR]: Module '"file://<tmpdir>/scheduler.ts"' has no default export.
+TS1192 [ERROR]: Module '"file://<tmpdir>/scheduler.ts"' has no default export.
 import Scheduler from "./scheduler.ts";
        ~~~~~~~~~
     at file://<tmpdir>/deck.ts:4:8
@@ -24,4 +24,6 @@ export { default as Scheduler } from "./scheduler.ts";
     at file://<tmpdir>/mod.ts:9:10
 
 Found 2 errors.
+
+error: Type checking failed.
 

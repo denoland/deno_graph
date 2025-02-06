@@ -41,8 +41,10 @@ thesgj/nextjs-toploader/1.6.9-canary.0
 -- stdout --
 
 -- stderr --
-error: TS2503 [ERROR]: Cannot find namespace 'JSX'.
+TS2503 [ERROR]: Cannot find namespace 'JSX'.
  */ const NextTopLoader = ({}: NextTopLoaderProps): JSX.Element =>({} as never);
                                                     ~~~
     at file://<tmpdir>/src/index.tsx:60:53
+
+error: Type checking failed.
 

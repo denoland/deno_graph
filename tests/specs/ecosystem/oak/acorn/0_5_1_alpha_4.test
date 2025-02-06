@@ -46,7 +46,7 @@ oak/acorn/0.5.1-alpha.4
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
   addEventListener(type: "error", listener: RouterErrorEventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions): void;
   ~~~~~~~~~~~~~~~~
     at file://<tmpdir>/router.ts:475:3
@@ -75,4 +75,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/router.ts:480:3
 
 Found 6 errors.
+
+error: Type checking failed.
 

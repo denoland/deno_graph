@@ -13,7 +13,7 @@ malven/modu/2.4.4
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'Element'.
+TS2304 [ERROR]: Cannot find name 'Element'.
   el: Element;
       ~~~~~~~
     at file://<tmpdir>/index.ts:12:7
@@ -114,4 +114,6 @@ TS2304 [ERROR]: Cannot find name 'Element'.
     at file://<tmpdir>/index.ts:148:33
 
 Found 20 errors.
+
+error: Type checking failed.
 

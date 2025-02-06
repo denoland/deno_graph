@@ -30,8 +30,10 @@ kz/dispose/0.0.1
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'AbstractDisposable'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'AbstractDisposable'.
    */ protected onDispose(): void {}
                 ~~~~~~~~~
     at file://<tmpdir>/src/disposable_pool.ts:87:17
+
+error: Type checking failed.
 

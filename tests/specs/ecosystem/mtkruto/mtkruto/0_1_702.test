@@ -13,7 +13,7 @@ mtkruto/mtkruto/0.1.702
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'ClientAbstract'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'ClientAbstract'.
   connect(): Promise<void> {
   ~~~~~~~
     at file://<tmpdir>/client/1_client_encrypted.ts:27:3
@@ -19584,4 +19584,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/transport/1_transport_intermediate.ts:17:3
 
 Found 3914 errors.
+
+error: Type checking failed.
 

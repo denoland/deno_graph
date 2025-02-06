@@ -13,7 +13,7 @@ seriousme/opifex/1.0.5
 -- stdout --
 
 -- stderr --
-error: TS2729 [ERROR]: Property 'defaultError' is used before its initialization.
+TS2729 [ERROR]: Property 'defaultError' is used before its initialization.
   error = this.defaultError;
                ~~~~~~~~~~~~
     at file://<tmpdir>/utils/utils.ts:15:16
@@ -64,4 +64,6 @@ TS2729 [ERROR]: Property 'noop' is used before its initialization.
         at file://<tmpdir>/utils/utils.ts:14:19
 
 Found 5 errors.
+
+error: Type checking failed.
 

@@ -71,7 +71,7 @@ oak/oak/14.1.1
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
     at file://<tmpdir>/application.ts:257:77
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
@@ -101,4 +101,6 @@ TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Closer'.
     at file://<tmpdir>/range.ts:23:55
 
 Found 7 errors.
+
+error: Type checking failed.
 

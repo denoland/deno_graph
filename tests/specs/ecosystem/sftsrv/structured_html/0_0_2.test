@@ -13,8 +13,10 @@ sftsrv/structured-html/0.0.2
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'Element'.
+TS2304 [ERROR]: Cannot find name 'Element'.
  */ export const convertHtmlToStructuredContents = (html: Element): EditorContent =>({} as never);
                                                           ~~~~~~~
     at file://<tmpdir>/src/index.ts:7:59
+
+error: Type checking failed.
 

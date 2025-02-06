@@ -13,7 +13,7 @@ rezi/svelte-gestures/4.0.5
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'PointerEvent'.
+TS2304 [ERROR]: Cannot find name 'PointerEvent'.
 export type GestureCallback = (register: RegisterGestureType) => (activeEvents: PointerEvent[], event: PointerEvent) => boolean;
                                                                                 ~~~~~~~~~~~~
     at file://<tmpdir>/src/composedGesture.ts:2:81
@@ -81,4 +81,6 @@ TS2304 [ERROR]: Cannot find name 'HTMLElement'.
     at file://<tmpdir>/src/tap.ts:5:82
 
 Found 17 errors.
+
+error: Type checking failed.
 

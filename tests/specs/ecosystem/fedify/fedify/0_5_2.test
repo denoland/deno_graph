@@ -48,7 +48,7 @@ fedify/fedify/0.5.2
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
    */ clone(values?: {
       ~~~~~
     at file://<tmpdir>/vocab/vocab.ts:922:7
@@ -809,4 +809,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/vocab/vocab.ts:7944:13
 
 Found 152 errors.
+
+error: Type checking failed.
 

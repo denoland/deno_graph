@@ -36,7 +36,7 @@ krutoo/utils/0.0.3
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
  */ export function findOffsetParent(element: HTMLElement): Element | null {
                                               ~~~~~~~~~~~
     at file://<tmpdir>/src/dom/fing-offset-parent.ts:5:47
@@ -82,4 +82,6 @@ TS2304 [ERROR]: Cannot find name 'HTMLElement'.
     at file://<tmpdir>/src/react/use-drag-and-drop.ts:22:51
 
 Found 9 errors.
+
+error: Type checking failed.
 

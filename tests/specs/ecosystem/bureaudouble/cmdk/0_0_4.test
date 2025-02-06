@@ -85,7 +85,7 @@ bureaudouble/cmdk/0.0.4
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
 const Command: React.ForwardRefExoticComponent<Omit<any, "ref"> & React.RefAttributes<HTMLDivElement>> = {} as never;
                                                                                       ~~~~~~~~~~~~~~
     at file://<tmpdir>/cmdk/src/index.tsx:76:87
@@ -131,4 +131,6 @@ TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
     at file://<tmpdir>/cmdk/src/index.tsx:106:91
 
 Found 9 errors.
+
+error: Type checking failed.
 

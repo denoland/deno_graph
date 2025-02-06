@@ -13,7 +13,7 @@ fp-utils/option/0.13.0
 -- stdout --
 
 -- stderr --
-error: TS2677 [ERROR]: A type predicate's type must be assignable to its parameter's type.
+TS2677 [ERROR]: A type predicate's type must be assignable to its parameter's type.
   Type 'None' is not assignable to type 'Option<unknown>'.
     Types of property 'isSome' are incompatible.
       Type '() => false' is not assignable to type '<U extends unknown>() => this is Some<U>'.
@@ -59,4 +59,6 @@ TS2416 [ERROR]: Property 'zip' in type 'None' is not assignable to the same prop
     at file://<tmpdir>/option.ts:443:29
 
 Found 5 errors.
+
+error: Type checking failed.
 

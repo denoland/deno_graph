@@ -13,7 +13,7 @@ tma/sdk/1.4.8
 -- stdout --
 
 -- stderr --
-error: TS2300 [ERROR]: Duplicate identifier 'isVisible'.
+TS2300 [ERROR]: Duplicate identifier 'isVisible'.
   declare private isVisible: any;
                   ~~~~~~~~~
     at file://<tmpdir>/src/back-button/BackButton.ts:16:19
@@ -114,4 +114,6 @@ TS2300 [ERROR]: Duplicate identifier 'isVisible'.
     at file://<tmpdir>/src/settings-button/SettingsButton.ts:15:11
 
 Found 20 errors.
+
+error: Type checking failed.
 

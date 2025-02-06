@@ -13,7 +13,7 @@ bureaudouble-forks/aria-hidden/0.0.1
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'Element'.
+TS2304 [ERROR]: Cannot find name 'Element'.
  */ export const hideOthers = (originalTarget: Element | Element[], parentNode?: HTMLElement, markerName?: string): Undo =>({} as never);
                                                ~~~~~~~
     at file://<tmpdir>/src/index.ts:8:48
@@ -59,4 +59,6 @@ TS2304 [ERROR]: Cannot find name 'HTMLElement'.
     at file://<tmpdir>/src/index.ts:25:86
 
 Found 9 errors.
+
+error: Type checking failed.
 

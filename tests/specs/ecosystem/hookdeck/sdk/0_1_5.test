@@ -13,7 +13,7 @@ hookdeck/sdk/0.1.5
 -- stdout --
 
 -- stderr --
-error: TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
 export { AttemptListRequest } from "./AttemptListRequest.ts";
          ~~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/api/resources/attempt/client/requests/index.ts:1:10
@@ -234,4 +234,6 @@ export { TransformationListExecutionRequest } from "./TransformationListExecutio
     at file://<tmpdir>/src/api/resources/transformation/client/requests/index.ts:6:10
 
 Found 44 errors.
+
+error: Type checking failed.
 

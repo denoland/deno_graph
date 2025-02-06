@@ -36,7 +36,7 @@ radix-ui-fork/react-slot/0.0.8
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
 interface SlotProps extends React.HTMLAttributes<HTMLElement> {
                                                  ~~~~~~~~~~~
     at file://<tmpdir>/src/Slot.tsx:2:50
@@ -47,4 +47,6 @@ const Slot: React.ForwardRefExoticComponent<SlotProps & React.RefAttributes<HTML
     at file://<tmpdir>/src/Slot.tsx:5:77
 
 Found 2 errors.
+
+error: Type checking failed.
 

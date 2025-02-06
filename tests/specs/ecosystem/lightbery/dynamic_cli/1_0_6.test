@@ -13,7 +13,7 @@ lightbery/dynamic-cli/1.0.6
 -- stdout --
 
 -- stderr --
-error: TS2580 [ERROR]: Cannot find name 'Buffer'.
+TS2580 [ERROR]: Cannot find name 'Buffer'.
   public simulateInput(input: string, key: Buffer): void {}
                                            ~~~~~~
     at file://<tmpdir>/DynamicCLI.ts:49:44
@@ -29,4 +29,6 @@ export { DynamicCLI, Component, TextColor, BackgroundColor };
     at file://<tmpdir>/DynamicCLI.ts:93:22
 
 Found 3 errors.
+
+error: Type checking failed.
 

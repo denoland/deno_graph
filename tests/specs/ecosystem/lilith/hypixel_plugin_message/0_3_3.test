@@ -13,7 +13,7 @@ lilith/hypixel-plugin-message/0.3.3
 -- stdout --
 
 -- stderr --
-error: TS2580 [ERROR]: Cannot find name 'Buffer'.
+TS2580 [ERROR]: Cannot find name 'Buffer'.
   read(buffer: Buffer): T;
                ~~~~~~
     at file://<tmpdir>/mod.ts:17:16
@@ -49,4 +49,6 @@ TS2580 [ERROR]: Cannot find name 'Buffer'.
     at file://<tmpdir>/mod.ts:63:97
 
 Found 7 errors.
+
+error: Type checking failed.
 

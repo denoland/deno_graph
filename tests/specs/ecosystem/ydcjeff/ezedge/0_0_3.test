@@ -264,8 +264,10 @@ ydcjeff/ezedge/0.0.3
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
  */ export function start_client(fn: (el: HTMLElement, hydratable: boolean, data: unknown | null) => void): void {}
                                           ~~~~~~~~~~~
     at file://<tmpdir>/runtime/mod.ts:5:43
+
+error: Type checking failed.
 

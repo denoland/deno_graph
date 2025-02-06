@@ -13,7 +13,7 @@ mr/tracecontext/0.1.3
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<any, any>'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<any, any>'.
   set(key: string, value: unknown): this {
   ~~~
     at file://<tmpdir>/tracestate.ts:40:3
@@ -24,4 +24,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/tracestate.ts:43:3
 
 Found 2 errors.
+
+error: Type checking failed.
 

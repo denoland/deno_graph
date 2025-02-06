@@ -150,7 +150,7 @@ bureaudouble/outils/0.0.12
 -- stdout --
 
 -- stderr --
-error: TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
+TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
   server: Partial<Deno.ServeTlsOptions>;
                        ~~~~~~~~~~~~~~~
     at file://<tmpdir>/createRenderPipe.ts:31:24
@@ -161,4 +161,6 @@ export type QueryFunction<V> = <T extends CompiledQuery<unknown>>(fn: (qb: Kysel
     at file://<tmpdir>/database/sqlite/createQueryFunction.ts:7:104
 
 Found 2 errors.
+
+error: Type checking failed.
 

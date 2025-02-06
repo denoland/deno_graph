@@ -36,7 +36,7 @@ fedify/fedify/0.8.0-dev.155+f511197c
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
    */ static get typeId(): URL {
                  ~~~~~~
     at file://<tmpdir>/vocab/vocab.ts:795:18
@@ -987,4 +987,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/vocab/vocab.ts:8087:13
 
 Found 190 errors.
+
+error: Type checking failed.
 

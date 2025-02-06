@@ -36,8 +36,10 @@ angus/use-speech/0.0.1
 -- stdout --
 
 -- stderr --
-error: TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
 export { UseSpeechOptions, useSpeech } from "./useSpeech.ts";
          ~~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/index.ts:1:10
+
+error: Type checking failed.
 

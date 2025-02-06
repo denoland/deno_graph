@@ -13,7 +13,7 @@ zone-x/zone-x/0.4.0
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'TimeZone'.
+TS2304 [ERROR]: Cannot find name 'TimeZone'.
 /** Gets users timezone from system settings */ export function getCurrentTimeZone(): TimeZone {
                                                                                       ~~~~~~~~
     at file://<tmpdir>/src/index.ts:1:87
@@ -24,4 +24,6 @@ TS2304 [ERROR]: Cannot find name 'TimeZone'.
     at file://<tmpdir>/src/index.ts:4:107
 
 Found 2 errors.
+
+error: Type checking failed.
 

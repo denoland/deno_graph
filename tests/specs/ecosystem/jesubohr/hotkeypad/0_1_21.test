@@ -13,8 +13,10 @@ jesubohr/hotkeypad/0.1.21
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
   /** The instance of the hotkeypad on the DOM */ declare instance: HTMLElement;
                                                                     ~~~~~~~~~~~
     at file://<tmpdir>/src/mod.ts:30:69
+
+error: Type checking failed.
 

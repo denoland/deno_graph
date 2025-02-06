@@ -13,7 +13,7 @@ kitsonk/xhr/0.4.0
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
   dispatchEvent(evt: Event): boolean {
   ~~~~~~~~~~~~~
     at file://<tmpdir>/mod.ts:10:3
@@ -24,4 +24,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/mod.ts:63:3
 
 Found 2 errors.
+
+error: Type checking failed.
 

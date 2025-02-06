@@ -13,8 +13,10 @@ namchee/telepon/1.1.2
 -- stdout --
 
 -- stderr --
-error: TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
 export { Telepon } from "./src/telepon.ts";
          ~~~~~~~
     at file://<tmpdir>/index.ts:1:10
+
+error: Type checking failed.
 

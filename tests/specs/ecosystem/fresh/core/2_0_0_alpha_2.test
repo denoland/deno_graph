@@ -44,8 +44,10 @@ fresh/core/2.0.0-alpha.2
 -- stdout --
 
 -- stderr --
-error: TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
+TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
 export type ListenOptions = Partial<Deno.ServeTlsOptions> & {
                                          ~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/app.ts:24:42
+
+error: Type checking failed.
 

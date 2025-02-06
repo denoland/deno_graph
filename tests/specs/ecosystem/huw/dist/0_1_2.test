@@ -288,7 +288,7 @@ huw/dist/0.1.2
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
 export default function plot(sample: number[]): ((HTMLElement | SVGSVGElement) & PlotType) & {
                                                   ~~~~~~~~~~~
     at file://<tmpdir>/plot.ts:2:51
@@ -299,4 +299,6 @@ export default function plot(sample: number[]): ((HTMLElement | SVGSVGElement) &
     at file://<tmpdir>/plot.ts:2:65
 
 Found 2 errors.
+
+error: Type checking failed.
 

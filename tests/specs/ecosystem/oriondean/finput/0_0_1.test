@@ -13,7 +13,7 @@ oriondean/finput/0.0.1
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLInputElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLInputElement'.
   constructor(element: HTMLInputElement, options: IOptions){}
                        ~~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/finput.ts:8:24
@@ -34,4 +34,6 @@ TS2304 [ERROR]: Cannot find name 'FocusEvent'.
     at file://<tmpdir>/src/types.ts:12:20
 
 Found 4 errors.
+
+error: Type checking failed.
 

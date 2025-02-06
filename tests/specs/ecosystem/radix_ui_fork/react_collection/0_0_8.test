@@ -92,7 +92,7 @@ radix-ui-fork/react-collection/0.0.8
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
 type CollectionElement = HTMLElement;
                          ~~~~~~~~~~~
     at file://<tmpdir>/src/Collection.tsx:6:26
@@ -108,4 +108,6 @@ function createCollection<ItemElement extends HTMLElement, ItemData = {
     at file://<tmpdir>/src/Collection.tsx:26:47
 
 Found 3 errors.
+
+error: Type checking failed.
 
