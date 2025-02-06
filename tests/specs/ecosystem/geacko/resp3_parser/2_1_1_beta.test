@@ -13,7 +13,7 @@ geacko/resp3-parser/2.1.1-beta
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
   get name(): string {
       ~~~~
     at file://<tmpdir>/src/types.ts:15:7
@@ -24,4 +24,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/src/types.ts:18:7
 
 Found 2 errors.
+
+error: Type checking failed.
 

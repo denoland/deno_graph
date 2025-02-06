@@ -13,7 +13,7 @@ kwhinnery/animals/0.0.16
 -- stdout --
 
 -- stderr --
-error: TS2307 [ERROR]: Cannot find module 'file://<tmpdir>/types/animal'.
+TS2307 [ERROR]: Cannot find module 'file://<tmpdir>/types/animal'.
     at file://<tmpdir>/types/mod.d.ts:1:15
 
 TS2307 [ERROR]: Cannot find module 'file://<tmpdir>/types/cat'.
@@ -23,4 +23,6 @@ TS2307 [ERROR]: Cannot find module 'file://<tmpdir>/types/dog'.
     at file://<tmpdir>/types/mod.d.ts:3:15
 
 Found 3 errors.
+
+error: Type checking failed.
 

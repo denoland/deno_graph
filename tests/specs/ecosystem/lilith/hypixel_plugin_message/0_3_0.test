@@ -13,7 +13,7 @@ lilith/hypixel-plugin-message/0.3.0
 -- stdout --
 
 -- stderr --
-error: TS2580 [ERROR]: Cannot find name 'Buffer'.
+TS2580 [ERROR]: Cannot find name 'Buffer'.
   read(buffer: Buffer): T;
                ~~~~~~
     at file://<tmpdir>/mod.ts:9:16
@@ -49,4 +49,6 @@ export function writeServerboundPacket<T extends VersionedPacket>(name: string, 
     at file://<tmpdir>/mod.ts:27:93
 
 Found 7 errors.
+
+error: Type checking failed.
 

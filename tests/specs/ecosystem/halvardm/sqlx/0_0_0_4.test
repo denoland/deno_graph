@@ -75,7 +75,7 @@ halvardm/sqlx/0.0.0-4
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'QueryResult'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'QueryResult'.
    */ insertRow(row_data: Uint8Array[], controls?: ClientControls): void {}
       ~~~~~~~~~
     at file://<tmpdir>/vendor/deno.land/x/postgres@v0.19.3/query/query.ts:102:7
@@ -86,4 +86,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/vendor/deno.land/x/postgres@v0.19.3/query/query.ts:115:7
 
 Found 2 errors.
+
+error: Type checking failed.
 

@@ -13,7 +13,7 @@ cliffy/table/1.0.0-rc.4
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'T[]'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'T[]'.
    */ public static from<T extends CellType | undefined>(cells: RowType<T>): Row<T> {
                     ~~~~
     at file://<tmpdir>/row.ts:31:21
@@ -29,4 +29,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/table.ts:105:40
 
 Found 3 errors.
+
+error: Type checking failed.
 

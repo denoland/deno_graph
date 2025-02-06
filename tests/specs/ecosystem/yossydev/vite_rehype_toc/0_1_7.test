@@ -13,8 +13,10 @@ yossydev/vite-rehype-toc/0.1.7
 -- stdout --
 
 -- stderr --
-error: TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
 export { Root };
          ~~~~
     at file://<tmpdir>/src/types.ts:36:10
+
+error: Type checking failed.
 

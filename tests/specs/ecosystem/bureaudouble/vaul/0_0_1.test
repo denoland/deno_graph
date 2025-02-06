@@ -285,7 +285,7 @@ bureaudouble/vaul/0.0.1
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
   onDrag?: (event: React.PointerEvent<HTMLDivElement>, percentageDragged: number) => void;
                                       ~~~~~~~~~~~~~~
     at file://<tmpdir>/src/index.tsx:22:39
@@ -306,4 +306,6 @@ const Content: React.ForwardRefExoticComponent<Omit<ContentProps, "ref"> & React
     at file://<tmpdir>/src/index.tsx:38:96
 
 Found 4 errors.
+
+error: Type checking failed.
 

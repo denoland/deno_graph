@@ -23,7 +23,7 @@ jersey/test/0.3.9
 -- stdout --
 
 -- stderr --
-error: TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
 type Socket = Deno.Reader & Deno.Writer;
                    ~~~~~~
     at file://<tmpdir>/src/protocol/protocol.ts:2:20
@@ -34,4 +34,6 @@ type Socket = Deno.Reader & Deno.Writer;
     at file://<tmpdir>/src/protocol/protocol.ts:2:34
 
 Found 2 errors.
+
+error: Type checking failed.
 

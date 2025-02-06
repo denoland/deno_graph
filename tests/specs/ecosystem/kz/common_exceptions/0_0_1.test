@@ -23,7 +23,7 @@ kz/common-exceptions/0.0.1
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
    */ public get name(): string {
                  ~~~~
     at file://<tmpdir>/src/exceptions/exception.ts:87:18
@@ -44,4 +44,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/src/exceptions/exception.ts:207:14
 
 Found 4 errors.
+
+error: Type checking failed.
 

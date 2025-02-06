@@ -13,7 +13,7 @@ clappcodes/transporter/0.1.9
 -- stdout --
 
 -- stderr --
-error: TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
+TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
     at file://<tmpdir>/app.ts:6:146
 
 TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
@@ -22,4 +22,6 @@ TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you m
     at file://<tmpdir>/app.ts:15:35
 
 Found 2 errors.
+
+error: Type checking failed.
 

@@ -147,7 +147,7 @@ ydcjeff/ruta/0.0.1
 -- stdout --
 
 -- stderr --
-error: TS2578 [ERROR]: Unused '@ts-expect-error' directive.
+TS2578 [ERROR]: Unused '@ts-expect-error' directive.
   /** Type only, no runtime equivalent. */ // @ts-expect-error Type only
                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/ruta_core.ts:4:44
@@ -193,4 +193,6 @@ TS1170 [ERROR]: A computed property name in a type literal must refer to an expr
     at file://<tmpdir>/src/ruta_core.ts:91:3
 
 Found 9 errors.
+
+error: Type checking failed.
 

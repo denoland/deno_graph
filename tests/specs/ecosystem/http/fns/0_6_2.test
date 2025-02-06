@@ -69,11 +69,13 @@ http/fns/0.6.2
 -- stdout --
 
 -- stderr --
-error: TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
+TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
     at file://<tmpdir>/lib/hosting/init_deploy.ts:4:222
 
 TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
     at file://<tmpdir>/lib/hosting/init_localhost.ts:4:233
 
 Found 2 errors.
+
+error: Type checking failed.
 

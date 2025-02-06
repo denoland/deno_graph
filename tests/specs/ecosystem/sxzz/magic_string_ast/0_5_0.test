@@ -51,7 +51,7 @@ sxzz/magic-string-ast/0.5.0
 -- stdout --
 
 -- stderr --
-error: TS2430 [ERROR]: Interface 'MagicStringAST' incorrectly extends interface 'MagicString'.
+TS2430 [ERROR]: Interface 'MagicStringAST' incorrectly extends interface 'MagicString'.
   The types returned by 'clone()' are incompatible between these types.
     Type 'MagicStringAST' is not assignable to type 'this'.
       'MagicStringAST' is assignable to the constraint of type 'this', but 'this' could be instantiated with a different subtype of constraint 'MagicStringAST'.
@@ -68,4 +68,6 @@ TS2416 [ERROR]: Property 'clone' in type 'MagicStringAST' is not assignable to t
     at file://<tmpdir>/src/index.ts:39:3
 
 Found 2 errors.
+
+error: Type checking failed.
 

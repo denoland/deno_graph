@@ -13,6 +13,8 @@ clappcodes/transporter/0.2.6
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
     at file://<tmpdir>/readable/from-event.ts:11:41
+
+error: Type checking failed.
 

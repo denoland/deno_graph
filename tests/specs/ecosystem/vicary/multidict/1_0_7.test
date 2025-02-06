@@ -13,7 +13,7 @@ vicary/multidict/1.0.7
 -- stdout --
 
 -- stderr --
-error: TS2416 [ERROR]: Property 'entries' in type 'MultiDict<K, V>' is not assignable to the same property in base type 'Omit<Map<K | V, Set<K | V>>, "set">'.
+TS2416 [ERROR]: Property 'entries' in type 'MultiDict<K, V>' is not assignable to the same property in base type 'Omit<Map<K | V, Set<K | V>>, "set">'.
   Type '() => IterableIterator<[K | V, Set<K | V>]>' is not assignable to type '() => MapIterator<[K | V, Set<K | V>]>'.
     Type 'IterableIterator<[K | V, Set<K | V>]>' is missing the following properties from type 'MapIterator<[K | V, Set<K | V>]>': map, filter, take, drop, and 9 more.
    */ entries(): IterableIterator<[K | V, Set<K | V>]> {
@@ -42,4 +42,6 @@ TS2416 [ERROR]: Property '[Symbol.iterator]' in type 'MultiDict<K, V>' is not as
     at file://<tmpdir>/src/MultiDict.ts:74:3
 
 Found 4 errors.
+
+error: Type checking failed.
 

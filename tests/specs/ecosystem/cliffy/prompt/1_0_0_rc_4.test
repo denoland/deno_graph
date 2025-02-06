@@ -44,7 +44,7 @@ cliffy/prompt/1.0.0-rc.4
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericPrompt<TValue, TRawValue>'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'GenericPrompt<TValue, TRawValue>'.
   public getDefaultSettings(options: GenericInputPromptOptions<TValue, TRawValue>): GenericInputPromptSettings<TValue, TRawValue> {
          ~~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/_generic_input.ts:19:10
@@ -348,4 +348,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/toggle.ts:46:17
 
 Found 61 errors.
+
+error: Type checking failed.
 

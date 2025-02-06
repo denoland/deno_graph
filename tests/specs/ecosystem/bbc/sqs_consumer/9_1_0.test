@@ -1033,7 +1033,7 @@ bbc/sqs-consumer/9.1.0
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventEmitter<DefaultEventMap>'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventEmitter<DefaultEventMap>'.
    */ on<E extends keyof Events>(event: E, listener: (...args: Events[E]) => void): this {
       ~~
     at file://<tmpdir>/src/emitter.ts:8:7
@@ -1049,4 +1049,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/src/emitter.ts:21:7
 
 Found 3 errors.
+
+error: Type checking failed.
 

@@ -76,7 +76,7 @@ bureaudouble/sonner/0.0.3
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
   onClick: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
                                     ~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/types.ts:38:37
@@ -92,4 +92,6 @@ TS2552 [ERROR]: Cannot find name 'MouseEvent'. Did you mean 'CloseEvent'?
         at asset:///lib.deno.websocket.d.ts:32:13
 
 Found 2 errors.
+
+error: Type checking failed.
 

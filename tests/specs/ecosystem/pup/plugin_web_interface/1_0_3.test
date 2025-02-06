@@ -23,7 +23,7 @@ pup/plugin-web-interface/1.0.3
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'PluginImplementation'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'PluginImplementation'.
   public meta = {
          ~~~~
     at file://<tmpdir>/mod.ts:3:10
@@ -39,4 +39,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/mod.ts:27:10
 
 Found 3 errors.
+
+error: Type checking failed.
 

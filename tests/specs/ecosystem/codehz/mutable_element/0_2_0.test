@@ -13,7 +13,7 @@ codehz/mutable-element/0.2.0
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'ShadowRootInit'.
+TS2304 [ERROR]: Cannot find name 'ShadowRootInit'.
  */ export function shadow(init: ShadowRootInit, ...rest: MutateAction<ShadowRoot>[]): (el: Node) => void {
                                  ~~~~~~~~~~~~~~
     at file://<tmpdir>/src/actions.ts:8:34
@@ -253,4 +253,6 @@ export function idle(): Reactor<IdleDeadline> {
     at file://<tmpdir>/src/utils.ts:55:33
 
 Found 49 errors.
+
+error: Type checking failed.
 

@@ -13,7 +13,7 @@ kt3k/capsule/0.6.0
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
   /** The element */ el: HTMLElement;
                          ~~~~~~~~~~~
     at file://<tmpdir>/mod.ts:19:26
@@ -48,4 +48,6 @@ export function unmount(name: string, el: HTMLElement): void {}
     at file://<tmpdir>/mod.ts:30:43
 
 Found 8 errors.
+
+error: Type checking failed.
 

@@ -153,8 +153,10 @@ halvardm/nessie/0.0.0-2
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Type<boolean>'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Type<boolean>'.
   /** Complete boolean type. */ public complete(): string[] {
                                        ~~~~~~~~
     at file://<tmpdir>/vendor/deno.land/x/cliffy@v1.0.0-rc.3/command/types/boolean.ts:7:40
+
+error: Type checking failed.
 

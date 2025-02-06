@@ -13,7 +13,7 @@ ayonli/jsext/0.8.41
 -- stdout --
 
 -- stderr --
-error: TS2411 [ERROR]: Property '"--"' of type 'string[] | undefined' is not assignable to 'string' index type 'string | number | boolean | (string | number | boolean)[]'.
+TS2411 [ERROR]: Property '"--"' of type 'string[] | undefined' is not assignable to 'string' index type 'string | number | boolean | (string | number | boolean)[]'.
   "--"?: string[];
   ~~~~
     at file://<tmpdir>/cli/common.ts:178:3
@@ -82,4 +82,6 @@ TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
     at file://<tmpdir>/runtime.ts:68:39
 
 Found 12 errors.
+
+error: Type checking failed.
 

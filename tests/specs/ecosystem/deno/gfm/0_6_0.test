@@ -111,7 +111,7 @@ deno/gfm/0.6.0
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class '_Renderer'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class '_Renderer'.
   heading(text: string, level: 1 | 2 | 3 | 4 | 5 | 6, raw: string): string {
   ~~~~~~~
     at file://<tmpdir>/mod.ts:12:3
@@ -132,4 +132,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/mod.ts:21:3
 
 Found 4 errors.
+
+error: Type checking failed.
 

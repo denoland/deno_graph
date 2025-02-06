@@ -13,8 +13,10 @@ ns/ha/0.1.2
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
    */ target?: HTMLElement;
                ~~~~~~~~~~~
     at file://<tmpdir>/mod.ts:14:16
+
+error: Type checking failed.
 

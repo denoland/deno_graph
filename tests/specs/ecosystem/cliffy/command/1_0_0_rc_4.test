@@ -37,7 +37,7 @@ cliffy/command/1.0.0-rc.4
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'StringType'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'StringType'.
   /** Complete action names. */ public complete(): string[] {
                                        ~~~~~~~~
     at file://<tmpdir>/types/action_list.ts:8:40
@@ -63,4 +63,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/upgrade/provider/github.ts:31:3
 
 Found 5 errors.
+
+error: Type checking failed.
 

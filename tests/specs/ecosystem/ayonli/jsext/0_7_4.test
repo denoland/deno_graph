@@ -13,7 +13,7 @@ ayonli/jsext/0.7.4
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, V>'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, V>'.
   get [Symbol.toStringTag](): "BiMap" {
       ~~~~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/collections/BiMap.ts:4:7
@@ -57,4 +57,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/collections/CiMap.ts:30:3
 
 Found 7 errors.
+
+error: Type checking failed.
 

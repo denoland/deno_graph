@@ -13,7 +13,7 @@ htmllover/html-router/0.0.4
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
 export class RouteLink extends HTMLElement {
                                ~~~~~~~~~~~
     at file://<tmpdir>/src/components/route-link.ts:2:32
@@ -54,4 +54,6 @@ TS2304 [ERROR]: Cannot find name 'DocumentFragment'.
     at file://<tmpdir>/src/types/index.ts:38:24
 
 Found 8 errors.
+
+error: Type checking failed.
 

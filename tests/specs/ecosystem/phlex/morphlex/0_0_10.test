@@ -13,7 +13,7 @@ phlex/morphlex/0.0.10
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'Node'.
+TS2304 [ERROR]: Cannot find name 'Node'.
     node: Node;
           ~~~~
     at file://<tmpdir>/src/morphlex.ts:6:11
@@ -89,4 +89,6 @@ export function morph(node: ChildNode, reference: ChildNode | string, options?: 
     at file://<tmpdir>/src/morphlex.ts:47:51
 
 Found 15 errors.
+
+error: Type checking failed.
 

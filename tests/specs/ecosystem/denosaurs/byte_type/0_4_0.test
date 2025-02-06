@@ -13,7 +13,7 @@ denosaurs/byte-type/0.4.0
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'UnsizedType<T[]>'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'UnsizedType<T[]>'.
   read(dt: DataView, options?: Options): T[] {
   ~~~~
     at file://<tmpdir>/src/array/array.ts:11:3
@@ -54,4 +54,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/src/compound/tuple.ts:16:3
 
 Found 8 errors.
+
+error: Type checking failed.
 

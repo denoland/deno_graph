@@ -13,8 +13,10 @@ felix/argon2/1.0.5
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
   get name(): string {
       ~~~~
     at file://<tmpdir>/lib/error.ts:12:7
+
+error: Type checking failed.
 

@@ -13,7 +13,7 @@ poolifier/poolifier/3.1.30
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'T[]'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'T[]'.
   /** @inheritDoc */ public push(...items: T[]): number {
                             ~~~~
     at file://<tmpdir>/src/circular-array.ts:11:29
@@ -89,4 +89,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/src/worker/thread-worker.ts:40:17
 
 Found 15 errors.
+
+error: Type checking failed.
 

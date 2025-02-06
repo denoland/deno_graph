@@ -72,6 +72,8 @@ amit/neon-serverless-driver/0.0.3
 -- stdout --
 
 -- stderr --
-error: TS2307 [ERROR]: Cannot find module 'file://<tmpdir>/pg-protocol'.
+TS2307 [ERROR]: Cannot find module 'file://<tmpdir>/pg-protocol'.
     at file://<tmpdir>/index.d.ts:1:31
+
+error: Type checking failed.
 

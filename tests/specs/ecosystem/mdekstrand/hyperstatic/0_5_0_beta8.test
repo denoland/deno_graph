@@ -23,7 +23,7 @@ mdekstrand/hyperstatic/0.5.0-beta8
 -- stdout --
 
 -- stderr --
-error: TS2304 [ERROR]: Cannot find name 'Node'.
+TS2304 [ERROR]: Cannot find name 'Node'.
  */ export const h: HyperStatic<Node, Element> = {} as never;
                                 ~~~~
     at file://<tmpdir>/browser/mod.ts:5:33
@@ -34,4 +34,6 @@ TS2304 [ERROR]: Cannot find name 'Element'.
     at file://<tmpdir>/browser/mod.ts:5:39
 
 Found 2 errors.
+
+error: Type checking failed.
 

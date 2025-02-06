@@ -13,8 +13,10 @@ might/fail/0.3.0
 -- stdout --
 
 -- stderr --
-error: TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
+TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
 export { Either, mightFail, makeMightFail, mightFailSync, makeMightFailSync };
          ~~~~~~
     at file://<tmpdir>/src/index.ts:4:10
+
+error: Type checking failed.
 

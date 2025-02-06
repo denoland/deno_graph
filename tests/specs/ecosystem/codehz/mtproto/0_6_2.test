@@ -13,7 +13,7 @@ codehz/mtproto/0.6.2
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<string, string>'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<string, string>'.
   set(key: string, value: string): this {
   ~~~
     at file://<tmpdir>/storage/jsondb.ts:7:3
@@ -54,4 +54,6 @@ class WebSocketWrapper implements Deno.Reader {
     at file://<tmpdir>/transport/connection/websocket.ts:2:40
 
 Found 8 errors.
+
+error: Type checking failed.
 

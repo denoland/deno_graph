@@ -13,7 +13,7 @@ lala/appraisal/0.7.3
 -- stdout --
 
 -- stderr --
-error: TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Tensor<DT, 2>'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Tensor<DT, 2>'.
   get length(): number {
       ~~~~~~
     at file://<tmpdir>/src/utils/misc/matrix.ts:31:7
@@ -34,4 +34,6 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
     at file://<tmpdir>/src/utils/misc/matrix.ts:85:31
 
 Found 4 errors.
+
+error: Type checking failed.
 

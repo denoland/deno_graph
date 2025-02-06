@@ -99,7 +99,7 @@ nostrify/nostrify/0.9.7
 -- stdout --
 
 -- stderr --
-error: TS2416 [ERROR]: Property 'forEach' in type 'NSet' is not assignable to the same property in base type 'Set<NostrEvent>'.
+TS2416 [ERROR]: Property 'forEach' in type 'NSet' is not assignable to the same property in base type 'Set<NostrEvent>'.
   Type '(callbackfn: (event: NostrEvent, key: NostrEvent, set: this) => void, thisArg?: any) => void' is not assignable to type '(callbackfn: (value: NostrEvent, value2: NostrEvent, set: Set<NostrEvent>) => void, thisArg?: any) => void'.
     Types of parameters 'callbackfn' and 'callbackfn' are incompatible.
       Types of parameters 'set' and 'set' are incompatible.
@@ -138,4 +138,6 @@ TS2416 [ERROR]: Property '[Symbol.iterator]' in type 'NSet' is not assignable to
     at file://<tmpdir>/src/NSet.ts:56:3
 
 Found 5 errors.
+
+error: Type checking failed.
 
