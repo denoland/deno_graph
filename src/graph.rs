@@ -4765,6 +4765,22 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         jsr_url_provider: &dyn JsrUrlProvider,
         module_analyzer: &dyn ModuleAnalyzer,
       ) -> Result<PendingInfoResponse, ModuleError> {
+        async fn handle_success(
+          module_analyzer: &dyn ModuleAnalyzer,
+          specifier: Url,
+          options: ParseModuleAndSourceInfoOptions<'_>,
+        ) -> Result<PendingInfoResponse, ModuleError> {
+          let is_root = options.is_root;
+          parse_module_source_and_info(module_analyzer, options)
+            .await
+            .map(|module_source_and_info| PendingInfoResponse::Module {
+              specifier: specifier.clone(),
+              module_source_and_info,
+              pending_load: None,
+              is_root,
+            })
+        }
+
         if let Some((package_nv, fut)) = maybe_version_load_fut {
           let inner = fut.await.map_err(|err| {
             ModuleError::LoadingErr(
@@ -4854,33 +4870,64 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               content,
               specifier,
               maybe_headers,
-            } => parse_module_source_and_info(
-              module_analyzer,
-              ParseModuleAndSourceInfoOptions {
-                specifier: specifier.clone(),
-                maybe_headers,
-                content,
-                maybe_attribute_type: maybe_attribute_type.as_ref(),
-                maybe_referrer: maybe_range,
-                is_root,
-                is_dynamic_branch: is_dynamic,
-              },
-            )
-            .await
-            .map(|module_source_and_info| {
-              PendingInfoResponse::Module {
-                specifier: specifier.clone(),
-                module_source_and_info,
-                pending_load: None,
-                is_root,
-              }
-            }),
+            } => {
+              handle_success(
+                module_analyzer,
+                specifier.clone(),
+                ParseModuleAndSourceInfoOptions {
+                  specifier,
+                  maybe_headers,
+                  content,
+                  maybe_attribute_type: maybe_attribute_type.as_ref(),
+                  maybe_referrer: maybe_range,
+                  is_root,
+                  is_dynamic_branch: is_dynamic,
+                },
+              )
+              .await
+            }
           },
           Ok(None) => Err(ModuleError::Missing(
             load_specifier.clone(),
             maybe_range.cloned(),
           )),
           Err(LoadError::ChecksumIntegrity(err)) => {
+            if maybe_version_info.is_none() {
+              // attempt to cache bust because the remote server might have changed
+              let result = loader
+                .load(
+                  &load_specifier,
+                  LoadOptions {
+                    is_dynamic,
+                    was_dynamic_root,
+                    cache_setting: CacheSetting::Reload,
+                    maybe_checksum: maybe_checksum.clone(),
+                  },
+                )
+                .await;
+              if let Ok(Some(LoadResponse::Module {
+                content,
+                specifier,
+                maybe_headers,
+              })) = result
+              {
+                return handle_success(
+                  module_analyzer,
+                  specifier.clone(),
+                  ParseModuleAndSourceInfoOptions {
+                    specifier,
+                    maybe_headers,
+                    content,
+                    maybe_attribute_type: maybe_attribute_type.as_ref(),
+                    maybe_referrer: maybe_range,
+                    is_root,
+                    is_dynamic_branch: is_dynamic,
+                  },
+                )
+                .await;
+              }
+            }
+
             Err(ModuleError::LoadingErr(
               load_specifier.clone(),
               maybe_range.cloned(),

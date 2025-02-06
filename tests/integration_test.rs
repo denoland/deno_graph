@@ -13,6 +13,8 @@ use deno_graph::packages::JsrPackageInfo;
 use deno_graph::packages::JsrPackageInfoVersion;
 use deno_graph::packages::JsrPackageVersionInfo;
 use deno_graph::source::CacheSetting;
+use deno_graph::source::ChecksumIntegrityError;
+use deno_graph::source::LoadError;
 use deno_graph::source::LoadFuture;
 use deno_graph::source::LoadOptions;
 use deno_graph::source::LoadResponse;
@@ -386,6 +388,86 @@ async fn test_jsr_wasm_module() {
       .await;
     graph.valid().unwrap();
   }
+}
+
+#[tokio::test]
+async fn test_checksum_error_force_refresh() {
+  #[derive(Default)]
+  struct TestLoader {
+    requests: RefCell<Vec<(String, CacheSetting)>>,
+  }
+
+  impl deno_graph::source::Loader for TestLoader {
+    fn load(
+      &self,
+      specifier: &ModuleSpecifier,
+      options: LoadOptions,
+    ) -> LoadFuture {
+      self
+        .requests
+        .borrow_mut()
+        .push((specifier.to_string(), options.cache_setting));
+      let specifier = specifier.clone();
+      match specifier.as_str() {
+        "https://deno.land/mod.ts" => Box::pin(async move {
+          match options.cache_setting {
+            CacheSetting::Only => unreachable!(),
+            CacheSetting::Use => {
+              Err(LoadError::ChecksumIntegrity(ChecksumIntegrityError {
+                actual: "actual".to_string(),
+                expected: "expected".to_string(),
+              }))
+            }
+            CacheSetting::Reload => Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: b"import './other.js';".to_vec().into(),
+            })),
+          }
+        }),
+        "https://deno.land/other.js" => Box::pin(async move {
+          match options.cache_setting {
+            CacheSetting::Only => unreachable!(),
+            CacheSetting::Use => {
+              Err(LoadError::ChecksumIntegrity(ChecksumIntegrityError {
+                actual: "actual".to_string(),
+                expected: "expected".to_string(),
+              }))
+            }
+            CacheSetting::Reload => Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: b"console.log(1);".to_vec().into(),
+            })),
+          }
+        }),
+        _ => unreachable!(),
+      }
+    }
+  }
+
+  let loader = TestLoader::default();
+  let mut graph = ModuleGraph::new(GraphKind::All);
+  graph
+    .build(
+      vec![Url::parse("https://deno.land/mod.ts").unwrap()],
+      &loader,
+      Default::default(),
+    )
+    .await;
+  graph.valid().unwrap();
+  assert_eq!(
+    *loader.requests.borrow(),
+    vec![
+      ("https://deno.land/mod.ts".to_string(), CacheSetting::Use),
+      ("https://deno.land/mod.ts".to_string(), CacheSetting::Reload),
+      ("https://deno.land/other.js".to_string(), CacheSetting::Use),
+      (
+        "https://deno.land/other.js".to_string(),
+        CacheSetting::Reload
+      ),
+    ]
+  );
 }
 
 #[tokio::test]
