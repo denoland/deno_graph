@@ -73,14 +73,13 @@ mrii/rocket-io/0.1.3
 
 -- stderr --
 error: Error: [ERR_PACKAGE_PATH_NOT_EXPORTED] Package subpath './build/esm/socket' is not defined for types by "exports" in '<global_npm_dir>/socket.io-client/4.7.5/package.json' imported from 'file://<tmpdir>/src/types/socket-reserved-events.ts'
-    at Object.resolveModuleNameLiterals (ext:deno_tsc/97_ts_host.js:617:26)
-    at resolveModuleNamesWorker (ext:deno_tsc/00_typescript.js:126292:20)
-    at resolveNamesReusingOldState (ext:deno_tsc/00_typescript.js:126434:14)
-    at resolveModuleNamesReusingOldState (ext:deno_tsc/00_typescript.js:126390:12)
-    at processImportedModules (ext:deno_tsc/00_typescript.js:127877:118)
-    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:127652:7)
-    at findSourceFile (ext:deno_tsc/00_typescript.js:127503:20)
-    at processImportedModules (ext:deno_tsc/00_typescript.js:127903:11)
-    at findSourceFileWorker (ext:deno_tsc/00_typescript.js:127652:7)
-    at findSourceFile (ext:deno_tsc/00_typescript.js:127503:20)
-
+    at Object.resolveModuleNameLiterals (ext:deno_cli_tsc/97_ts_host.js:629:26)
+    at ext:deno_cli_tsc/97_ts_host.js:758:49
+    at spanned (ext:deno_cli_tsc/97_ts_host.js:16:12)
+    at Object.host.<computed> [as resolveModuleNameLiterals] (ext:deno_cli_tsc/97_ts_host.js:758:14)
+    at resolveModuleNamesWorker (ext:deno_cli_tsc/00_typescript.js:126323:20)
+    at resolveNamesReusingOldState (ext:deno_cli_tsc/00_typescript.js:126465:14)
+    at resolveModuleNamesReusingOldState (ext:deno_cli_tsc/00_typescript.js:126421:12)
+    at processImportedModules (ext:deno_cli_tsc/00_typescript.js:127908:118)
+    at findSourceFileWorker (ext:deno_cli_tsc/00_typescript.js:127683:7)
+    at findSourceFile (ext:deno_cli_tsc/00_typescript.js:127534:20)
