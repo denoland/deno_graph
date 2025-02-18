@@ -323,6 +323,7 @@ pub async fn js_create_graph(
         imports,
         reporter: None,
         executor: Default::default(),
+        jsr_version_resolver: None,
       },
     )
     .await;
