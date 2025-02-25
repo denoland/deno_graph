@@ -62,7 +62,7 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "test: using test = 5",
+                            "test: using test = 5;",
                         ),
                     ),
                     range: SourceRange {
