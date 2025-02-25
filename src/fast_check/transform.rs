@@ -15,7 +15,7 @@ use deno_ast::swc::common::comments::SingleThreadedCommentsMapInner;
 use deno_ast::swc::common::Spanned;
 use deno_ast::swc::common::SyntaxContext;
 use deno_ast::swc::common::DUMMY_SP;
-use deno_ast::swc::visit::VisitWith;
+use deno_ast::swc::ecma_visit::VisitWith;
 use deno_ast::EmitOptions;
 use deno_ast::ModuleSpecifier;
 use deno_ast::MultiThreadedComments;
@@ -312,6 +312,7 @@ impl<'a> FastCheckTransformer<'a> {
         span: DUMMY_SP,
         declare: false,
         global: false,
+        namespace: true,
         id: TsModuleName::Ident(Ident::new(
           swc_id.0,
           DUMMY_SP,
@@ -360,7 +361,7 @@ impl<'a> FastCheckTransformer<'a> {
       diagnostics: IndexMap<String, SourceRange>,
     }
 
-    impl deno_ast::swc::visit::Visit for VisitExpandoPropInits<'_> {
+    impl deno_ast::swc::ecma_visit::Visit for VisitExpandoPropInits<'_> {
       fn visit_ident(&mut self, ident: &Ident) {
         let (name, context) = ident.to_id();
         if context == self.parent_context && self.symbol.export(&name).is_some()
