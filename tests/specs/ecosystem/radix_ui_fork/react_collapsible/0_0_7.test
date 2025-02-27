@@ -88,26 +88,4 @@ radix-ui-fork/react-collapsible/0.0.7
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
-const Collapsible: React.ForwardRefExoticComponent<CollapsibleProps & React.RefAttributes<HTMLDivElement>> = {} as never;
-                                                                                          ~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/Collapsible.tsx:14:91
-
-TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
-const CollapsibleTrigger: React.ForwardRefExoticComponent<CollapsibleTriggerProps & React.RefAttributes<HTMLButtonElement>> = {} as never;
-                                                                                                        ~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/Collapsible.tsx:18:105
-
-TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
-const CollapsibleContent: React.ForwardRefExoticComponent<CollapsibleContentProps & React.RefAttributes<HTMLDivElement>> = {} as never;
-                                                                                                        ~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/Collapsible.tsx:25:105
-
-Found 3 errors.
-
-error: Type checking failed.
-
+== TYPE CHECK PASSED ==

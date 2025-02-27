@@ -88,26 +88,4 @@ radix-ui-fork/react-collection/0.0.8
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-TS2304 [ERROR]: Cannot find name 'HTMLElement'.
-type CollectionElement = HTMLElement;
-                         ~~~~~~~~~~~
-    at file://<tmpdir>/src/Collection.tsx:6:26
-
-TS2552 [ERROR]: Cannot find name 'HTMLElement'. Did you mean 'ItemElement'?
-type Collection<ItemElement extends HTMLElement, ItemData = {
-                                    ~~~~~~~~~~~
-    at file://<tmpdir>/src/Collection.tsx:15:37
-
-TS2552 [ERROR]: Cannot find name 'HTMLElement'. Did you mean 'ItemElement'?
-function createCollection<ItemElement extends HTMLElement, ItemData = {
-                                              ~~~~~~~~~~~
-    at file://<tmpdir>/src/Collection.tsx:26:47
-
-Found 3 errors.
-
-error: Type checking failed.
-
+== TYPE CHECK PASSED ==

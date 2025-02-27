@@ -88,21 +88,4 @@ radix-ui-fork/react-roving-focus/0.0.7
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
-const RovingFocusGroup: React.ForwardRefExoticComponent<Omit<RovingFocusGroupProps, "ref"> & React.RefAttributes<HTMLDivElement>> = {} as never;
-                                                                                                                 ~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/RovingFocusGroup.tsx:24:114
-
-TS2304 [ERROR]: Cannot find name 'HTMLSpanElement'.
-const RovingFocusGroupItem: React.ForwardRefExoticComponent<RovingFocusItemProps & React.RefAttributes<HTMLSpanElement>> = {} as never;
-                                                                                                       ~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/RovingFocusGroup.tsx:39:104
-
-Found 2 errors.
-
-error: Type checking failed.
-
+== TYPE CHECK PASSED ==
