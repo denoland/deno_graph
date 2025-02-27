@@ -89,26 +89,4 @@ radix-ui-fork/react-dismissable-layer/0.0.6
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-TS2304 [ERROR]: Cannot find name 'KeyboardEvent'.
-   */ onEscapeKeyDown?: (event: KeyboardEvent) => void;
-                                ~~~~~~~~~~~~~
-    at file://<tmpdir>/src/DismissableLayer.tsx:15:33
-
-TS2304 [ERROR]: Cannot find name 'PointerEvent'.
-  originalEvent: PointerEvent;
-                 ~~~~~~~~~~~~
-    at file://<tmpdir>/src/DismissableLayer.tsx:39:18
-
-TS2304 [ERROR]: Cannot find name 'FocusEvent'.
-  originalEvent: FocusEvent;
-                 ~~~~~~~~~~
-    at file://<tmpdir>/src/DismissableLayer.tsx:42:18
-
-Found 3 errors.
-
-error: Type checking failed.
-
+== TYPE CHECK PASSED ==

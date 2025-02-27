@@ -1884,7 +1884,7 @@ struct SymbolFiller<'a> {
   builder: &'a ModuleBuilder,
 }
 
-impl<'a> SymbolFiller<'a> {
+impl SymbolFiller<'_> {
   fn fill(&self, program: &Program) {
     let module_symbol = self.builder.create_new_symbol_for_root();
     module_symbol.add_decl(SymbolDecl::new(

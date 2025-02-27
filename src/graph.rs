@@ -1031,7 +1031,7 @@ pub struct JsonModule {
 impl JsonModule {
   /// Return the size in bytes of the content of the JSON module.
   pub fn size(&self) -> usize {
-    self.source.as_bytes().len()
+    self.source.len()
   }
 }
 
@@ -1274,7 +1274,7 @@ pub struct BuildOptions<'a> {
   pub resolver: Option<&'a dyn Resolver>,
 }
 
-impl<'a> Default for BuildOptions<'a> {
+impl Default for BuildOptions<'_> {
   fn default() -> Self {
     Self {
       is_dynamic: false,
@@ -1310,7 +1310,7 @@ pub enum CheckJsOption<'a> {
   Custom(&'a dyn CheckJsResolver),
 }
 
-impl<'a> CheckJsOption<'a> {
+impl CheckJsOption<'_> {
   pub fn resolve(&self, specifier: &ModuleSpecifier) -> bool {
     match self {
       CheckJsOption::True => true,
@@ -1476,7 +1476,7 @@ impl<'a, 'options> ModuleEntryIterator<'a, 'options> {
   }
 }
 
-impl<'a, 'options> Iterator for ModuleEntryIterator<'a, 'options> {
+impl<'a> Iterator for ModuleEntryIterator<'a, '_> {
   type Item = (&'a ModuleSpecifier, ModuleEntryRef<'a>);
 
   fn next(&mut self) -> Option<Self::Item> {
@@ -1642,7 +1642,7 @@ impl<'a, 'options> ModuleGraphErrorIterator<'a, 'options> {
   }
 }
 
-impl<'a, 'options> Iterator for ModuleGraphErrorIterator<'a, 'options> {
+impl Iterator for ModuleGraphErrorIterator<'_, '_> {
   type Item = ModuleGraphError;
 
   fn next(&mut self) -> Option<Self::Item> {
@@ -1973,7 +1973,7 @@ impl ModuleGraph {
     self
       .module_slots
       .get(specifier)
-      .map_or(false, |ms| matches!(ms, ModuleSlot::Module(_)))
+      .is_some_and(|ms| matches!(ms, ModuleSlot::Module(_)))
   }
 
   /// Returns any module errors found in the graph.

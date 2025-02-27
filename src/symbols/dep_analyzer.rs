@@ -39,8 +39,8 @@ use deno_ast::swc::ast::TsTypeParam;
 use deno_ast::swc::ast::TsTypeParamDecl;
 use deno_ast::swc::ast::TsTypeParamInstantiation;
 use deno_ast::swc::ast::VarDeclarator;
-use deno_ast::swc::visit::Visit;
-use deno_ast::swc::visit::VisitWith;
+use deno_ast::swc::ecma_visit::Visit;
+use deno_ast::swc::ecma_visit::VisitWith;
 
 use super::swc_helpers::ts_entity_name_to_parts;
 use super::swc_helpers::ts_qualified_name_parts;
