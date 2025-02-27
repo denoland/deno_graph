@@ -1972,7 +1972,8 @@ impl ModuleGraph {
     let specifier = self.resolve(specifier);
     self
       .module_slots
-      .get(specifier).is_some_and(|ms| matches!(ms, ModuleSlot::Module(_)))
+      .get(specifier)
+      .is_some_and(|ms| matches!(ms, ModuleSlot::Module(_)))
   }
 
   /// Returns any module errors found in the graph.
