@@ -416,7 +416,7 @@ dependencies = [
 [[package]]
 name = "deno_ast"
 version = "0.45.1"
-source = "git+https://github.com/dsherret/deno_ast?rev=77e6be69bedf1d93389f3c78f55c692f3eb91a2e#77e6be69bedf1d93389f3c78f55c692f3eb91a2e"
+source = "git+https://github.com/dsherret/deno_ast?rev=69305a5ea48d15096f863c9b5da22d8498146e66#69305a5ea48d15096f863c9b5da22d8498146e66"
 dependencies = [
  "base64 0.21.7",
  "deno_error",
@@ -451,7 +451,7 @@ dependencies = [
  "swc_visit_macros",
  "text_lines",
  "thiserror",
- "unicode-width",
+ "unicode-width 0.2.0",
  "url",
 ]
 
@@ -2178,7 +2178,7 @@ dependencies = [
  "swc_eq_ignore_macros",
  "swc_visit",
  "tracing",
- "unicode-width",
+ "unicode-width 0.1.14",
  "url",
 ]
 
@@ -2810,6 +2810,12 @@ name = "unicode-width"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7dd6e30e90baa6f72411720665d41d89b9a3d039dc45b8faea1ddd07f617f6af"
+
+[[package]]
+name = "unicode-width"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1fc81956842c57dac11422a97c3b8195a1ff727f06e85c84ed2e8aa277c9a0fd"
 
 [[package]]
 name = "untrusted"
