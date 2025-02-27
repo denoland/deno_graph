@@ -221,7 +221,7 @@ impl<'a> CapturingEsParser<'a> {
   }
 }
 
-impl<'a> EsParser for CapturingEsParser<'a> {
+impl EsParser for CapturingEsParser<'_> {
   fn parse_program(
     &self,
     options: ParseOptions,
@@ -333,7 +333,7 @@ impl<'a> ParserModuleAnalyzer<'a> {
   }
 }
 
-impl<'a> Default for ParserModuleAnalyzer<'a> {
+impl Default for ParserModuleAnalyzer<'_> {
   fn default() -> Self {
     Self {
       parser: &DefaultEsParser,
@@ -342,7 +342,7 @@ impl<'a> Default for ParserModuleAnalyzer<'a> {
 }
 
 #[async_trait::async_trait(?Send)]
-impl<'a> ModuleAnalyzer for ParserModuleAnalyzer<'a> {
+impl ModuleAnalyzer for ParserModuleAnalyzer<'_> {
   async fn analyze(
     &self,
     specifier: &deno_ast::ModuleSpecifier,

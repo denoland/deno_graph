@@ -315,7 +315,7 @@ struct RegistryUrlConverter<'a> {
   workspace_members: &'a [WorkspaceMember],
 }
 
-impl<'a> RegistryUrlConverter<'a> {
+impl RegistryUrlConverter<'_> {
   fn registry_package_url(&self, nv: &PackageNv) -> Url {
     if let Some(member) = self.workspace_members.iter().find(|m| {
       m.name == nv.name

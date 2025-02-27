@@ -55,7 +55,7 @@ pub struct Definition<'a> {
   pub symbol_decl: &'a SymbolDecl,
 }
 
-impl<'a> Definition<'a> {
+impl Definition<'_> {
   pub fn range(&self) -> &SourceRange {
     &self.symbol_decl.range
   }
@@ -754,7 +754,7 @@ pub struct ResolvedReExportAllPath<'a> {
   pub next: Box<ResolvedExportOrReExportAllPath<'a>>,
 }
 
-impl<'a> ResolvedReExportAllPath<'a> {
+impl ResolvedReExportAllPath<'_> {
   pub fn resolved_module(&self) -> ModuleInfoRef {
     match &*self.next {
       ResolvedExportOrReExportAllPath::Export(e) => e.module,
