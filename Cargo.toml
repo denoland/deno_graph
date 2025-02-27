@@ -89,4 +89,4 @@ lto = true
 opt-level = "z"
 
 [patch.crates-io]
-deno_ast = { git = "https://github.com/dsherret/deno_ast", rev = "c17d9e1d13e5d50e247c4c382520f7d66ca343ee" }
+deno_ast = { git = "https://github.com/dsherret/deno_ast", rev = "77e6be69bedf1d93389f3c78f55c692f3eb91a2e" }
