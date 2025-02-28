@@ -3802,9 +3802,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Ok(info) => {
           // resolve the best version out of the existing versions first
           let package_req = pending_resolution.package_ref.req();
-          match self.resolve_jsr_version(&info, package_req) {
-            Some(version) => {
-              // now queue a pending load for that version information
+          let package_nv = self
+            .graph
+            .packages
+            .mappings()
+            .get(package_req)
+            .cloned()
+            .or_else(|| {
+              let version = self.resolve_jsr_version(&info, package_req)?;
               let package_nv = PackageNv {
                 name: package_name.clone(),
                 version,
@@ -3813,7 +3818,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 .graph
                 .packages
                 .add_nv(package_req.clone(), package_nv.clone());
-
+              Some(package_nv)
+            });
+          match package_nv {
+            Some(package_nv) => {
+              // now queue a pending load for that version information
               self.queue_load_package_version_info(&package_nv);
               pending_version_resolutions.push(PendingJsrNvResolutionItem {
                 specifier: pending_resolution.specifier,

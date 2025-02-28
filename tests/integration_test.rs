@@ -688,14 +688,20 @@ await import(`./a/${test}`);
   .await;
 }
 
-#[test]
-fn test_fill_from_lockfile() {
+#[tokio::test]
+async fn test_fill_from_lockfile() {
   let mut graph = ModuleGraph::new(GraphKind::All);
   let redirects = [("https://example.com", "https://example.com/final")];
-  let specifiers = [(
-    JsrDepPackageReq::from_str("jsr:@scope/example").unwrap(),
-    "1.0.0",
-  )];
+  let specifiers = [
+    (
+      JsrDepPackageReq::from_str("jsr:@scope/example").unwrap(),
+      "1.0.0",
+    ),
+    (
+      JsrDepPackageReq::from_str("jsr:@scope/example@1.0.1").unwrap(),
+      "1.0.1",
+    ),
+  ];
   graph.fill_from_lockfile(FillFromLockfileOptions {
     redirects: redirects.iter().copied(),
     package_specifiers: specifiers.iter().map(|(k, v)| (k, *v)),
@@ -716,6 +722,69 @@ fn test_fill_from_lockfile() {
       .get(&PackageReq::from_str("@scope/example").unwrap())
       .unwrap(),
     PackageNv::from_str("@scope/example@1.0.0").unwrap(),
+  );
+
+  let mut loader = MemoryLoader::default();
+  loader.add_jsr_package_info(
+    "@scope/example",
+    &JsrPackageInfo {
+      versions: vec![
+        (
+          deno_semver::Version::parse_standard("1.0.0").unwrap(),
+          JsrPackageInfoVersion::default(),
+        ),
+        (
+          deno_semver::Version::parse_standard("1.0.1").unwrap(),
+          JsrPackageInfoVersion::default(),
+        ),
+      ]
+      .into_iter()
+      .collect(),
+    },
+  );
+  loader.add_jsr_version_info(
+    "@scope/example",
+    "1.0.0",
+    &JsrPackageVersionInfo {
+      exports: serde_json::json!({
+        ".": "./mod.ts"
+      }),
+      ..Default::default()
+    },
+  );
+  loader.add_jsr_version_info(
+    "@scope/example",
+    "1.0.1",
+    &JsrPackageVersionInfo {
+      exports: serde_json::json!({
+        ".": "./mod.ts"
+      }),
+      ..Default::default()
+    },
+  );
+  loader.add_source_with_text(
+    "https://jsr.io/@scope/example/1.0.0/mod.ts",
+    "// This is version 1.0.0 of this package.",
+  );
+  loader.add_source_with_text(
+    "https://jsr.io/@scope/example/1.0.1/mod.ts",
+    "// This is version 1.0.1 of this package.",
+  );
+  graph
+    .build(
+      // This should match 1.0.0 due to the first entry in the lockfile.
+      vec![Url::parse("jsr:/@scope/example").unwrap()],
+      &loader,
+      Default::default(),
+    )
+    .await;
+  graph.valid().unwrap();
+  let modules = graph.modules().collect::<Vec<_>>();
+  assert_eq!(modules.len(), 1);
+  let module = modules.into_iter().next().unwrap().js().unwrap();
+  assert_eq!(
+    module.source.as_ref(),
+    "// This is version 1.0.0 of this package."
   );
 }
 
