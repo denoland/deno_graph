@@ -1443,7 +1443,11 @@ impl<'a, 'options> ModuleEntryIterator<'a, 'options> {
       | MediaType::Tsx
       | MediaType::Json
       | MediaType::Wasm => true,
-      MediaType::Css | MediaType::SourceMap | MediaType::Unknown => false,
+      MediaType::Css
+      | MediaType::SourceMap
+      | MediaType::Html
+      | MediaType::Sql
+      | MediaType::Unknown => false,
       MediaType::JavaScript
       | MediaType::Jsx
       | MediaType::Mjs
@@ -2525,6 +2529,8 @@ pub(crate) async fn parse_module_source_and_info(
     MediaType::Css
     | MediaType::Json
     | MediaType::SourceMap
+    | MediaType::Html
+    | MediaType::Sql
     | MediaType::Unknown => Err(ModuleError::UnsupportedMediaType(
       opts.specifier,
       media_type,
@@ -2730,7 +2736,7 @@ pub(crate) fn parse_js_module_from_module_info(
   // import source was set by the @jsxImportSource pragma. This is done to
   // prevent a default import source types from being injected when the user
   // has explicitly overridden the import source in the file.
-  if matches!(media_type, MediaType::Jsx | MediaType::Tsx) {
+  if media_type.is_jsx() {
     let has_jsx_import_source_pragma = module_info.jsx_import_source.is_some();
     let res = module_info.jsx_import_source.or_else(|| {
       maybe_resolver.and_then(|r| {
