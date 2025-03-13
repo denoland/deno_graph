@@ -41,17 +41,4 @@ sxzz/ast-kit/0.12.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-TS2694 [ERROR]: Namespace '"file:<global_npm_dir>/@babel/types/7.24.5/lib/index-legacy.d.ts"' has no exported member 'ParentMaps'.
-    at file://<tmpdir>/src/walk.ts:16:124
-
-TS2694 [ERROR]: Namespace '"file:<global_npm_dir>/@babel/types/7.24.5/lib/index-legacy.d.ts"' has no exported member 'ParentMaps'.
-    at file://<tmpdir>/src/walk.ts:16:139
-
-Found 2 errors.
-
-error: Type checking failed.
-
+== TYPE CHECK PASSED ==
