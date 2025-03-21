@@ -175,6 +175,7 @@ pub struct TestBuilder {
   entry_point: String,
   entry_point_types: String,
   fast_check_cache: bool,
+  skip_dynamic_deps: bool,
   workspace_members: Vec<WorkspaceMember>,
   workspace_fast_check: bool,
   lockfile_jsr_packages: BTreeMap<PackageReq, PackageNv>,
@@ -189,6 +190,7 @@ impl TestBuilder {
       entry_point: "file:///mod.ts".to_string(),
       entry_point_types: "file:///mod.ts".to_string(),
       fast_check_cache: false,
+      skip_dynamic_deps: false,
       workspace_members: Default::default(),
       workspace_fast_check: false,
       lockfile_jsr_packages: Default::default(),
@@ -246,6 +248,12 @@ impl TestBuilder {
   }
 
   #[allow(unused)]
+  pub fn skip_dynamic_deps(&mut self, value: bool) -> &mut Self {
+    self.skip_dynamic_deps = value;
+    self
+  }
+
+  #[allow(unused)]
   pub fn ensure_locker(&mut self) -> &mut Self {
     self.locker.get_or_insert_with(Default::default);
     self
@@ -297,6 +305,7 @@ impl TestBuilder {
           npm_resolver: Some(&TestNpmResolver),
           locker: self.locker.as_mut().map(|l| l as _),
           resolver: Some(&resolver),
+          skip_dynamic_deps: self.skip_dynamic_deps,
           ..Default::default()
         },
       )

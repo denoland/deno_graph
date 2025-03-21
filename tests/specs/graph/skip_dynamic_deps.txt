@@ -1,0 +1,90 @@
+~~ {"skipDynamicDeps":true} ~~
+# https://localhost/mod.ts
+console.log(123);
+await import("https://localhost/other.ts");
+
+# https://localhost/other.ts
+console.log("This should not be loaded");
+
+# mod.ts
+import 'https://localhost/mod.ts'
+await import("https://localhost/other.ts");
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "https://localhost/mod.ts",
+          "code": {
+            "specifier": "https://localhost/mod.ts",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 33
+              }
+            }
+          }
+        },
+        {
+          "specifier": "https://localhost/other.ts",
+          "code": {
+            "specifier": "https://localhost/other.ts",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 1,
+                "character": 13
+              },
+              "end": {
+                "line": 1,
+                "character": 41
+              }
+            }
+          },
+          "isDynamic": true
+        }
+      ],
+      "size": 78,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "https://localhost/other.ts",
+          "code": {
+            "specifier": "https://localhost/other.ts",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 1,
+                "character": 13
+              },
+              "end": {
+                "line": 1,
+                "character": 41
+              }
+            }
+          },
+          "isDynamic": true
+        }
+      ],
+      "size": 62,
+      "mediaType": "TypeScript",
+      "specifier": "https://localhost/mod.ts"
+    }
+  ],
+  "redirects": {}
+}
