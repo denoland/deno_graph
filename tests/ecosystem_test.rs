@@ -290,6 +290,7 @@ async fn test_version(
       &loader,
       BuildOptions {
         is_dynamic: false,
+        skip_dynamic_deps: false,
         module_analyzer: &module_analyzer,
         file_system: &NullFileSystem,
         locker: None,

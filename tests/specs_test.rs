@@ -91,6 +91,7 @@ fn run_graph_test(test: &CollectedTest) {
   builder.lockfile_jsr_packages(spec.lockfile_jsr_packages.clone());
 
   if let Some(options) = &spec.options {
+    builder.skip_dynamic_deps(options.skip_dynamic_deps);
     builder.workspace_fast_check(options.workspace_fast_check);
     builder.fast_check_cache(options.fast_check_cache);
     if let Some(checksums) = options.remote_checksums.as_ref() {
@@ -325,6 +326,9 @@ pub struct SpecOptions {
   #[serde(default)]
   #[serde(skip_serializing_if = "is_false")]
   pub fast_check_cache: bool,
+  #[serde(default)]
+  #[serde(skip_serializing_if = "is_false")]
+  pub skip_dynamic_deps: bool,
 }
 
 fn is_false(v: &bool) -> bool {

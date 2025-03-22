@@ -1255,6 +1255,8 @@ pub struct BuildFastCheckTypeGraphOptions<'a> {
 
 pub struct BuildOptions<'a> {
   pub is_dynamic: bool,
+  /// Skip loading statically analyzable dynamic dependencies.
+  pub skip_dynamic_deps: bool,
   /// Additional imports that should be brought into the scope of
   /// the module graph to add to the graph's "imports". This may
   /// be extra modules such as TypeScript's "types" option or JSX
@@ -1278,6 +1280,7 @@ impl Default for BuildOptions<'_> {
   fn default() -> Self {
     Self {
       is_dynamic: false,
+      skip_dynamic_deps: false,
       imports: Default::default(),
       executor: Default::default(),
       locker: None,
@@ -3606,6 +3609,7 @@ impl FillPassMode {
 
 struct Builder<'a, 'graph> {
   in_dynamic_branch: bool,
+  skip_dynamic_deps: bool,
   was_dynamic_root: bool,
   file_system: &'a FileSystem,
   jsr_url_provider: &'a dyn JsrUrlProvider,
@@ -3636,6 +3640,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     };
     let mut builder = Self {
       in_dynamic_branch: options.is_dynamic,
+      skip_dynamic_deps: options.skip_dynamic_deps,
       was_dynamic_root: options.is_dynamic,
       file_system: options.file_system,
       jsr_url_provider: options.jsr_url_provider,
@@ -5187,6 +5192,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) {
     for dep in dependencies.values_mut() {
+      if dep.is_dynamic && self.skip_dynamic_deps {
+        continue;
+      }
+
       if matches!(self.graph.graph_kind, GraphKind::All | GraphKind::CodeOnly)
         || dep.maybe_type.is_none()
       {
