@@ -935,6 +935,16 @@ impl Module {
     }
   }
 
+  pub fn media_type(&self) -> MediaType {
+    match self {
+      Module::Js(module) => module.media_type,
+      Module::Json(module) => module.media_type,
+      Module::Wasm(_) => MediaType::Wasm,
+      Module::Node(_) => MediaType::JavaScript,
+      Module::Npm(_) | Module::External(_) => MediaType::Unknown,
+    }
+  }
+
   pub fn json(&self) -> Option<&JsonModule> {
     if let Module::Json(module) = &self {
       Some(module)
@@ -985,7 +995,45 @@ impl Module {
       | crate::Module::External(_) => None,
     }
   }
+
+  pub fn maybe_types_dependency(&self) -> Option<&TypesDependency> {
+    match self {
+      Module::Js(js_module) => js_module.maybe_types_dependency.as_ref(),
+      Module::Wasm(_)
+      | Module::Json(_)
+      | Module::Npm(_)
+      | Module::Node(_)
+      | Module::External(_) => None,
+    }
+  }
+
+  pub fn dependencies(&self) -> &IndexMap<String, Dependency> {
+    match self {
+      Module::Js(js_module) => &js_module.dependencies,
+      Module::Wasm(wasm_module) => &wasm_module.dependencies,
+      Module::Npm(_)
+      | Module::Node(_)
+      | Module::External(_)
+      | Module::Json(_) => EMPTY_DEPS.get_or_init(Default::default),
+    }
+  }
+
+  pub fn dependencies_prefer_fast_check(
+    &self,
+  ) -> &IndexMap<String, Dependency> {
+    match self {
+      Module::Js(js_module) => js_module.dependencies_prefer_fast_check(),
+      Module::Wasm(wasm_module) => &wasm_module.dependencies,
+      Module::Npm(_)
+      | Module::Node(_)
+      | Module::External(_)
+      | Module::Json(_) => EMPTY_DEPS.get_or_init(Default::default),
+    }
+  }
 }
+
+static EMPTY_DEPS: std::sync::OnceLock<IndexMap<String, Dependency>> =
+  std::sync::OnceLock::new();
 
 /// An npm package entrypoint.
 #[derive(Debug, Clone, Serialize)]
@@ -1488,25 +1536,16 @@ impl<'a> Iterator for ModuleEntryIterator<'a, '_> {
 
   fn next(&mut self) -> Option<Self::Item> {
     match self.previous_module.take() {
-      Some(ModuleEntryRef::Module(module)) => match module {
-        Module::Js(module) => {
-          let check_types = self.kind.include_types()
-            && self.is_checkable(&module.specifier, module.media_type);
-          let module_deps = if check_types && self.prefer_fast_check_graph {
-            module.dependencies_prefer_fast_check()
-          } else {
-            &module.dependencies
-          };
-          self.analyze_module_deps(module_deps);
-        }
-        Module::Wasm(module) => {
-          self.analyze_module_deps(&module.dependencies);
-        }
-        Module::Json(_)
-        | Module::External(_)
-        | Module::Npm(_)
-        | Module::Node(_) => {}
-      },
+      Some(ModuleEntryRef::Module(module)) => {
+        let check_types = self.kind.include_types()
+          && self.is_checkable(module.specifier(), module.media_type());
+        let module_deps = if check_types && self.prefer_fast_check_graph {
+          module.dependencies_prefer_fast_check()
+        } else {
+          module.dependencies()
+        };
+        self.analyze_module_deps(module_deps);
+      }
       Some(ModuleEntryRef::Redirect(specifier)) => {
         if self.seen.insert(specifier) {
           self.visiting.push_front(specifier);
@@ -1583,7 +1622,7 @@ impl<'a, 'options> ModuleGraphErrorIterator<'a, 'options> {
 
   fn check_resolution(
     &self,
-    module: &JsModule,
+    module: &Module,
     kind: ResolutionKind,
     specifier_text: &str,
     resolution: &Resolution,
@@ -1591,7 +1630,7 @@ impl<'a, 'options> ModuleGraphErrorIterator<'a, 'options> {
   ) -> Option<ModuleGraphError> {
     match resolution {
       Resolution::Ok(resolved) => {
-        let referrer_scheme = module.specifier.scheme();
+        let referrer_scheme = module.specifier().scheme();
         let specifier_scheme = resolved.specifier.scheme();
         if referrer_scheme == "https" && specifier_scheme == "http" {
           Some(ModuleGraphError::for_resolution_kind(
@@ -1660,9 +1699,9 @@ impl Iterator for ModuleGraphErrorIterator<'_, '_> {
 
       if let Some((_, module_entry)) = self.iterator.next() {
         match module_entry {
-          ModuleEntryRef::Module(Module::Js(module)) => {
+          ModuleEntryRef::Module(module) => {
             if kind.include_types() {
-              if let Some(dep) = module.maybe_types_dependency.as_ref() {
+              if let Some(dep) = module.maybe_types_dependency().as_ref() {
                 if let Some(err) = self.check_resolution(
                   module,
                   ResolutionKind::Types,
@@ -1678,11 +1717,11 @@ impl Iterator for ModuleGraphErrorIterator<'_, '_> {
             let check_types = kind.include_types()
               && self
                 .iterator
-                .is_checkable(&module.specifier, module.media_type);
+                .is_checkable(module.specifier(), module.media_type());
             let module_deps = if check_types && prefer_fast_check_graph {
               module.dependencies_prefer_fast_check()
             } else {
-              &module.dependencies
+              module.dependencies()
             };
             for (specifier_text, dep) in module_deps {
               if follow_dynamic || !dep.is_dynamic {
@@ -1720,7 +1759,9 @@ impl Iterator for ModuleGraphErrorIterator<'_, '_> {
                 .push(ModuleGraphError::ModuleError(error.clone()));
             }
           }
-          _ => {}
+          ModuleEntryRef::Redirect(_) => {
+            // do nothing
+          }
         }
       } else {
         break; // no more modules, stop searching
@@ -6045,6 +6086,87 @@ mod tests {
       errors[0],
       ModuleGraphError::ModuleError(ModuleError::MissingDynamic(..))
     ));
+  }
+
+  #[tokio::test]
+  async fn missing_wasm_module_dep_is_error() {
+    struct TestLoader;
+    impl Loader for TestLoader {
+      fn load(
+        &self,
+        specifier: &ModuleSpecifier,
+        _options: LoadOptions,
+      ) -> LoadFuture {
+        let specifier = specifier.clone();
+        match specifier.as_str() {
+          "file:///foo.js" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: b"import './math_with_import.wasm';".to_vec().into(),
+            }))
+          }),
+          "file:///math_with_import.wasm" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              content: include_bytes!(
+                "../tests/testdata/math_with_import.wasm"
+              )
+              .to_vec()
+              .into(),
+            }))
+          }),
+          "file:///math.ts" => Box::pin(async move { Ok(None) }),
+          _ => unreachable!(),
+        }
+      }
+    }
+    let loader = TestLoader;
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    let roots = vec![Url::parse("file:///foo.js").unwrap()];
+    graph
+      .build(roots.clone(), &loader, Default::default())
+      .await;
+
+    // should return the not found error for the Wasm module
+    let errors = graph
+      .walk(
+        roots.iter(),
+        WalkOptions {
+          follow_dynamic: false,
+          kind: GraphKind::All,
+          check_js: CheckJsOption::True,
+          prefer_fast_check_graph: false,
+        },
+      )
+      .errors()
+      .collect::<Vec<_>>();
+    assert_eq!(errors.len(), 1);
+    match &errors[0] {
+      ModuleGraphError::ModuleError(ModuleError::Missing(specifier, range)) => {
+        assert_eq!(specifier.as_str(), "file:///math.ts");
+        assert_eq!(
+          range.clone(),
+          Some(Range {
+            specifier: Url::parse("file:///math_with_import.wasm").unwrap(),
+            // this range is the range in the generated .d.ts file
+            range: PositionRange {
+              start: Position {
+                line: 0,
+                character: 92,
+              },
+              end: Position {
+                line: 0,
+                character: 103,
+              }
+            },
+            resolution_mode: Some(ResolutionMode::Import),
+          })
+        );
+      }
+      _ => unreachable!(),
+    }
   }
 
   #[tokio::test]
