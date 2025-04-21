@@ -44,7 +44,7 @@ harness = false
 async-trait = "0.1.68"
 capacity_builder = "0.5.0"
 data-url = "0.3.0"
-deno_ast = { version = "0.46.2", features = ["dep_analysis", "emit"] }
+deno_ast = { version = "0.46.3", features = ["dep_analysis", "emit"] }
 deno_media_type = { version = "0.2.8", features = ["decoding", "data_url", "module_specifier"] }
 deno_unsync.workspace = true
 deno_path_util = "0.3.0"
