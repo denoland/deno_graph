@@ -99,21 +99,6 @@ struct TestNpmResolver;
 
 #[async_trait(?Send)]
 impl NpmResolver for TestNpmResolver {
-  fn resolve_builtin_node_module(
-    &self,
-    _specifier: &ModuleSpecifier,
-  ) -> Result<Option<String>, deno_graph::source::UnknownBuiltInNodeModuleError>
-  {
-    Ok(None)
-  }
-
-  fn on_resolve_bare_builtin_node_module(
-    &self,
-    _module_name: &str,
-    _range: &deno_graph::Range,
-  ) {
-  }
-
   fn load_and_cache_npm_package_info(&self, _package_name: &str) {}
 
   async fn resolve_pkg_reqs(
@@ -323,7 +308,6 @@ impl TestBuilder {
           jsr_url_provider: Default::default(),
           es_parser: Some(&capturing_analyzer),
           resolver: None,
-          npm_resolver: None,
           workspace_fast_check: if self.workspace_fast_check {
             WorkspaceFastCheckOption::Enabled(&self.workspace_members)
           } else {

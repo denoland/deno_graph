@@ -512,20 +512,6 @@ pub struct NpmResolvePkgReqsResult {
 
 #[async_trait(?Send)]
 pub trait NpmResolver: fmt::Debug {
-  /// Gets the builtin node module name from the specifier (ex. "node:fs" -> "fs").
-  fn resolve_builtin_node_module(
-    &self,
-    specifier: &ModuleSpecifier,
-  ) -> Result<Option<String>, UnknownBuiltInNodeModuleError>;
-
-  /// The callback when a bare specifier is resolved to a builtin node module.
-  /// (Note: used for printing warnings to discourage that usage of bare specifiers)
-  fn on_resolve_bare_builtin_node_module(
-    &self,
-    module_name: &str,
-    range: &Range,
-  );
-
   /// This is an optimization for the implementation to start loading and caching
   /// the npm registry package information ahead of time.
   fn load_and_cache_npm_package_info(&self, package_name: &str);
@@ -538,11 +524,6 @@ pub trait NpmResolver: fmt::Debug {
     &self,
     package_req: &[PackageReq],
   ) -> NpmResolvePkgReqsResult;
-
-  /// Returns true when bare node specifier resoluion is enabled
-  fn enables_bare_builtin_node_module(&self) -> bool {
-    false
-  }
 }
 
 pub fn load_data_url(

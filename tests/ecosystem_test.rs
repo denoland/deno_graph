@@ -325,7 +325,6 @@ async fn test_version(
     jsr_url_provider: &PassthroughJsrUrlProvider,
     es_parser: Some(&module_analyzer),
     resolver: None,
-    npm_resolver: None,
     workspace_fast_check: WorkspaceFastCheckOption::Enabled(&workspace_members),
   });
 
