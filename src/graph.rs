@@ -274,9 +274,6 @@ pub enum ModuleLoadError {
   Jsr(#[from] JsrLoadError),
   #[class(inherit)]
   #[error(transparent)]
-  NodeUnknownBuiltinModule(#[from] UnknownBuiltInNodeModuleError),
-  #[class(inherit)]
-  #[error(transparent)]
   Npm(#[from] NpmLoadError),
   #[class(generic)]
   #[error("Too many redirects.")]

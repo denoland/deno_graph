@@ -489,14 +489,6 @@ pub trait Resolver: fmt::Debug {
   }
 }
 
-#[derive(Error, Debug, Clone, deno_error::JsError)]
-#[class("NotFound")]
-#[error("Unknown built-in \"node:\" module: {module_name}")]
-pub struct UnknownBuiltInNodeModuleError {
-  /// Name of the invalid module.
-  pub module_name: String,
-}
-
 #[derive(Debug)]
 pub struct NpmResolvePkgReqsResult {
   /// The individual results of resolving the package requirements.
