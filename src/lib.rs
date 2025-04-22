@@ -21,7 +21,6 @@ pub mod source;
 
 use source::FileSystem;
 use source::JsrUrlProvider;
-use source::NpmResolver;
 use source::Resolver;
 
 use std::collections::HashMap;
@@ -120,7 +119,6 @@ pub struct ParseModuleOptions<'a> {
   pub file_system: &'a FileSystem,
   pub jsr_url_provider: &'a dyn JsrUrlProvider,
   pub maybe_resolver: Option<&'a dyn Resolver>,
-  pub maybe_npm_resolver: Option<&'a dyn NpmResolver>,
   pub module_analyzer: &'a dyn ModuleAnalyzer,
 }
 
@@ -147,7 +145,6 @@ pub async fn parse_module(
     options.file_system,
     options.jsr_url_provider,
     options.maybe_resolver,
-    options.maybe_npm_resolver,
     graph::ParseModuleOptions {
       graph_kind: options.graph_kind,
       module_source_and_info,
@@ -165,7 +162,6 @@ pub struct ParseModuleFromAstOptions<'a> {
   pub file_system: &'a FileSystem,
   pub jsr_url_provider: &'a dyn JsrUrlProvider,
   pub maybe_resolver: Option<&'a dyn Resolver>,
-  pub maybe_npm_resolver: Option<&'a dyn NpmResolver>,
 }
 
 /// Parse an individual module from an AST, returning the module.
@@ -180,7 +176,6 @@ pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> JsModule {
     options.file_system,
     options.jsr_url_provider,
     options.maybe_resolver,
-    options.maybe_npm_resolver,
   )
 }
 
@@ -195,7 +190,6 @@ mod tests {
   use self::graph::CheckJsOption;
 
   use super::*;
-  use async_trait::async_trait;
   use deno_error::JsErrorBox;
   use indexmap::IndexMap;
   use indexmap::IndexSet;
@@ -204,7 +198,6 @@ mod tests {
   use source::tests::MockResolver;
   use source::CacheInfo;
   use source::MemoryLoader;
-  use source::NpmResolvePkgReqsResult;
   use source::ResolutionMode;
   use source::Source;
   use source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
@@ -1267,96 +1260,8 @@ console.log(a);
     }
   }
 
-  #[derive(Debug, Clone)]
-  struct MockNpmResolver {
-    enables_bare_builtin_node_module: bool,
-  }
-
-  #[async_trait(?Send)]
-  impl NpmResolver for MockNpmResolver {
-    fn resolve_builtin_node_module(
-      &self,
-      specifier: &deno_ast::ModuleSpecifier,
-    ) -> Result<Option<String>, source::UnknownBuiltInNodeModuleError> {
-      if specifier.to_string() == "node:path" {
-        Ok(Some("path".to_string()))
-      } else {
-        Ok(None)
-      }
-    }
-
-    fn on_resolve_bare_builtin_node_module(
-      &self,
-      module_name: &str,
-      range: &Range,
-    ) {
-      let specifier = &range.specifier;
-      let start = range.range.start;
-      let line = start.line + 1;
-      let column = start.character;
-      log::warn!("Warning: Resolving \"{module_name}\" as \"node:{module_name}\" at {specifier}:{line}:{column}. If you want to use a built-in Node module, add a \"node:\" prefix.");
-    }
-
-    fn load_and_cache_npm_package_info(&self, _package_name: &str) {
-      // do nothing for these tests
-    }
-
-    async fn resolve_pkg_reqs(
-      &self,
-      _package_reqs: &[deno_semver::package::PackageReq],
-    ) -> NpmResolvePkgReqsResult {
-      todo!()
-    }
-
-    fn enables_bare_builtin_node_module(&self) -> bool {
-      self.enables_bare_builtin_node_module
-    }
-  }
-
-  #[derive(Debug, Clone)]
-  struct MockImportMapResolver {}
-
-  impl Resolver for MockImportMapResolver {
-    fn default_jsx_import_source(
-      &self,
-      _referrer: &ModuleSpecifier,
-    ) -> Option<String> {
-      None
-    }
-
-    fn jsx_import_source_module(&self, _referrer: &ModuleSpecifier) -> &str {
-      source::DEFAULT_JSX_IMPORT_SOURCE_MODULE
-    }
-
-    fn resolve(
-      &self,
-      specifier_text: &str,
-      referrer_range: &Range,
-      _kind: ResolutionKind,
-    ) -> Result<deno_ast::ModuleSpecifier, source::ResolveError> {
-      use import_map::ImportMapErrorKind;
-      Err(source::ResolveError::ImportMap(
-        ImportMapErrorKind::UnmappedBareSpecifier(
-          specifier_text.to_string(),
-          Some(referrer_range.specifier.to_string()),
-        )
-        .into_box(),
-      ))
-    }
-
-    fn resolve_types(
-      &self,
-      _specifier: &deno_ast::ModuleSpecifier,
-    ) -> Result<
-      Option<(deno_ast::ModuleSpecifier, Option<Range>)>,
-      source::ResolveError,
-    > {
-      Ok(None)
-    }
-  }
-
   #[tokio::test]
-  async fn test_builtin_node_module_as_bare_specifier() {
+  async fn test_builtin_node_module() {
     let expectation = json!({
       "roots": [
         "file:///a/test.ts"
@@ -1366,7 +1271,7 @@ console.log(a);
           "kind": "esm",
           "dependencies": [
             {
-              "specifier": "path",
+              "specifier": "node:path",
               "code": {
                 "specifier": "node:path",
                 "resolutionMode": "import",
@@ -1377,13 +1282,13 @@ console.log(a);
                   },
                   "end": {
                     "line": 0,
-                    "character": 13
+                    "character": 18
                   }
                 }
               },
             }
           ],
-          "size": 14,
+          "size": 19,
           "mediaType": "TypeScript",
           "specifier": "file:///a/test.ts"
         },
@@ -1395,10 +1300,6 @@ console.log(a);
       ],
       "redirects": {}
     });
-    let mock_npm_resolver = MockNpmResolver {
-      enables_bare_builtin_node_module: true,
-    };
-    let mock_import_map_resolver = MockImportMapResolver {};
 
     let loader = setup(
       vec![(
@@ -1406,7 +1307,7 @@ console.log(a);
         Source::Module {
           specifier: "file:///a/test.ts",
           maybe_headers: None,
-          content: r#"import "path";"#,
+          content: r#"import "node:path";"#,
         },
       )],
       vec![],
@@ -1415,52 +1316,10 @@ console.log(a);
       ModuleSpecifier::parse("file:///a/test.ts").expect("bad url");
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
-      .build(
-        vec![root_specifier.clone()],
-        &loader,
-        BuildOptions {
-          npm_resolver: Some(&mock_npm_resolver),
-          ..Default::default()
-        },
-      )
+      .build(vec![root_specifier.clone()], &loader, Default::default())
       .await;
-    assert!(graph.valid().is_ok());
+    graph.valid().unwrap();
     assert_eq!(json!(graph), expectation);
-    let mut graph = ModuleGraph::new(GraphKind::All);
-    graph
-      .build(
-        vec![root_specifier.clone()],
-        &loader,
-        BuildOptions {
-          resolver: Some(&mock_import_map_resolver),
-          npm_resolver: Some(&mock_npm_resolver),
-          ..Default::default()
-        },
-      )
-      .await;
-    assert!(graph.valid().is_ok());
-    assert_eq!(json!(graph), expectation);
-
-    let mock_npm_resolver = MockNpmResolver {
-      enables_bare_builtin_node_module: false,
-    };
-    let mut graph = ModuleGraph::new(GraphKind::All);
-    graph
-      .build(
-        vec![root_specifier.clone()],
-        &loader,
-        BuildOptions {
-          npm_resolver: Some(&mock_npm_resolver),
-          ..Default::default()
-        },
-      )
-      .await;
-    let res = graph.valid();
-    assert!(res.is_err());
-    assert_eq!(
-      res.unwrap_err().to_string(),
-      "Relative import path \"path\" not prefixed with / or ./ or ../"
-    );
   }
 
   #[tokio::test]
@@ -3285,7 +3144,6 @@ export const foo = 'bar';"#,
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
       maybe_resolver: None,
-      maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
     .await
@@ -3304,7 +3162,6 @@ export const foo = 'bar';"#,
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
       maybe_resolver: None,
-      maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
     .await
@@ -3328,7 +3185,6 @@ export const foo = 'bar';"#,
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
       maybe_resolver: None,
-      maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
     .await
@@ -3400,7 +3256,6 @@ export const foo = 'bar';"#,
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
       maybe_resolver: None,
-      maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
     .await
@@ -3474,7 +3329,6 @@ export const foo = 'bar';"#,
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
       maybe_resolver: None,
-      maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
     .await
@@ -3514,7 +3368,6 @@ export const foo = 'bar';"#,
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
       maybe_resolver: None,
-      maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
     .await
@@ -3568,7 +3421,6 @@ export const foo = 'bar';"#,
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
       maybe_resolver: Some(&R),
-      maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
     .await
@@ -3622,7 +3474,6 @@ export const foo = 'bar';"#,
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
       maybe_resolver: Some(&R),
-      maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
     .await
@@ -3674,7 +3525,6 @@ export const foo = 'bar';"#,
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
       maybe_resolver: Some(&R),
-      maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
     .await
@@ -3745,7 +3595,6 @@ export const foo = 'bar';"#,
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
       maybe_resolver: Some(&R),
-      maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
     .await
@@ -3789,7 +3638,6 @@ export const foo = 'bar';"#,
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
       maybe_resolver: None,
-      maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
     .await;
@@ -3818,7 +3666,6 @@ export function a(a) {
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
       maybe_resolver: None,
-      maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
     .await
@@ -3876,7 +3723,6 @@ export function a(a) {
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
       maybe_resolver: None,
-      maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
     .await
@@ -3915,7 +3761,6 @@ export function a(a: A): B {
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
       maybe_resolver: None,
-      maybe_npm_resolver: None,
       module_analyzer: Default::default(),
     })
     .await

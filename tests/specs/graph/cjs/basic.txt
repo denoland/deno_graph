@@ -178,8 +178,9 @@ module.exports = 5;
       "specifier": "file:///other.cjs"
     },
     {
+      "kind": "node",
       "specifier": "node:module",
-      "error": "Module not found \"node:module\"."
+      "moduleName": "module"
     }
   ],
   "redirects": {}

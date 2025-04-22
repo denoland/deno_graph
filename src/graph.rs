@@ -274,9 +274,6 @@ pub enum ModuleLoadError {
   Jsr(#[from] JsrLoadError),
   #[class(inherit)]
   #[error(transparent)]
-  NodeUnknownBuiltinModule(#[from] UnknownBuiltInNodeModuleError),
-  #[class(inherit)]
-  #[error(transparent)]
   Npm(#[from] NpmLoadError),
   #[class(generic)]
   #[error("Too many redirects.")]
@@ -802,7 +799,6 @@ impl Dependency {
     specifier: &str,
     jsr_url_provider: &dyn JsrUrlProvider,
     maybe_resolver: Option<&dyn Resolver>,
-    maybe_npm_resolver: Option<&dyn NpmResolver>,
   ) -> Self {
     let maybe_code = self
       .maybe_code
@@ -814,7 +810,6 @@ impl Dependency {
           ResolutionKind::Execution,
           jsr_url_provider,
           maybe_resolver,
-          maybe_npm_resolver,
         )
       })
       .unwrap_or_default();
@@ -831,7 +826,6 @@ impl Dependency {
           ResolutionKind::Types,
           jsr_url_provider,
           maybe_resolver,
-          maybe_npm_resolver,
         )
       })
       .unwrap_or_default();
@@ -858,7 +852,6 @@ impl TypesDependency {
     &self,
     jsr_url_provider: &dyn JsrUrlProvider,
     maybe_resolver: Option<&dyn Resolver>,
-    maybe_npm_resolver: Option<&dyn NpmResolver>,
   ) -> Self {
     let dependency = self
       .dependency
@@ -870,7 +863,6 @@ impl TypesDependency {
           ResolutionKind::Types,
           jsr_url_provider,
           maybe_resolver,
-          maybe_npm_resolver,
         )
       })
       .unwrap_or_default();
@@ -1245,7 +1237,6 @@ impl GraphImport {
     imports: Vec<String>,
     jsr_url_provider: &dyn JsrUrlProvider,
     maybe_resolver: Option<&dyn Resolver>,
-    maybe_npm_resolver: Option<&dyn NpmResolver>,
   ) -> Self {
     let dependencies = imports
       .into_iter()
@@ -1261,7 +1252,6 @@ impl GraphImport {
           ResolutionKind::Types,
           jsr_url_provider,
           maybe_resolver,
-          maybe_npm_resolver,
         );
         (
           import,
@@ -1296,7 +1286,6 @@ pub struct BuildFastCheckTypeGraphOptions<'a> {
   pub jsr_url_provider: &'a dyn JsrUrlProvider,
   pub es_parser: Option<&'a dyn crate::EsParser>,
   pub resolver: Option<&'a dyn Resolver>,
-  pub npm_resolver: Option<&'a dyn NpmResolver>,
   /// Whether to fill workspace members with fast check TypeScript data.
   pub workspace_fast_check: WorkspaceFastCheckOption<'a>,
 }
@@ -1943,7 +1932,6 @@ impl ModuleGraph {
             &NullFileSystem,
             options.jsr_url_provider,
             options.resolver,
-            options.npm_resolver,
           );
           FastCheckTypeModuleSlot::Module(Box::new(FastCheckTypeModule {
             dependencies,
@@ -2270,7 +2258,6 @@ fn resolve(
   resolution_kind: ResolutionKind,
   jsr_url_provider: &dyn JsrUrlProvider,
   maybe_resolver: Option<&dyn Resolver>,
-  maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> Resolution {
   let response = if let Some(resolver) = maybe_resolver {
     resolver.resolve(specifier_text, &referrer_range, resolution_kind)
@@ -2291,39 +2278,6 @@ fn resolve(
               range: referrer_range.clone(),
             },
           ));
-        }
-      }
-    }
-  }
-  if let Some(npm_resolver) = maybe_npm_resolver {
-    if npm_resolver.enables_bare_builtin_node_module() {
-      use import_map::ImportMapErrorKind;
-      use ResolveError::*;
-      use SpecifierError::*;
-      let res_ref = response.as_ref();
-      if matches!(res_ref, Err(Specifier(ImportPrefixMissing { .. })))
-        || matches!(
-          res_ref,
-          Err(ImportMap(error)) if matches!(
-            error.as_kind(),
-            ImportMapErrorKind::UnmappedBareSpecifier(_, _)
-          )
-        )
-      {
-        if let Ok(specifier) =
-          ModuleSpecifier::parse(&format!("node:{}", specifier_text))
-        {
-          if npm_resolver.resolve_builtin_node_module(&specifier).is_ok() {
-            npm_resolver.on_resolve_bare_builtin_node_module(
-              specifier_text,
-              &referrer_range,
-            );
-            return Resolution::from_resolve_result(
-              Ok(specifier),
-              specifier_text,
-              referrer_range,
-            );
-          }
         }
       }
     }
@@ -2594,7 +2548,6 @@ pub(crate) fn parse_module(
   file_system: &FileSystem,
   jsr_url_provider: &dyn JsrUrlProvider,
   maybe_resolver: Option<&dyn Resolver>,
-  maybe_npm_resolver: Option<&dyn NpmResolver>,
   options: ParseModuleOptions,
 ) -> Module {
   match options.module_source_and_info {
@@ -2622,7 +2575,6 @@ pub(crate) fn parse_module(
       file_system,
       jsr_url_provider,
       maybe_resolver,
-      maybe_npm_resolver,
     )),
     ModuleSourceAndInfo::Wasm {
       specifier,
@@ -2638,7 +2590,6 @@ pub(crate) fn parse_module(
       file_system,
       jsr_url_provider,
       maybe_resolver,
-      maybe_npm_resolver,
     )),
   }
 }
@@ -2654,7 +2605,6 @@ pub(crate) fn parse_js_module_from_module_info(
   file_system: &FileSystem,
   jsr_url_provider: &dyn JsrUrlProvider,
   maybe_resolver: Option<&dyn Resolver>,
-  maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> JsModule {
   let mut module = JsModule::new(specifier, source);
   module.is_script = module_info.is_script;
@@ -2676,7 +2626,6 @@ pub(crate) fn parse_js_module_from_module_info(
           ResolutionKind::Types,
           jsr_url_provider,
           maybe_resolver,
-          maybe_npm_resolver,
         ),
       });
     }
@@ -2700,7 +2649,6 @@ pub(crate) fn parse_js_module_from_module_info(
               ResolutionKind::Types,
               jsr_url_provider,
               maybe_resolver,
-              maybe_npm_resolver,
             );
           }
           dep.imports.push(Import {
@@ -2730,7 +2678,6 @@ pub(crate) fn parse_js_module_from_module_info(
             ResolutionKind::Types,
             jsr_url_provider,
             maybe_resolver,
-            maybe_npm_resolver,
           );
           if is_untyped {
             module.maybe_types_dependency = Some(TypesDependency {
@@ -2816,7 +2763,6 @@ pub(crate) fn parse_js_module_from_module_info(
           ResolutionKind::Execution,
           jsr_url_provider,
           maybe_resolver,
-          maybe_npm_resolver,
         );
       }
       if graph_kind.include_types() && dep.maybe_type.is_none() {
@@ -2850,7 +2796,6 @@ pub(crate) fn parse_js_module_from_module_info(
             ResolutionKind::Types,
             jsr_url_provider,
             maybe_resolver,
-            maybe_npm_resolver,
           );
           dep.maybe_deno_types_specifier = Some(specifier_text);
         } else {
@@ -2860,7 +2805,6 @@ pub(crate) fn parse_js_module_from_module_info(
             ResolutionKind::Types,
             jsr_url_provider,
             maybe_resolver,
-            maybe_npm_resolver,
           );
           if types_resolution.maybe_specifier()
             != dep.maybe_code.maybe_specifier()
@@ -2901,7 +2845,6 @@ pub(crate) fn parse_js_module_from_module_info(
           ResolutionKind::Types,
           jsr_url_provider,
           maybe_resolver,
-          maybe_npm_resolver,
         );
       }
       dep.imports.push(Import {
@@ -2931,7 +2874,6 @@ pub(crate) fn parse_js_module_from_module_info(
             ResolutionKind::Types,
             jsr_url_provider,
             maybe_resolver,
-            maybe_npm_resolver,
           ),
         });
       }
@@ -2991,7 +2933,6 @@ pub(crate) fn parse_js_module_from_module_info(
     file_system,
     jsr_url_provider,
     maybe_resolver,
-    maybe_npm_resolver,
   );
 
   // Return the module as a valid module
@@ -3008,7 +2949,6 @@ fn parse_wasm_module_from_module_info(
   file_system: &FileSystem,
   jsr_url_provider: &dyn JsrUrlProvider,
   maybe_resolver: Option<&dyn Resolver>,
-  maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) -> WasmModule {
   let mut module = WasmModule {
     specifier,
@@ -3026,7 +2966,6 @@ fn parse_wasm_module_from_module_info(
     file_system,
     jsr_url_provider,
     maybe_resolver,
-    maybe_npm_resolver,
   );
   module
 }
@@ -3041,7 +2980,6 @@ fn fill_module_dependencies(
   file_system: &FileSystem,
   jsr_url_provider: &dyn JsrUrlProvider,
   maybe_resolver: Option<&dyn Resolver>,
-  maybe_npm_resolver: Option<&dyn NpmResolver>,
 ) {
   for desc in dependencies {
     let (imports, types_specifier) = match desc {
@@ -3178,7 +3116,6 @@ fn fill_module_dependencies(
             ResolutionKind::Types,
             jsr_url_provider,
             maybe_resolver,
-            maybe_npm_resolver,
           );
         }
       }
@@ -3190,7 +3127,6 @@ fn fill_module_dependencies(
             ResolutionKind::Types,
             jsr_url_provider,
             maybe_resolver,
-            maybe_npm_resolver,
           );
         }
       } else if dep.maybe_code.is_none() {
@@ -3202,7 +3138,6 @@ fn fill_module_dependencies(
           ResolutionKind::Execution,
           jsr_url_provider,
           maybe_resolver,
-          maybe_npm_resolver,
         );
         dep.is_dynamic = import.is_dynamic;
       } else {
@@ -3219,7 +3154,6 @@ fn fill_module_dependencies(
           ResolutionKind::Types,
           jsr_url_provider,
           maybe_resolver,
-          maybe_npm_resolver,
         );
         // only bother setting if the resolved specifier
         // does not match the code specifier
@@ -3813,7 +3747,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         imports,
         self.jsr_url_provider,
         self.resolver,
-        self.npm_resolver,
       );
       for dep in graph_import.dependencies.values() {
         if let Resolution::Ok(resolved) = &dep.maybe_type {
@@ -4682,25 +4615,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             NpmLoadError::PackageReqReferenceParse(err).into(),
           ))
         }),
-      _ => {
-        if let Some(npm_resolver) = self.npm_resolver {
-          match npm_resolver.resolve_builtin_node_module(specifier) {
-            Ok(Some(builtin_module)) => {
-              return Ok(LoadSpecifierKind::Node(builtin_module))
-            }
-            Ok(None) => {}
-            Err(err) => {
-              return Err(Box::new(ModuleError::LoadingErr(
-                specifier.clone(),
-                maybe_range.cloned(),
-                err.into(),
-              )))
-            }
-          }
-        }
-
-        Ok(LoadSpecifierKind::Url)
-      }
+      "node" => Ok(LoadSpecifierKind::Node(specifier.path().to_string())),
+      _ => Ok(LoadSpecifierKind::Url),
     }
   }
 
@@ -5174,7 +5090,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       self.file_system,
       self.jsr_url_provider,
       self.resolver,
-      self.npm_resolver,
       ParseModuleOptions {
         graph_kind: self.graph.graph_kind,
         module_source_and_info,
@@ -5843,7 +5758,7 @@ mod tests {
       ..Default::default()
     };
     let new_dependency =
-      dependency.with_new_resolver("./b.ts", Default::default(), None, None);
+      dependency.with_new_resolver("./b.ts", Default::default(), None);
     assert_eq!(
       new_dependency,
       Dependency {
@@ -5884,7 +5799,7 @@ mod tests {
       })),
     };
     let new_types_dependency =
-      types_dependency.with_new_resolver(Default::default(), None, None);
+      types_dependency.with_new_resolver(Default::default(), None);
     assert_eq!(
       new_types_dependency,
       TypesDependency {
