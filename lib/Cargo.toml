@@ -16,7 +16,6 @@ crate-type = ["cdylib"]
 [dependencies]
 console_error_panic_hook = "0.1.7"
 deno_graph = { path = "../", default-features = false }
-getrandom = { version = "*", features = ["js"] }
 futures = "0.3.17"
 js-sys = "0.3.68"
 serde = { version = "1.0.130", features = ["derive", "rc"] }
