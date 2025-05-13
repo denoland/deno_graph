@@ -152,47 +152,5 @@ TS2578 [ERROR]: Unused '@ts-expect-error' directive.
                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/ruta_core.ts:4:44
 
-TS1170 [ERROR]: A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
-  [KEY_PAGES]: RouteOptions['page'][];
-  ~~~~~~~~~~~
-    at file://<tmpdir>/src/ruta_core.ts:84:3
-
-TS1170 [ERROR]: A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
-  [KEY_ERRORS]: [parent?: RouteOptions['error'], own?: RouteOptions['error']];
-  ~~~~~~~~~~~~
-    at file://<tmpdir>/src/ruta_core.ts:85:3
-
-TS1170 [ERROR]: A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
-  [KEY_LOAD_FNS]: RouteOptions['load'][];
-  ~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/ruta_core.ts:86:3
-
-TS1170 [ERROR]: A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
-  [KEY_PARAMS_FNS]: RouteOptions['parse_params'][];
-  ~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/ruta_core.ts:87:3
-
-TS1170 [ERROR]: A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
-  [KEY_SEARCH_FNS]: RouteOptions['parse_search'][];
-  ~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/ruta_core.ts:88:3
-
-TS1170 [ERROR]: A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
-  [KEY_URL_PATTERN]?: URLPattern;
-  ~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/ruta_core.ts:89:3
-
-TS1170 [ERROR]: A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
-  [KEY_PAGES_RESOLVED]: boolean;
-  ~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/ruta_core.ts:90:3
-
-TS1170 [ERROR]: A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
-  [KEY_HAS_LAYOUT]: boolean;
-  ~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/ruta_core.ts:91:3
-
-Found 9 errors.
-
 error: Type checking failed.
 
