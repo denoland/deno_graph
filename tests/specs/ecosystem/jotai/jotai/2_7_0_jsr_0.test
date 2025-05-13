@@ -36,17 +36,10 @@ jotai/jotai/2.7.0-jsr.0
 -- stdout --
 
 -- stderr --
-TS1170 [ERROR]: A computed property name in a type literal must refer to an expression whose type is a literal type or a 'unique symbol' type.
-  [Symbol.observable]?: () => ObservableLike<T> | undefined;
-  ~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/vanilla/utils/atomWithObservable.ts:12:3
-
 TS2339 [ERROR]: Property 'observable' does not exist on type 'SymbolConstructor'.
   [Symbol.observable]?: () => ObservableLike<T> | undefined;
           ~~~~~~~~~~
     at file://<tmpdir>/src/vanilla/utils/atomWithObservable.ts:12:11
-
-Found 2 errors.
 
 error: Type checking failed.
 

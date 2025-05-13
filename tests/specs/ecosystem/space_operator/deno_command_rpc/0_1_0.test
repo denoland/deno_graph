@@ -1,25 +1,34 @@
 space-operator/deno-command-rpc/0.1.0
 -- deno.lock --
 {
-  "version": "3",
-  "packages": {
-    "specifiers": {
-      "jsr:@space-operator/flow-lib@^0.3.0": "jsr:@space-operator/flow-lib@0.3.0",
-      "jsr:@std/encoding@^0.220.1": "jsr:@std/encoding@0.220.1"
+  "version": "5",
+  "specifiers": {
+    "jsr:@space-operator/flow-lib@0.3": "0.3.0",
+    "jsr:@std/encoding@~0.220.1": "0.220.1",
+    "npm:@types/node@*": "22.15.15"
+  },
+  "jsr": {
+    "@space-operator/flow-lib@0.3.0": {
+      "integrity": "ced0335c9420afa5dec8c8be1af3aedf328bddea6c8e901babe63731ffca107e",
+      "dependencies": [
+        "jsr:@std/encoding"
+      ]
     },
-    "jsr": {
-      "@space-operator/flow-lib@0.3.0": {
-        "integrity": "ced0335c9420afa5dec8c8be1af3aedf328bddea6c8e901babe63731ffca107e",
-        "dependencies": [
-          "jsr:@std/encoding@^0.220.1"
-        ]
-      },
-      "@std/encoding@0.220.1": {
-        "integrity": "8dc38dd72e36cd68857a5837e24eb09a64bb296b96c295239c75eec17d45d23f"
-      }
+    "@std/encoding@0.220.1": {
+      "integrity": "8dc38dd72e36cd68857a5837e24eb09a64bb296b96c295239c75eec17d45d23f"
     }
   },
-  "remote": {}
+  "npm": {
+    "@types/node@22.15.15": {
+      "integrity": "sha512-R5muMcZob3/Jjchn5LcO8jdKwSCbzqmPB6ruBxMcf9kbxtniZHP327s6C37iOfuw8mbKK3cAQa7sEl7afLrQ8A==",
+      "dependencies": [
+        "undici-types"
+      ]
+    },
+    "undici-types@6.21.0": {
+      "integrity": "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="
+    }
+  }
 }
 
 ===
