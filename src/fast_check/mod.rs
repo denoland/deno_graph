@@ -533,7 +533,7 @@ pub fn build_fast_check_type_graph<'a>(
           let source_hash = graph
             .get(specifier)
             .and_then(|m| m.source())
-            .map(|s| fast_insecure_hash(s.as_bytes()))
+            .map(|s| fast_insecure_hash(s.get().unwrap().as_bytes()))
             .unwrap_or(0);
           if errors.is_empty() {
             let module = module_result.as_ref().ok().unwrap();
@@ -561,7 +561,7 @@ pub fn build_fast_check_type_graph<'a>(
           let source_hash = graph
             .get(specifier)
             .and_then(|m| m.source())
-            .map(|s| fast_insecure_hash(s.as_bytes()))
+            .map(|s| fast_insecure_hash(s.get().unwrap().as_bytes()))
             .unwrap_or(0);
           package_cache_items.push((
             specifier.clone(),

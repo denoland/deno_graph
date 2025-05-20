@@ -520,7 +520,7 @@ impl<'a> PublicRangeFinder<'a> {
         .graph
         .get(specifier)
         .and_then(|m| m.source())
-        .map(|s| fast_insecure_hash(s.as_bytes()))
+        .map(|s| fast_insecure_hash(s.get().unwrap().as_bytes()))
         .unwrap_or(0);
       if hash != module_item.source_hash() {
         return false;
