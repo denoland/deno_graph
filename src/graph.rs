@@ -1063,10 +1063,12 @@ impl<T: ?Sized> SourceCell<T> {
     Self(Mutex::new(Some(value)))
   }
 
+  /// Gets the value found in the cell.
   pub fn get(&self) -> Result<Arc<T>, SourceCellValueNotExistsError> {
     self.0.lock().clone().ok_or(SourceCellValueNotExistsError)
   }
 
+  /// Takes the value out of the cell.
   pub fn take(&self) -> Result<Arc<T>, SourceCellValueNotExistsError> {
     self.0.lock().take().ok_or(SourceCellValueNotExistsError)
   }
