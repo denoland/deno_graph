@@ -3750,12 +3750,6 @@
     "allFastCheck": true
   },
   {
-    "scope": "campfire",
-    "name": "dialog",
-    "version": "0.0.1",
-    "allFastCheck": true
-  },
-  {
     "scope": "cargo",
     "name": "assemble",
     "version": "0.0.1",
