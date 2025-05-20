@@ -1743,7 +1743,7 @@ export function a(a) {
     let data_specifier = ModuleSpecifier::parse("data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;").unwrap();
     let module = graph.get(&data_specifier).unwrap().js().unwrap();
     assert_eq!(
-      module.source.as_ref().get().unwrap().to_string(),
+      module.source.as_ref(),
       r#"export * from "https://example.com/c.ts";"#,
     );
   }
