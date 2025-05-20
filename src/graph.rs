@@ -63,6 +63,7 @@ use futures::stream::StreamExt;
 use futures::FutureExt;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
+use parking_lot::Mutex;
 use serde::ser::SerializeSeq;
 use serde::ser::SerializeStruct;
 use serde::Deserialize;
@@ -977,7 +978,7 @@ impl Module {
     }
   }
 
-  pub fn source(&self) -> Option<&Arc<str>> {
+  pub fn source(&self) -> Option<&SourceCell<str>> {
     match self {
       crate::Module::Js(m) => Some(&m.source),
       crate::Module::Json(m) => Some(&m.source),
@@ -1024,6 +1025,55 @@ impl Module {
   }
 }
 
+#[derive(Debug, Error)]
+#[error("Value in text source cell was taken. This is a bug in the use of deno_graph. Please report this as an issue.")]
+pub struct SourceCellValueNotExistsError;
+
+#[derive(Debug)]
+pub struct SourceCell<T: ?Sized>(Mutex<Option<Arc<T>>>);
+
+impl Serialize for SourceCell<str> {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    let len = match &*self.0.lock() {
+      Some(arc_str) => arc_str.len() as u32,
+      None => 0,
+    };
+    serializer.serialize_u32(len)
+  }
+}
+
+impl Serialize for SourceCell<[u8]> {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    let len = match &*self.0.lock() {
+      Some(bytes) => bytes.len() as u32,
+      None => 0,
+    };
+    serializer.serialize_u32(len)
+  }
+}
+
+impl<T: ?Sized> SourceCell<T> {
+  pub fn new(value: Arc<T>) -> Self {
+    Self(Mutex::new(Some(value)))
+  }
+
+  /// Gets the value found in the cell.
+  pub fn get(&self) -> Result<Arc<T>, SourceCellValueNotExistsError> {
+    self.0.lock().clone().ok_or(SourceCellValueNotExistsError)
+  }
+
+  /// Takes the value out of the cell.
+  pub fn take(&self) -> Result<Arc<T>, SourceCellValueNotExistsError> {
+    self.0.lock().take().ok_or(SourceCellValueNotExistsError)
+  }
+}
+
 static EMPTY_DEPS: std::sync::OnceLock<IndexMap<String, Dependency>> =
   std::sync::OnceLock::new();
 
@@ -1061,8 +1111,8 @@ pub struct JsonModule {
   pub specifier: ModuleSpecifier,
   #[serde(flatten, skip_serializing_if = "Option::is_none")]
   pub maybe_cache_info: Option<CacheInfo>,
-  #[serde(rename = "size", serialize_with = "serialize_source")]
-  pub source: Arc<str>,
+  #[serde(rename = "size")]
+  pub source: Arc<SourceCell<str>>,
   // todo(#240): This will always be MediaType::Json, but it's currently
   // used in the --json output. It's redundant though.
   pub media_type: MediaType,
@@ -1070,8 +1120,8 @@ pub struct JsonModule {
 
 impl JsonModule {
   /// Return the size in bytes of the content of the JSON module.
-  pub fn size(&self) -> usize {
-    self.source.len()
+  pub fn size(&self) -> Result<usize, SourceCellValueNotExistsError> {
+    self.source.get().map(|v| v.len())
   }
 }
 
@@ -1102,8 +1152,8 @@ pub struct JsModule {
   pub dependencies: IndexMap<String, Dependency>,
   #[serde(flatten, skip_serializing_if = "Option::is_none")]
   pub maybe_cache_info: Option<CacheInfo>,
-  #[serde(rename = "size", serialize_with = "serialize_source")]
-  pub source: Arc<str>,
+  #[serde(rename = "size")]
+  pub source: Arc<SourceCell<str>>,
   #[serde(rename = "typesDependency", skip_serializing_if = "Option::is_none")]
   pub maybe_types_dependency: Option<TypesDependency>,
   #[serde(skip_serializing_if = "is_media_type_unknown")]
@@ -1119,7 +1169,7 @@ impl JsModule {
       is_script: false,
       dependencies: Default::default(),
       maybe_cache_info: None,
-      source,
+      source: Arc::new(SourceCell::new(source)),
       maybe_types_dependency: None,
       media_type: MediaType::Unknown,
       specifier,
@@ -1128,8 +1178,8 @@ impl JsModule {
   }
 
   /// Return the size in bytes of the content of the module.
-  pub fn size(&self) -> usize {
-    self.source.len()
+  pub fn size(&self) -> Result<usize, SourceCellValueNotExistsError> {
+    self.source.get().map(|v| v.len())
   }
 
   pub fn fast_check_diagnostics(&self) -> Option<&Vec<FastCheckDiagnostic>> {
@@ -1167,8 +1217,8 @@ pub struct WasmModule {
     serialize_with = "serialize_dependencies"
   )]
   pub dependencies: IndexMap<String, Dependency>,
-  #[serde(rename = "size", serialize_with = "serialize_source_bytes")]
-  pub source: Arc<[u8]>,
+  #[serde(rename = "size")]
+  pub source: Arc<SourceCell<[u8]>>,
   #[serde(skip_serializing)]
   pub source_dts: Arc<str>,
   #[serde(flatten, skip_serializing_if = "Option::is_none")]
@@ -1177,8 +1227,8 @@ pub struct WasmModule {
 
 impl WasmModule {
   /// Return the size in bytes of the content of the module.
-  pub fn size(&self) -> usize {
-    self.source.len()
+  pub fn size(&self) -> Result<usize, SourceCellValueNotExistsError> {
+    self.source.get().map(|s| s.len())
   }
 }
 
@@ -2554,7 +2604,7 @@ pub(crate) fn parse_module(
     ModuleSourceAndInfo::Json { specifier, source } => {
       Module::Json(JsonModule {
         maybe_cache_info: None,
-        source,
+        source: Arc::new(SourceCell::new(source)),
         media_type: MediaType::Json,
         specifier,
       })
@@ -2953,7 +3003,7 @@ fn parse_wasm_module_from_module_info(
   let mut module = WasmModule {
     specifier,
     dependencies: Default::default(),
-    source,
+    source: Arc::new(SourceCell::new(source)),
     source_dts,
     maybe_cache_info: None,
   };
@@ -4016,7 +4066,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                         None, // no charset for JSR
                       ) {
                         Ok(source) => {
-                          module.source = source;
+                          module.source = Arc::new(SourceCell::new(source));
                         }
                         Err(err) => *slot = ModuleSlot::Err(*err),
                       }
@@ -4028,7 +4078,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                         None, // no charset for JSR
                       ) {
                         Ok(source) => {
-                          module.source = source;
+                          module.source = Arc::new(SourceCell::new(source));
                         }
                         Err(err) => *slot = ModuleSlot::Err(*err),
                       }
@@ -4036,7 +4086,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     Module::Wasm(module) => {
                       match wasm_module_to_dts(&content) {
                         Ok(source_dts) => {
-                          module.source = content.clone();
+                          module.source =
+                            Arc::new(SourceCell::new(content.clone()));
                           module.source_dts = source_dts.into();
                         }
                         Err(err) => {
@@ -5531,26 +5582,6 @@ where
   seq.end()
 }
 
-fn serialize_source<S>(
-  source: &Arc<str>,
-  serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-  S: Serializer,
-{
-  serializer.serialize_u32(source.len() as u32)
-}
-
-fn serialize_source_bytes<S>(
-  source: &Arc<[u8]>,
-  serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-  S: Serializer,
-{
-  serializer.serialize_u32(source.len() as u32)
-}
-
 #[cfg(test)]
 mod tests {
   use crate::packages::JsrPackageInfoVersion;
@@ -6795,8 +6826,10 @@ mod tests {
       unreachable!();
     };
     let dts = fsm.dts.unwrap();
-    let source_map =
-      SourceMap::single(module.specifier.clone(), module.source.to_string());
+    let source_map = SourceMap::single(
+      module.specifier.clone(),
+      module.source.get().unwrap().to_string(),
+    );
     let EmittedSourceText { text, .. } = emit(
       (&dts.program).into(),
       &dts.comments.as_single_threaded(),
@@ -6881,7 +6914,7 @@ mod tests {
       let dts = fsm.dts.unwrap();
       let source_map = SourceMap::single(
         module.specifier().clone(),
-        module.source().unwrap().to_string(),
+        module.source().unwrap().get().unwrap().to_string(),
       );
       let EmittedSourceText { text, .. } = emit(
         (&dts.program).into(),
