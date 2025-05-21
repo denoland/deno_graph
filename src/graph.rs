@@ -2111,12 +2111,11 @@ impl ModuleGraph {
       }
     }
 
-    // remove any unwalked modules
+    // Remove any unwalked items. Use retain rather than replace for these
+    // in order to maintain the original order
     self
       .module_slots
       .retain(|specifier, _| seen_pending.has_seen(specifier));
-
-    // use retain rather than replace for these in order to maintain the original order
     self.npm_packages.retain(|nv| found_nvs.contains(nv));
     self
       .redirects
