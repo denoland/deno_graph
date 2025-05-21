@@ -95,7 +95,7 @@ impl BuildResult {
 }
 
 #[derive(Debug)]
-struct TestNpmResolver;
+pub struct TestNpmResolver;
 
 #[async_trait(?Send)]
 impl NpmResolver for TestNpmResolver {

@@ -9,6 +9,7 @@ use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::TypeScriptReference;
 use crate::analyzer::TypeScriptTypesResolutionMode;
+use crate::collections::SeenPendingCollection;
 #[cfg(feature = "fast_check")]
 use crate::fast_check::FastCheckDtsModule;
 use crate::jsr::JsrMetadataStore;
@@ -173,6 +174,12 @@ impl Range {
   pub fn includes(&self, position: Position) -> bool {
     self.range.includes(position)
   }
+}
+
+#[derive(Debug, Default)]
+pub struct PruneOptions {
+  pub keep_dynamic_imports: bool,
+  pub keep_type_graph: bool,
 }
 
 #[derive(Debug, Clone, Error, JsError)]
@@ -1991,6 +1998,131 @@ impl ModuleGraph {
     new_graph.has_node_specifier = self.has_node_specifier;
 
     new_graph
+  }
+
+  pub fn prune(&mut self, options: PruneOptions) {
+    let remove_dynamic_imports = !options.keep_dynamic_imports;
+    let remove_types =
+      !options.keep_type_graph && self.graph_kind.include_types();
+    if !remove_dynamic_imports && !remove_types {
+      return;
+    }
+
+    if remove_types {
+      self.graph_kind = GraphKind::CodeOnly;
+    }
+
+    let specifiers_count = self.specifiers_count();
+    let mut seen_pending =
+      SeenPendingCollection::with_capacity(specifiers_count);
+    seen_pending.extend(self.roots.iter().cloned());
+    let mut found_nvs = HashSet::with_capacity(self.npm_packages.len());
+    let mut has_node_specifier = false;
+    let mut seen_redirects = HashSet::with_capacity(self.redirects.len());
+
+    let handle_dependencies =
+      |seen_pending: &mut SeenPendingCollection<Url>,
+       dependencies: &mut IndexMap<String, Dependency>| {
+        if remove_dynamic_imports {
+          dependencies.retain(|_, dependency| !dependency.is_dynamic);
+        }
+
+        for dependency in dependencies.values_mut() {
+          if remove_types {
+            dependency.maybe_deno_types_specifier = None;
+            dependency.maybe_type = Resolution::None;
+          }
+          if let Some(url) = dependency.get_code() {
+            seen_pending.add(url.clone());
+          }
+          if let Some(url) = dependency.get_type() {
+            seen_pending.add(url.clone());
+          }
+        }
+      };
+
+    if remove_types {
+      // these are always types
+      self.imports.clear();
+    } else {
+      for import in self.imports.values_mut() {
+        handle_dependencies(&mut seen_pending, &mut import.dependencies)
+      }
+    }
+
+    // walk the graph
+    while let Some(specifier) = seen_pending.next_pending() {
+      let specifier = match self.redirects.get(&specifier) {
+        Some(mut redirected_specifier) => {
+          if !seen_redirects.insert(specifier.clone()) {
+            continue;
+          }
+
+          let maybe_specifier = loop {
+            match self.redirects.get(redirected_specifier) {
+              Some(specifier) => {
+                if !seen_redirects.insert(redirected_specifier.clone()) {
+                  break None;
+                }
+                redirected_specifier = specifier;
+              }
+              None => break Some(redirected_specifier.clone()),
+            }
+          };
+          match maybe_specifier {
+            Some(specifier) => specifier,
+            None => continue,
+          }
+        }
+        None => specifier, // avoids a clone in the common case
+      };
+      let Some(module) = self.module_slots.get_mut(&specifier) else {
+        continue;
+      };
+      let module = match module {
+        ModuleSlot::Module(module) => module,
+        ModuleSlot::Err(_) | ModuleSlot::Pending => {
+          continue;
+        }
+      };
+      match module {
+        Module::Js(js_module) => {
+          if remove_types {
+            js_module.fast_check = None;
+            js_module.maybe_types_dependency = None;
+          }
+          handle_dependencies(&mut seen_pending, &mut js_module.dependencies);
+        }
+        Module::Wasm(wasm_module) => {
+          if remove_types {
+            wasm_module.source_dts = Default::default();
+          }
+          handle_dependencies(&mut seen_pending, &mut wasm_module.dependencies);
+        }
+        Module::Npm(module) => {
+          found_nvs.insert(module.nv_reference.nv().clone());
+        }
+        Module::Node(_) => {
+          has_node_specifier = true;
+        }
+        Module::Json(_) | Module::External(_) => {
+          // ignore
+        }
+      }
+    }
+
+    // remove any unwalked modules
+    self
+      .module_slots
+      .retain(|specifier, _| seen_pending.has_seen(specifier));
+
+    // remove any unwalked npm nvs (use retain rather than replace in
+    // order to maintain the original order)
+    self.npm_packages.retain(|nv| found_nvs.contains(nv));
+    self
+      .redirects
+      .retain(|redirect, _| seen_redirects.contains(redirect));
+    self.has_node_specifier = has_node_specifier;
   }
 
   /// Iterates over all the module entries in the module graph searching from the provided roots.

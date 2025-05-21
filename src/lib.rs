@@ -7,6 +7,7 @@
 
 mod analyzer;
 mod ast;
+mod collections;
 mod graph;
 mod jsr;
 mod module_specifier;
@@ -83,6 +84,7 @@ pub use graph::ModuleLoadError;
 pub use graph::NpmLoadError;
 pub use graph::NpmModule;
 pub use graph::Position;
+pub use graph::PruneOptions;
 pub use graph::Range;
 pub use graph::Resolution;
 pub use graph::ResolutionError;
