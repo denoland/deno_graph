@@ -2116,8 +2116,7 @@ impl ModuleGraph {
       .module_slots
       .retain(|specifier, _| seen_pending.has_seen(specifier));
 
-    // remove any unwalked npm nvs (use retain rather than replace in
-    // order to maintain the original order)
+    // use retain rather than replace for these in order to maintain the original order
     self.npm_packages.retain(|nv| found_nvs.contains(nv));
     self
       .redirects
