@@ -176,10 +176,10 @@ impl Range {
   }
 }
 
-#[derive(Debug, Default)]
-pub struct PruneOptions {
-  pub keep_dynamic_imports: bool,
-  pub keep_type_graph: bool,
+#[derive(Debug, Copy, Clone)]
+pub enum PruneMode {
+  TypesAndNonRemoteDynamic,
+  TypesOnly,
 }
 
 #[derive(Debug, Clone, Error, JsError)]
@@ -2000,17 +2000,22 @@ impl ModuleGraph {
     new_graph
   }
 
-  pub fn prune(&mut self, options: PruneOptions) {
-    let remove_dynamic_imports = !options.keep_dynamic_imports;
-    let remove_types =
-      !options.keep_type_graph && self.graph_kind.include_types();
-    if !remove_dynamic_imports && !remove_types {
-      return;
+  pub fn prune(&mut self, mode: PruneMode) {
+    fn is_remote_specifier(specifier: &ModuleSpecifier) -> bool {
+      matches!(specifier.scheme(), "http" | "https" | "jsr")
     }
 
-    if remove_types {
-      self.graph_kind = GraphKind::CodeOnly;
-    }
+    let remove_dynamic_imports = match mode {
+      PruneMode::TypesAndNonRemoteDynamic => true,
+      PruneMode::TypesOnly => {
+        if !self.graph_kind.include_types() {
+          return; // nothing to do
+        }
+        false
+      }
+    };
+
+    self.graph_kind = GraphKind::CodeOnly;
 
     let specifiers_count = self.specifiers_count();
     let mut seen_pending =
@@ -2024,14 +2029,18 @@ impl ModuleGraph {
       |seen_pending: &mut SeenPendingCollection<Url>,
        dependencies: &mut IndexMap<String, Dependency>| {
         if remove_dynamic_imports {
-          dependencies.retain(|_, dependency| !dependency.is_dynamic);
+          dependencies.retain(|_, dependency| {
+            !dependency.is_dynamic
+              || dependency
+                .get_code()
+                .map(is_remote_specifier)
+                .unwrap_or(false)
+          });
         }
 
         for dependency in dependencies.values_mut() {
-          if remove_types {
-            dependency.maybe_deno_types_specifier = None;
-            dependency.maybe_type = Resolution::None;
-          }
+          dependency.maybe_deno_types_specifier = None;
+          dependency.maybe_type = Resolution::None;
           if let Some(url) = dependency.get_code() {
             seen_pending.add(url.clone());
           }
@@ -2041,14 +2050,8 @@ impl ModuleGraph {
         }
       };
 
-    if remove_types {
-      // these are always types
-      self.imports.clear();
-    } else {
-      for import in self.imports.values_mut() {
-        handle_dependencies(&mut seen_pending, &mut import.dependencies)
-      }
-    }
+    // these are always types
+    self.imports.clear();
 
     // walk the graph
     while let Some(specifier) = seen_pending.next_pending() {
@@ -2087,16 +2090,12 @@ impl ModuleGraph {
       };
       match module {
         Module::Js(js_module) => {
-          if remove_types {
-            js_module.fast_check = None;
-            js_module.maybe_types_dependency = None;
-          }
+          js_module.fast_check = None;
+          js_module.maybe_types_dependency = None;
           handle_dependencies(&mut seen_pending, &mut js_module.dependencies);
         }
         Module::Wasm(wasm_module) => {
-          if remove_types {
-            wasm_module.source_dts = Default::default();
-          }
+          wasm_module.source_dts = Default::default();
           handle_dependencies(&mut seen_pending, &mut wasm_module.dependencies);
         }
         Module::Npm(module) => {
@@ -2113,13 +2112,13 @@ impl ModuleGraph {
 
     // Remove any unwalked items. Use retain rather than replace for these
     // in order to maintain the original order
-    self
-      .module_slots
-      .retain(|specifier, _| seen_pending.has_seen(specifier));
+    self.module_slots.retain(|specifier, _| {
+      is_remote_specifier(specifier) || seen_pending.has_seen(specifier)
+    });
     self.npm_packages.retain(|nv| found_nvs.contains(nv));
-    self
-      .redirects
-      .retain(|redirect, _| seen_redirects.contains(redirect));
+    self.redirects.retain(|redirect, _| {
+      is_remote_specifier(redirect) || seen_redirects.contains(redirect)
+    });
     self.has_node_specifier = has_node_specifier;
   }
 

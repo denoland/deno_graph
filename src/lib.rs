@@ -84,7 +84,7 @@ pub use graph::ModuleLoadError;
 pub use graph::NpmLoadError;
 pub use graph::NpmModule;
 pub use graph::Position;
-pub use graph::PruneOptions;
+pub use graph::PruneMode;
 pub use graph::Range;
 pub use graph::Resolution;
 pub use graph::ResolutionError;

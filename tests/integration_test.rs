@@ -23,7 +23,7 @@ use deno_graph::BuildOptions;
 use deno_graph::FillFromLockfileOptions;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
-use deno_graph::PruneOptions;
+use deno_graph::PruneMode;
 use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
@@ -979,10 +979,13 @@ import { Code } from "./code.ts";
 function test() {
   await import("./dynamic.ts");
 }
+
+await import("https://example.com/main.ts");
 "#,
   );
   loader.add_source_with_text("file:///project/types.ts", "");
   loader.add_source_with_text("file:///project/code.ts", "");
+  loader.add_source_with_text("https:///example.com/main.ts", "");
   loader.add_source_with_text(
     "file:///project/dynamic.ts",
     "function test() { import ('npm:chalk@1.0.0'); }",
@@ -1003,10 +1006,7 @@ function test() {
   // removing everything
   {
     let mut graph = graph.clone();
-    graph.prune(PruneOptions {
-      keep_dynamic_imports: false,
-      keep_type_graph: false,
-    });
+    graph.prune(PruneMode::TypesAndNonRemoteDynamic);
     assert_eq!(graph.graph_kind(), GraphKind::CodeOnly);
     assert_eq!(graph.npm_packages, IndexSet::from([]));
     assert_eq!(
@@ -1034,11 +1034,29 @@ function test() {
                     "end": { "line": 2, "character": 32 }
                   }
                 }
+              },
+              {
+                "specifier": "https://example.com/main.ts",
+                "code": {
+                  "specifier": "https://example.com/main.ts",
+                  "resolutionMode": "import",
+                  "span": {
+                    "start": { "line": 8, "character": 13 },
+                    "end": { "line": 8, "character": 42 }
+                  }
+                },
+                "isDynamic": true
               }
             ],
-            "size": 129,
+            "size": 175,
             "mediaType": "TypeScript",
             "specifier": "file:///project/mod.ts"
+          },
+          {
+            "kind": "esm",
+            "size": 0,
+            "mediaType": "TypeScript",
+            "specifier": "https://example.com/main.ts",
           }
         ],
         "redirects": {}
@@ -1049,10 +1067,7 @@ function test() {
   // remove only types
   {
     let mut graph = graph.clone();
-    graph.prune(PruneOptions {
-      keep_dynamic_imports: true,
-      keep_type_graph: false,
-    });
+    graph.prune(PruneMode::TypesOnly);
     assert_eq!(graph.graph_kind(), GraphKind::CodeOnly);
     assert_eq!(
       graph.npm_packages,
@@ -1113,11 +1128,29 @@ function test() {
                   }
                 },
                 "isDynamic": true,
-              }
+              },
+              {
+                "specifier": "https://example.com/main.ts",
+                "code": {
+                  "specifier": "https://example.com/main.ts",
+                  "resolutionMode": "import",
+                  "span": {
+                    "start": { "line": 8, "character": 13 },
+                    "end": { "line": 8, "character": 42 }
+                  }
+                },
+                "isDynamic": true
+              },
             ],
-            "size": 129,
+            "size": 175,
             "mediaType": "TypeScript",
             "specifier": "file:///project/mod.ts"
+          },
+          {
+            "kind": "esm",
+            "size": 0,
+            "mediaType": "TypeScript",
+            "specifier": "https://example.com/main.ts",
           }
         ],
         "redirects": {
