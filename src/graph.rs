@@ -2002,7 +2002,7 @@ impl ModuleGraph {
 
   pub fn prune(&mut self, mode: PruneMode) {
     fn is_remote_specifier(specifier: &ModuleSpecifier) -> bool {
-      matches!(specifier.scheme(), "http" | "https" | "jsr")
+      matches!(specifier.scheme(), "http" | "https" | "jsr" | "npm")
     }
 
     let remove_dynamic_imports = match mode {
@@ -2023,7 +2023,6 @@ impl ModuleGraph {
     seen_pending.extend(self.roots.iter().cloned());
     let mut found_nvs = HashSet::with_capacity(self.npm_packages.len());
     let mut has_node_specifier = false;
-    let mut seen_redirects = HashSet::with_capacity(self.redirects.len());
 
     let handle_dependencies =
       |seen_pending: &mut SeenPendingCollection<Url>,
@@ -2056,28 +2055,11 @@ impl ModuleGraph {
     // walk the graph
     while let Some(specifier) = seen_pending.next_pending() {
       let specifier = match self.redirects.get(&specifier) {
-        Some(mut redirected_specifier) => {
-          if !seen_redirects.insert(specifier.clone()) {
-            continue;
-          }
-
-          let maybe_specifier = loop {
-            match self.redirects.get(redirected_specifier) {
-              Some(specifier) => {
-                if !seen_redirects.insert(redirected_specifier.clone()) {
-                  break None;
-                }
-                redirected_specifier = specifier;
-              }
-              None => break Some(redirected_specifier.clone()),
-            }
-          };
-          match maybe_specifier {
-            Some(specifier) => specifier,
-            None => continue,
-          }
+        Some(redirected_specifier) => {
+          seen_pending.add(redirected_specifier.clone());
+          continue;
         }
-        None => specifier, // avoids a clone in the common case
+        None => specifier,
       };
       let Some(module) = self.module_slots.get_mut(&specifier) else {
         continue;
@@ -2118,7 +2100,7 @@ impl ModuleGraph {
     self.npm_packages.retain(|nv| found_nvs.contains(nv));
     self
       .redirects
-      .retain(|redirect, _| seen_redirects.contains(redirect));
+      .retain(|redirect, _| seen_pending.has_seen(redirect));
     self.has_node_specifier = has_node_specifier;
   }
 
