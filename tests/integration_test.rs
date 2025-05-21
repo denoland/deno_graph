@@ -1151,6 +1151,10 @@ await import("https://example.com/main.ts");
             "size": 0,
             "mediaType": "TypeScript",
             "specifier": "https://example.com/main.ts",
+          },
+          {
+            "kind": "npm",
+            "specifier": "npm:/chalk@1.0.0"
           }
         ],
         "redirects": {
