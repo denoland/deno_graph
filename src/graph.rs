@@ -2112,13 +2112,13 @@ impl ModuleGraph {
 
     // Remove any unwalked items. Use retain rather than replace for these
     // in order to maintain the original order
-    self.module_slots.retain(|specifier, _| {
-      is_remote_specifier(specifier) || seen_pending.has_seen(specifier)
-    });
+    self
+      .module_slots
+      .retain(|specifier, _| seen_pending.has_seen(specifier));
     self.npm_packages.retain(|nv| found_nvs.contains(nv));
-    self.redirects.retain(|redirect, _| {
-      is_remote_specifier(redirect) || seen_redirects.contains(redirect)
-    });
+    self
+      .redirects
+      .retain(|redirect, _| seen_redirects.contains(redirect));
     self.has_node_specifier = has_node_specifier;
   }
 
