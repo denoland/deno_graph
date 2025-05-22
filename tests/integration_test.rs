@@ -23,7 +23,6 @@ use deno_graph::BuildOptions;
 use deno_graph::FillFromLockfileOptions;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
-use deno_graph::PruneMode;
 use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
@@ -1002,165 +1001,99 @@ await import("https://example.com/main.ts");
     )
     .await;
   graph.valid().unwrap();
-
-  // removing everything
-  {
-    let mut graph = graph.clone();
-    graph.prune(PruneMode::TypesAndNonRemoteDynamic);
-    assert_eq!(graph.graph_kind(), GraphKind::CodeOnly);
-    assert_eq!(graph.npm_packages, IndexSet::from([]));
-    assert_eq!(
-      json!(graph),
-      json!({
-        "roots": ["file:///project/mod.ts"],
-        "modules": [
-          {
-            "kind": "esm",
-            "size": 0,
-            "mediaType": "TypeScript",
-            "specifier": "file:///project/code.ts"
-          },
-          {
-            "kind": "esm",
-            "dependencies": [
-              { "specifier": "./types.ts" },
-              {
-                "specifier": "./code.ts",
-                "code": {
-                  "specifier": "file:///project/code.ts",
-                  "resolutionMode": "import",
-                  "span": {
-                    "start": { "line": 2, "character": 21 },
-                    "end": { "line": 2, "character": 32 }
-                  }
-                }
-              },
-              {
-                "specifier": "https://example.com/main.ts",
-                "code": {
-                  "specifier": "https://example.com/main.ts",
-                  "resolutionMode": "import",
-                  "span": {
-                    "start": { "line": 8, "character": 13 },
-                    "end": { "line": 8, "character": 42 }
-                  }
-                },
-                "isDynamic": true
-              }
-            ],
-            "size": 175,
-            "mediaType": "TypeScript",
-            "specifier": "file:///project/mod.ts"
-          },
-          {
-            "kind": "esm",
-            "size": 0,
-            "mediaType": "TypeScript",
-            "specifier": "https://example.com/main.ts",
-          }
-        ],
-        "redirects": {}
-      })
-    );
-  }
-
-  // remove only types
-  {
-    let mut graph = graph.clone();
-    graph.prune(PruneMode::TypesOnly);
-    assert_eq!(graph.graph_kind(), GraphKind::CodeOnly);
-    assert_eq!(
-      graph.npm_packages,
-      IndexSet::from([PackageNv::from_str("chalk@1.0.0").unwrap()])
-    );
-    assert_eq!(
-      json!(graph),
-      json!({
-        "roots": ["file:///project/mod.ts"],
-        "modules": [
-          {
-            "kind": "esm",
-            "size": 0,
-            "mediaType": "TypeScript",
-            "specifier": "file:///project/code.ts"
-          },
-          {
-            "kind": "esm",
-            "dependencies": [{
+  graph.prune_types();
+  assert_eq!(graph.graph_kind(), GraphKind::CodeOnly);
+  assert_eq!(
+    graph.npm_packages,
+    IndexSet::from([PackageNv::from_str("chalk@1.0.0").unwrap()])
+  );
+  assert_eq!(
+    json!(graph),
+    json!({
+      "roots": ["file:///project/mod.ts"],
+      "modules": [
+        {
+          "kind": "esm",
+          "size": 0,
+          "mediaType": "TypeScript",
+          "specifier": "file:///project/code.ts"
+        },
+        {
+          "kind": "esm",
+          "dependencies": [{
+            "specifier": "npm:chalk@1.0.0",
+            "code": {
               "specifier": "npm:chalk@1.0.0",
+              "resolutionMode": "import",
+              "span": {
+                "start": { "line": 0, "character": 26 },
+                "end": { "line": 0, "character": 43 },
+              }
+            },
+            "isDynamic": true
+          }],
+          "size": 47,
+          "mediaType": "TypeScript",
+          "specifier": "file:///project/dynamic.ts",
+        },
+        {
+          "kind": "esm",
+          "dependencies": [
+            { "specifier": "./types.ts" },
+            {
+              "specifier": "./code.ts",
               "code": {
-                "specifier": "npm:chalk@1.0.0",
+                "specifier": "file:///project/code.ts",
                 "resolutionMode": "import",
                 "span": {
-                  "start": { "line": 0, "character": 26 },
-                  "end": { "line": 0, "character": 43 },
+                  "start": { "line": 2, "character": 21 },
+                  "end": { "line": 2, "character": 32 }
+                }
+              }
+            },
+            {
+              "specifier": "./dynamic.ts",
+              "code": {
+                "specifier": "file:///project/dynamic.ts",
+                "resolutionMode": "import",
+                "span": {
+                  "start": { "line": 5, "character": 15 },
+                  "end": { "line": 5, "character": 29 }
+                }
+              },
+              "isDynamic": true,
+            },
+            {
+              "specifier": "https://example.com/main.ts",
+              "code": {
+                "specifier": "https://example.com/main.ts",
+                "resolutionMode": "import",
+                "span": {
+                  "start": { "line": 8, "character": 13 },
+                  "end": { "line": 8, "character": 42 }
                 }
               },
               "isDynamic": true
-            }],
-            "size": 47,
-            "mediaType": "TypeScript",
-            "specifier": "file:///project/dynamic.ts",
-          },
-          {
-            "kind": "esm",
-            "dependencies": [
-              { "specifier": "./types.ts" },
-              {
-                "specifier": "./code.ts",
-                "code": {
-                  "specifier": "file:///project/code.ts",
-                  "resolutionMode": "import",
-                  "span": {
-                    "start": { "line": 2, "character": 21 },
-                    "end": { "line": 2, "character": 32 }
-                  }
-                }
-              },
-              {
-                "specifier": "./dynamic.ts",
-                "code": {
-                  "specifier": "file:///project/dynamic.ts",
-                  "resolutionMode": "import",
-                  "span": {
-                    "start": { "line": 5, "character": 15 },
-                    "end": { "line": 5, "character": 29 }
-                  }
-                },
-                "isDynamic": true,
-              },
-              {
-                "specifier": "https://example.com/main.ts",
-                "code": {
-                  "specifier": "https://example.com/main.ts",
-                  "resolutionMode": "import",
-                  "span": {
-                    "start": { "line": 8, "character": 13 },
-                    "end": { "line": 8, "character": 42 }
-                  }
-                },
-                "isDynamic": true
-              },
-            ],
-            "size": 175,
-            "mediaType": "TypeScript",
-            "specifier": "file:///project/mod.ts"
-          },
-          {
-            "kind": "esm",
-            "size": 0,
-            "mediaType": "TypeScript",
-            "specifier": "https://example.com/main.ts",
-          },
-          {
-            "kind": "npm",
-            "specifier": "npm:/chalk@1.0.0"
-          }
-        ],
-        "redirects": {
-          "npm:chalk@1.0.0": "npm:/chalk@1.0.0"
+            },
+          ],
+          "size": 175,
+          "mediaType": "TypeScript",
+          "specifier": "file:///project/mod.ts"
+        },
+        {
+          "kind": "esm",
+          "size": 0,
+          "mediaType": "TypeScript",
+          "specifier": "https://example.com/main.ts",
+        },
+        {
+          "kind": "npm",
+          "specifier": "npm:/chalk@1.0.0"
         }
-      })
-    );
-  }
+      ],
+      "redirects": {
+        "npm:chalk@1.0.0": "npm:/chalk@1.0.0"
+      }
+    })
+  );
 }

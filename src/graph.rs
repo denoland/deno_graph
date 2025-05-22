@@ -176,12 +176,6 @@ impl Range {
   }
 }
 
-#[derive(Debug, Copy, Clone)]
-pub enum PruneMode {
-  TypesAndNonRemoteDynamic,
-  TypesOnly,
-}
-
 #[derive(Debug, Clone, Error, JsError)]
 pub enum JsrLoadError {
   #[class(type)]
@@ -2000,20 +1994,11 @@ impl ModuleGraph {
     new_graph
   }
 
-  pub fn prune(&mut self, mode: PruneMode) {
-    fn is_remote_specifier(specifier: &ModuleSpecifier) -> bool {
-      matches!(specifier.scheme(), "http" | "https" | "jsr" | "npm")
+  /// Remove TypeScript from the module graph.
+  pub fn prune_types(&mut self) {
+    if !self.graph_kind.include_types() {
+      return; // nothing to do
     }
-
-    let remove_dynamic_imports = match mode {
-      PruneMode::TypesAndNonRemoteDynamic => true,
-      PruneMode::TypesOnly => {
-        if !self.graph_kind.include_types() {
-          return; // nothing to do
-        }
-        false
-      }
-    };
 
     self.graph_kind = GraphKind::CodeOnly;
 
@@ -2027,16 +2012,6 @@ impl ModuleGraph {
     let handle_dependencies =
       |seen_pending: &mut SeenPendingCollection<Url>,
        dependencies: &mut IndexMap<String, Dependency>| {
-        if remove_dynamic_imports {
-          dependencies.retain(|_, dependency| {
-            !dependency.is_dynamic
-              || dependency
-                .get_code()
-                .map(is_remote_specifier)
-                .unwrap_or(false)
-          });
-        }
-
         for dependency in dependencies.values_mut() {
           dependency.maybe_deno_types_specifier = None;
           dependency.maybe_type = Resolution::None;
