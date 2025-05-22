@@ -7,6 +7,7 @@
 
 mod analyzer;
 mod ast;
+mod collections;
 mod graph;
 mod jsr;
 mod module_specifier;
