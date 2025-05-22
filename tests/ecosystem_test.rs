@@ -287,6 +287,7 @@ async fn test_version(
   graph
     .build(
       roots.clone(),
+      Vec::new(),
       &loader,
       BuildOptions {
         is_dynamic: false,
@@ -300,7 +301,6 @@ async fn test_version(
         jsr_url_provider: &PassthroughJsrUrlProvider,
         passthrough_jsr_specifiers: true,
         executor: Default::default(),
-        imports: vec![],
       },
     )
     .await;

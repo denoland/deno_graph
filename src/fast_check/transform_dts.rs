@@ -1088,6 +1088,7 @@ mod tests {
     graph
       .build(
         vec![specifier.clone()],
+        Default::default(),
         &loader,
         BuildOptions {
           module_analyzer: &analyzer,

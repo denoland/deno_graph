@@ -233,6 +233,7 @@ async fn test_jsr_version_not_found_then_found() {
     graph
       .build(
         vec![Url::parse("file:///main.ts").unwrap()],
+        Vec::new(),
         &loader,
         Default::default(),
       )
@@ -270,6 +271,7 @@ async fn test_jsr_version_not_found_then_found() {
     graph
       .build(
         vec![Url::parse("file:///empty.ts").unwrap()],
+        Vec::new(),
         &loader,
         Default::default(),
       )
@@ -282,6 +284,7 @@ async fn test_jsr_version_not_found_then_found() {
     graph
       .build(
         vec![Url::parse("file:///main.ts").unwrap()],
+        Vec::new(),
         &loader,
         Default::default(),
       )
@@ -386,6 +389,7 @@ async fn test_jsr_wasm_module() {
     graph
       .build(
         vec![Url::parse("file:///main.ts").unwrap()],
+        Vec::new(),
         &loader,
         Default::default(),
       )
@@ -455,6 +459,7 @@ async fn test_checksum_error_force_refresh() {
   graph
     .build(
       vec![Url::parse("https://deno.land/mod.ts").unwrap()],
+      Vec::new(),
       &loader,
       Default::default(),
     )
@@ -506,6 +511,7 @@ async fn test_dynamic_imports_with_template_arg() {
     graph
       .build(
         vec![Url::parse(entrypoint).unwrap()],
+        Vec::new(),
         &loader,
         BuildOptions {
           file_system: &sys,
@@ -778,6 +784,7 @@ async fn test_fill_from_lockfile() {
     .build(
       // This should match 1.0.0 due to the first entry in the lockfile.
       vec![Url::parse("jsr:/@scope/example").unwrap()],
+      Vec::new(),
       &loader,
       Default::default(),
     )
@@ -839,6 +846,7 @@ async fn test_json_root() {
   graph
     .build(
       vec![Url::parse("jsr:/@scope/example@^1.0.0/json-export").unwrap()],
+      Vec::new(),
       &loader,
       Default::default(),
     )
@@ -847,6 +855,7 @@ async fn test_json_root() {
   graph
     .build(
       vec![Url::parse("https://deno.land/x/redirect").unwrap()],
+      Vec::new(),
       &loader,
       Default::default(),
     )
@@ -855,6 +864,7 @@ async fn test_json_root() {
   graph
     .build(
       vec![Url::parse("https://deno.land/x/redirect3").unwrap()],
+      Vec::new(),
       &loader,
       Default::default(),
     )
@@ -888,6 +898,7 @@ async fn test_wasm_math() {
   graph
     .build(
       vec![Url::parse("file:///project/main.ts").unwrap()],
+      Vec::new(),
       &loader,
       Default::default(),
     )
@@ -935,6 +946,7 @@ async fn test_wasm_math_with_import() {
   graph
     .build(
       vec![Url::parse("file:///project/main.ts").unwrap()],
+      Vec::new(),
       &loader,
       Default::default(),
     )
@@ -993,6 +1005,7 @@ await import("https://example.com/main.ts");
   graph
     .build(
       vec![Url::parse("file:///project/mod.ts").unwrap()],
+      Vec::new(),
       &loader,
       BuildOptions {
         npm_resolver: Some(&TestNpmResolver),

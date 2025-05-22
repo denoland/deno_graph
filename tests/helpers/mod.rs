@@ -284,6 +284,7 @@ impl TestBuilder {
     graph
       .build(
         roots.clone(),
+        Vec::new(),
         &self.loader,
         deno_graph::BuildOptions {
           module_analyzer: &capturing_analyzer,

@@ -1295,11 +1295,6 @@ pub struct BuildOptions<'a> {
   pub is_dynamic: bool,
   /// Skip loading statically analyzable dynamic dependencies.
   pub skip_dynamic_deps: bool,
-  /// Additional imports that should be brought into the scope of
-  /// the module graph to add to the graph's "imports". This may
-  /// be extra modules such as TypeScript's "types" option or JSX
-  /// runtime types.
-  pub imports: Vec<ReferrerImports>,
   pub executor: &'a dyn Executor,
   pub locker: Option<&'a mut dyn Locker>,
   pub file_system: &'a FileSystem,
@@ -1319,7 +1314,6 @@ impl Default for BuildOptions<'_> {
     Self {
       is_dynamic: false,
       skip_dynamic_deps: false,
-      imports: Default::default(),
       executor: Default::default(),
       locker: None,
       file_system: &NullFileSystem,
@@ -1853,10 +1847,22 @@ impl ModuleGraph {
   pub async fn build<'a>(
     &mut self,
     roots: Vec<ModuleSpecifier>,
+    imports: Vec<ReferrerImports>,
     loader: &'a dyn Loader,
     options: BuildOptions<'a>,
   ) {
-    Builder::build(self, roots, loader, options).await
+    Builder::new(self, loader, options)
+      .build(roots, imports)
+      .await
+  }
+
+  pub async fn reload<'a>(
+    &mut self,
+    specifiers: Vec<ModuleSpecifier>,
+    loader: &'a dyn Loader,
+    options: BuildOptions<'a>,
+  ) {
+    Builder::new(self, loader, options).reload(specifiers).await
   }
 
   #[cfg(feature = "fast_check")]
@@ -3689,17 +3695,16 @@ struct Builder<'a, 'graph> {
 }
 
 impl<'a, 'graph> Builder<'a, 'graph> {
-  pub async fn build(
+  pub fn new(
     graph: &'graph mut ModuleGraph,
-    roots: Vec<ModuleSpecifier>,
     loader: &'a dyn Loader,
     options: BuildOptions<'a>,
-  ) {
+  ) -> Self {
     let fill_pass_mode = match graph.roots.is_empty() {
       true => FillPassMode::AllowRestart,
       false => FillPassMode::NoRestart,
     };
-    let mut builder = Self {
+    Self {
       in_dynamic_branch: options.is_dynamic,
       skip_dynamic_deps: options.skip_dynamic_deps,
       was_dynamic_root: options.is_dynamic,
@@ -3717,11 +3722,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       fill_pass_mode,
       executor: options.executor,
       resolved_roots: Default::default(),
-    };
-    builder.fill(roots, options.imports).await;
+    }
   }
 
-  async fn fill(
+  pub async fn build(
     &mut self,
     roots: Vec<ModuleSpecifier>,
     imports: Vec<ReferrerImports>,
@@ -3748,6 +3752,33 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     // process any imports that are being added to the graph.
     self.handle_provided_imports(imports);
 
+    let should_restart = self.resolve_pending().await;
+    if should_restart {
+      self.restart(provided_roots, provided_imports).await
+    }
+  }
+
+  pub async fn reload(&mut self, specifiers: Vec<ModuleSpecifier>) {
+    let specifiers = specifiers
+      .into_iter()
+      .map(|s| {
+        let resolved = self.graph.resolve(&s);
+        if *resolved == s {
+          s
+        } else {
+          resolved.clone()
+        }
+      })
+      .collect::<Vec<_>>();
+
+    for specifier in &specifiers {
+      self.graph.module_slots.remove(specifier);
+      self.load(&specifier, None, self.in_dynamic_branch, true, None, None);
+    }
+    self.resolve_pending().await;
+  }
+
+  async fn resolve_pending(&mut self) -> bool {
     while !(self.state.pending.is_empty()
       && self.state.jsr.pending_resolutions.is_empty()
       && self.state.dynamic_branches.is_empty())
@@ -3803,8 +3834,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       if self.state.pending.is_empty() {
         let should_restart = self.resolve_pending_jsr_specifiers().await;
         if should_restart {
-          self.restart(provided_roots, provided_imports).await;
-          return;
+          return true;
         }
 
         // resolving jsr specifiers will load more specifiers
@@ -3822,6 +3852,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     // resolve any npm package requirements
     NpmSpecifierResolver::fill_builder(self).await;
+
+    false
   }
 
   fn handle_provided_imports(&mut self, imports: Vec<ReferrerImports>) {
@@ -4216,7 +4248,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     self.fill_pass_mode = FillPassMode::CacheBusting;
 
     // boxed due to async recursion
-    async move { self.fill(roots, imports).await }.boxed_local()
+    async move { self.build(roots, imports).await }.boxed_local()
   }
 
   fn resolve_jsr_nv(
@@ -5977,6 +6009,7 @@ mod tests {
     graph
       .build(
         vec![Url::parse("file:///foo.js").unwrap()],
+        Vec::new(),
         &loader,
         Default::default(),
       )
@@ -5990,6 +6023,7 @@ mod tests {
     graph
       .build(
         vec![Url::parse("file:///dynamic_root.js").unwrap()],
+        Vec::new(),
         &loader,
         BuildOptions {
           is_dynamic: true,
@@ -6028,7 +6062,7 @@ mod tests {
     let mut graph = ModuleGraph::new(GraphKind::All);
     let roots = vec![Url::parse("file:///foo.js").unwrap()];
     graph
-      .build(roots.clone(), &loader, Default::default())
+      .build(roots.clone(), Vec::new(), &loader, Default::default())
       .await;
     assert!(graph
       .try_get(&Url::parse("file:///foo.js").unwrap())
@@ -6127,7 +6161,7 @@ mod tests {
     let mut graph = ModuleGraph::new(GraphKind::All);
     let roots = vec![Url::parse("file:///foo.js").unwrap()];
     graph
-      .build(roots.clone(), &loader, Default::default())
+      .build(roots.clone(), Vec::new(), &loader, Default::default())
       .await;
 
     // should return the not found error for the Wasm module
@@ -6204,6 +6238,7 @@ mod tests {
     graph
       .build(
         vec![Url::parse("file:///foo.js").unwrap()],
+        Vec::new(),
         &loader,
         Default::default(),
       )
@@ -6286,7 +6321,7 @@ mod tests {
     let mut graph = ModuleGraph::new(GraphKind::All);
     let roots = vec![Url::parse("https://deno.land/foo.js").unwrap()];
     graph
-      .build(roots.clone(), &loader, Default::default())
+      .build(roots.clone(), Vec::new(), &loader, Default::default())
       .await;
     assert_eq!(graph.specifiers_count(), 4);
     let errors = graph
@@ -6421,6 +6456,7 @@ mod tests {
     graph
       .build(
         vec![Url::parse("file:///foo.js").unwrap()],
+        Default::default(),
         &loader,
         Default::default(),
       )
@@ -6486,6 +6522,7 @@ mod tests {
     graph
       .build(
         vec![Url::parse("file:///foo.ts").unwrap()],
+        Vec::new(),
         &TestLoader,
         Default::default(),
       )
@@ -6689,6 +6726,7 @@ mod tests {
     graph
       .build(
         vec![Url::parse("file:///foo.ts").unwrap()],
+        Vec::new(),
         &TestLoader,
         Default::default(),
       )
@@ -6759,6 +6797,7 @@ mod tests {
     graph
       .build(
         vec![Url::parse("file:///foo.tsx").unwrap()],
+        Vec::new(),
         &mem_loader,
         BuildOptions {
           resolver: Some(&resolver),
@@ -6810,6 +6849,7 @@ mod tests {
     graph
       .build(
         vec![Url::parse("file:///foo.tsx").unwrap()],
+        Vec::new(),
         &mem_loader,
         Default::default(),
       )
@@ -6858,6 +6898,7 @@ mod tests {
     graph
       .build(
         vec![Url::parse("file:///foo.ts").unwrap()],
+        Vec::new(),
         &test_loader,
         BuildOptions {
           ..Default::default()
@@ -6944,6 +6985,7 @@ mod tests {
     graph
       .build(
         vec![Url::parse("file:///foo.ts").unwrap()],
+        Vec::new(),
         &test_loader,
         BuildOptions::default(),
       )
@@ -7080,7 +7122,7 @@ mod tests {
     let mut graph = ModuleGraph::new(GraphKind::All);
     let roots = vec![Url::parse("file:///main.ts").unwrap()];
     graph
-      .build(roots.clone(), &loader, Default::default())
+      .build(roots.clone(), Vec::new(), &loader, Default::default())
       .await;
     assert_eq!(graph.specifiers_count(), 4);
     let errors = graph
