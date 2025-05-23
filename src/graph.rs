@@ -285,6 +285,8 @@ pub enum ModuleLoadError {
 #[derive(Debug, JsError)]
 #[class(inherit)]
 pub struct DecodeError {
+  /// Modified time of the underlying file. Used to tell whether
+  /// the file should be reloaded.
   pub mtime: Option<SystemTime>,
   #[inherit]
   pub err: std::io::Error,
@@ -324,6 +326,8 @@ pub enum ModuleError {
   #[class(inherit)]
   Parse {
     specifier: ModuleSpecifier,
+    /// Modified time of the underlying file. Used to tell whether
+    /// the file should be reloaded.
     mtime: Option<SystemTime>,
     #[inherit]
     diagnostic: ParseDiagnostic,
@@ -331,6 +335,8 @@ pub enum ModuleError {
   #[class(inherit)]
   WasmParse {
     specifier: ModuleSpecifier,
+    /// Modified time of the underlying file. Used to tell whether
+    /// the file should be reloaded.
     mtime: Option<SystemTime>,
     #[inherit]
     err: wasm_dep_analyzer::ParseError,
@@ -385,24 +391,24 @@ impl ModuleError {
     }
   }
 
-  /// Gets the mtime of the loaded file that caused this error.
+  /// Gets the mtime (if able) of the loaded file that caused this error.
   pub fn mtime(&self) -> Option<SystemTime> {
     match self {
-        ModuleError::Parse { mtime, .. } |
-        ModuleError::WasmParse { mtime, .. } => *mtime,
-        ModuleError::Load { err, .. } => match err {
-            ModuleLoadError::Decode(decode_error) => decode_error.mtime,
-            ModuleLoadError::HttpsChecksumIntegrity { .. } |
-            ModuleLoadError::Loader { .. } |
-            ModuleLoadError::Jsr { .. } |
-            ModuleLoadError::Npm { .. } |
-            ModuleLoadError::TooManyRedirects => None,
-        },
-        ModuleError::Missing { .. } |
-        ModuleError::MissingDynamic { .. } |
-        ModuleError::UnsupportedMediaType { .. } |
-        ModuleError::InvalidTypeAssertion { .. } |
-        ModuleError::UnsupportedImportAttributeType { .. } => None,
+      ModuleError::Parse { mtime, .. }
+      | ModuleError::WasmParse { mtime, .. } => *mtime,
+      ModuleError::Load { err, .. } => match err {
+        ModuleLoadError::Decode(decode_error) => decode_error.mtime,
+        ModuleLoadError::HttpsChecksumIntegrity { .. }
+        | ModuleLoadError::Loader { .. }
+        | ModuleLoadError::Jsr { .. }
+        | ModuleLoadError::Npm { .. }
+        | ModuleLoadError::TooManyRedirects => None,
+      },
+      ModuleError::Missing { .. }
+      | ModuleError::MissingDynamic { .. }
+      | ModuleError::UnsupportedMediaType { .. }
+      | ModuleError::InvalidTypeAssertion { .. }
+      | ModuleError::UnsupportedImportAttributeType { .. } => None,
     }
   }
 
