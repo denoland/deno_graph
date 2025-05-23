@@ -306,6 +306,7 @@ pub async fn js_create_graph(
   graph
     .build(
       roots,
+      imports,
       &loader,
       BuildOptions {
         is_dynamic: false,
@@ -321,7 +322,6 @@ pub async fn js_create_graph(
         locker: None,
         passthrough_jsr_specifiers: false,
         module_analyzer: Default::default(),
-        imports,
         reporter: None,
         executor: Default::default(),
       },
@@ -370,6 +370,7 @@ pub async fn js_parse_module(
     graph_kind: GraphKind::All,
     specifier,
     maybe_headers,
+    mtime: None,
     content: content.into(),
     file_system: &NullFileSystem,
     jsr_url_provider: Default::default(),

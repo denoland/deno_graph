@@ -26,6 +26,7 @@ use source::Resolver;
 
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::time::SystemTime;
 
 pub use analyzer::DependencyDescriptor;
 pub use analyzer::DynamicArgument;
@@ -120,6 +121,7 @@ pub struct ParseModuleOptions<'a> {
   pub graph_kind: GraphKind,
   pub specifier: ModuleSpecifier,
   pub maybe_headers: Option<HashMap<String, String>>,
+  pub mtime: Option<SystemTime>,
   pub content: Arc<[u8]>,
   pub file_system: &'a FileSystem,
   pub jsr_url_provider: &'a dyn JsrUrlProvider,
@@ -138,6 +140,7 @@ pub async fn parse_module(
     graph::ParseModuleAndSourceInfoOptions {
       specifier: options.specifier,
       maybe_headers: options.maybe_headers,
+      mtime: options.mtime,
       content: options.content,
       maybe_attribute_type: None,
       maybe_referrer: None,
@@ -163,6 +166,7 @@ pub struct ParseModuleFromAstOptions<'a> {
   pub graph_kind: GraphKind,
   pub specifier: ModuleSpecifier,
   pub maybe_headers: Option<&'a HashMap<String, String>>,
+  pub mtime: Option<SystemTime>,
   pub parsed_source: &'a deno_ast::ParsedSource,
   pub file_system: &'a FileSystem,
   pub jsr_url_provider: &'a dyn JsrUrlProvider,
@@ -177,6 +181,7 @@ pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> JsModule {
     options.parsed_source.media_type(),
     options.maybe_headers,
     ParserModuleAnalyzer::module_info(options.parsed_source),
+    options.mtime,
     options.parsed_source.text().clone(),
     options.file_system,
     options.jsr_url_provider,
@@ -1432,11 +1437,10 @@ console.log(a);
     let err = result.unwrap_err();
     assert!(matches!(
       err,
-      ModuleGraphError::ModuleError(ModuleError::UnsupportedMediaType(
-        _,
-        MediaType::Json,
-        _
-      )),
+      ModuleGraphError::ModuleError(ModuleError::UnsupportedMediaType {
+        media_type: MediaType::Json,
+        ..
+      }),
     ));
   }
 
@@ -3294,6 +3298,7 @@ export const foo = 'bar';"#,
       graph_kind: GraphKind::All,
       specifier: specifier.clone(),
       maybe_headers: None,
+      mtime: None,
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
@@ -3312,6 +3317,7 @@ export const foo = 'bar';"#,
       graph_kind: GraphKind::CodeOnly,
       specifier: specifier.clone(),
       maybe_headers: None,
+      mtime: None,
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
@@ -3335,6 +3341,7 @@ export const foo = 'bar';"#,
       graph_kind: GraphKind::All,
       specifier: specifier.clone(),
       maybe_headers: None,
+      mtime: None,
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
@@ -3401,6 +3408,7 @@ export const foo = 'bar';"#,
       graph_kind: GraphKind::All,
       specifier,
       maybe_headers: None,
+      mtime: None,
       content: br#"
     import a from "./a.json" assert { type: "json" };
     await import("./b.json", { assert: { type: "json" } });
@@ -3471,6 +3479,7 @@ export const foo = 'bar';"#,
       graph_kind: GraphKind::All,
       specifier: specifier.clone(),
       maybe_headers: None,
+      mtime: None,
       content: br#"
     /** @jsxImportSource https://example.com/preact */
 
@@ -3509,6 +3518,7 @@ export const foo = 'bar';"#,
       graph_kind: GraphKind::All,
       specifier: specifier.clone(),
       maybe_headers: None,
+      mtime: None,
       content: br#"
     /** @jsxImportSource https://example.com/preact */
     /** @jsxImportSourceTypes https://example.com/preact-types */
@@ -3563,6 +3573,7 @@ export const foo = 'bar';"#,
       graph_kind: GraphKind::All,
       specifier: specifier.clone(),
       maybe_headers: None,
+      mtime: None,
       content: br#"
     /** @jsxImportSourceTypes https://example.com/preact-types */
 
@@ -3616,6 +3627,7 @@ export const foo = 'bar';"#,
       graph_kind: GraphKind::All,
       specifier: specifier.clone(),
       maybe_headers: None,
+      mtime: None,
       content: br#"
     /** @jsxImportSource https://example.com/preact */
 
@@ -3669,6 +3681,7 @@ export const foo = 'bar';"#,
       graph_kind: GraphKind::All,
       specifier: specifier.clone(),
       maybe_headers: None,
+      mtime: None,
       content: br#"
     export function A() {
       return <div>Hello Deno</div>;
@@ -3739,6 +3752,7 @@ export const foo = 'bar';"#,
       graph_kind: GraphKind::All,
       specifier: specifier.clone(),
       maybe_headers: None,
+      mtime: None,
       content: br#"
     export function A() {
       return <div>Hello Deno</div>;
@@ -3784,6 +3798,7 @@ export const foo = 'bar';"#,
       graph_kind: GraphKind::All,
       specifier: specifier.clone(),
       maybe_headers: Some(headers),
+      mtime: None,
       content: br#"declare interface A {
   a: string;
 }"#
@@ -3816,6 +3831,7 @@ export function a(a) {
       graph_kind: GraphKind::All,
       specifier: specifier.clone(),
       maybe_headers: None,
+      mtime: None,
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
@@ -3873,6 +3889,7 @@ export function a(a) {
       graph_kind: GraphKind::CodeOnly,
       specifier: specifier.clone(),
       maybe_headers: None,
+      mtime: None,
       content: code.to_vec().into(),
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
@@ -3899,6 +3916,7 @@ export function a(a) {
       graph_kind: GraphKind::All,
       specifier: specifier.clone(),
       maybe_headers: None,
+      mtime: None,
       content: br#"
 /**
  * Some js doc

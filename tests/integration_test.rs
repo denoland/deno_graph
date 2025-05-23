@@ -170,6 +170,7 @@ async fn test_jsr_version_not_found_then_found() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
+            mtime: None,
             content: b"import 'jsr:@scope/a@1.2".to_vec().into(),
           }))
         }),
@@ -177,6 +178,7 @@ async fn test_jsr_version_not_found_then_found() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
+            mtime: None,
             content: Default::default(),
           }))
         }),
@@ -185,6 +187,7 @@ async fn test_jsr_version_not_found_then_found() {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
+              mtime: None,
               content: match options.cache_setting {
                 CacheSetting::Only | CacheSetting::Use => {
                   // first time it won't have the version
@@ -202,6 +205,7 @@ async fn test_jsr_version_not_found_then_found() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
+            mtime: None,
             content: br#"{
                 "exports": { ".": "./mod.ts" },
                 "manifest": {
@@ -219,6 +223,7 @@ async fn test_jsr_version_not_found_then_found() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
+            mtime: None,
             content: b"console.log('Hello, world!')".to_vec().into(),
           }))
         }),
@@ -333,6 +338,7 @@ async fn test_jsr_wasm_module() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
+            mtime: None,
             content: b"import 'jsr:@scope/a@1".to_vec().into(),
           }))
         }),
@@ -340,6 +346,7 @@ async fn test_jsr_wasm_module() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
+            mtime: None,
             content: br#"{ "versions": { "1.0.0": {} } }"#.to_vec().into(),
           }))
         }),
@@ -347,6 +354,7 @@ async fn test_jsr_wasm_module() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
+            mtime: None,
             content: br#"{
                 "exports": { ".": "./math.wasm" },
                 "manifest": {
@@ -372,6 +380,7 @@ async fn test_jsr_wasm_module() {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
+              mtime: None,
               content: std::fs::read("./tests/testdata/math.wasm")
                 .unwrap()
                 .into(),
@@ -429,6 +438,7 @@ async fn test_checksum_error_force_refresh() {
             CacheSetting::Reload => Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
+              mtime: None,
               content: b"import './other.js';".to_vec().into(),
             })),
           }
@@ -445,6 +455,7 @@ async fn test_checksum_error_force_refresh() {
             CacheSetting::Reload => Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
+              mtime: None,
               content: b"console.log(1);".to_vec().into(),
             })),
           }

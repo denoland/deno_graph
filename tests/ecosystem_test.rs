@@ -187,6 +187,7 @@ impl deno_graph::source::Loader for Loader<'_> {
           Ok(source_code) => Ok(Some(LoadResponse::Module {
             content: source_code.into_bytes().into(),
             maybe_headers: None,
+            mtime: None,
             specifier: specifier.clone(),
           })),
           Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(None),
@@ -307,11 +308,10 @@ async fn test_version(
   if let Err(err) = graph.valid() {
     match err {
       deno_graph::ModuleGraphError::ModuleError(
-        deno_graph::ModuleError::UnsupportedMediaType(
-          _,
-          MediaType::Cjs | MediaType::Cts,
-          _,
-        ),
+        deno_graph::ModuleError::UnsupportedMediaType {
+          media_type: MediaType::Cjs | MediaType::Cts,
+          ..
+        },
       ) => {
         // ignore, old packages with cjs and cts
         return;
