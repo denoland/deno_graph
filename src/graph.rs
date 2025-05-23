@@ -1010,15 +1010,13 @@ impl Module {
       Module::Npm(_) | Module::External(_) => MediaType::Unknown,
     }
   }
-  
+
   pub fn mtime(&self) -> Option<SystemTime> {
     match self {
-        Module::Js(m) => m.mtime,
-        Module::Json(m) => m.mtime,
-        Module::Wasm(m) => m.mtime,
-        Module::Npm(_) |
-        Module::Node(_) |
-        Module::External(_) => None,
+      Module::Js(m) => m.mtime,
+      Module::Json(m) => m.mtime,
+      Module::Wasm(m) => m.mtime,
+      Module::Npm(_) | Module::Node(_) | Module::External(_) => None,
     }
   }
 
