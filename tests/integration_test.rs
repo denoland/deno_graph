@@ -159,7 +159,7 @@ async fn test_jsr_version_not_found_then_found() {
       specifier: &ModuleSpecifier,
       options: LoadOptions,
     ) -> LoadFuture {
-      assert!(!options.is_dynamic);
+      assert!(!options.in_dynamic_branch);
       self
         .requests
         .borrow_mut()
@@ -170,6 +170,7 @@ async fn test_jsr_version_not_found_then_found() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
+            mtime: None,
             content: b"import 'jsr:@scope/a@1.2".to_vec().into(),
           }))
         }),
@@ -177,6 +178,7 @@ async fn test_jsr_version_not_found_then_found() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
+            mtime: None,
             content: Default::default(),
           }))
         }),
@@ -185,6 +187,7 @@ async fn test_jsr_version_not_found_then_found() {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
+              mtime: None,
               content: match options.cache_setting {
                 CacheSetting::Only | CacheSetting::Use => {
                   // first time it won't have the version
@@ -202,6 +205,7 @@ async fn test_jsr_version_not_found_then_found() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
+            mtime: None,
             content: br#"{
                 "exports": { ".": "./mod.ts" },
                 "manifest": {
@@ -219,6 +223,7 @@ async fn test_jsr_version_not_found_then_found() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
+            mtime: None,
             content: b"console.log('Hello, world!')".to_vec().into(),
           }))
         }),
@@ -233,6 +238,7 @@ async fn test_jsr_version_not_found_then_found() {
     graph
       .build(
         vec![Url::parse("file:///main.ts").unwrap()],
+        Vec::new(),
         &loader,
         Default::default(),
       )
@@ -270,6 +276,7 @@ async fn test_jsr_version_not_found_then_found() {
     graph
       .build(
         vec![Url::parse("file:///empty.ts").unwrap()],
+        Vec::new(),
         &loader,
         Default::default(),
       )
@@ -282,6 +289,7 @@ async fn test_jsr_version_not_found_then_found() {
     graph
       .build(
         vec![Url::parse("file:///main.ts").unwrap()],
+        Vec::new(),
         &loader,
         Default::default(),
       )
@@ -323,13 +331,14 @@ async fn test_jsr_wasm_module() {
       specifier: &ModuleSpecifier,
       options: LoadOptions,
     ) -> LoadFuture {
-      assert!(!options.is_dynamic);
+      assert!(!options.in_dynamic_branch);
       let specifier = specifier.clone();
       match specifier.as_str() {
         "file:///main.ts" => Box::pin(async move {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
+            mtime: None,
             content: b"import 'jsr:@scope/a@1".to_vec().into(),
           }))
         }),
@@ -337,6 +346,7 @@ async fn test_jsr_wasm_module() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
+            mtime: None,
             content: br#"{ "versions": { "1.0.0": {} } }"#.to_vec().into(),
           }))
         }),
@@ -344,6 +354,7 @@ async fn test_jsr_wasm_module() {
           Ok(Some(LoadResponse::Module {
             specifier: specifier.clone(),
             maybe_headers: None,
+            mtime: None,
             content: br#"{
                 "exports": { ".": "./math.wasm" },
                 "manifest": {
@@ -369,6 +380,7 @@ async fn test_jsr_wasm_module() {
             Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
+              mtime: None,
               content: std::fs::read("./tests/testdata/math.wasm")
                 .unwrap()
                 .into(),
@@ -386,6 +398,7 @@ async fn test_jsr_wasm_module() {
     graph
       .build(
         vec![Url::parse("file:///main.ts").unwrap()],
+        Vec::new(),
         &loader,
         Default::default(),
       )
@@ -425,6 +438,7 @@ async fn test_checksum_error_force_refresh() {
             CacheSetting::Reload => Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
+              mtime: None,
               content: b"import './other.js';".to_vec().into(),
             })),
           }
@@ -441,6 +455,7 @@ async fn test_checksum_error_force_refresh() {
             CacheSetting::Reload => Ok(Some(LoadResponse::Module {
               specifier: specifier.clone(),
               maybe_headers: None,
+              mtime: None,
               content: b"console.log(1);".to_vec().into(),
             })),
           }
@@ -455,6 +470,7 @@ async fn test_checksum_error_force_refresh() {
   graph
     .build(
       vec![Url::parse("https://deno.land/mod.ts").unwrap()],
+      Vec::new(),
       &loader,
       Default::default(),
     )
@@ -506,6 +522,7 @@ async fn test_dynamic_imports_with_template_arg() {
     graph
       .build(
         vec![Url::parse(entrypoint).unwrap()],
+        Vec::new(),
         &loader,
         BuildOptions {
           file_system: &sys,
@@ -778,6 +795,7 @@ async fn test_fill_from_lockfile() {
     .build(
       // This should match 1.0.0 due to the first entry in the lockfile.
       vec![Url::parse("jsr:/@scope/example").unwrap()],
+      Vec::new(),
       &loader,
       Default::default(),
     )
@@ -839,6 +857,7 @@ async fn test_json_root() {
   graph
     .build(
       vec![Url::parse("jsr:/@scope/example@^1.0.0/json-export").unwrap()],
+      Vec::new(),
       &loader,
       Default::default(),
     )
@@ -847,6 +866,7 @@ async fn test_json_root() {
   graph
     .build(
       vec![Url::parse("https://deno.land/x/redirect").unwrap()],
+      Vec::new(),
       &loader,
       Default::default(),
     )
@@ -855,6 +875,7 @@ async fn test_json_root() {
   graph
     .build(
       vec![Url::parse("https://deno.land/x/redirect3").unwrap()],
+      Vec::new(),
       &loader,
       Default::default(),
     )
@@ -888,6 +909,7 @@ async fn test_wasm_math() {
   graph
     .build(
       vec![Url::parse("file:///project/main.ts").unwrap()],
+      Vec::new(),
       &loader,
       Default::default(),
     )
@@ -935,6 +957,7 @@ async fn test_wasm_math_with_import() {
   graph
     .build(
       vec![Url::parse("file:///project/main.ts").unwrap()],
+      Vec::new(),
       &loader,
       Default::default(),
     )
@@ -993,6 +1016,7 @@ await import("https://example.com/main.ts");
   graph
     .build(
       vec![Url::parse("file:///project/mod.ts").unwrap()],
+      Vec::new(),
       &loader,
       BuildOptions {
         npm_resolver: Some(&TestNpmResolver),
@@ -1094,6 +1118,114 @@ await import("https://example.com/main.ts");
       "redirects": {
         "npm:chalk@1.0.0": "npm:/chalk@1.0.0"
       }
+    })
+  );
+}
+
+#[tokio::test]
+async fn test_reload() {
+  let mut graph = ModuleGraph::new(GraphKind::All);
+  let mut loader = MemoryLoader::default();
+  loader.add_source_with_text("file:///project/mod.ts", r#"import "./a.ts";"#);
+  loader.add_source_with_text("file:///project/a.ts", "");
+
+  graph
+    .build(
+      vec![Url::parse("file:///project/mod.ts").unwrap()],
+      Vec::new(),
+      &loader,
+      BuildOptions {
+        npm_resolver: Some(&TestNpmResolver),
+        ..Default::default()
+      },
+    )
+    .await;
+
+  loader.add_source_with_text("file:///project/a.ts", "await import('./b.ts')");
+  loader
+    .add_source_with_text("file:///project/b.ts", "import 'npm:chalk@1.0.0';");
+  graph
+    .reload(
+      vec![Url::parse("file:///project/a.ts").unwrap()],
+      &loader,
+      BuildOptions {
+        npm_resolver: Some(&TestNpmResolver),
+        ..Default::default()
+      },
+    )
+    .await;
+
+  graph.valid().unwrap();
+  assert_eq!(
+    graph.npm_packages,
+    IndexSet::from([PackageNv::from_str("chalk@1.0.0").unwrap()])
+  );
+  assert_eq!(
+    json!(graph),
+    json!({
+      "roots": ["file:///project/mod.ts"],
+      "modules": [
+        {
+          "kind": "esm",
+          "dependencies": [
+            {
+              "specifier": "./b.ts",
+              "code": {
+                "specifier": "file:///project/b.ts",
+                "resolutionMode": "import",
+                "span": {
+                  "start": { "line": 0, "character": 13 },
+                  "end": { "line": 0, "character": 21 }
+                }
+              },
+              "isDynamic": true
+            }
+          ],
+          "size": 22,
+          "mediaType": "TypeScript",
+          "specifier": "file:///project/a.ts"
+        },
+        {
+          "kind": "esm",
+          "dependencies": [
+            {
+              "specifier": "npm:chalk@1.0.0",
+              "code": {
+                "specifier": "npm:chalk@1.0.0",
+                "resolutionMode": "import",
+                "span": {
+                  "start": { "line": 0, "character": 7 },
+                  "end": { "line": 0, "character": 24 }
+                }
+              }
+            }
+          ],
+          "size": 25,
+          "mediaType": "TypeScript",
+          "specifier": "file:///project/b.ts"
+        },
+        {
+          "kind": "esm",
+          "dependencies": [
+            {
+              "specifier": "./a.ts",
+              "code": {
+                "specifier": "file:///project/a.ts",
+                "resolutionMode": "import",
+                "span": {
+                  "start": { "line": 0, "character": 7 },
+                  "end": { "line": 0, "character": 15 }
+                }
+              }
+            }
+          ],
+          "size": 16,
+          "mediaType": "TypeScript",
+          "specifier": "file:///project/mod.ts"
+        },
+        { "kind": "npm", "specifier": "npm:/chalk@1.0.0" }
+      ],
+      "redirects": { "npm:chalk@1.0.0": "npm:/chalk@1.0.0" }
     })
   );
 }

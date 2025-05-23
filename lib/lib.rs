@@ -101,7 +101,7 @@ impl Loader for JsLoader {
       let context = JsValue::null();
       let arg1 = JsValue::from(specifier.to_string());
       let arg2 = serde_wasm_bindgen::to_value(&JsLoadOptions {
-        is_dynamic: options.is_dynamic,
+        is_dynamic: options.in_dynamic_branch,
         cache_setting: options.cache_setting.as_js_str(),
         checksum: options.maybe_checksum.map(|c| c.into_string()),
       })
@@ -306,6 +306,7 @@ pub async fn js_create_graph(
   graph
     .build(
       roots,
+      imports,
       &loader,
       BuildOptions {
         is_dynamic: false,
@@ -321,7 +322,6 @@ pub async fn js_create_graph(
         locker: None,
         passthrough_jsr_specifiers: false,
         module_analyzer: Default::default(),
-        imports,
         reporter: None,
         executor: Default::default(),
       },
@@ -370,6 +370,7 @@ pub async fn js_parse_module(
     graph_kind: GraphKind::All,
     specifier,
     maybe_headers,
+    mtime: None,
     content: content.into(),
     file_system: &NullFileSystem,
     jsr_url_provider: Default::default(),

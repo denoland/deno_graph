@@ -194,7 +194,7 @@ impl JsrMetadataStore {
     let fut = services.loader.load(
       &specifier,
       LoadOptions {
-        is_dynamic: false,
+        in_dynamic_branch: false,
         was_dynamic_root: false,
         cache_setting,
         maybe_checksum: maybe_expected_checksum,
