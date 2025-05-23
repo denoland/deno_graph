@@ -385,6 +385,27 @@ impl ModuleError {
     }
   }
 
+  /// Gets the mtime of the loaded file that caused this error.
+  pub fn mtime(&self) -> Option<SystemTime> {
+    match self {
+        ModuleError::Parse { mtime, .. } |
+        ModuleError::WasmParse { mtime, .. } => *mtime,
+        ModuleError::Load { err, .. } => match err {
+            ModuleLoadError::Decode(decode_error) => decode_error.mtime,
+            ModuleLoadError::HttpsChecksumIntegrity { .. } |
+            ModuleLoadError::Loader { .. } |
+            ModuleLoadError::Jsr { .. } |
+            ModuleLoadError::Npm { .. } |
+            ModuleLoadError::TooManyRedirects => None,
+        },
+        ModuleError::Missing { .. } |
+        ModuleError::MissingDynamic { .. } |
+        ModuleError::UnsupportedMediaType { .. } |
+        ModuleError::InvalidTypeAssertion { .. } |
+        ModuleError::UnsupportedImportAttributeType { .. } => None,
+    }
+  }
+
   /// Converts the error into a string along with the range related to the error.
   pub fn to_string_with_range(&self) -> String {
     if let Some(range) = self.maybe_referrer() {
