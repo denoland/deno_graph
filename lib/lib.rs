@@ -101,7 +101,7 @@ impl Loader for JsLoader {
       let context = JsValue::null();
       let arg1 = JsValue::from(specifier.to_string());
       let arg2 = serde_wasm_bindgen::to_value(&JsLoadOptions {
-        is_dynamic: options.is_dynamic,
+        is_dynamic: options.in_dynamic_branch,
         cache_setting: options.cache_setting.as_js_str(),
         checksum: options.maybe_checksum.map(|c| c.into_string()),
       })

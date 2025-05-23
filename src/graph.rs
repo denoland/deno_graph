@@ -3864,13 +3864,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
   }
 
+  /// A naive reload of the specifiers. This does not remove modules no longer
+  /// relevant data from the graph.
   pub async fn reload(&mut self, specifiers: Vec<ModuleSpecifier>) {
     let specifiers = specifiers
       .into_iter()
       .map(|s| {
         let resolved = self.graph.resolve(&s);
         if *resolved == s {
-          s
+          s // avoid clone
         } else {
           resolved.clone()
         }
@@ -4560,7 +4562,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           let fut = self.loader.load(
             specifier,
             LoadOptions {
-              is_dynamic: self.in_dynamic_branch,
+              in_dynamic_branch: self.in_dynamic_branch,
               was_dynamic_root: self.was_dynamic_root,
               cache_setting: CacheSetting::Only,
               maybe_checksum: Some(checksum.clone()),
@@ -5017,7 +5019,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         let result = loader.load(
           &load_specifier,
           LoadOptions {
-            is_dynamic,
+            in_dynamic_branch: is_dynamic,
             was_dynamic_root,
             cache_setting: CacheSetting::Use,
             maybe_checksum: maybe_checksum.clone(),
@@ -5101,7 +5103,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 .load(
                   &load_specifier,
                   LoadOptions {
-                    is_dynamic,
+                    in_dynamic_branch: is_dynamic,
                     was_dynamic_root,
                     cache_setting: CacheSetting::Reload,
                     maybe_checksum: maybe_checksum.clone(),
@@ -5254,7 +5256,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             let fut = self.loader.load(
               &specifier,
               LoadOptions {
-                is_dynamic: self.in_dynamic_branch,
+                in_dynamic_branch: self.in_dynamic_branch,
                 was_dynamic_root: self.was_dynamic_root,
                 cache_setting: CacheSetting::Use,
                 maybe_checksum: Some(checksum.clone()),
@@ -6067,7 +6069,7 @@ mod tests {
         let specifier = specifier.clone();
         match specifier.as_str() {
           "file:///foo.js" => {
-            assert!(!options.is_dynamic);
+            assert!(!options.in_dynamic_branch);
             assert!(!options.was_dynamic_root);
             *self.loaded_foo.borrow_mut() = true;
             Box::pin(async move {
@@ -6080,7 +6082,7 @@ mod tests {
             })
           }
           "file:///bar.js" => {
-            assert!(options.is_dynamic);
+            assert!(options.in_dynamic_branch);
             assert!(!options.was_dynamic_root);
             *self.loaded_bar.borrow_mut() = true;
             Box::pin(async move {
@@ -6093,7 +6095,7 @@ mod tests {
             })
           }
           "file:///baz.js" => {
-            assert!(options.is_dynamic);
+            assert!(options.in_dynamic_branch);
             assert!(!options.was_dynamic_root);
             *self.loaded_baz.borrow_mut() = true;
             Box::pin(async move {
@@ -6106,7 +6108,7 @@ mod tests {
             })
           }
           "file:///dynamic_root.js" => {
-            assert!(options.is_dynamic);
+            assert!(options.in_dynamic_branch);
             assert!(options.was_dynamic_root);
             *self.loaded_dynamic_root.borrow_mut() = true;
             Box::pin(async move {
@@ -6567,7 +6569,7 @@ mod tests {
             }))
           }),
           "file:///bar.js" => {
-            assert!(!options.is_dynamic);
+            assert!(!options.in_dynamic_branch);
             *self.loaded_bar.borrow_mut() = true;
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
@@ -6629,7 +6631,7 @@ mod tests {
             }))
           }),
           "file:///bar.ts" => {
-            assert!(!options.is_dynamic);
+            assert!(!options.in_dynamic_branch);
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
@@ -6640,7 +6642,7 @@ mod tests {
             })
           }
           "file:///baz.json" => {
-            assert!(!options.is_dynamic);
+            assert!(!options.in_dynamic_branch);
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),
@@ -6846,7 +6848,7 @@ mod tests {
             }))
           }),
           "file:///bar.d.ts" => {
-            assert!(!options.is_dynamic);
+            assert!(!options.in_dynamic_branch);
             Box::pin(async move {
               Ok(Some(LoadResponse::Module {
                 specifier: specifier.clone(),

@@ -281,11 +281,12 @@ impl Locker for HashMapLocker {
 
 #[derive(Debug, Clone)]
 pub struct LoadOptions {
-  pub is_dynamic: bool,
+  /// If the specifier being loaded is part of a dynamic branch.
+  pub in_dynamic_branch: bool,
   /// If the root specifier building the graph was in a dynamic branch.
   ///
   /// This can be useful for telling if a dynamic load is statically analyzable
-  /// where `is_dynamic` is `true`` and `was_dynamic_root` is `false`.
+  /// where `is_dynamic_branch` is `true`` and `was_dynamic_root` is `false`.
   pub was_dynamic_root: bool,
   pub cache_setting: CacheSetting,
   /// It is the loader's responsibility to verify the provided checksum if it
