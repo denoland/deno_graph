@@ -43,18 +43,18 @@ console.log('HI');
             "resolutionMode": "import",
             "span": {
               "start": {
-                "line": 0,
+                "line": 5,
                 "character": 7
               },
               "end": {
-                "line": 0,
+                "line": 5,
                 "character": 21
               }
             }
           }
         }
       ],
-      "size": 22,
+      "size": 433,
       "mediaType": "TypeScript",
       "specifier": "file:///mod.ts"
     },
