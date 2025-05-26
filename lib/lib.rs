@@ -322,6 +322,7 @@ pub async fn js_create_graph(
         locker: None,
         passthrough_jsr_specifiers: false,
         module_analyzer: Default::default(),
+        module_info_cacher: Default::default(),
         reporter: None,
         executor: Default::default(),
       },
