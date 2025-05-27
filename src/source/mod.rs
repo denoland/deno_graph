@@ -323,9 +323,23 @@ pub trait Loader {
     specifier: &ModuleSpecifier,
     options: LoadOptions,
   ) -> LoadFuture;
+}
 
+pub trait ModuleInfoCacher {
   /// Cache the module info for the provided specifier if the loader
   /// supports caching this information.
+  fn cache_module_info(
+    &self,
+    specifier: &ModuleSpecifier,
+    media_type: MediaType,
+    source: &Arc<[u8]>,
+    module_info: &ModuleInfo,
+  );
+}
+
+pub struct NullModuleInfoCacher;
+
+impl ModuleInfoCacher for NullModuleInfoCacher {
   fn cache_module_info(
     &self,
     _specifier: &ModuleSpecifier,
@@ -333,6 +347,12 @@ pub trait Loader {
     _source: &Arc<[u8]>,
     _module_info: &ModuleInfo,
   ) {
+  }
+}
+
+impl Default for &dyn ModuleInfoCacher {
+  fn default() -> Self {
+    &NullModuleInfoCacher
   }
 }
 

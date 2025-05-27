@@ -1379,6 +1379,7 @@ pub struct BuildOptions<'a> {
   /// specifiers as external.
   pub passthrough_jsr_specifiers: bool,
   pub module_analyzer: &'a dyn ModuleAnalyzer,
+  pub module_info_cacher: &'a dyn ModuleInfoCacher,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   pub reporter: Option<&'a dyn Reporter>,
   pub resolver: Option<&'a dyn Resolver>,
@@ -1395,6 +1396,7 @@ impl Default for BuildOptions<'_> {
       jsr_url_provider: Default::default(),
       passthrough_jsr_specifiers: false,
       module_analyzer: Default::default(),
+      module_info_cacher: Default::default(),
       npm_resolver: None,
       reporter: None,
       resolver: None,
@@ -3801,6 +3803,7 @@ struct Builder<'a, 'graph> {
   resolver: Option<&'a dyn Resolver>,
   npm_resolver: Option<&'a dyn NpmResolver>,
   module_analyzer: &'a dyn ModuleAnalyzer,
+  module_info_cacher: &'a dyn ModuleInfoCacher,
   reporter: Option<&'a dyn Reporter>,
   graph: &'graph mut ModuleGraph,
   state: PendingState<'a>,
@@ -3831,6 +3834,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       resolver: options.resolver,
       npm_resolver: options.npm_resolver,
       module_analyzer: options.module_analyzer,
+      module_info_cacher: options.module_info_cacher,
       reporter: options.reporter,
       graph,
       state: PendingState::default(),
@@ -4240,7 +4244,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 ModuleSlot::Module(module) => {
                   match module {
                     Module::Js(module) => {
-                      self.loader.cache_module_info(
+                      self.module_info_cacher.cache_module_info(
                         &specifier,
                         module.media_type,
                         &content,
