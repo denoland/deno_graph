@@ -141,17 +141,14 @@ impl JsrMetadataStore {
       move |content| {
         let version_info: JsrPackageVersionInfo =
           serde_json::from_slice(content)?;
-        let checksum_for_locker = version_info
-          .lockfile_checksum
-          .clone()
-          .or_else(|| {
-            if should_compute_checksum {
-              Some(LoaderChecksum::gen(content))
-            } else {
-              None
-            }
-          })
-          .map(LoaderChecksum::new);
+        let checksum_for_locker = should_compute_checksum.then(|| {
+          LoaderChecksum::new(
+            version_info
+              .lockfile_checksum
+              .clone()
+              .unwrap_or_else(|| LoaderChecksum::gen(content)),
+          )
+        });
         Ok(PendingJsrPackageVersionInfoLoadItem {
           checksum_for_locker,
           info: Arc::new(version_info),
