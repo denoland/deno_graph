@@ -47,6 +47,14 @@ pub struct JsrPackageVersionInfo {
   #[serde(rename = "moduleGraph2")]
   pub module_graph_2: Option<serde_json::Value>,
   pub manifest: HashMap<String, JsrPackageVersionManifestEntry>,
+  /// This is a property that deno_cache_dir sets when copying from
+  /// the global to the local cache. If it's set, put this in the lockfile
+  /// instead of computing the checksum from the file bytes. This is necessary
+  /// because we store less data in the metadata files found in the vendor
+  /// directory than in the global cache and also someone may modify the vendored
+  /// files then regenerate the lockfile.
+  #[serde(rename = "lockfileChecksum")]
+  pub lockfile_checksum: Option<String>,
 }
 
 impl JsrPackageVersionInfo {

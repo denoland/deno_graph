@@ -7131,6 +7131,7 @@ mod tests {
         module_graph_1: None,
         module_graph_2: None,
         manifest: Default::default(),
+        lockfile_checksum: None,
       },
     );
     test_loader.add_external_source("https://jsr.io/@package/foo/1.0.0/mod.ts");

@@ -139,13 +139,19 @@ impl JsrMetadataStore {
       // we won't have a checksum when not using a lockfile
       maybe_expected_checksum,
       move |content| {
-        let checksum_for_locker = if should_compute_checksum {
-          Some(LoaderChecksum::new(LoaderChecksum::gen(content)))
-        } else {
-          None
-        };
         let version_info: JsrPackageVersionInfo =
           serde_json::from_slice(content)?;
+        let checksum_for_locker = version_info
+          .lockfile_checksum
+          .clone()
+          .or_else(|| {
+            if should_compute_checksum {
+              Some(LoaderChecksum::gen(content))
+            } else {
+              None
+            }
+          })
+          .map(LoaderChecksum::new);
         Ok(PendingJsrPackageVersionInfoLoadItem {
           checksum_for_locker,
           info: Arc::new(version_info),
