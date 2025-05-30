@@ -64,6 +64,7 @@ use futures::stream::StreamExt;
 use futures::FutureExt;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
+use parking_lot::Mutex;
 use serde::ser::SerializeSeq;
 use serde::ser::SerializeStruct;
 use serde::Deserialize;
@@ -977,10 +978,12 @@ impl WorkspaceMember {
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "kind")]
 pub enum Module {
-  // todo(#239): remove this when updating the --json output for 2.0
+  #[serde(rename = "asset")]
+  Asset(AssetModule),
+  // todo(#239): remove this when updating the --json output for 3.0
   #[serde(rename = "esm")]
   Js(JsModule),
-  // todo(#239): remove this when updating the --json output for 2.0
+  // todo(#239): remove this when updating the --json output for 3.0
   #[serde(rename = "asserted")]
   Json(JsonModule),
   Wasm(WasmModule),
@@ -992,6 +995,7 @@ pub enum Module {
 impl Module {
   pub fn specifier(&self) -> &ModuleSpecifier {
     match self {
+      Module::Asset(module) => &module.specifier,
       Module::Js(module) => &module.specifier,
       Module::Json(module) => &module.specifier,
       Module::Wasm(module) => &module.specifier,
@@ -1003,6 +1007,7 @@ impl Module {
 
   pub fn media_type(&self) -> MediaType {
     match self {
+      Module::Asset(module) => module.media_type,
       Module::Js(module) => module.media_type,
       Module::Json(module) => module.media_type,
       Module::Wasm(_) => MediaType::Wasm,
@@ -1086,7 +1091,8 @@ impl Module {
     match self {
       Module::Js(js_module) => &js_module.dependencies,
       Module::Wasm(wasm_module) => &wasm_module.dependencies,
-      Module::Npm(_)
+      Module::Asset(_)
+      | Module::Npm(_)
       | Module::Node(_)
       | Module::External(_)
       | Module::Json(_) => EMPTY_DEPS.get_or_init(Default::default),
@@ -1099,7 +1105,8 @@ impl Module {
     match self {
       Module::Js(js_module) => js_module.dependencies_prefer_fast_check(),
       Module::Wasm(wasm_module) => &wasm_module.dependencies,
-      Module::Npm(_)
+      Module::Asset(_)
+      | Module::Npm(_)
       | Module::Node(_)
       | Module::External(_)
       | Module::Json(_) => EMPTY_DEPS.get_or_init(Default::default),
@@ -1109,6 +1116,51 @@ impl Module {
 
 static EMPTY_DEPS: std::sync::OnceLock<IndexMap<String, Dependency>> =
   std::sync::OnceLock::new();
+
+#[derive(Debug)]
+pub struct SourceCell<T: ?Sized>(Mutex<Option<Arc<T>>>);
+
+impl Serialize for SourceCell<str> {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    let len = match &*self.0.lock() {
+      Some(arc_str) => arc_str.len() as u32,
+      None => 0,
+    };
+    serializer.serialize_u32(len)
+  }
+}
+
+impl Serialize for SourceCell<[u8]> {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    let len = match &*self.0.lock() {
+      Some(bytes) => bytes.len() as u32,
+      None => 0,
+    };
+    serializer.serialize_u32(len)
+  }
+}
+
+impl<T: ?Sized> SourceCell<T> {
+  pub fn new(value: Arc<T>) -> Self {
+    Self(Mutex::new(Some(value)))
+  }
+
+  /// Gets the value found in the cell.
+  pub fn get(&self) -> Option<Arc<T>> {
+    self.0.lock().clone()
+  }
+
+  /// Takes the value out of the cell.
+  pub fn take(&self) -> Option<Arc<T>> {
+    self.0.lock().take()
+  }
+}
 
 /// An npm package entrypoint.
 #[derive(Debug, Clone, Serialize)]
@@ -1136,6 +1188,22 @@ pub struct BuiltInNodeModule {
   pub specifier: ModuleSpecifier,
   /// Module name (ex. "fs")
   pub module_name: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssetModule {
+  pub specifier: ModuleSpecifier,
+  #[serde(skip_serializing_if = "is_media_type_unknown")]
+  pub media_type: MediaType,
+  #[serde(flatten, skip_serializing_if = "Option::is_none")]
+  pub maybe_cache_info: Option<CacheInfo>,
+  #[serde(rename = "size")]
+  pub bytes: Arc<SourceCell<[u8]>>,
+  #[serde(skip_serializing)]
+  pub text: Arc<SourceCell<str>>,
+  #[serde(skip_serializing)]
+  pub mtime: Option<SystemTime>,
 }
 
 #[derive(Debug, Clone, Serialize)]

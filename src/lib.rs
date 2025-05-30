@@ -89,6 +89,7 @@ pub use graph::Range;
 pub use graph::Resolution;
 pub use graph::ResolutionError;
 pub use graph::ResolutionResolved;
+pub use graph::SourceCell;
 pub use graph::TypesDependency;
 pub use graph::WalkOptions;
 pub use graph::WasmModule;
