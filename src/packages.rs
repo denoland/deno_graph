@@ -15,7 +15,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::analyzer::module_graph_1_to_2;
-use crate::ModuleInfo;
+use crate::analyzer::ModuleInfo;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct JsrPackageInfo {

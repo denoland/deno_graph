@@ -1,25 +1,20 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
-use deno_ast::dep::DynamicDependencyKind;
-use deno_ast::dep::ImportAttributes;
-use deno_ast::dep::StaticDependencyKind;
-use deno_ast::MediaType;
-use deno_ast::ModuleSpecifier;
-use deno_ast::ParseDiagnostic;
-use deno_ast::SourceRange;
-use deno_ast::SourceTextInfo;
-use regex::Match;
+use deno_error::JsErrorBox;
+use deno_media_type::MediaType;
+use once_cell::sync::Lazy;
+use regex::Regex;
 use serde::ser::SerializeTuple;
 use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
 
-use crate::ast::DENO_TYPES_RE;
 use crate::graph::Position;
 use crate::source::ResolutionMode;
-use crate::DefaultModuleAnalyzer;
+use crate::ModuleSpecifier;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Hash)]
 pub struct PositionRange {
@@ -42,9 +37,10 @@ impl PositionRange {
     (position >= self.start) && (position <= self.end)
   }
 
+  #[cfg(feature = "deno_ast")]
   pub fn from_source_range(
-    range: SourceRange,
-    text_info: &SourceTextInfo,
+    range: deno_ast::SourceRange,
+    text_info: &deno_ast::SourceTextInfo,
   ) -> Self {
     Self {
       start: Position::from_source_pos(range.start, text_info),
@@ -52,8 +48,12 @@ impl PositionRange {
     }
   }
 
-  pub fn as_source_range(&self, text_info: &SourceTextInfo) -> SourceRange {
-    SourceRange::new(
+  #[cfg(feature = "deno_ast")]
+  pub fn as_source_range(
+    &self,
+    text_info: &deno_ast::SourceTextInfo,
+  ) -> deno_ast::SourceRange {
+    deno_ast::SourceRange::new(
       self.start.as_source_pos(text_info),
       self.end.as_source_pos(text_info),
     )
@@ -117,6 +117,66 @@ impl DependencyDescriptor {
       DependencyDescriptor::Dynamic(d) => &d.import_attributes,
     }
   }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[serde(untagged)]
+pub enum ImportAttribute {
+  /// The value of this attribute could not be statically analyzed.
+  Unknown,
+  /// The value of this attribute is a statically analyzed string.
+  Known(String),
+}
+
+#[derive(Clone, Default, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ImportAttributes {
+  /// There was no import attributes object literal.
+  #[default]
+  None,
+  /// The set of attribute keys could not be statically analyzed.
+  Unknown,
+  /// The set of attribute keys is statically analyzed, though each respective
+  /// value may or may not not be for dynamic imports.
+  Known(HashMap<String, ImportAttribute>),
+}
+
+impl ImportAttributes {
+  pub fn is_none(&self) -> bool {
+    matches!(self, ImportAttributes::None)
+  }
+
+  pub fn get(&self, key: &str) -> Option<&String> {
+    match self {
+      ImportAttributes::Known(map) => match map.get(key) {
+        Some(ImportAttribute::Known(value)) => Some(value),
+        _ => None,
+      },
+      _ => None,
+    }
+  }
+}
+
+#[derive(
+  Default, Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize,
+)]
+#[serde(rename_all = "camelCase")]
+pub enum DynamicDependencyKind {
+  #[default]
+  Import,
+  Require,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum StaticDependencyKind {
+  Import,
+  ImportType,
+  ImportEquals,
+  Export,
+  ExportType,
+  ExportEquals,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -213,6 +273,7 @@ pub enum TypeScriptTypesResolutionMode {
 }
 
 impl TypeScriptTypesResolutionMode {
+  #[allow(clippy::should_implement_trait)]
   pub fn from_str(text: &str) -> Option<Self> {
     match text {
       "import" => Some(Self::Import),
@@ -295,7 +356,7 @@ pub fn module_graph_1_to_2(module_info: &mut serde_json::Value) {
   ) -> Option<SpecifierWithRange> {
     fn comment_position_to_position_range(
       mut comment_start: Position,
-      m: &Match,
+      range: std::ops::Range<usize>,
     ) -> PositionRange {
       // the comment text starts after the double slash or slash star, so add 2
       comment_start.character += 2;
@@ -304,30 +365,24 @@ pub fn module_graph_1_to_2(module_info: &mut serde_json::Value) {
         // Does -1 and +1 to include the quotes
         start: Position {
           line: comment_start.line,
-          character: comment_start.character + m.start() - 1,
+          character: comment_start.character + range.start - 1,
         },
         end: Position {
           line: comment_start.line,
-          character: comment_start.character + m.end() + 1,
+          character: comment_start.character + range.end + 1,
         },
       }
     }
 
     let comment = leading_comments.last()?;
-    let captures = DENO_TYPES_RE.captures(&comment.text)?;
-    if let Some(m) = captures.get(1) {
-      Some(SpecifierWithRange {
-        text: m.as_str().to_string(),
-        range: comment_position_to_position_range(comment.range.start, &m),
-      })
-    } else if let Some(m) = captures.get(2) {
-      Some(SpecifierWithRange {
-        text: m.as_str().to_string(),
-        range: comment_position_to_position_range(comment.range.start, &m),
-      })
-    } else {
-      unreachable!("Unexpected captures from deno types regex")
-    }
+    let deno_types = find_deno_types(&comment.text)?;
+    Some(SpecifierWithRange {
+      text: deno_types.text.to_string(),
+      range: comment_position_to_position_range(
+        comment.range.start,
+        deno_types.range,
+      ),
+    })
   }
 
   // To support older module graphs, we need to convert the module graph 1
@@ -375,12 +430,117 @@ pub trait ModuleAnalyzer {
     specifier: &ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
-  ) -> Result<ModuleInfo, ParseDiagnostic>;
+  ) -> Result<ModuleInfo, JsErrorBox>;
 }
 
 impl<'a> Default for &'a dyn ModuleAnalyzer {
   fn default() -> &'a dyn ModuleAnalyzer {
-    &DefaultModuleAnalyzer
+    #[cfg(feature = "deno_ast")]
+    {
+      &crate::ast::DefaultModuleAnalyzer
+    }
+    #[cfg(not(feature = "deno_ast"))]
+    {
+      panic!("Provide a module analyzer or turn on the deno_ast feature of deno_graph.");
+    }
+  }
+}
+
+/// Matches a `/// <reference ... />` comment reference.
+pub fn is_comment_triple_slash_reference(comment_text: &str) -> bool {
+  static TRIPLE_SLASH_REFERENCE_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?i)^/\s*<reference\s.*?/>").unwrap());
+  TRIPLE_SLASH_REFERENCE_RE.is_match(comment_text)
+}
+
+/// Matches a path reference, which adds a dependency to a module
+pub fn find_path_reference(text: &str) -> Option<regex::Match> {
+  static PATH_REFERENCE_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?i)\spath\s*=\s*["']([^"']*)["']"#).unwrap());
+  PATH_REFERENCE_RE
+    .captures(text)
+    .and_then(|captures| captures.get(1))
+}
+
+/// Matches a types reference, which for JavaScript files indicates the
+/// location of types to use when type checking a program that includes it as
+/// a dependency.
+pub fn find_types_reference(text: &str) -> Option<regex::Match> {
+  static TYPES_REFERENCE_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?i)\stypes\s*=\s*["']([^"']*)["']"#).unwrap());
+  TYPES_REFERENCE_RE.captures(text).and_then(|c| c.get(1))
+}
+
+/// Ex. `resolution-mode="require"` in `/// <reference types="pkg" resolution-mode="require" />`
+pub fn find_resolution_mode(text: &str) -> Option<regex::Match> {
+  static RESOLUTION_MODE_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"(?i)\sresolution-mode\s*=\s*["']([^"']*)["']"#).unwrap()
+  });
+  RESOLUTION_MODE_RE.captures(text).and_then(|m| m.get(1))
+}
+
+/// Matches the `@jsxImportSource` pragma.
+pub fn find_jsx_import_source(text: &str) -> Option<regex::Match> {
+  static JSX_IMPORT_SOURCE_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?i)^[\s*]*@jsxImportSource\s+(\S+)").unwrap());
+  JSX_IMPORT_SOURCE_RE.captures(text).and_then(|c| c.get(1))
+}
+
+/// Matches the `@jsxImportSourceTypes` pragma.
+pub fn find_jsx_import_source_types(text: &str) -> Option<regex::Match> {
+  static JSX_IMPORT_SOURCE_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"(?i)^[\s*]*@jsxImportSourceTypes\s+(\S+)").unwrap()
+  });
+  JSX_IMPORT_SOURCE_TYPES_RE
+    .captures(text)
+    .and_then(|c| c.get(1))
+}
+
+/// Matches the `@ts-self-types` pragma.
+pub fn find_ts_self_types(text: &str) -> Option<regex::Match> {
+  static TS_SELF_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"(?i)^\s*@ts-self-types\s*=\s*["']([^"']+)["']"#).unwrap()
+  });
+  TS_SELF_TYPES_RE.captures(text).and_then(|c| c.get(1))
+}
+
+/// Matches the `@ts-types` pragma.
+pub fn find_ts_types(text: &str) -> Option<regex::Match> {
+  static TS_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"(?i)^\s*@ts-types\s*=\s*["']([^"']+)["']"#).unwrap()
+  });
+  TS_TYPES_RE.captures(text).and_then(|c| c.get(1))
+}
+
+pub struct DenoTypesPragmaMatch<'a> {
+  pub text: &'a str,
+  pub range: std::ops::Range<usize>,
+  pub is_quoteless: bool,
+}
+
+pub fn find_deno_types(text: &str) -> Option<DenoTypesPragmaMatch> {
+  /// Matches the `@deno-types` pragma.
+  static DENO_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"(?i)^\s*@deno-types\s*=\s*(?:["']([^"']+)["']|(\S+))"#)
+      .unwrap()
+  });
+
+  let captures = DENO_TYPES_RE.captures(text)?;
+
+  if let Some(m) = captures.get(1) {
+    Some(DenoTypesPragmaMatch {
+      text: m.as_str(),
+      range: m.range(),
+      is_quoteless: false,
+    })
+  } else if let Some(m) = captures.get(2) {
+    Some(DenoTypesPragmaMatch {
+      text: m.as_str(),
+      range: m.range(),
+      is_quoteless: true,
+    })
+  } else {
+    unreachable!("Unexpected captures from deno types regex")
   }
 }
 
@@ -392,7 +552,6 @@ fn is_false(v: &bool) -> bool {
 mod test {
   use std::collections::HashMap;
 
-  use deno_ast::dep::ImportAttribute;
   use pretty_assertions::assert_eq;
   use serde::de::DeserializeOwned;
   use serde_json::json;

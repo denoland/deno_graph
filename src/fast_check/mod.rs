@@ -17,13 +17,9 @@ use deno_ast::SourceRange;
 use deno_ast::SourceTextInfo;
 
 mod cache;
-#[cfg(feature = "fast_check")]
 mod range_finder;
-#[cfg(feature = "fast_check")]
 mod swc_helpers;
-#[cfg(feature = "fast_check")]
 mod transform;
-#[cfg(feature = "fast_check")]
 mod transform_dts;
 
 pub use cache::FastCheckCache;
@@ -32,11 +28,8 @@ pub use cache::FastCheckCacheKey;
 pub use cache::FastCheckCacheModuleItem;
 pub use cache::FastCheckCacheModuleItemDiagnostic;
 pub use cache::FastCheckCacheModuleItemInfo;
-#[cfg(feature = "fast_check")]
 pub use transform::FastCheckDtsModule;
-#[cfg(feature = "fast_check")]
 pub use transform::FastCheckModule;
-#[cfg(feature = "fast_check")]
 pub use transform::TransformOptions;
 
 #[derive(Clone)]

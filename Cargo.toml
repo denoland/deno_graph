@@ -27,7 +27,7 @@ all-features = true
 [features]
 default = ["fast_check", "ecosystem_test"]
 fast_check = ["symbols", "deno_ast/transpiling", "twox-hash"]
-symbols = ["deno_ast/transforms", "deno_ast/visit", "deno_ast/utils"]
+symbols = ["deno_ast", "deno_ast/transforms", "deno_ast/visit", "deno_ast/utils"]
 ecosystem_test = []
 
 [[test]]
@@ -44,7 +44,7 @@ harness = false
 async-trait = "0.1.68"
 capacity_builder = "0.5.0"
 data-url = "0.3.0"
-deno_ast = { version = "0.48.0", features = ["dep_analysis", "emit"] }
+deno_ast = { version = "0.48.0", features = ["emit"], optional = true }
 deno_media_type = { version = "0.2.8", features = ["decoding", "data_url", "module_specifier"] }
 deno_unsync.workspace = true
 deno_path_util = "0.4.0"

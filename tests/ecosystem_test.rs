@@ -9,11 +9,11 @@ use std::sync::Arc;
 
 use deno_ast::diagnostics::Diagnostic;
 use deno_ast::MediaType;
+use deno_graph::ast::CapturingModuleAnalyzer;
 use deno_graph::source::LoadResponse;
 use deno_graph::source::NullFileSystem;
 use deno_graph::BuildFastCheckTypeGraphOptions;
 use deno_graph::BuildOptions;
-use deno_graph::CapturingModuleAnalyzer;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
 use deno_graph::WorkspaceFastCheckOption;

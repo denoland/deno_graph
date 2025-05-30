@@ -6,8 +6,6 @@ use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use deno_ast::SourceTextInfo;
 
-use crate::FastCheckDiagnosticRange;
-
 use super::range_finder::ModulePublicRanges;
 use super::swc_helpers::any_type_ann;
 use super::swc_helpers::maybe_lit_to_ts_type;
@@ -15,6 +13,7 @@ use super::swc_helpers::ts_readonly;
 use super::swc_helpers::ts_tuple_element;
 use super::swc_helpers::type_ann;
 use super::swc_helpers::DeclMutabilityKind;
+use super::FastCheckDiagnosticRange;
 
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum FastCheckDtsDiagnostic {
@@ -1050,13 +1049,13 @@ fn valid_prop_name(prop_name: &PropName) -> Option<PropName> {
 mod tests {
   use std::collections::VecDeque;
 
+  use crate::ast::CapturingModuleAnalyzer;
   use crate::fast_check::range_finder::find_public_ranges;
   use crate::fast_check::transform_dts::FastCheckDtsTransformer;
   use crate::source::MemoryLoader;
   use crate::source::Source;
   use crate::symbols::RootSymbol;
   use crate::BuildOptions;
-  use crate::CapturingModuleAnalyzer;
   use crate::GraphKind;
   use crate::ModuleGraph;
   use crate::WorkspaceMember;

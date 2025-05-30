@@ -5,8 +5,9 @@
 #![deny(clippy::unused_async)]
 #![deny(clippy::unnecessary_wraps)]
 
-mod analyzer;
-mod ast;
+pub mod analyzer;
+#[cfg(feature = "deno_ast")]
+pub mod ast;
 mod collections;
 mod graph;
 mod jsr;
@@ -16,7 +17,8 @@ mod rt;
 #[cfg(feature = "symbols")]
 pub mod symbols;
 
-mod fast_check;
+#[cfg(feature = "deno_ast")]
+pub mod fast_check;
 pub mod packages;
 pub mod source;
 
@@ -28,37 +30,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
 
-pub use analyzer::DependencyDescriptor;
-pub use analyzer::DynamicArgument;
-pub use analyzer::DynamicDependencyDescriptor;
-pub use analyzer::DynamicTemplatePart;
-pub use analyzer::JsDocImportInfo;
-pub use analyzer::ModuleAnalyzer;
-pub use analyzer::ModuleInfo;
-pub use analyzer::PositionRange;
-pub use analyzer::SpecifierWithRange;
-pub use analyzer::StaticDependencyDescriptor;
-pub use analyzer::TypeScriptReference;
-pub use ast::CapturingEsParser;
-pub use ast::CapturingModuleAnalyzer;
-pub use ast::DefaultEsParser;
-pub use ast::DefaultModuleAnalyzer;
-pub use ast::DefaultParsedSourceStore;
-pub use ast::EsParser;
-pub use ast::ParseOptions;
-pub use ast::ParsedSourceStore;
-pub use ast::ParserModuleAnalyzer;
-pub use deno_ast::MediaType;
-pub use fast_check::FastCheckCache;
-pub use fast_check::FastCheckCacheItem;
-pub use fast_check::FastCheckCacheKey;
-pub use fast_check::FastCheckCacheModuleItem;
-pub use fast_check::FastCheckCacheModuleItemDiagnostic;
-pub use fast_check::FastCheckCacheModuleItemInfo;
-pub use fast_check::FastCheckDiagnostic;
-pub use fast_check::FastCheckDiagnosticRange;
-#[cfg(feature = "fast_check")]
-pub use fast_check::FastCheckModule;
+pub use deno_media_type::MediaType;
 #[cfg(feature = "fast_check")]
 pub use graph::BuildFastCheckTypeGraphOptions;
 pub use graph::BuildOptions;
@@ -66,7 +38,9 @@ pub use graph::CheckJsOption;
 pub use graph::CheckJsResolver;
 pub use graph::Dependency;
 pub use graph::ExternalModule;
+#[cfg(feature = "fast_check")]
 pub use graph::FastCheckTypeModule;
+#[cfg(feature = "fast_check")]
 pub use graph::FastCheckTypeModuleSlot;
 pub use graph::FillFromLockfileOptions;
 pub use graph::GraphImport;
@@ -101,9 +75,7 @@ pub use module_specifier::SpecifierError;
 pub use rt::Executor;
 pub use source::NpmResolvePkgReqsResult;
 
-pub use deno_ast::dep::ImportAttribute;
-pub use deno_ast::dep::ImportAttributes;
-pub use deno_ast::dep::StaticDependencyKind;
+use self::analyzer::ModuleAnalyzer;
 
 /// Additional import that should be brought into the scope of
 /// the module graph to add to the graph's "imports". This may
@@ -162,6 +134,7 @@ pub async fn parse_module(
   Ok(module)
 }
 
+#[cfg(feature = "deno_ast")]
 pub struct ParseModuleFromAstOptions<'a> {
   pub graph_kind: GraphKind,
   pub specifier: ModuleSpecifier,
@@ -174,13 +147,14 @@ pub struct ParseModuleFromAstOptions<'a> {
 }
 
 /// Parse an individual module from an AST, returning the module.
+#[cfg(feature = "deno_ast")]
 pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> JsModule {
   graph::parse_js_module_from_module_info(
     options.graph_kind,
     options.specifier,
     options.parsed_source.media_type(),
     options.maybe_headers,
-    ParserModuleAnalyzer::module_info(options.parsed_source),
+    ast::ParserModuleAnalyzer::module_info(options.parsed_source),
     options.mtime,
     options.parsed_source.text().clone(),
     options.file_system,
@@ -191,6 +165,7 @@ pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> JsModule {
 
 #[cfg(test)]
 mod tests {
+  use crate::analyzer::PositionRange;
   use crate::graph::Import;
   use crate::graph::ImportKind;
   use crate::graph::ResolutionResolved;
