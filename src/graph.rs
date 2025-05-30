@@ -122,7 +122,7 @@ impl Position {
     }
   }
 
-  #[cfg(feature = "deno_ast")]
+  #[cfg(feature = "swc")]
   pub fn from_source_pos(
     pos: deno_ast::SourcePos,
     text_info: &deno_ast::SourceTextInfo,
@@ -134,7 +134,7 @@ impl Position {
     }
   }
 
-  #[cfg(feature = "deno_ast")]
+  #[cfg(feature = "swc")]
   pub fn as_source_pos(
     &self,
     text_info: &deno_ast::SourceTextInfo,

@@ -35,13 +35,13 @@ fn wasm_module_deps_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
     }
   }
 
-  #[cfg(feature = "deno_ast")]
+  #[cfg(feature = "swc")]
   fn is_valid_ident(export_name: &str) -> bool {
     !export_name.is_empty()
       && deno_ast::swc::ast::Ident::verify_symbol(export_name).is_ok()
   }
 
-  #[cfg(not(feature = "deno_ast"))]
+  #[cfg(not(feature = "swc"))]
   fn is_valid_ident(_export_name: &str) -> bool {
     // Just assume everything is not valid if not using deno_ast.
     // This should not be a big deal because it just means that

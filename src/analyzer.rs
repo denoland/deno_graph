@@ -37,7 +37,7 @@ impl PositionRange {
     (position >= self.start) && (position <= self.end)
   }
 
-  #[cfg(feature = "deno_ast")]
+  #[cfg(feature = "swc")]
   pub fn from_source_range(
     range: deno_ast::SourceRange,
     text_info: &deno_ast::SourceTextInfo,
@@ -48,7 +48,7 @@ impl PositionRange {
     }
   }
 
-  #[cfg(feature = "deno_ast")]
+  #[cfg(feature = "swc")]
   pub fn as_source_range(
     &self,
     text_info: &deno_ast::SourceTextInfo,
@@ -435,13 +435,15 @@ pub trait ModuleAnalyzer {
 
 impl<'a> Default for &'a dyn ModuleAnalyzer {
   fn default() -> &'a dyn ModuleAnalyzer {
-    #[cfg(feature = "deno_ast")]
+    #[cfg(feature = "swc")]
     {
       &crate::ast::DefaultModuleAnalyzer
     }
-    #[cfg(not(feature = "deno_ast"))]
+    #[cfg(not(feature = "swc"))]
     {
-      panic!("Provide a module analyzer or turn on the deno_ast feature of deno_graph.");
+      panic!(
+        "Provide a module analyzer or turn on the 'swc' cargo feature of deno_graph."
+      );
     }
   }
 }

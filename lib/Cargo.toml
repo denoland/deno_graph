@@ -15,7 +15,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 console_error_panic_hook = "0.1.7"
-deno_graph = { path = "../", features = ["deno_ast"], default-features = false }
+deno_graph = { path = "../", features = ["swc"], default-features = false }
 futures = "0.3.17"
 js-sys = "0.3.68"
 serde = { version = "1.0.130", features = ["derive", "rc"] }

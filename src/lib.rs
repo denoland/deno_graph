@@ -6,7 +6,7 @@
 #![deny(clippy::unnecessary_wraps)]
 
 pub mod analyzer;
-#[cfg(feature = "deno_ast")]
+#[cfg(feature = "swc")]
 pub mod ast;
 mod collections;
 mod graph;
@@ -17,7 +17,7 @@ mod rt;
 #[cfg(feature = "symbols")]
 pub mod symbols;
 
-#[cfg(feature = "deno_ast")]
+#[cfg(feature = "fast_check")]
 pub mod fast_check;
 pub mod packages;
 pub mod source;
@@ -134,7 +134,7 @@ pub async fn parse_module(
   Ok(module)
 }
 
-#[cfg(feature = "deno_ast")]
+#[cfg(feature = "swc")]
 pub struct ParseModuleFromAstOptions<'a> {
   pub graph_kind: GraphKind,
   pub specifier: ModuleSpecifier,
@@ -147,7 +147,7 @@ pub struct ParseModuleFromAstOptions<'a> {
 }
 
 /// Parse an individual module from an AST, returning the module.
-#[cfg(feature = "deno_ast")]
+#[cfg(feature = "swc")]
 pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> JsModule {
   graph::parse_js_module_from_module_info(
     options.graph_kind,
