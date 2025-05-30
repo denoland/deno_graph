@@ -1,6 +1,6 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
-pub type ModuleSpecifier = deno_ast::ModuleSpecifier;
+pub type ModuleSpecifier = url::Url;
 
 pub use import_map::specifier::resolve_import;
 pub use import_map::specifier::SpecifierError;

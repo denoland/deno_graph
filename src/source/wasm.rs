@@ -35,9 +35,18 @@ fn wasm_module_deps_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
     }
   }
 
+  #[cfg(feature = "swc")]
   fn is_valid_ident(export_name: &str) -> bool {
     !export_name.is_empty()
       && deno_ast::swc::ast::Ident::verify_symbol(export_name).is_ok()
+  }
+
+  #[cfg(not(feature = "swc"))]
+  fn is_valid_ident(_export_name: &str) -> bool {
+    // Just assume everything is not valid if not using deno_ast.
+    // This should not be a big deal because it just means that
+    // this code will quote all the properties.
+    false
   }
 
   let is_valid_export_ident_per_export = wasm_deps

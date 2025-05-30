@@ -19,12 +19,12 @@ use deno_ast::SourceTextInfo;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
 
+use crate::ast::EsParser;
+use crate::ast::ParseOptions;
 use crate::graph::WasmModule;
-use crate::EsParser;
 use crate::JsModule;
 use crate::JsonModule;
 use crate::ModuleGraph;
-use crate::ParseOptions;
 
 use super::collections::AdditiveOnlyIndexMap;
 use super::collections::AdditiveOnlyIndexMapForCopyValues;

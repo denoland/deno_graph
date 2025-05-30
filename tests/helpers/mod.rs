@@ -6,6 +6,10 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use deno_ast::ModuleSpecifier;
+use deno_graph::ast::CapturingModuleAnalyzer;
+use deno_graph::fast_check::FastCheckCache;
+use deno_graph::fast_check::FastCheckCacheItem;
+use deno_graph::fast_check::FastCheckCacheKey;
 use deno_graph::source::CacheInfo;
 use deno_graph::source::CacheSetting;
 use deno_graph::source::HashMapLocker;
@@ -16,7 +20,6 @@ use deno_graph::source::LoaderChecksum;
 use deno_graph::source::Locker;
 use deno_graph::source::MemoryLoader;
 use deno_graph::source::NpmResolver;
-use deno_graph::FastCheckCache;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
 use deno_graph::NpmLoadError;
@@ -81,7 +84,7 @@ pub struct BuildResult {
   #[allow(unused)]
   pub locker: Option<HashMapLocker>,
   pub graph: ModuleGraph,
-  pub analyzer: deno_graph::CapturingModuleAnalyzer,
+  pub analyzer: CapturingModuleAnalyzer,
   #[allow(unused)]
   pub fast_check_cache: Option<TestFastCheckCache>,
 }
@@ -127,9 +130,7 @@ impl NpmResolver for TestNpmResolver {
 #[derive(Default)]
 pub struct TestFastCheckCache {
   // BTreeMap because the cache items are inserted non-deterministically
-  pub inner: RefCell<
-    BTreeMap<deno_graph::FastCheckCacheKey, deno_graph::FastCheckCacheItem>,
-  >,
+  pub inner: RefCell<BTreeMap<FastCheckCacheKey, FastCheckCacheItem>>,
 }
 
 impl FastCheckCache for TestFastCheckCache {
@@ -137,18 +138,11 @@ impl FastCheckCache for TestFastCheckCache {
     "stable-for-tests"
   }
 
-  fn get(
-    &self,
-    key: deno_graph::FastCheckCacheKey,
-  ) -> Option<deno_graph::FastCheckCacheItem> {
+  fn get(&self, key: FastCheckCacheKey) -> Option<FastCheckCacheItem> {
     self.inner.borrow().get(&key).cloned()
   }
 
-  fn set(
-    &self,
-    key: deno_graph::FastCheckCacheKey,
-    value: deno_graph::FastCheckCacheItem,
-  ) {
+  fn set(&self, key: FastCheckCacheKey, value: FastCheckCacheItem) {
     self.inner.borrow_mut().insert(key, value);
   }
 }
@@ -277,7 +271,7 @@ impl TestBuilder {
     }
     let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
     let roots = vec![entry_point_url.clone()];
-    let capturing_analyzer = deno_graph::CapturingModuleAnalyzer::default();
+    let capturing_analyzer = CapturingModuleAnalyzer::default();
     let resolver = WorkspaceMemberResolver {
       members: self.workspace_members.clone(),
     };

@@ -3,7 +3,6 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use deno_ast::ModuleSpecifier;
 use deno_semver::package::PackageNv;
 use deno_unsync::future::LocalFutureExt;
 use deno_unsync::future::SharedLocal;
@@ -23,6 +22,7 @@ use crate::source::Loader;
 use crate::source::LoaderChecksum;
 use crate::source::Locker;
 use crate::Executor;
+use crate::ModuleSpecifier;
 
 #[derive(Debug, Clone)]
 pub struct PendingJsrPackageVersionInfoLoadItem {

@@ -1,5 +1,14 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
+use crate::analyzer::find_deno_types;
+use crate::analyzer::find_jsx_import_source;
+use crate::analyzer::find_jsx_import_source_types;
+use crate::analyzer::find_path_reference;
+use crate::analyzer::find_resolution_mode;
+use crate::analyzer::find_ts_self_types;
+use crate::analyzer::find_ts_types;
+use crate::analyzer::find_types_reference;
+use crate::analyzer::is_comment_triple_slash_reference;
 use crate::analyzer::DependencyDescriptor;
 use crate::analyzer::DynamicArgument;
 use crate::analyzer::DynamicDependencyDescriptor;
@@ -15,7 +24,6 @@ use crate::analyzer::TypeScriptTypesResolutionMode;
 use crate::graph::Position;
 use crate::module_specifier::ModuleSpecifier;
 
-use deno_ast::dep::DependencyComment;
 use deno_ast::MultiThreadedComments;
 use deno_ast::ProgramRef;
 use deno_ast::SourcePos;
@@ -27,46 +35,15 @@ use deno_ast::MediaType;
 use deno_ast::ParseDiagnostic;
 use deno_ast::ParsedSource;
 use deno_ast::SourceTextInfo;
-use once_cell::sync::Lazy;
-use regex::Regex;
+use deno_error::JsErrorBox;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-/// Matches the `@jsxImportSource` pragma.
-static JSX_IMPORT_SOURCE_RE: Lazy<Regex> =
-  Lazy::new(|| Regex::new(r"(?i)^[\s*]*@jsxImportSource\s+(\S+)").unwrap());
-/// Matches the `@jsxImportSourceTypes` pragma.
-static JSX_IMPORT_SOURCE_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
-  Regex::new(r"(?i)^[\s*]*@jsxImportSourceTypes\s+(\S+)").unwrap()
-});
-/// Matches a `/// <reference ... />` comment reference.
-static TRIPLE_SLASH_REFERENCE_RE: Lazy<Regex> =
-  Lazy::new(|| Regex::new(r"(?i)^/\s*<reference\s.*?/>").unwrap());
-/// Matches a path reference, which adds a dependency to a module
-static PATH_REFERENCE_RE: Lazy<Regex> =
-  Lazy::new(|| Regex::new(r#"(?i)\spath\s*=\s*["']([^"']*)["']"#).unwrap());
-/// Matches a types reference, which for JavaScript files indicates the
-/// location of types to use when type checking a program that includes it as
-/// a dependency.
-static TYPES_REFERENCE_RE: Lazy<Regex> =
-  Lazy::new(|| Regex::new(r#"(?i)\stypes\s*=\s*["']([^"']*)["']"#).unwrap());
-/// Ex. `resolution-mode="require"` in `/// <reference types="pkg" resolution-mode="require" />`
-static RESOLUTION_MODE_RE: Lazy<Regex> = Lazy::new(|| {
-  Regex::new(r#"(?i)\sresolution-mode\s*=\s*["']([^"']*)["']"#).unwrap()
-});
-/// Matches the `@ts-self-types` pragma.
-static TS_SELF_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
-  Regex::new(r#"(?i)^\s*@ts-self-types\s*=\s*["']([^"']+)["']"#).unwrap()
-});
-/// Matches the `@ts-types` pragma.
-static TS_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
-  Regex::new(r#"(?i)^\s*@ts-types\s*=\s*["']([^"']+)["']"#).unwrap()
-});
-/// Matches the `@deno-types` pragma.
-pub static DENO_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
-  Regex::new(r#"(?i)^\s*@deno-types\s*=\s*(?:["']([^"']+)["']|(\S+))"#).unwrap()
-});
+use self::dep::analyze_program_dependencies;
+use self::dep::DependencyComment;
+
+mod dep;
 
 pub struct ParseOptions<'a> {
   pub specifier: &'a ModuleSpecifier,
@@ -251,7 +228,7 @@ impl ModuleAnalyzer for DefaultModuleAnalyzer {
     specifier: &deno_ast::ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
-  ) -> Result<ModuleInfo, ParseDiagnostic> {
+  ) -> Result<ModuleInfo, JsErrorBox> {
     ParserModuleAnalyzer::default()
       .analyze(specifier, source, media_type)
       .await
@@ -348,8 +325,10 @@ impl ModuleAnalyzer for ParserModuleAnalyzer<'_> {
     specifier: &deno_ast::ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
-  ) -> Result<ModuleInfo, ParseDiagnostic> {
-    self.analyze_sync(specifier, source, media_type)
+  ) -> Result<ModuleInfo, JsErrorBox> {
+    self
+      .analyze_sync(specifier, source, media_type)
+      .map_err(JsErrorBox::from_err)
   }
 }
 
@@ -392,7 +371,7 @@ impl ModuleAnalyzer for CapturingModuleAnalyzer {
     specifier: &deno_ast::ModuleSpecifier,
     source: Arc<str>,
     media_type: MediaType,
-  ) -> Result<ModuleInfo, ParseDiagnostic> {
+  ) -> Result<ModuleInfo, JsErrorBox> {
     let capturing_parser = self.as_capturing_parser();
     let module_analyzer = ParserModuleAnalyzer::new(&capturing_parser);
     module_analyzer.analyze(specifier, source, media_type).await
@@ -445,12 +424,12 @@ fn analyze_dependencies(
   text_info: &SourceTextInfo,
   comments: &MultiThreadedComments,
 ) -> Vec<DependencyDescriptor> {
-  let deps = deno_ast::dep::analyze_program_dependencies(program, comments);
+  let deps = analyze_program_dependencies(program, comments);
 
   deps
     .into_iter()
     .map(|d| match d {
-      deno_ast::dep::DependencyDescriptor::Static(d) => {
+      self::dep::DependencyDescriptor::Static(d) => {
         DependencyDescriptor::Static(StaticDependencyDescriptor {
           kind: d.kind,
           types_specifier: analyze_ts_or_deno_types(
@@ -465,7 +444,7 @@ fn analyze_dependencies(
           import_attributes: d.import_attributes,
         })
       }
-      deno_ast::dep::DependencyDescriptor::Dynamic(d) => {
+      self::dep::DependencyDescriptor::Dynamic(d) => {
         DependencyDescriptor::Dynamic(DynamicDependencyDescriptor {
           kind: d.kind,
           types_specifier: analyze_ts_or_deno_types(
@@ -473,27 +452,27 @@ fn analyze_dependencies(
             &d.leading_comments,
           ),
           argument: match d.argument {
-            deno_ast::dep::DynamicArgument::String(text) => {
+            self::dep::DynamicArgument::String(text) => {
               DynamicArgument::String(text.to_string())
             }
-            deno_ast::dep::DynamicArgument::Template(parts) => {
+            self::dep::DynamicArgument::Template(parts) => {
               DynamicArgument::Template(
                 parts
                   .into_iter()
                   .map(|part| match part {
-                    deno_ast::dep::DynamicTemplatePart::String(text) => {
+                    self::dep::DynamicTemplatePart::String(text) => {
                       DynamicTemplatePart::String {
                         value: text.to_string(),
                       }
                     }
-                    deno_ast::dep::DynamicTemplatePart::Expr => {
+                    self::dep::DynamicTemplatePart::Expr => {
                       DynamicTemplatePart::Expr
                     }
                   })
                   .collect(),
               )
             }
-            deno_ast::dep::DynamicArgument::Expr => DynamicArgument::Expr,
+            self::dep::DynamicArgument::Expr => DynamicArgument::Expr,
           },
           argument_range: PositionRange::from_source_range(
             d.argument_range,
@@ -514,11 +493,10 @@ fn analyze_ts_references(
   if let Some(c) = leading_comments {
     for comment in c {
       if comment.kind == CommentKind::Line
-        && TRIPLE_SLASH_REFERENCE_RE.is_match(&comment.text)
+        && is_comment_triple_slash_reference(&comment.text)
       {
         let comment_start = comment.start();
-        if let Some(captures) = PATH_REFERENCE_RE.captures(&comment.text) {
-          let m = captures.get(1).unwrap();
+        if let Some(m) = find_path_reference(&comment.text) {
           references.push(TypeScriptReference::Path(SpecifierWithRange {
             text: m.as_str().to_string(),
             range: comment_source_to_position_range(
@@ -528,13 +506,8 @@ fn analyze_ts_references(
               false,
             ),
           }));
-        } else if let Some(captures) =
-          TYPES_REFERENCE_RE.captures(&comment.text)
-        {
-          let m = captures.get(1).unwrap();
-          let resolution_mode = RESOLUTION_MODE_RE
-            .captures(&comment.text)
-            .and_then(|m| m.get(1))
+        } else if let Some(m) = find_types_reference(&comment.text) {
+          let resolution_mode = find_resolution_mode(&comment.text)
             .and_then(|m| TypeScriptTypesResolutionMode::from_str(m.as_str()));
           references.push(TypeScriptReference::Types {
             specifier: SpecifierWithRange {
@@ -569,8 +542,7 @@ fn analyze_jsx_import_source(
       if c.kind != CommentKind::Block {
         return None; // invalid
       }
-      let captures = JSX_IMPORT_SOURCE_RE.captures(&c.text)?;
-      let m = captures.get(1)?;
+      let m = find_jsx_import_source(&c.text)?;
       Some(SpecifierWithRange {
         text: m.as_str().to_string(),
         range: comment_source_to_position_range(
@@ -598,8 +570,7 @@ fn analyze_jsx_import_source_types(
       if c.kind != CommentKind::Block {
         return None; // invalid
       }
-      let captures = JSX_IMPORT_SOURCE_TYPES_RE.captures(&c.text)?;
-      let m = captures.get(1)?;
+      let m = find_jsx_import_source_types(&c.text)?;
       Some(SpecifierWithRange {
         text: m.as_str().to_string(),
         range: comment_source_to_position_range(
@@ -624,8 +595,7 @@ fn analyze_ts_self_types(
 
   leading_comments.and_then(|c| {
     c.iter().find_map(|c| {
-      let captures = TS_SELF_TYPES_RE.captures(&c.text)?;
-      let m = captures.get(1)?;
+      let m = find_ts_self_types(&c.text)?;
       Some(SpecifierWithRange {
         text: m.as_str().to_string(),
         range: comment_source_to_position_range(
@@ -646,22 +616,8 @@ pub fn analyze_ts_or_deno_types(
 ) -> Option<SpecifierWithRange> {
   let comment = leading_comments.last()?;
 
-  if let Some(captures) = TS_TYPES_RE.captures(&comment.text) {
-    if let Some(m) = captures.get(1) {
-      return Some(SpecifierWithRange {
-        text: m.as_str().to_string(),
-        range: comment_source_to_position_range(
-          comment.range.start(),
-          m.range(),
-          text_info,
-          false,
-        ),
-      });
-    }
-  }
-  let captures = DENO_TYPES_RE.captures(&comment.text)?;
-  if let Some(m) = captures.get(1) {
-    Some(SpecifierWithRange {
+  if let Some(m) = find_ts_types(&comment.text) {
+    return Some(SpecifierWithRange {
       text: m.as_str().to_string(),
       range: comment_source_to_position_range(
         comment.range.start(),
@@ -669,20 +625,18 @@ pub fn analyze_ts_or_deno_types(
         text_info,
         false,
       ),
-    })
-  } else if let Some(m) = captures.get(2) {
-    Some(SpecifierWithRange {
-      text: m.as_str().to_string(),
-      range: comment_source_to_position_range(
-        comment.range.start(),
-        m.range(),
-        text_info,
-        true,
-      ),
-    })
-  } else {
-    unreachable!("Unexpected captures from deno types regex")
+    });
   }
+  let deno_types = find_deno_types(&comment.text)?;
+  Some(SpecifierWithRange {
+    text: deno_types.text.to_string(),
+    range: comment_source_to_position_range(
+      comment.range.start(),
+      deno_types.range,
+      text_info,
+      deno_types.is_quoteless,
+    ),
+  })
 }
 
 fn analyze_jsdoc_imports(
