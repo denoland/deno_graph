@@ -393,7 +393,7 @@ pub async fn js_parse_module(
 mod tests {
   use super::*;
 
-  use deno_graph::analyzer::PositionRange;
+  use deno_graph::PositionRange;
   use serde_json::from_value;
   use serde_json::json;
 
