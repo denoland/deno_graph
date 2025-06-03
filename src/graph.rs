@@ -7,7 +7,6 @@ use crate::analyzer::DynamicTemplatePart;
 use crate::analyzer::ImportAttributes;
 use crate::analyzer::ModuleAnalyzer;
 use crate::analyzer::ModuleInfo;
-use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::StaticDependencyKind;
 use crate::analyzer::TypeScriptReference;
@@ -60,6 +59,7 @@ use indexmap::IndexMap;
 use indexmap::IndexSet;
 use serde::ser::SerializeSeq;
 use serde::ser::SerializeStruct;
+use serde::ser::SerializeTuple;
 use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
@@ -143,6 +143,79 @@ impl Position {
       line_index: self.line,
       column_index: self.character,
     })
+  }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Hash)]
+pub struct PositionRange {
+  #[serde(default = "Position::zeroed")]
+  pub start: Position,
+  #[serde(default = "Position::zeroed")]
+  pub end: Position,
+}
+
+impl PositionRange {
+  pub fn zeroed() -> Self {
+    Self {
+      start: Position::zeroed(),
+      end: Position::zeroed(),
+    }
+  }
+
+  /// Determines if a given position is within the range.
+  pub fn includes(&self, position: Position) -> bool {
+    (position >= self.start) && (position <= self.end)
+  }
+
+  #[cfg(feature = "swc")]
+  pub fn from_source_range(
+    range: deno_ast::SourceRange,
+    text_info: &deno_ast::SourceTextInfo,
+  ) -> Self {
+    Self {
+      start: Position::from_source_pos(range.start, text_info),
+      end: Position::from_source_pos(range.end, text_info),
+    }
+  }
+
+  #[cfg(feature = "swc")]
+  pub fn as_source_range(
+    &self,
+    text_info: &deno_ast::SourceTextInfo,
+  ) -> deno_ast::SourceRange {
+    deno_ast::SourceRange::new(
+      self.start.as_source_pos(text_info),
+      self.end.as_source_pos(text_info),
+    )
+  }
+}
+
+// Custom serialization to serialize to an array. Interestingly we
+// don't need to implement custom deserialization logic that does
+// the same thing, and serde_json will handle it fine.
+impl Serialize for PositionRange {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    struct PositionSerializer<'a>(&'a Position);
+
+    impl Serialize for PositionSerializer<'_> {
+      fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+      where
+        S: Serializer,
+      {
+        let mut seq = serializer.serialize_tuple(2)?;
+        seq.serialize_element(&self.0.line)?;
+        seq.serialize_element(&self.0.character)?;
+        seq.end()
+      }
+    }
+
+    let mut seq = serializer.serialize_tuple(2)?;
+    seq.serialize_element(&PositionSerializer(&self.start))?;
+    seq.serialize_element(&PositionSerializer(&self.end))?;
+    seq.end()
   }
 }
 

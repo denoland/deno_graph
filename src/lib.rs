@@ -5,7 +5,7 @@
 #![deny(clippy::unused_async)]
 #![deny(clippy::unnecessary_wraps)]
 
-mod analyzer;
+pub mod analyzer;
 #[cfg(feature = "swc")]
 pub mod ast;
 mod collections;
@@ -30,24 +30,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
 
-pub use analyzer::analyzer_helpers;
-pub use analyzer::DenoTypesPragmaMatch;
-pub use analyzer::DependencyDescriptor;
-pub use analyzer::DynamicArgument;
-pub use analyzer::DynamicDependencyDescriptor;
-pub use analyzer::DynamicDependencyKind;
-pub use analyzer::DynamicTemplatePart;
-pub use analyzer::ImportAttribute;
-pub use analyzer::ImportAttributes;
-pub use analyzer::JsDocImportInfo;
-pub use analyzer::ModuleAnalyzer;
-pub use analyzer::ModuleInfo;
-pub use analyzer::PositionRange;
-pub use analyzer::SpecifierWithRange;
-pub use analyzer::StaticDependencyDescriptor;
-pub use analyzer::StaticDependencyKind;
-pub use analyzer::TypeScriptReference;
-pub use analyzer::TypeScriptTypesResolutionMode;
 pub use deno_media_type::MediaType;
 #[cfg(feature = "fast_check")]
 pub use graph::BuildFastCheckTypeGraphOptions;
@@ -77,6 +59,7 @@ pub use graph::ModuleLoadError;
 pub use graph::NpmLoadError;
 pub use graph::NpmModule;
 pub use graph::Position;
+pub use graph::PositionRange;
 pub use graph::Range;
 pub use graph::Resolution;
 pub use graph::ResolutionError;
@@ -92,6 +75,8 @@ pub use module_specifier::ModuleSpecifier;
 pub use module_specifier::SpecifierError;
 pub use rt::Executor;
 pub use source::NpmResolvePkgReqsResult;
+
+use self::analyzer::ModuleAnalyzer;
 
 /// Additional import that should be brought into the scope of
 /// the module graph to add to the graph's "imports". This may
@@ -181,9 +166,9 @@ pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> JsModule {
 
 #[cfg(test)]
 mod tests {
-  use crate::analyzer::PositionRange;
   use crate::graph::Import;
   use crate::graph::ImportKind;
+  use crate::graph::PositionRange;
   use crate::graph::ResolutionResolved;
   use crate::source::NullFileSystem;
   use crate::source::ResolutionKind;

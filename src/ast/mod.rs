@@ -1,5 +1,14 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
+use crate::analyzer::find_deno_types;
+use crate::analyzer::find_jsx_import_source;
+use crate::analyzer::find_jsx_import_source_types;
+use crate::analyzer::find_path_reference;
+use crate::analyzer::find_resolution_mode;
+use crate::analyzer::find_ts_self_types;
+use crate::analyzer::find_ts_types;
+use crate::analyzer::find_types_reference;
+use crate::analyzer::is_comment_triple_slash_reference;
 use crate::analyzer::DependencyDescriptor;
 use crate::analyzer::DynamicArgument;
 use crate::analyzer::DynamicDependencyDescriptor;
@@ -7,21 +16,12 @@ use crate::analyzer::DynamicTemplatePart;
 use crate::analyzer::JsDocImportInfo;
 use crate::analyzer::ModuleAnalyzer;
 use crate::analyzer::ModuleInfo;
-use crate::analyzer::PositionRange;
 use crate::analyzer::SpecifierWithRange;
 use crate::analyzer::StaticDependencyDescriptor;
 use crate::analyzer::TypeScriptReference;
 use crate::analyzer::TypeScriptTypesResolutionMode;
-use crate::analyzer_helpers::find_deno_types;
-use crate::analyzer_helpers::find_jsx_import_source;
-use crate::analyzer_helpers::find_jsx_import_source_types;
-use crate::analyzer_helpers::find_path_reference;
-use crate::analyzer_helpers::find_resolution_mode;
-use crate::analyzer_helpers::find_ts_self_types;
-use crate::analyzer_helpers::find_ts_types;
-use crate::analyzer_helpers::find_types_reference;
-use crate::analyzer_helpers::is_comment_triple_slash_reference;
 use crate::graph::Position;
+use crate::graph::PositionRange;
 use crate::module_specifier::ModuleSpecifier;
 
 use deno_ast::MultiThreadedComments;
