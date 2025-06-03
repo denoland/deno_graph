@@ -1,24 +1,23 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
-use crate::analyzer::DependencyDescriptor;
-use crate::analyzer::DynamicArgument;
-use crate::analyzer::DynamicTemplatePart;
-use crate::analyzer::ModuleAnalyzer;
-use crate::analyzer::ModuleInfo;
-use crate::analyzer::PositionRange;
-use crate::analyzer::SpecifierWithRange;
-use crate::analyzer::TypeScriptReference;
-use crate::analyzer::TypeScriptTypesResolutionMode;
+use crate::analysis::DependencyDescriptor;
+use crate::analysis::DynamicArgument;
+use crate::analysis::DynamicDependencyKind;
+use crate::analysis::DynamicTemplatePart;
+use crate::analysis::ImportAttributes;
+use crate::analysis::ModuleAnalyzer;
+use crate::analysis::ModuleInfo;
+use crate::analysis::SpecifierWithRange;
+use crate::analysis::StaticDependencyKind;
+use crate::analysis::TypeScriptReference;
+use crate::analysis::TypeScriptTypesResolutionMode;
 use crate::collections::SeenPendingCollection;
-#[cfg(feature = "fast_check")]
-use crate::fast_check::FastCheckDtsModule;
 use crate::jsr::JsrMetadataStore;
 use crate::jsr::JsrMetadataStoreServices;
 use crate::jsr::PendingJsrPackageVersionInfoLoadItem;
 use crate::jsr::PendingResult;
 use crate::ReferrerImports;
 
-use crate::fast_check::FastCheckDiagnostic;
 use crate::module_specifier::is_fs_root_specifier;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
@@ -31,17 +30,11 @@ use crate::rt::Executor;
 
 use crate::source::*;
 
-use deno_ast::dep::DynamicDependencyKind;
-use deno_ast::dep::ImportAttributes;
-use deno_ast::dep::StaticDependencyKind;
-use deno_ast::encoding::detect_charset;
-use deno_ast::LineAndColumnIndex;
-use deno_ast::MediaType;
-use deno_ast::ParseDiagnostic;
-use deno_ast::SourcePos;
-use deno_ast::SourceTextInfo;
+use crate::MediaType;
 use deno_error::JsError;
+use deno_error::JsErrorBox;
 use deno_error::JsErrorClass;
+use deno_media_type::encoding::detect_charset;
 use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::jsr::JsrPackageNvReference;
 use deno_semver::jsr::JsrPackageReqReference;
@@ -66,6 +59,7 @@ use indexmap::IndexMap;
 use indexmap::IndexSet;
 use serde::ser::SerializeSeq;
 use serde::ser::SerializeStruct;
+use serde::ser::SerializeTuple;
 use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
@@ -128,7 +122,11 @@ impl Position {
     }
   }
 
-  pub fn from_source_pos(pos: SourcePos, text_info: &SourceTextInfo) -> Self {
+  #[cfg(feature = "swc")]
+  pub fn from_source_pos(
+    pos: deno_ast::SourcePos,
+    text_info: &deno_ast::SourceTextInfo,
+  ) -> Self {
     let line_and_column_index = text_info.line_and_column_index(pos);
     Self {
       line: line_and_column_index.line_index,
@@ -136,11 +134,88 @@ impl Position {
     }
   }
 
-  pub fn as_source_pos(&self, text_info: &SourceTextInfo) -> SourcePos {
-    text_info.loc_to_source_pos(LineAndColumnIndex {
+  #[cfg(feature = "swc")]
+  pub fn as_source_pos(
+    &self,
+    text_info: &deno_ast::SourceTextInfo,
+  ) -> deno_ast::SourcePos {
+    text_info.loc_to_source_pos(deno_ast::LineAndColumnIndex {
       line_index: self.line,
       column_index: self.character,
     })
+  }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Hash)]
+pub struct PositionRange {
+  #[serde(default = "Position::zeroed")]
+  pub start: Position,
+  #[serde(default = "Position::zeroed")]
+  pub end: Position,
+}
+
+impl PositionRange {
+  pub fn zeroed() -> Self {
+    Self {
+      start: Position::zeroed(),
+      end: Position::zeroed(),
+    }
+  }
+
+  /// Determines if a given position is within the range.
+  pub fn includes(&self, position: Position) -> bool {
+    (position >= self.start) && (position <= self.end)
+  }
+
+  #[cfg(feature = "swc")]
+  pub fn from_source_range(
+    range: deno_ast::SourceRange,
+    text_info: &deno_ast::SourceTextInfo,
+  ) -> Self {
+    Self {
+      start: Position::from_source_pos(range.start, text_info),
+      end: Position::from_source_pos(range.end, text_info),
+    }
+  }
+
+  #[cfg(feature = "swc")]
+  pub fn as_source_range(
+    &self,
+    text_info: &deno_ast::SourceTextInfo,
+  ) -> deno_ast::SourceRange {
+    deno_ast::SourceRange::new(
+      self.start.as_source_pos(text_info),
+      self.end.as_source_pos(text_info),
+    )
+  }
+}
+
+// Custom serialization to serialize to an array. Interestingly we
+// don't need to implement custom deserialization logic that does
+// the same thing, and serde_json will handle it fine.
+impl Serialize for PositionRange {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: Serializer,
+  {
+    struct PositionSerializer<'a>(&'a Position);
+
+    impl Serialize for PositionSerializer<'_> {
+      fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+      where
+        S: Serializer,
+      {
+        let mut seq = serializer.serialize_tuple(2)?;
+        seq.serialize_element(&self.0.line)?;
+        seq.serialize_element(&self.0.character)?;
+        seq.end()
+      }
+    }
+
+    let mut seq = serializer.serialize_tuple(2)?;
+    seq.serialize_element(&PositionSerializer(&self.start))?;
+    seq.serialize_element(&PositionSerializer(&self.end))?;
+    seq.end()
   }
 }
 
@@ -330,7 +405,7 @@ pub enum ModuleError {
     /// the file should be reloaded.
     mtime: Option<SystemTime>,
     #[inherit]
-    diagnostic: ParseDiagnostic,
+    diagnostic: Arc<JsErrorBox>,
   },
   #[class(inherit)]
   WasmParse {
@@ -1160,19 +1235,20 @@ impl JsonModule {
   }
 }
 
+#[cfg(feature = "fast_check")]
 #[derive(Debug, Clone)]
 pub enum FastCheckTypeModuleSlot {
   Module(Box<FastCheckTypeModule>),
-  Error(Vec<FastCheckDiagnostic>),
+  Error(Vec<crate::fast_check::FastCheckDiagnostic>),
 }
 
+#[cfg(feature = "fast_check")]
 #[derive(Debug, Clone)]
 pub struct FastCheckTypeModule {
   pub dependencies: IndexMap<String, Dependency>,
   pub source: Arc<str>,
   pub source_map: Arc<str>,
-  #[cfg(feature = "fast_check")]
-  pub dts: Option<FastCheckDtsModule>,
+  pub dts: Option<crate::fast_check::FastCheckDtsModule>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -1196,6 +1272,7 @@ pub struct JsModule {
   #[serde(skip_serializing_if = "is_media_type_unknown")]
   pub media_type: MediaType,
   pub specifier: ModuleSpecifier,
+  #[cfg(feature = "fast_check")]
   #[serde(skip_serializing)]
   pub fast_check: Option<FastCheckTypeModuleSlot>,
 }
@@ -1206,7 +1283,10 @@ impl JsModule {
     self.source.len()
   }
 
-  pub fn fast_check_diagnostics(&self) -> Option<&Vec<FastCheckDiagnostic>> {
+  #[cfg(feature = "fast_check")]
+  pub fn fast_check_diagnostics(
+    &self,
+  ) -> Option<&Vec<crate::fast_check::FastCheckDiagnostic>> {
     let module_slot = self.fast_check.as_ref()?;
     match module_slot {
       FastCheckTypeModuleSlot::Module(_) => None,
@@ -1214,6 +1294,7 @@ impl JsModule {
     }
   }
 
+  #[cfg(feature = "fast_check")]
   pub fn fast_check_module(&self) -> Option<&FastCheckTypeModule> {
     let module_slot = self.fast_check.as_ref()?;
     match module_slot {
@@ -1225,10 +1306,15 @@ impl JsModule {
   pub fn dependencies_prefer_fast_check(
     &self,
   ) -> &IndexMap<String, Dependency> {
-    match self.fast_check_module() {
-      Some(fast_check) => &fast_check.dependencies,
-      None => &self.dependencies,
+    #[cfg(feature = "fast_check")]
+    {
+      match self.fast_check_module() {
+        Some(fast_check) => &fast_check.dependencies,
+        None => &self.dependencies,
+      }
     }
+    #[cfg(not(feature = "fast_check"))]
+    &self.dependencies
   }
 }
 
@@ -1360,7 +1446,7 @@ pub struct BuildFastCheckTypeGraphOptions<'a> {
   pub fast_check_cache: Option<&'a dyn crate::fast_check::FastCheckCache>,
   pub fast_check_dts: bool,
   pub jsr_url_provider: &'a dyn JsrUrlProvider,
-  pub es_parser: Option<&'a dyn crate::EsParser>,
+  pub es_parser: Option<&'a dyn crate::ast::EsParser>,
   pub resolver: Option<&'a dyn Resolver>,
   /// Whether to fill workspace members with fast check TypeScript data.
   pub workspace_fast_check: WorkspaceFastCheckOption<'a>,
@@ -1966,7 +2052,7 @@ impl ModuleGraph {
       return;
     }
 
-    let default_es_parser = crate::CapturingModuleAnalyzer::default();
+    let default_es_parser = crate::ast::CapturingModuleAnalyzer::default();
     let root_symbol = crate::symbols::RootSymbol::new(
       self,
       options.es_parser.unwrap_or(&default_es_parser),
@@ -2130,7 +2216,10 @@ impl ModuleGraph {
       };
       match module {
         Module::Js(js_module) => {
-          js_module.fast_check = None;
+          #[cfg(feature = "fast_check")]
+          {
+            js_module.fast_check = None;
+          }
           js_module.maybe_types_dependency = None;
           handle_dependencies(&mut seen_pending, &mut js_module.dependencies);
         }
@@ -2678,7 +2767,7 @@ pub(crate) async fn parse_module_source_and_info(
         Err(diagnostic) => Err(ModuleError::Parse {
           specifier: opts.specifier,
           mtime: opts.mtime,
-          diagnostic,
+          diagnostic: Arc::new(diagnostic),
         }),
       }
     }
@@ -2704,7 +2793,7 @@ pub(crate) async fn parse_module_source_and_info(
             Err(diagnostic) => Err(ModuleError::Parse {
               specifier: opts.specifier,
               mtime: opts.mtime,
-              diagnostic,
+              diagnostic: Arc::new(diagnostic),
             }),
           }
         }
@@ -2814,6 +2903,7 @@ pub(crate) fn parse_js_module_from_module_info(
     maybe_types_dependency: None,
     media_type,
     specifier,
+    #[cfg(feature = "fast_check")]
     fast_check: None,
   };
 
@@ -4530,7 +4620,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         _specifier: &ModuleSpecifier,
         _source: Arc<str>,
         _media_type: MediaType,
-      ) -> Result<ModuleInfo, ParseDiagnostic> {
+      ) -> Result<ModuleInfo, JsErrorBox> {
         Ok(self.0.borrow_mut().take().unwrap()) // will only be called once
       }
     }
@@ -5801,8 +5891,8 @@ where
 
 #[cfg(test)]
 mod tests {
+  use crate::analysis::ImportAttribute;
   use crate::packages::JsrPackageInfoVersion;
-  use deno_ast::dep::ImportAttribute;
   use deno_ast::emit;
   use deno_ast::EmitOptions;
   use deno_ast::SourceMap;

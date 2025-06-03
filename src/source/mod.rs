@@ -8,10 +8,9 @@ use std::sync::Arc;
 use std::time::SystemTime;
 
 use async_trait::async_trait;
-use deno_ast::data_url::RawDataUrl;
-use deno_ast::MediaType;
-use deno_ast::ModuleSpecifier;
 use deno_error::JsErrorClass;
+use deno_media_type::data_url::RawDataUrl;
+use deno_media_type::MediaType;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use deno_semver::StackString;
@@ -26,11 +25,12 @@ use sys_traits::BaseFsReadDir;
 use thiserror::Error;
 use url::Url;
 
+use crate::analysis::ModuleInfo;
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
-use crate::ModuleInfo;
+use crate::ModuleSpecifier;
 use crate::NpmLoadError;
 use crate::SpecifierError;
 
