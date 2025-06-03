@@ -1,25 +1,25 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
-use crate::analyzer::find_deno_types;
-use crate::analyzer::find_jsx_import_source;
-use crate::analyzer::find_jsx_import_source_types;
-use crate::analyzer::find_path_reference;
-use crate::analyzer::find_resolution_mode;
-use crate::analyzer::find_ts_self_types;
-use crate::analyzer::find_ts_types;
-use crate::analyzer::find_types_reference;
-use crate::analyzer::is_comment_triple_slash_reference;
-use crate::analyzer::DependencyDescriptor;
-use crate::analyzer::DynamicArgument;
-use crate::analyzer::DynamicDependencyDescriptor;
-use crate::analyzer::DynamicTemplatePart;
-use crate::analyzer::JsDocImportInfo;
-use crate::analyzer::ModuleAnalyzer;
-use crate::analyzer::ModuleInfo;
-use crate::analyzer::SpecifierWithRange;
-use crate::analyzer::StaticDependencyDescriptor;
-use crate::analyzer::TypeScriptReference;
-use crate::analyzer::TypeScriptTypesResolutionMode;
+use crate::analysis::find_deno_types;
+use crate::analysis::find_jsx_import_source;
+use crate::analysis::find_jsx_import_source_types;
+use crate::analysis::find_path_reference;
+use crate::analysis::find_resolution_mode;
+use crate::analysis::find_ts_self_types;
+use crate::analysis::find_ts_types;
+use crate::analysis::find_types_reference;
+use crate::analysis::is_comment_triple_slash_reference;
+use crate::analysis::DependencyDescriptor;
+use crate::analysis::DynamicArgument;
+use crate::analysis::DynamicDependencyDescriptor;
+use crate::analysis::DynamicTemplatePart;
+use crate::analysis::JsDocImportInfo;
+use crate::analysis::ModuleAnalyzer;
+use crate::analysis::ModuleInfo;
+use crate::analysis::SpecifierWithRange;
+use crate::analysis::StaticDependencyDescriptor;
+use crate::analysis::TypeScriptReference;
+use crate::analysis::TypeScriptTypesResolutionMode;
 use crate::graph::Position;
 use crate::graph::PositionRange;
 use crate::module_specifier::ModuleSpecifier;
@@ -906,7 +906,7 @@ fn comment_source_to_position_range(
 
 #[cfg(test)]
 mod tests {
-  use crate::analyzer::JsDocImportInfo;
+  use crate::analysis::JsDocImportInfo;
 
   use super::*;
   use pretty_assertions::assert_eq;

@@ -5,7 +5,7 @@
 #![deny(clippy::unused_async)]
 #![deny(clippy::unnecessary_wraps)]
 
-pub mod analyzer;
+pub mod analysis;
 #[cfg(feature = "swc")]
 pub mod ast;
 mod collections;
@@ -76,7 +76,7 @@ pub use module_specifier::SpecifierError;
 pub use rt::Executor;
 pub use source::NpmResolvePkgReqsResult;
 
-use self::analyzer::ModuleAnalyzer;
+use self::analysis::ModuleAnalyzer;
 
 /// Additional import that should be brought into the scope of
 /// the module graph to add to the graph's "imports". This may

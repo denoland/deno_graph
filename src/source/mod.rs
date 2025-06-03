@@ -25,7 +25,7 @@ use sys_traits::BaseFsReadDir;
 use thiserror::Error;
 use url::Url;
 
-use crate::analyzer::ModuleInfo;
+use crate::analysis::ModuleInfo;
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::packages::JsrPackageInfo;

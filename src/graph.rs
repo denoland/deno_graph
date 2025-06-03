@@ -1,16 +1,16 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
-use crate::analyzer::DependencyDescriptor;
-use crate::analyzer::DynamicArgument;
-use crate::analyzer::DynamicDependencyKind;
-use crate::analyzer::DynamicTemplatePart;
-use crate::analyzer::ImportAttributes;
-use crate::analyzer::ModuleAnalyzer;
-use crate::analyzer::ModuleInfo;
-use crate::analyzer::SpecifierWithRange;
-use crate::analyzer::StaticDependencyKind;
-use crate::analyzer::TypeScriptReference;
-use crate::analyzer::TypeScriptTypesResolutionMode;
+use crate::analysis::DependencyDescriptor;
+use crate::analysis::DynamicArgument;
+use crate::analysis::DynamicDependencyKind;
+use crate::analysis::DynamicTemplatePart;
+use crate::analysis::ImportAttributes;
+use crate::analysis::ModuleAnalyzer;
+use crate::analysis::ModuleInfo;
+use crate::analysis::SpecifierWithRange;
+use crate::analysis::StaticDependencyKind;
+use crate::analysis::TypeScriptReference;
+use crate::analysis::TypeScriptTypesResolutionMode;
 use crate::collections::SeenPendingCollection;
 use crate::jsr::JsrMetadataStore;
 use crate::jsr::JsrMetadataStoreServices;
@@ -5891,7 +5891,7 @@ where
 
 #[cfg(test)]
 mod tests {
-  use crate::analyzer::ImportAttribute;
+  use crate::analysis::ImportAttribute;
   use crate::packages::JsrPackageInfoVersion;
   use deno_ast::emit;
   use deno_ast::EmitOptions;

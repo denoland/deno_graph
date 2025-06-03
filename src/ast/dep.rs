@@ -13,10 +13,10 @@ use deno_ast::SourcePos;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 
-use crate::analyzer::DynamicDependencyKind;
-use crate::analyzer::ImportAttribute;
-use crate::analyzer::ImportAttributes;
-use crate::analyzer::StaticDependencyKind;
+use crate::analysis::DynamicDependencyKind;
+use crate::analysis::ImportAttribute;
+use crate::analysis::ImportAttributes;
+use crate::analysis::StaticDependencyKind;
 
 pub fn analyze_program_dependencies(
   program: ProgramRef,

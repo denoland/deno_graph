@@ -26,7 +26,7 @@ use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use indexmap::IndexMap;
 
-use crate::analyzer::ModuleInfo;
+use crate::analysis::ModuleInfo;
 use crate::ast::ParserModuleAnalyzer;
 use crate::symbols::EsModuleInfo;
 use crate::symbols::ExpandoPropertyRef;
