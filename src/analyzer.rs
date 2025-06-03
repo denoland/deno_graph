@@ -342,6 +342,10 @@ pub struct ModuleInfo {
   pub jsdoc_imports: Vec<JsDocImportInfo>,
 }
 
+fn is_false(v: &bool) -> bool {
+  !v
+}
+
 pub fn module_graph_1_to_2(module_info: &mut serde_json::Value) {
   #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
   #[serde(rename_all = "camelCase")]
@@ -375,7 +379,7 @@ pub fn module_graph_1_to_2(module_info: &mut serde_json::Value) {
     }
 
     let comment = leading_comments.last()?;
-    let deno_types = find_deno_types(&comment.text)?;
+    let deno_types = analyzer_helpers::find_deno_types(&comment.text)?;
     Some(SpecifierWithRange {
       text: deno_types.text.to_string(),
       range: comment_position_to_position_range(
@@ -448,106 +452,107 @@ impl<'a> Default for &'a dyn ModuleAnalyzer {
   }
 }
 
-/// Matches a `/// <reference ... />` comment reference.
-pub fn is_comment_triple_slash_reference(comment_text: &str) -> bool {
-  static TRIPLE_SLASH_REFERENCE_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?i)^/\s*<reference\s.*?/>").unwrap());
-  TRIPLE_SLASH_REFERENCE_RE.is_match(comment_text)
-}
-
-/// Matches a path reference, which adds a dependency to a module
-pub fn find_path_reference(text: &str) -> Option<regex::Match> {
-  static PATH_REFERENCE_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r#"(?i)\spath\s*=\s*["']([^"']*)["']"#).unwrap());
-  PATH_REFERENCE_RE
-    .captures(text)
-    .and_then(|captures| captures.get(1))
-}
-
-/// Matches a types reference, which for JavaScript files indicates the
-/// location of types to use when type checking a program that includes it as
-/// a dependency.
-pub fn find_types_reference(text: &str) -> Option<regex::Match> {
-  static TYPES_REFERENCE_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r#"(?i)\stypes\s*=\s*["']([^"']*)["']"#).unwrap());
-  TYPES_REFERENCE_RE.captures(text).and_then(|c| c.get(1))
-}
-
-/// Ex. `resolution-mode="require"` in `/// <reference types="pkg" resolution-mode="require" />`
-pub fn find_resolution_mode(text: &str) -> Option<regex::Match> {
-  static RESOLUTION_MODE_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"(?i)\sresolution-mode\s*=\s*["']([^"']*)["']"#).unwrap()
-  });
-  RESOLUTION_MODE_RE.captures(text).and_then(|m| m.get(1))
-}
-
-/// Matches the `@jsxImportSource` pragma.
-pub fn find_jsx_import_source(text: &str) -> Option<regex::Match> {
-  static JSX_IMPORT_SOURCE_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?i)^[\s*]*@jsxImportSource\s+(\S+)").unwrap());
-  JSX_IMPORT_SOURCE_RE.captures(text).and_then(|c| c.get(1))
-}
-
-/// Matches the `@jsxImportSourceTypes` pragma.
-pub fn find_jsx_import_source_types(text: &str) -> Option<regex::Match> {
-  static JSX_IMPORT_SOURCE_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"(?i)^[\s*]*@jsxImportSourceTypes\s+(\S+)").unwrap()
-  });
-  JSX_IMPORT_SOURCE_TYPES_RE
-    .captures(text)
-    .and_then(|c| c.get(1))
-}
-
-/// Matches the `@ts-self-types` pragma.
-pub fn find_ts_self_types(text: &str) -> Option<regex::Match> {
-  static TS_SELF_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"(?i)^\s*@ts-self-types\s*=\s*["']([^"']+)["']"#).unwrap()
-  });
-  TS_SELF_TYPES_RE.captures(text).and_then(|c| c.get(1))
-}
-
-/// Matches the `@ts-types` pragma.
-pub fn find_ts_types(text: &str) -> Option<regex::Match> {
-  static TS_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"(?i)^\s*@ts-types\s*=\s*["']([^"']+)["']"#).unwrap()
-  });
-  TS_TYPES_RE.captures(text).and_then(|c| c.get(1))
-}
-
 pub struct DenoTypesPragmaMatch<'a> {
   pub text: &'a str,
   pub range: std::ops::Range<usize>,
   pub is_quoteless: bool,
 }
 
-pub fn find_deno_types(text: &str) -> Option<DenoTypesPragmaMatch> {
-  /// Matches the `@deno-types` pragma.
-  static DENO_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"(?i)^\s*@deno-types\s*=\s*(?:["']([^"']+)["']|(\S+))"#)
-      .unwrap()
-  });
+pub mod analyzer_helpers {
+  use super::*;
 
-  let captures = DENO_TYPES_RE.captures(text)?;
-
-  if let Some(m) = captures.get(1) {
-    Some(DenoTypesPragmaMatch {
-      text: m.as_str(),
-      range: m.range(),
-      is_quoteless: false,
-    })
-  } else if let Some(m) = captures.get(2) {
-    Some(DenoTypesPragmaMatch {
-      text: m.as_str(),
-      range: m.range(),
-      is_quoteless: true,
-    })
-  } else {
-    unreachable!("Unexpected captures from deno types regex")
+  /// Matches a `/// <reference ... />` comment reference.
+  pub fn is_comment_triple_slash_reference(comment_text: &str) -> bool {
+    static TRIPLE_SLASH_REFERENCE_RE: Lazy<Regex> =
+      Lazy::new(|| Regex::new(r"(?i)^/\s*<reference\s.*?/>").unwrap());
+    TRIPLE_SLASH_REFERENCE_RE.is_match(comment_text)
   }
-}
 
-fn is_false(v: &bool) -> bool {
-  !v
+  /// Matches a path reference, which adds a dependency to a module
+  pub fn find_path_reference(text: &str) -> Option<regex::Match> {
+    static PATH_REFERENCE_RE: Lazy<Regex> =
+      Lazy::new(|| Regex::new(r#"(?i)\spath\s*=\s*["']([^"']*)["']"#).unwrap());
+    PATH_REFERENCE_RE
+      .captures(text)
+      .and_then(|captures| captures.get(1))
+  }
+
+  /// Matches a types reference, which for JavaScript files indicates the
+  /// location of types to use when type checking a program that includes it as
+  /// a dependency.
+  pub fn find_types_reference(text: &str) -> Option<regex::Match> {
+    static TYPES_REFERENCE_RE: Lazy<Regex> = Lazy::new(|| {
+      Regex::new(r#"(?i)\stypes\s*=\s*["']([^"']*)["']"#).unwrap()
+    });
+    TYPES_REFERENCE_RE.captures(text).and_then(|c| c.get(1))
+  }
+
+  /// Ex. `resolution-mode="require"` in `/// <reference types="pkg" resolution-mode="require" />`
+  pub fn find_resolution_mode(text: &str) -> Option<regex::Match> {
+    static RESOLUTION_MODE_RE: Lazy<Regex> = Lazy::new(|| {
+      Regex::new(r#"(?i)\sresolution-mode\s*=\s*["']([^"']*)["']"#).unwrap()
+    });
+    RESOLUTION_MODE_RE.captures(text).and_then(|m| m.get(1))
+  }
+
+  /// Matches the `@jsxImportSource` pragma.
+  pub fn find_jsx_import_source(text: &str) -> Option<regex::Match> {
+    static JSX_IMPORT_SOURCE_RE: Lazy<Regex> =
+      Lazy::new(|| Regex::new(r"(?i)^[\s*]*@jsxImportSource\s+(\S+)").unwrap());
+    JSX_IMPORT_SOURCE_RE.captures(text).and_then(|c| c.get(1))
+  }
+
+  /// Matches the `@jsxImportSourceTypes` pragma.
+  pub fn find_jsx_import_source_types(text: &str) -> Option<regex::Match> {
+    static JSX_IMPORT_SOURCE_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
+      Regex::new(r"(?i)^[\s*]*@jsxImportSourceTypes\s+(\S+)").unwrap()
+    });
+    JSX_IMPORT_SOURCE_TYPES_RE
+      .captures(text)
+      .and_then(|c| c.get(1))
+  }
+
+  /// Matches the `@ts-self-types` pragma.
+  pub fn find_ts_self_types(text: &str) -> Option<regex::Match> {
+    static TS_SELF_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
+      Regex::new(r#"(?i)^\s*@ts-self-types\s*=\s*["']([^"']+)["']"#).unwrap()
+    });
+    TS_SELF_TYPES_RE.captures(text).and_then(|c| c.get(1))
+  }
+
+  /// Matches the `@ts-types` pragma.
+  pub fn find_ts_types(text: &str) -> Option<regex::Match> {
+    static TS_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
+      Regex::new(r#"(?i)^\s*@ts-types\s*=\s*["']([^"']+)["']"#).unwrap()
+    });
+    TS_TYPES_RE.captures(text).and_then(|c| c.get(1))
+  }
+
+  pub fn find_deno_types(text: &str) -> Option<DenoTypesPragmaMatch> {
+    /// Matches the `@deno-types` pragma.
+    static DENO_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
+      Regex::new(r#"(?i)^\s*@deno-types\s*=\s*(?:["']([^"']+)["']|(\S+))"#)
+        .unwrap()
+    });
+
+    let captures = DENO_TYPES_RE.captures(text)?;
+
+    if let Some(m) = captures.get(1) {
+      Some(DenoTypesPragmaMatch {
+        text: m.as_str(),
+        range: m.range(),
+        is_quoteless: false,
+      })
+    } else if let Some(m) = captures.get(2) {
+      Some(DenoTypesPragmaMatch {
+        text: m.as_str(),
+        range: m.range(),
+        is_quoteless: true,
+      })
+    } else {
+      unreachable!("Unexpected captures from deno types regex")
+    }
+  }
 }
 
 #[cfg(test)]

@@ -30,6 +30,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
 
+pub use analyzer::analyzer_helpers;
 pub use analyzer::DenoTypesPragmaMatch;
 pub use analyzer::DependencyDescriptor;
 pub use analyzer::DynamicArgument;
