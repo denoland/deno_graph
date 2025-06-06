@@ -793,7 +793,9 @@ async fn test_fill_from_lockfile() {
   );
   graph
     .build(
-      // This should match 1.0.0 due to the first entry in the lockfile.
+      // This will match 1.0.1 because it's the highest loaded matching
+      // version, even though this specifier is said as locking to 1.0.1
+      // in the lockfile
       vec![Url::parse("jsr:/@scope/example").unwrap()],
       Vec::new(),
       &loader,
@@ -806,7 +808,17 @@ async fn test_fill_from_lockfile() {
   let module = modules.into_iter().next().unwrap().js().unwrap();
   assert_eq!(
     module.source.as_ref(),
-    "// This is version 1.0.0 of this package."
+    "// This is version 1.0.1 of this package."
+  );
+
+  // now it will be automatically updated to 1.0.1 instead of 1.0.0
+  assert_eq!(
+    *graph
+      .packages
+      .mappings()
+      .get(&PackageReq::from_str("@scope/example").unwrap())
+      .unwrap(),
+    PackageNv::from_str("@scope/example@1.0.1").unwrap(),
   );
 }
 

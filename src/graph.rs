@@ -4471,9 +4471,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     package_info: &JsrPackageInfo,
     package_req: &PackageReq,
   ) -> Option<PackageNv> {
-    if let Some(package_nv) = self.graph.packages.mappings().get(package_req) {
-      return Some(package_nv.clone());
-    }
     let version = (|| {
       // 1. try to resolve with the list of existing versions
       if let Some(existing_versions) =
