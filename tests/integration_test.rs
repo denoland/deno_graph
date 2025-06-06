@@ -810,6 +810,16 @@ async fn test_fill_from_lockfile() {
     module.source.as_ref(),
     "// This is version 1.0.1 of this package."
   );
+
+  // now it will be automatically updated to 1.0.1 instead of 1.0.0
+  assert_eq!(
+    *graph
+      .packages
+      .mappings()
+      .get(&PackageReq::from_str("@scope/example").unwrap())
+      .unwrap(),
+    PackageNv::from_str("@scope/example@1.0.1").unwrap(),
+  );
 }
 
 #[tokio::test]
