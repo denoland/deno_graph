@@ -91,6 +91,9 @@ fn run_graph_test(test: &CollectedTest) {
   builder.lockfile_jsr_packages(spec.lockfile_jsr_packages.clone());
 
   if let Some(options) = &spec.options {
+    if let Some(entrypoint) = &options.entrypoint {
+      builder.entry_point(entrypoint);
+    }
     builder.skip_dynamic_deps(options.skip_dynamic_deps);
     builder.workspace_fast_check(options.workspace_fast_check);
     builder.fast_check_cache(options.fast_check_cache);
@@ -283,6 +286,9 @@ fn run_symbol_test(test: &CollectedTest) {
   }
 
   if let Some(options) = &spec.options {
+    if let Some(entrypoint) = &options.entrypoint {
+      builder.entry_point(entrypoint);
+    }
     builder.workspace_fast_check(options.workspace_fast_check);
   }
 
@@ -311,9 +317,12 @@ fn run_symbol_test(test: &CollectedTest) {
   );
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SpecOptions {
+  #[serde(default)]
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub entrypoint: Option<String>,
   #[serde(default)]
   #[serde(skip_serializing_if = "Option::is_none")]
   pub remote_checksums: Option<HashMap<String, String>>,

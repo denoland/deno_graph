@@ -1,0 +1,43 @@
+~~ {"entrypoint":"jsr:@scope/a@1"} ~~
+# https://jsr.io/@scope/a/meta.json
+{
+  "versions": {
+    "1.0.0": {}
+  }
+}
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{
+  "manifest": {},
+  "exports": {
+    ".": "./main.ts"
+  }
+}
+
+# https://jsr.io/@scope/a/1.0.0/main.ts
+console.log("HI");
+
+# output
+{
+  "roots": [
+    "jsr:@scope/a@1"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "size": 19,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/main.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a@1": "https://jsr.io/@scope/a/1.0.0/main.ts"
+  },
+  "packages": {
+    "@scope/a@1": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/main.ts:
+  {}
+  <empty>
