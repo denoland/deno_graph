@@ -184,7 +184,7 @@ fn run_graph_test(test: &CollectedTest) {
         if let Some(dts) = &fast_check.dts {
           let source_map = SourceMap::single(
             module.specifier.clone(),
-            module.source.to_string(),
+            module.source.text.to_string(),
           );
           let EmittedSourceText { text, .. } = emit(
             (&dts.program).into(),

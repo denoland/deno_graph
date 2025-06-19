@@ -73,7 +73,7 @@ impl ImportAttributes {
     matches!(self, ImportAttributes::None)
   }
 
-  pub fn get(&self, key: &str) -> Option<&String> {
+  pub fn get(&self, key: &str) -> Option<&str> {
     match self {
       ImportAttributes::Known(map) => match map.get(key) {
         Some(ImportAttribute::Known(value)) => Some(value),
@@ -81,6 +81,13 @@ impl ImportAttributes {
       },
       _ => None,
     }
+  }
+
+  pub fn has_asset(&self) -> bool {
+    let Some(value) = self.get("type") else {
+      return false;
+    };
+    matches!(value, "text" | "bytes")
   }
 }
 

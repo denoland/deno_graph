@@ -89,3 +89,6 @@ codegen-units = 1
 incremental = true
 lto = true
 opt-level = "z"
+
+[patch.crates-io]
+deno_media_type = { path = "../deno_media_type" }

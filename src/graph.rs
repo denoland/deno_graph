@@ -34,7 +34,8 @@ use crate::MediaType;
 use deno_error::JsError;
 use deno_error::JsErrorBox;
 use deno_error::JsErrorClass;
-use deno_media_type::encoding::detect_charset;
+use deno_media_type::encoding::DecodedArcSourceDetailKind;
+use deno_media_type::encoding::BOM_CHAR;
 use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::jsr::JsrPackageNvReference;
 use deno_semver::jsr::JsrPackageReqReference;
@@ -57,7 +58,6 @@ use futures::stream::StreamExt;
 use futures::FutureExt;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
-use parking_lot::Mutex;
 use serde::ser::SerializeSeq;
 use serde::ser::SerializeStruct;
 use serde::ser::SerializeTuple;
@@ -1096,7 +1096,10 @@ impl Module {
       Module::Js(m) => m.mtime,
       Module::Json(m) => m.mtime,
       Module::Wasm(m) => m.mtime,
-      Module::Npm(_) | Module::Node(_) | Module::External(_) => None,
+      Module::Asset(_)
+      | Module::Npm(_)
+      | Module::Node(_)
+      | Module::External(_) => None,
     }
   }
 
@@ -1142,9 +1145,10 @@ impl Module {
 
   pub fn source(&self) -> Option<&Arc<str>> {
     match self {
-      crate::Module::Js(m) => Some(&m.source),
-      crate::Module::Json(m) => Some(&m.source),
-      crate::Module::Wasm(_)
+      crate::Module::Js(m) => Some(&m.source.text),
+      crate::Module::Json(m) => Some(&m.source.text),
+      crate::Module::Asset(_)
+      | crate::Module::Wasm(_)
       | crate::Module::Npm(_)
       | crate::Module::Node(_)
       | crate::Module::External(_) => None,
@@ -1154,7 +1158,8 @@ impl Module {
   pub fn maybe_types_dependency(&self) -> Option<&TypesDependency> {
     match self {
       Module::Js(js_module) => js_module.maybe_types_dependency.as_ref(),
-      Module::Wasm(_)
+      Module::Asset(_)
+      | Module::Wasm(_)
       | Module::Json(_)
       | Module::Npm(_)
       | Module::Node(_)
@@ -1192,51 +1197,6 @@ impl Module {
 static EMPTY_DEPS: std::sync::OnceLock<IndexMap<String, Dependency>> =
   std::sync::OnceLock::new();
 
-#[derive(Debug)]
-pub struct SourceCell<T: ?Sized>(Mutex<Option<Arc<T>>>);
-
-impl Serialize for SourceCell<str> {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
-  {
-    let len = match &*self.0.lock() {
-      Some(arc_str) => arc_str.len() as u32,
-      None => 0,
-    };
-    serializer.serialize_u32(len)
-  }
-}
-
-impl Serialize for SourceCell<[u8]> {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
-  {
-    let len = match &*self.0.lock() {
-      Some(bytes) => bytes.len() as u32,
-      None => 0,
-    };
-    serializer.serialize_u32(len)
-  }
-}
-
-impl<T: ?Sized> SourceCell<T> {
-  pub fn new(value: Arc<T>) -> Self {
-    Self(Mutex::new(Some(value)))
-  }
-
-  /// Gets the value found in the cell.
-  pub fn get(&self) -> Option<Arc<T>> {
-    self.0.lock().clone()
-  }
-
-  /// Takes the value out of the cell.
-  pub fn take(&self) -> Option<Arc<T>> {
-    self.0.lock().take()
-  }
-}
-
 /// An npm package entrypoint.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -1254,6 +1214,8 @@ pub struct NpmModule {
 #[serde(rename_all = "camelCase")]
 pub struct ExternalModule {
   pub specifier: ModuleSpecifier,
+  #[serde(flatten, skip_serializing_if = "Option::is_none")]
+  pub maybe_cache_info: Option<CacheInfo>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -1273,12 +1235,6 @@ pub struct AssetModule {
   pub media_type: MediaType,
   #[serde(flatten, skip_serializing_if = "Option::is_none")]
   pub maybe_cache_info: Option<CacheInfo>,
-  #[serde(rename = "size")]
-  pub bytes: Arc<SourceCell<[u8]>>,
-  #[serde(skip_serializing)]
-  pub text: Arc<SourceCell<str>>,
-  #[serde(skip_serializing)]
-  pub mtime: Option<SystemTime>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -1288,7 +1244,7 @@ pub struct JsonModule {
   #[serde(flatten, skip_serializing_if = "Option::is_none")]
   pub maybe_cache_info: Option<CacheInfo>,
   #[serde(rename = "size", serialize_with = "serialize_source")]
-  pub source: Arc<str>,
+  pub source: ModuleTextSource,
   #[serde(skip_serializing)]
   pub mtime: Option<SystemTime>,
   // todo(#240): This will always be MediaType::Json, but it's currently
@@ -1299,7 +1255,7 @@ pub struct JsonModule {
 impl JsonModule {
   /// Return the size in bytes of the content of the JSON module.
   pub fn size(&self) -> usize {
-    self.source.len()
+    self.source.text.len()
   }
 }
 
@@ -1319,6 +1275,53 @@ pub struct FastCheckTypeModule {
   pub dts: Option<crate::fast_check::FastCheckDtsModule>,
 }
 
+#[derive(Debug, Clone)]
+pub struct ModuleTextSource {
+  /// How the source was decoded. This is useful to check when getting the bytes of
+  /// the module for bytes imports in order to tell if we can just use the original
+  /// source.
+  pub text: Arc<str>,
+  pub decoded_kind: DecodedArcSourceDetailKind,
+}
+
+impl ModuleTextSource {
+  pub fn new_unknown(text: Arc<str>) -> Self {
+    Self {
+      text,
+      // force loading bytes imports for the file system because we don't
+      // know what the original source was
+      decoded_kind: DecodedArcSourceDetailKind::Changed,
+    }
+  }
+
+  /// Tries to get the original bytes of the module. If this returns `None`
+  /// then the bytes need to be loaded from the cache instead of from memory.
+  pub fn try_get_original_bytes(&self) -> Option<Arc<[u8]>> {
+    match self.decoded_kind {
+      DecodedArcSourceDetailKind::Unchanged => unsafe {
+        let raw_ptr = Arc::into_raw(self.text.clone());
+        Some(Arc::from_raw(
+          std::mem::transmute::<*const str, *const [u8]>(raw_ptr),
+        ))
+      },
+      DecodedArcSourceDetailKind::Changed => None,
+      DecodedArcSourceDetailKind::OnlyUtf8Bom => {
+        // add back the BOM
+        let mut bytes =
+          Vec::with_capacity(self.text.len() + BOM_CHAR.len_utf8());
+        BOM_CHAR.encode_utf8(&mut bytes);
+        bytes.extend(self.text.as_bytes());
+        Some(Arc::from(bytes))
+      }
+    }
+  }
+
+  #[inline]
+  pub fn as_bytes(&self) -> &[u8] {
+    self.text.as_bytes()
+  }
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct JsModule {
@@ -1334,7 +1337,7 @@ pub struct JsModule {
   #[serde(skip_serializing)]
   pub mtime: Option<SystemTime>,
   #[serde(rename = "size", serialize_with = "serialize_source")]
-  pub source: Arc<str>,
+  pub source: ModuleTextSource,
   #[serde(rename = "typesDependency", skip_serializing_if = "Option::is_none")]
   pub maybe_types_dependency: Option<TypesDependency>,
   #[serde(skip_serializing_if = "is_media_type_unknown")]
@@ -1348,7 +1351,7 @@ pub struct JsModule {
 impl JsModule {
   /// Return the size in bytes of the content of the module.
   pub fn size(&self) -> usize {
-    self.source.len()
+    self.source.text.len()
   }
 
   #[cfg(feature = "fast_check")]
@@ -1420,7 +1423,10 @@ pub(crate) enum ModuleSlot {
   /// When trying to load or parse the module, an error occurred.
   Err(ModuleError),
   /// An internal state set when loading a module asynchronously.
-  Pending,
+  Pending {
+    /// If loading an asset, which won't load the content into memory.
+    is_asset: bool,
+  },
 }
 
 impl ModuleSlot {
@@ -1431,6 +1437,10 @@ impl ModuleSlot {
     } else {
       None
     }
+  }
+
+  pub fn is_pending_asset_load(&self) -> bool {
+    matches!(self, ModuleSlot::Pending { is_asset: true })
   }
 }
 
@@ -1445,7 +1455,7 @@ fn to_result<'a>(
   match module_slot {
     ModuleSlot::Err(err) => Some((specifier, Err(err))),
     ModuleSlot::Module(module) => Some((specifier, Ok(module))),
-    ModuleSlot::Pending => None,
+    ModuleSlot::Pending { .. } => None,
   }
 }
 
@@ -1774,7 +1784,7 @@ impl<'a> Iterator for ModuleEntryIterator<'a, '_> {
       match self.graph.module_slots.get_key_value(specifier) {
         Some((specifier, module_slot)) => {
           match module_slot {
-            ModuleSlot::Pending => {
+            ModuleSlot::Pending { .. } => {
               // ignore
             }
             ModuleSlot::Module(module) => {
@@ -2151,7 +2161,7 @@ impl ModuleGraph {
           Module::Js(m) => m,
           _ => continue,
         },
-        ModuleSlot::Err(_) | ModuleSlot::Pending => continue,
+        ModuleSlot::Err(_) | ModuleSlot::Pending { .. } => continue,
       };
       module.fast_check = Some(match fast_check_module_result {
         Ok(fast_check_module) => {
@@ -2278,7 +2288,7 @@ impl ModuleGraph {
       };
       let module = match module {
         ModuleSlot::Module(module) => module,
-        ModuleSlot::Err(_) | ModuleSlot::Pending => {
+        ModuleSlot::Err(_) | ModuleSlot::Pending { .. } => {
           continue;
         }
       };
@@ -2301,7 +2311,7 @@ impl ModuleGraph {
         Module::Node(_) => {
           has_node_specifier = true;
         }
-        Module::Json(_) | Module::External(_) => {
+        Module::Asset(_) | Module::Json(_) | Module::External(_) => {
           // ignore
         }
       }
@@ -2344,7 +2354,7 @@ impl ModuleGraph {
   pub fn module_errors(&self) -> impl Iterator<Item = &ModuleError> {
     self.module_slots.values().filter_map(|ms| match ms {
       ModuleSlot::Err(err) => Some(err),
-      ModuleSlot::Module(_) | ModuleSlot::Pending => None,
+      ModuleSlot::Module(_) | ModuleSlot::Pending { .. } => None,
     })
   }
 
@@ -2448,7 +2458,8 @@ impl ModuleGraph {
         let dependency = referring_module.dependencies.get(specifier)?;
         self.resolve_dependency_from_dep(dependency, prefer_types)
       }
-      Module::Json(_)
+      Module::Asset(_)
+      | Module::Json(_)
       | Module::Npm(_)
       | Module::Node(_)
       | Module::External(_) => None,
@@ -2626,10 +2637,12 @@ where
         "specifier": specifier,
         "error": err.to_string(),
       }))?,
-      ModuleSlot::Pending => seq.serialize_element(&serde_json::json!({
-        "specifier": specifier,
-        "error": "[INTERNAL ERROR] A pending module load never completed.",
-      }))?,
+      ModuleSlot::Pending { .. } => {
+        seq.serialize_element(&serde_json::json!({
+          "specifier": specifier,
+          "error": "[INTERNAL ERROR] A pending module load never completed.",
+        }))?
+      }
     };
   }
   seq.end()
@@ -2663,7 +2676,7 @@ pub(crate) enum ModuleSourceAndInfo {
   Json {
     specifier: ModuleSpecifier,
     mtime: Option<SystemTime>,
-    source: Arc<str>,
+    source: ModuleTextSource,
   },
   Js {
     specifier: ModuleSpecifier,
@@ -2671,7 +2684,7 @@ pub(crate) enum ModuleSourceAndInfo {
     maybe_headers: Option<HashMap<String, String>>,
     module_info: Box<ModuleInfo>,
     mtime: Option<SystemTime>,
-    source: Arc<str>,
+    source: ModuleTextSource,
   },
   Wasm {
     specifier: ModuleSpecifier,
@@ -2747,27 +2760,17 @@ pub(crate) async fn parse_module_source_and_info(
         Some("json")
       ))
   {
-    let charset = maybe_charset.unwrap_or_else(|| {
-      detect_charset(&opts.specifier, opts.content.as_ref())
-    });
-    return match deno_media_type::encoding::decode_arc_source(
-      charset,
+    return new_source_with_text(
+      &opts.specifier,
       opts.content,
-    ) {
-      Ok(text) => Ok(ModuleSourceAndInfo::Json {
-        specifier: opts.specifier,
-        mtime: opts.mtime,
-        source: text,
-      }),
-      Err(err) => Err(ModuleError::Load {
-        specifier: opts.specifier,
-        maybe_referrer: None,
-        err: ModuleLoadError::Decode(Arc::new(DecodeError {
-          mtime: opts.mtime,
-          err,
-        })),
-      }),
-    };
+      maybe_charset,
+      opts.mtime,
+    )
+    .map(|source| ModuleSourceAndInfo::Json {
+      specifier: opts.specifier,
+      mtime: opts.mtime,
+      source,
+    });
   }
 
   if let Some(attribute_type) = opts.maybe_attribute_type {
@@ -2815,10 +2818,9 @@ pub(crate) async fn parse_module_source_and_info(
         opts.content,
         maybe_charset,
         opts.mtime,
-      )
-      .map_err(|err| *err)?;
+      )?;
       match module_analyzer
-        .analyze(&opts.specifier, source.clone(), media_type)
+        .analyze(&opts.specifier, source.text.clone(), media_type)
         .await
       {
         Ok(module_info) => {
@@ -2957,7 +2959,7 @@ pub(crate) fn parse_js_module_from_module_info(
   maybe_headers: Option<&HashMap<String, String>>,
   module_info: ModuleInfo,
   mtime: Option<SystemTime>,
-  source: Arc<str>,
+  source: ModuleTextSource,
   file_system: &FileSystem,
   jsr_url_provider: &dyn JsrUrlProvider,
   maybe_resolver: Option<&dyn Resolver>,
@@ -3371,9 +3373,7 @@ fn fill_module_dependencies(
                 desc
                   .import_attributes
                   .get("resolution-mode")
-                  .and_then(|s| {
-                    TypeScriptTypesResolutionMode::from_str(s.as_str())
-                  })
+                  .and_then(TypeScriptTypesResolutionMode::from_str)
                   .map(|m| m.as_deno_graph())
               })
               .flatten()
@@ -3467,7 +3467,8 @@ fn fill_module_dependencies(
       // TODO(nayeemrmn): Import attributes should be visited and checked for
       // every import, not one per specifier.
       if dep.maybe_attribute_type.is_none() {
-        dep.maybe_attribute_type = import.attributes.get("type").cloned();
+        dep.maybe_attribute_type =
+          import.attributes.get("type").map(|s| s.to_string());
       }
 
       if let Some(types_specifier) = &types_specifier {
@@ -3610,19 +3611,18 @@ fn analyze_dynamic_arg_template_parts(
     return Vec::new(); // don't search for this
   }
 
-  let matching_media_types =
-    if import_attributes.get("type").map(|t| t.as_str()) == Some("json") {
-      vec![MediaType::Json]
-    } else {
-      vec![
-        MediaType::JavaScript,
-        MediaType::TypeScript,
-        MediaType::Jsx,
-        MediaType::Tsx,
-        MediaType::Mjs,
-        MediaType::Mts,
-      ]
-    };
+  let matching_media_types = if import_attributes.get("type") == Some("json") {
+    vec![MediaType::Json]
+  } else {
+    vec![
+      MediaType::JavaScript,
+      MediaType::TypeScript,
+      MediaType::Jsx,
+      MediaType::Tsx,
+      MediaType::Mjs,
+      MediaType::Mts,
+    ]
+  };
   let mut specifiers = Vec::new();
   // skip the root specifier
   if is_fs_root_specifier(&dir_path) {
@@ -3766,6 +3766,10 @@ impl GraphKind {
   pub fn include_types(&self) -> bool {
     matches!(self, Self::All | Self::TypesOnly)
   }
+
+  pub fn include_code(&self) -> bool {
+    matches!(self, Self::All | Self::CodeOnly)
+  }
 }
 
 enum PendingInfoResponse {
@@ -3783,6 +3787,7 @@ enum PendingInfoResponse {
     count: usize,
     specifier: ModuleSpecifier,
     maybe_attribute_type: Option<AttributeTypeWithRange>,
+    is_asset: bool,
     is_dynamic: bool,
     is_root: bool,
   },
@@ -3855,6 +3860,7 @@ struct PendingModuleLoadItem {
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_range: Option<Range>,
   load_specifier: Url,
+  is_asset: bool,
   is_dynamic: bool,
   is_root: bool,
   maybe_checksum: Option<LoaderChecksum>,
@@ -3887,6 +3893,7 @@ struct PendingJsrReqResolutionItem {
   package_ref: JsrPackageReqReference,
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_range: Option<Range>,
+  is_asset: bool,
   is_dynamic: bool,
   is_root: bool,
 }
@@ -3897,6 +3904,7 @@ struct PendingJsrNvResolutionItem {
   nv_ref: JsrPackageNvReference,
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_range: Option<Range>,
+  is_asset: bool,
   is_dynamic: bool,
   is_root: bool,
 }
@@ -3920,12 +3928,33 @@ struct PendingJsrState {
 #[derive(Debug)]
 struct PendingDynamicBranch {
   range: Range,
+  is_asset: bool,
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_version_info: Option<JsrPackageVersionInfoExt>,
 }
 
+#[derive(Debug)]
+struct DeferredLoad {
+  maybe_range: Option<Range>,
+  is_dynamic: bool,
+  is_root: bool,
+  maybe_attribute_type: Option<AttributeTypeWithRange>,
+  maybe_version_info: Option<JsrPackageVersionInfoExt>,
+}
+
+struct LoadOptionsRef<'a> {
+  specifier: &'a ModuleSpecifier,
+  maybe_range: Option<&'a Range>,
+  is_asset: bool,
+  is_dynamic: bool,
+  is_root: bool,
+  maybe_attribute_type: Option<AttributeTypeWithRange>,
+  maybe_version_info: Option<&'a JsrPackageVersionInfoExt>,
+}
+
 #[derive(Debug, Default)]
 struct PendingState<'a> {
+  deferred: HashMap<ModuleSpecifier, DeferredLoad>,
   pending: FuturesOrdered<PendingInfoFuture<'a>>,
   jsr: PendingJsrState,
   npm: PendingNpmState,
@@ -4023,7 +4052,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     self.graph.roots.extend(roots.clone());
 
     for root in roots {
-      self.load(&root, None, self.in_dynamic_branch, true, None, None);
+      self.load(LoadOptionsRef {
+        specifier: &root,
+        maybe_range: None,
+        is_asset: false,
+        is_dynamic: self.in_dynamic_branch,
+        is_root: true,
+        maybe_attribute_type: None,
+        maybe_version_info: None,
+      });
     }
 
     // process any imports that are being added to the graph.
@@ -4052,7 +4089,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
     for specifier in &specifiers {
       self.graph.module_slots.remove(specifier);
-      self.load(specifier, None, self.in_dynamic_branch, true, None, None);
+      self.load(LoadOptionsRef {
+        specifier,
+        maybe_range: None,
+        is_asset: false,
+        is_dynamic: self.in_dynamic_branch,
+        is_root: true,
+        maybe_attribute_type: None,
+        maybe_version_info: None,
+      });
     }
     self.resolve_pending().await;
   }
@@ -4147,14 +4192,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       );
       for dep in graph_import.dependencies.values() {
         if let Resolution::Ok(resolved) = &dep.maybe_type {
-          self.load(
-            &resolved.specifier,
-            Some(&resolved.range),
-            self.in_dynamic_branch,
-            self.resolved_roots.contains(&resolved.specifier),
-            None,
-            None,
-          );
+          self.load(LoadOptionsRef {
+            specifier: &resolved.specifier,
+            maybe_range: Some(&resolved.range),
+            is_asset: false,
+            is_dynamic: self.in_dynamic_branch,
+            is_root: self.resolved_roots.contains(&resolved.specifier),
+            maybe_attribute_type: None,
+            maybe_version_info: None,
+          });
         }
       }
       self.graph.imports.insert(referrer, graph_import);
@@ -4198,6 +4244,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 }),
                 maybe_attribute_type: pending_resolution.maybe_attribute_type,
                 maybe_range: pending_resolution.maybe_range,
+                is_asset: pending_resolution.is_asset,
                 is_dynamic: pending_resolution.is_dynamic,
                 is_root: pending_resolution.is_root,
               });
@@ -4301,14 +4348,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 base_url,
                 inner: version_info,
               };
-              self.load(
-                &specifier,
-                resolution_item.maybe_range.as_ref(),
-                resolution_item.is_dynamic,
-                resolution_item.is_root,
-                resolution_item.maybe_attribute_type,
-                Some(&version_info),
-              );
+              self.load(LoadOptionsRef {
+                specifier: &specifier,
+                maybe_range: resolution_item.maybe_range.as_ref(),
+                is_asset: resolution_item.is_asset,
+                is_dynamic: resolution_item.is_dynamic,
+                is_root: resolution_item.is_root,
+                maybe_attribute_type: resolution_item.maybe_attribute_type,
+                maybe_version_info: Some(&version_info),
+              });
             }
             None => {
               self.graph.module_slots.insert(
@@ -4360,14 +4408,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         std::mem::take(&mut self.state.dynamic_branches)
       {
         if !self.graph.module_slots.contains_key(&specifier) {
-          self.load(
-            &specifier,
-            Some(&dynamic_branch.range),
-            true,
-            self.resolved_roots.contains(&specifier),
-            dynamic_branch.maybe_attribute_type,
-            dynamic_branch.maybe_version_info.as_ref(),
-          );
+          self.load(LoadOptionsRef {
+            specifier: &specifier,
+            maybe_range: Some(&dynamic_branch.range),
+            is_asset: dynamic_branch.is_asset,
+            is_dynamic: true,
+            is_root: self.resolved_roots.contains(&specifier),
+            maybe_attribute_type: dynamic_branch.maybe_attribute_type,
+            maybe_version_info: dynamic_branch.maybe_version_info.as_ref(),
+          });
         }
       }
     }
@@ -4401,6 +4450,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               match slot {
                 ModuleSlot::Module(module) => {
                   match module {
+                    Module::Asset(_module) => {
+                      debug_assert!(false, "Should never reach here.")
+                    }
                     Module::Js(module) => {
                       self.module_info_cacher.cache_module_info(
                         &specifier,
@@ -4417,7 +4469,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                         Ok(source) => {
                           module.source = source;
                         }
-                        Err(err) => *slot = ModuleSlot::Err(*err),
+                        Err(err) => *slot = ModuleSlot::Err(err),
                       }
                     }
                     Module::Json(module) => {
@@ -4430,7 +4482,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                         Ok(source) => {
                           module.source = source;
                         }
-                        Err(err) => *slot = ModuleSlot::Err(*err),
+                        Err(err) => *slot = ModuleSlot::Err(err),
                       }
                     }
                     Module::Wasm(module) => {
@@ -4456,7 +4508,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 ModuleSlot::Err(_) => {
                   // the module errored some other way, so ignore
                 }
-                ModuleSlot::Pending => {
+                ModuleSlot::Pending { .. } => {
                   unreachable!(); // should not happen by design
                 }
               }
@@ -4502,6 +4554,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     for slot in self.graph.module_slots.values_mut() {
       if let ModuleSlot::Module(ref mut module) = slot {
         match module {
+          Module::Asset(module) => {
+            module.maybe_cache_info =
+              self.loader.get_cache_info(&module.specifier);
+          }
           Module::Json(module) => {
             module.maybe_cache_info =
               self.loader.get_cache_info(&module.specifier);
@@ -4632,7 +4688,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     debug_assert_ne!(requested_specifier, specifier);
     // remove a potentially pending redirect that will never resolve
     if let Some(slot) = self.graph.module_slots.get(&requested_specifier) {
-      if matches!(slot, ModuleSlot::Pending) {
+      if matches!(slot, ModuleSlot::Pending { .. }) {
         self.graph.module_slots.remove(&requested_specifier);
       }
     }
@@ -4645,54 +4701,38 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   }
 
   /// Enqueue a request to load the specifier via the loader.
-  fn load(
-    &mut self,
-    specifier: &ModuleSpecifier,
-    maybe_range: Option<&Range>,
-    is_dynamic: bool,
-    is_root: bool,
-    maybe_attribute_type: Option<AttributeTypeWithRange>,
-    maybe_version_info: Option<&JsrPackageVersionInfoExt>,
-  ) {
-    self.load_with_redirect_count(
-      0,
-      specifier,
-      maybe_range,
-      is_dynamic,
-      is_root,
-      maybe_attribute_type,
-      maybe_version_info,
-    )
+  fn load(&mut self, options: LoadOptionsRef) {
+    self.load_with_redirect_count(0, options)
   }
 
   #[allow(clippy::too_many_arguments)]
   fn load_with_redirect_count(
     &mut self,
     redirect_count: usize,
-    specifier: &ModuleSpecifier,
-    maybe_range: Option<&Range>,
-    is_dynamic: bool,
-    is_root: bool,
-    maybe_attribute_type: Option<AttributeTypeWithRange>,
-    maybe_version_info: Option<&JsrPackageVersionInfoExt>,
+    options: LoadOptionsRef,
   ) {
-    struct ProvidedModuleAnalyzer(RefCell<Option<ModuleInfo>>);
-
-    #[async_trait::async_trait(?Send)]
-    impl ModuleAnalyzer for ProvidedModuleAnalyzer {
-      async fn analyze(
-        &self,
-        _specifier: &ModuleSpecifier,
-        _source: Arc<str>,
-        _media_type: MediaType,
-      ) -> Result<ModuleInfo, JsErrorBox> {
-        Ok(self.0.borrow_mut().take().unwrap()) // will only be called once
-      }
-    }
-
+    let specifier = options.specifier;
+    let maybe_range = options.maybe_range;
     let original_specifier = specifier;
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
-    if self.graph.module_slots.contains_key(specifier) {
+    if let Some(module_slot) = self.graph.module_slots.get(specifier) {
+      if module_slot.is_pending_asset_load() {
+        // this will occur when something pending is only being cached
+        // and in this case we'll defer loading until after it's been
+        // cached as we don't want to start another or cancel the currently
+        // loading specifier
+        self
+          .state
+          .deferred
+          .entry(specifier.clone())
+          .or_insert_with(|| DeferredLoad {
+            maybe_range: maybe_range.cloned(),
+            is_dynamic: options.is_dynamic,
+            is_root: options.is_root,
+            maybe_attribute_type: options.maybe_attribute_type,
+            maybe_version_info: options.maybe_version_info.cloned(),
+          });
+      }
       // ensure any jsr/npm dependencies that we've already seen are marked
       // as a dependency of the referrer
       if matches!(original_specifier.scheme(), "jsr" | "npm") {
@@ -4706,158 +4746,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       return;
     }
 
-    if let Some(version_info) = maybe_version_info {
-      if let Some(sub_path) = version_info.get_subpath(specifier) {
-        let checksum = match version_info.get_checksum(sub_path) {
-          Ok(checksum) => checksum,
-          Err(err) => {
-            self.graph.module_slots.insert(
-              specifier.clone(),
-              ModuleSlot::Err(ModuleError::Load {
-                specifier: specifier.clone(),
-                maybe_referrer: maybe_range.cloned(),
-                err,
-              }),
-            );
-            return;
-          }
-        };
-        let checksum = LoaderChecksum::new(checksum.to_string());
-        if let Some(module_info) = version_info.inner.module_info(sub_path) {
-          // Check if this specifier is in the cache. If it is, then
-          // don't use the module information as it may be out of date
-          // with what's in the cache
-          let fut = self.loader.load(
-            specifier,
-            LoadOptions {
-              in_dynamic_branch: self.in_dynamic_branch,
-              was_dynamic_root: self.was_dynamic_root,
-              cache_setting: CacheSetting::Only,
-              maybe_checksum: Some(checksum.clone()),
-            },
-          );
-          let is_dynamic_branch = self.in_dynamic_branch;
-          let module_analyzer = self.module_analyzer;
-          self.state.pending.push_back({
-            let requested_specifier = specifier.clone();
-            let maybe_range = maybe_range.cloned();
-            let version_info = version_info.clone();
-            async move {
-              let response = fut.await;
-              let result = match response {
-                Ok(None) => {
-                  parse_module_source_and_info(
-                    &ProvidedModuleAnalyzer(RefCell::new(Some(
-                      module_info.clone(),
-                    ))),
-                    ParseModuleAndSourceInfoOptions {
-                      specifier: requested_specifier.clone(),
-                      maybe_headers: Default::default(),
-                      mtime: None, // remote, no mtime
-                      // we'll load the content later
-                      content: if MediaType::from_specifier(
-                        &requested_specifier,
-                      ) == MediaType::Wasm
-                      {
-                        // TODO(#561): temporary hack until a larger refactor can be done
-                        Arc::new([
-                          // minimum allowed wasm module
-                          0x00, 0x61, 0x73, 0x6D, 0x01, 0x00, 0x00, 0x00, 0x0A,
-                          0x01, 0x00,
-                        ])
-                      } else {
-                        Arc::new([]) as Arc<[u8]>
-                      },
-                      maybe_attribute_type: maybe_attribute_type.as_ref(),
-                      maybe_referrer: maybe_range.as_ref(),
-                      is_root,
-                      is_dynamic_branch,
-                    },
-                  )
-                  .await
-                  .map(|module_source_and_info| {
-                    PendingInfoResponse::Module {
-                      specifier: requested_specifier.clone(),
-                      module_source_and_info,
-                      pending_load: Some(Box::new((checksum, module_info))),
-                      is_root,
-                    }
-                  })
-                }
-                Ok(Some(response)) => match response {
-                  LoadResponse::External { specifier } => {
-                    Ok(PendingInfoResponse::External { specifier, is_root })
-                  }
-                  LoadResponse::Redirect { specifier } => {
-                    Err(ModuleError::Load {
-                      specifier: requested_specifier.clone(),
-                      maybe_referrer: maybe_range.clone(),
-                      err: JsrLoadError::RedirectInPackage(specifier).into(),
-                    })
-                  }
-                  LoadResponse::Module {
-                    content,
-                    specifier,
-                    mtime,
-                    maybe_headers,
-                  } => parse_module_source_and_info(
-                    module_analyzer,
-                    ParseModuleAndSourceInfoOptions {
-                      specifier: specifier.clone(),
-                      maybe_headers,
-                      mtime,
-                      content,
-                      maybe_attribute_type: maybe_attribute_type.as_ref(),
-                      maybe_referrer: maybe_range.as_ref(),
-                      is_root,
-                      is_dynamic_branch,
-                    },
-                  )
-                  .await
-                  .map(|module_source_and_info| {
-                    PendingInfoResponse::Module {
-                      specifier: specifier.clone(),
-                      module_source_and_info,
-                      pending_load: None,
-                      is_root,
-                    }
-                  }),
-                },
-                Err(err) => Err(ModuleError::Load {
-                  specifier: requested_specifier.clone(),
-                  maybe_referrer: maybe_range.clone(),
-                  err: ModuleLoadError::Loader(Arc::new(err)),
-                }),
-              };
-              PendingInfo {
-                requested_specifier,
-                maybe_range,
-                result,
-                maybe_version_info: Some(version_info),
-                loaded_package_via_https_url: None,
-              }
-            }
-            .boxed_local()
-          });
-          self
-            .graph
-            .module_slots
-            .insert(specifier.clone(), ModuleSlot::Pending);
-          return;
-        } else {
-          self.load_pending_module(PendingModuleLoadItem {
-            redirect_count,
-            requested_specifier: specifier.clone(),
-            maybe_attribute_type,
-            maybe_range: maybe_range.cloned(),
-            load_specifier: specifier.clone(),
-            is_dynamic,
-            is_root,
-            maybe_checksum: Some(checksum),
-            maybe_version_info: Some(version_info.clone()),
-          });
-          return;
-        }
+    if let Some(version_info) = options.maybe_version_info {
+      let specifier = specifier.clone();
+      if let Some(sub_path) = version_info.get_subpath(&specifier) {
+        self.load_jsr_subpath(
+          redirect_count,
+          &specifier,
+          version_info,
+          sub_path,
+          options,
+        );
+        return;
       }
     }
 
@@ -4877,10 +4776,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           self.load_jsr_specifier(
             specifier,
             package_req_ref,
-            maybe_attribute_type,
+            options.maybe_attribute_type,
             maybe_range,
-            is_dynamic,
-            is_root,
+            options.is_asset,
+            options.is_dynamic,
+            options.is_root,
           );
         }
       }
@@ -4892,7 +4792,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             specifier.clone(),
             package_req_ref,
             maybe_range,
-            is_dynamic,
+            options.is_dynamic,
           );
         } else {
           // mark external
@@ -4918,11 +4818,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         self.load_pending_module(PendingModuleLoadItem {
           redirect_count,
           requested_specifier: specifier.clone(),
-          maybe_attribute_type,
+          maybe_attribute_type: options.maybe_attribute_type,
           maybe_range: maybe_range.cloned(),
           load_specifier: specifier.clone(),
-          is_dynamic,
-          is_root,
+          is_asset: options.is_asset,
+          is_dynamic: options.is_dynamic,
+          is_root: options.is_root,
           maybe_checksum: None,
           maybe_version_info: None,
         });
@@ -4936,12 +4837,190 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
   }
 
+  fn load_jsr_subpath(
+    &mut self,
+    redirect_count: usize,
+    specifier: &ModuleSpecifier,
+    version_info: &JsrPackageVersionInfoExt,
+    sub_path: &str,
+    options: LoadOptionsRef,
+  ) {
+    struct ProvidedModuleAnalyzer(RefCell<Option<ModuleInfo>>);
+
+    #[async_trait::async_trait(?Send)]
+    impl ModuleAnalyzer for ProvidedModuleAnalyzer {
+      async fn analyze(
+        &self,
+        _specifier: &ModuleSpecifier,
+        _source: Arc<str>,
+        _media_type: MediaType,
+      ) -> Result<ModuleInfo, JsErrorBox> {
+        Ok(self.0.borrow_mut().take().unwrap()) // will only be called once
+      }
+    }
+
+    let checksum = match version_info.get_checksum(sub_path) {
+      Ok(checksum) => checksum,
+      Err(err) => {
+        self.graph.module_slots.insert(
+          specifier.clone(),
+          ModuleSlot::Err(ModuleError::Load {
+            specifier: specifier.clone(),
+            maybe_referrer: options.maybe_range.cloned(),
+            err,
+          }),
+        );
+        return;
+      }
+    };
+    let checksum = LoaderChecksum::new(checksum.to_string());
+
+    if let Some(module_info) = (!options.is_asset)
+      .then(|| version_info.inner.module_info(sub_path))
+      .flatten()
+    {
+      // Check if this specifier is in the cache. If it is, then
+      // don't use the module information as it may be out of date
+      // with what's in the cache
+      let fut = self.loader.load(
+        specifier,
+        LoadOptions {
+          in_dynamic_branch: self.in_dynamic_branch,
+          was_dynamic_root: self.was_dynamic_root,
+          cache_setting: CacheSetting::Only,
+          maybe_checksum: Some(checksum.clone()),
+        },
+      );
+      let is_dynamic_branch = self.in_dynamic_branch;
+      let module_analyzer = self.module_analyzer;
+      self.state.pending.push_back({
+        let requested_specifier = specifier.clone();
+        let maybe_range = options.maybe_range.cloned();
+        let version_info = version_info.clone();
+        async move {
+          let response = fut.await;
+          let result = match response {
+            Ok(None) => {
+              parse_module_source_and_info(
+                &ProvidedModuleAnalyzer(RefCell::new(Some(
+                  module_info.clone(),
+                ))),
+                ParseModuleAndSourceInfoOptions {
+                  specifier: requested_specifier.clone(),
+                  maybe_headers: Default::default(),
+                  mtime: None, // remote, no mtime
+                  // we'll load the content later
+                  content: if MediaType::from_specifier(&requested_specifier)
+                    == MediaType::Wasm
+                  {
+                    // TODO(#561): temporary hack until a larger refactor can be done
+                    Arc::new([
+                      // minimum allowed wasm module
+                      0x00, 0x61, 0x73, 0x6D, 0x01, 0x00, 0x00, 0x00, 0x0A,
+                      0x01, 0x00,
+                    ])
+                  } else {
+                    Arc::new([]) as Arc<[u8]>
+                  },
+                  maybe_attribute_type: options.maybe_attribute_type.as_ref(),
+                  maybe_referrer: maybe_range.as_ref(),
+                  is_root: options.is_root,
+                  is_dynamic_branch,
+                },
+              )
+              .await
+              .map(|module_source_and_info| {
+                PendingInfoResponse::Module {
+                  specifier: requested_specifier.clone(),
+                  module_source_and_info,
+                  pending_load: Some(Box::new((checksum, module_info))),
+                  is_root: options.is_root,
+                }
+              })
+            }
+            Ok(Some(response)) => match response {
+              LoadResponse::External { specifier } => {
+                Ok(PendingInfoResponse::External {
+                  specifier,
+                  is_root: options.is_root,
+                })
+              }
+              LoadResponse::Redirect { specifier } => Err(ModuleError::Load {
+                specifier: requested_specifier.clone(),
+                maybe_referrer: maybe_range.clone(),
+                err: JsrLoadError::RedirectInPackage(specifier).into(),
+              }),
+              LoadResponse::Module {
+                content,
+                specifier,
+                mtime,
+                maybe_headers,
+              } => parse_module_source_and_info(
+                module_analyzer,
+                ParseModuleAndSourceInfoOptions {
+                  specifier: specifier.clone(),
+                  maybe_headers,
+                  mtime,
+                  content,
+                  maybe_attribute_type: options.maybe_attribute_type.as_ref(),
+                  maybe_referrer: maybe_range.as_ref(),
+                  is_root: options.is_root,
+                  is_dynamic_branch,
+                },
+              )
+              .await
+              .map(|module_source_and_info| {
+                PendingInfoResponse::Module {
+                  specifier: specifier.clone(),
+                  module_source_and_info,
+                  pending_load: None,
+                  is_root: options.is_root,
+                }
+              }),
+            },
+            Err(err) => Err(ModuleError::Load {
+              specifier: requested_specifier.clone(),
+              maybe_referrer: maybe_range.clone(),
+              err: ModuleLoadError::Loader(Arc::new(err)),
+            }),
+          };
+          PendingInfo {
+            requested_specifier,
+            maybe_range,
+            result,
+            maybe_version_info: Some(version_info),
+            loaded_package_via_https_url: None,
+          }
+        }
+        .boxed_local()
+      });
+      self
+        .graph
+        .module_slots
+        .insert(specifier.clone(), ModuleSlot::Pending { is_asset: false });
+    } else {
+      self.load_pending_module(PendingModuleLoadItem {
+        redirect_count,
+        requested_specifier: specifier.clone(),
+        maybe_attribute_type: options.maybe_attribute_type,
+        maybe_range: options.maybe_range.cloned(),
+        load_specifier: specifier.clone(),
+        is_asset: options.is_asset,
+        is_dynamic: options.is_dynamic,
+        is_root: options.is_root,
+        maybe_checksum: Some(checksum),
+        maybe_version_info: Some(version_info.clone()),
+      });
+    }
+  }
+
   fn load_jsr_specifier(
     &mut self,
     specifier: Url,
     package_ref: JsrPackageReqReference,
     maybe_attribute_type: Option<AttributeTypeWithRange>,
     maybe_range: Option<&Range>,
+    is_asset: bool,
     is_dynamic: bool,
     is_root: bool,
   ) {
@@ -4957,6 +5036,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         package_ref,
         maybe_attribute_type,
         maybe_range: maybe_range.cloned(),
+        is_asset,
         is_dynamic,
         is_root,
       });
@@ -5073,7 +5153,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
   }
 
-  #[allow(clippy::too_many_arguments)]
   fn load_pending_module(&mut self, item: PendingModuleLoadItem) {
     let PendingModuleLoadItem {
       redirect_count,
@@ -5081,15 +5160,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       maybe_attribute_type,
       maybe_range,
       load_specifier,
+      is_asset,
       is_dynamic,
       is_root,
       mut maybe_checksum,
       mut maybe_version_info,
     } = item;
-    self
-      .graph
-      .module_slots
-      .insert(requested_specifier.clone(), ModuleSlot::Pending);
+    self.graph.module_slots.insert(
+      requested_specifier.clone(),
+      ModuleSlot::Pending { is_asset },
+    );
     let loader = self.loader;
     let module_analyzer = self.module_analyzer;
     let jsr_url_provider = self.jsr_url_provider;
@@ -5133,6 +5213,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           PackageNv,
           PendingResult<PendingJsrPackageVersionInfoLoadItem>,
         )>,
+        is_asset: bool,
         is_dynamic: bool,
         was_dynamic_root: bool,
         loader: &dyn Loader,
@@ -5229,6 +5310,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   count: redirect_count + 1,
                   specifier,
                   maybe_attribute_type,
+                  is_asset: false,
                   is_dynamic,
                   is_root,
                 })
@@ -5334,6 +5416,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         maybe_attribute_type,
         &mut loaded_package_via_https_url,
         maybe_version_load_fut,
+        is_asset,
         is_dynamic,
         was_dynamic_root,
         loader,
@@ -5465,18 +5548,22 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       PendingInfoResponse::Redirect {
         count,
         specifier,
+        is_asset,
         is_dynamic,
         is_root,
         maybe_attribute_type,
       } => {
         self.load_with_redirect_count(
           count,
-          &specifier,
-          maybe_referrer.as_ref(),
-          is_dynamic,
-          is_root,
-          maybe_attribute_type,
-          None,
+          LoadOptionsRef {
+            specifier: &specifier,
+            maybe_range: maybe_referrer.as_ref(),
+            is_asset,
+            is_dynamic,
+            is_root,
+            maybe_attribute_type,
+            maybe_version_info: None,
+          },
         );
       }
     }
@@ -5519,14 +5606,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             .as_ref()
             .map(|d| &d.dependency)
           {
-            self.load(
-              &resolved.specifier,
-              Some(&resolved.range),
-              false,
-              self.resolved_roots.contains(&resolved.specifier),
-              None,
+            self.load(LoadOptionsRef {
+              specifier: &resolved.specifier,
+              maybe_range: Some(&resolved.range),
+              is_asset: false, // types dependency can't be an asset
+              is_dynamic: false,
+              is_root: self.resolved_roots.contains(&resolved.specifier),
+              maybe_attribute_type: None,
               maybe_version_info,
-            );
+            });
           }
         } else {
           module.maybe_types_dependency = None;
@@ -5553,10 +5641,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       if dep.is_dynamic && self.skip_dynamic_deps {
         continue;
       }
+      let is_asset = dep.imports.iter().all(|i| i.attributes.has_asset());
 
-      if matches!(self.graph.graph_kind, GraphKind::All | GraphKind::CodeOnly)
-        || dep.maybe_type.is_none()
-      {
+      if self.graph.graph_kind.include_code() || dep.maybe_type.is_none() {
         if let Resolution::Ok(resolved) = &dep.maybe_code {
           let specifier = &resolved.specifier;
           let range = &resolved.range;
@@ -5567,24 +5654,33 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 kind: attribute_type.clone(),
               }
             });
+          // todo(THIS PR): shouldn't this just be `dep.is_dynamic`?
           if dep.is_dynamic && !self.in_dynamic_branch {
-            self.state.dynamic_branches.insert(
-              specifier.clone(),
-              PendingDynamicBranch {
+            let value = self
+              .state
+              .dynamic_branches
+              .entry(specifier.clone())
+              .or_insert_with(|| PendingDynamicBranch {
                 range: range.clone(),
+                is_asset,
                 maybe_attribute_type,
                 maybe_version_info: maybe_version_info.map(ToOwned::to_owned),
-              },
-            );
+              });
+            if !is_asset {
+              // overwrite to `false` if changing in order to ensure we load the contents
+              value.is_asset = false;
+            }
           } else {
-            self.load(
+            self.load(LoadOptionsRef {
               specifier,
-              Some(range),
-              self.in_dynamic_branch,
-              self.resolved_roots.contains(specifier),
+              maybe_range: Some(range),
+              is_asset,
+              // todo(THIS PR): shouldn't this be `dep.is_dynamic`?
+              is_dynamic: self.in_dynamic_branch,
+              is_root: self.resolved_roots.contains(specifier),
               maybe_attribute_type,
               maybe_version_info,
-            );
+            });
           }
         }
       } else {
@@ -5606,20 +5702,22 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             self.state.dynamic_branches.insert(
               specifier.clone(),
               PendingDynamicBranch {
+                is_asset,
                 range: range.clone(),
                 maybe_attribute_type,
                 maybe_version_info: maybe_version_info.map(ToOwned::to_owned),
               },
             );
           } else {
-            self.load(
+            self.load(LoadOptionsRef {
               specifier,
-              Some(range),
-              self.in_dynamic_branch,
-              self.resolved_roots.contains(specifier),
+              maybe_range: Some(range),
+              is_asset,
+              is_dynamic: self.in_dynamic_branch,
+              is_root: self.resolved_roots.contains(specifier),
               maybe_attribute_type,
               maybe_version_info,
-            );
+            });
           }
         }
       } else {
@@ -5863,17 +5961,20 @@ fn new_source_with_text(
   bytes: Arc<[u8]>,
   maybe_charset: Option<&str>,
   mtime: Option<SystemTime>,
-) -> Result<Arc<str>, Box<ModuleError>> {
+) -> Result<ModuleTextSource, ModuleError> {
   let charset = maybe_charset.unwrap_or_else(|| {
     deno_media_type::encoding::detect_charset(specifier, bytes.as_ref())
   });
-  deno_media_type::encoding::decode_arc_source(charset, bytes).map_err(|err| {
-    Box::new(ModuleError::Load {
+  deno_media_type::encoding::decode_arc_source_detail(charset, bytes)
+    .map(|detail| ModuleTextSource {
+      text: detail.text,
+      decoded_kind: detail.kind,
+    })
+    .map_err(|err| ModuleError::Load {
       specifier: specifier.clone(),
       maybe_referrer: None,
       err: ModuleLoadError::Decode(Arc::new(DecodeError { mtime, err })),
     })
-  })
 }
 
 impl Serialize for Resolution {
@@ -5935,13 +6036,13 @@ where
 }
 
 fn serialize_source<S>(
-  source: &Arc<str>,
+  source: &ModuleTextSource,
   serializer: S,
 ) -> Result<S::Ok, S::Error>
 where
   S: Serializer,
 {
-  serializer.serialize_u32(source.len() as u32)
+  serializer.serialize_u32(source.text.len() as u32)
 }
 
 fn serialize_source_bytes<S>(
@@ -7230,8 +7331,10 @@ mod tests {
       unreachable!();
     };
     let dts = fsm.dts.unwrap();
-    let source_map =
-      SourceMap::single(module.specifier.clone(), module.source.to_string());
+    let source_map = SourceMap::single(
+      module.specifier.clone(),
+      module.source.text.to_string(),
+    );
     let EmittedSourceText { text, .. } = emit(
       (&dts.program).into(),
       &dts.comments.as_single_threaded(),

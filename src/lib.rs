@@ -56,6 +56,7 @@ pub use graph::ModuleError;
 pub use graph::ModuleGraph;
 pub use graph::ModuleGraphError;
 pub use graph::ModuleLoadError;
+pub use graph::ModuleTextSource;
 pub use graph::NpmLoadError;
 pub use graph::NpmModule;
 pub use graph::Position;
@@ -64,7 +65,6 @@ pub use graph::Range;
 pub use graph::Resolution;
 pub use graph::ResolutionError;
 pub use graph::ResolutionResolved;
-pub use graph::SourceCell;
 pub use graph::TypesDependency;
 pub use graph::WalkOptions;
 pub use graph::WasmModule;
@@ -158,7 +158,7 @@ pub fn parse_module_from_ast(options: ParseModuleFromAstOptions) -> JsModule {
     options.maybe_headers,
     ast::ParserModuleAnalyzer::module_info(options.parsed_source),
     options.mtime,
-    options.parsed_source.text().clone(),
+    ModuleTextSource::new_unknown(options.parsed_source.text().clone()),
     options.file_system,
     options.jsr_url_provider,
     options.maybe_resolver,
@@ -1830,7 +1830,7 @@ export function a(a) {
     let data_specifier = ModuleSpecifier::parse("data:application/typescript,export%20*%20from%20%22https://example.com/c.ts%22;").unwrap();
     let module = graph.get(&data_specifier).unwrap().js().unwrap();
     assert_eq!(
-      module.source.as_ref(),
+      module.source.text.as_ref(),
       r#"export * from "https://example.com/c.ts";"#,
     );
   }
