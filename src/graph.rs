@@ -1053,8 +1053,6 @@ impl WorkspaceMember {
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "kind")]
 pub enum Module {
-  #[serde(rename = "asset")]
-  Asset(AssetModule),
   // todo(#239): remove this when updating the --json output for 3.0
   #[serde(rename = "esm")]
   Js(JsModule),
@@ -1070,7 +1068,6 @@ pub enum Module {
 impl Module {
   pub fn specifier(&self) -> &ModuleSpecifier {
     match self {
-      Module::Asset(module) => &module.specifier,
       Module::Js(module) => &module.specifier,
       Module::Json(module) => &module.specifier,
       Module::Wasm(module) => &module.specifier,
@@ -1082,7 +1079,6 @@ impl Module {
 
   pub fn media_type(&self) -> MediaType {
     match self {
-      Module::Asset(module) => module.media_type,
       Module::Js(module) => module.media_type,
       Module::Json(module) => module.media_type,
       Module::Wasm(_) => MediaType::Wasm,
@@ -1096,10 +1092,7 @@ impl Module {
       Module::Js(m) => m.mtime,
       Module::Json(m) => m.mtime,
       Module::Wasm(m) => m.mtime,
-      Module::Asset(_)
-      | Module::Npm(_)
-      | Module::Node(_)
-      | Module::External(_) => None,
+      Module::Npm(_) | Module::Node(_) | Module::External(_) => None,
     }
   }
 
@@ -1147,8 +1140,7 @@ impl Module {
     match self {
       crate::Module::Js(m) => Some(&m.source.text),
       crate::Module::Json(m) => Some(&m.source.text),
-      crate::Module::Asset(_)
-      | crate::Module::Wasm(_)
+      crate::Module::Wasm(_)
       | crate::Module::Npm(_)
       | crate::Module::Node(_)
       | crate::Module::External(_) => None,
@@ -1158,8 +1150,7 @@ impl Module {
   pub fn maybe_types_dependency(&self) -> Option<&TypesDependency> {
     match self {
       Module::Js(js_module) => js_module.maybe_types_dependency.as_ref(),
-      Module::Asset(_)
-      | Module::Wasm(_)
+      Module::Wasm(_)
       | Module::Json(_)
       | Module::Npm(_)
       | Module::Node(_)
@@ -1171,8 +1162,7 @@ impl Module {
     match self {
       Module::Js(js_module) => &js_module.dependencies,
       Module::Wasm(wasm_module) => &wasm_module.dependencies,
-      Module::Asset(_)
-      | Module::Npm(_)
+      Module::Npm(_)
       | Module::Node(_)
       | Module::External(_)
       | Module::Json(_) => EMPTY_DEPS.get_or_init(Default::default),
@@ -1185,8 +1175,7 @@ impl Module {
     match self {
       Module::Js(js_module) => js_module.dependencies_prefer_fast_check(),
       Module::Wasm(wasm_module) => &wasm_module.dependencies,
-      Module::Asset(_)
-      | Module::Npm(_)
+      Module::Npm(_)
       | Module::Node(_)
       | Module::External(_)
       | Module::Json(_) => EMPTY_DEPS.get_or_init(Default::default),
@@ -1225,16 +1214,6 @@ pub struct BuiltInNodeModule {
   pub specifier: ModuleSpecifier,
   /// Module name (ex. "fs")
   pub module_name: String,
-}
-
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AssetModule {
-  pub specifier: ModuleSpecifier,
-  #[serde(skip_serializing_if = "is_media_type_unknown")]
-  pub media_type: MediaType,
-  #[serde(flatten, skip_serializing_if = "Option::is_none")]
-  pub maybe_cache_info: Option<CacheInfo>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -1437,6 +1416,10 @@ impl ModuleSlot {
     } else {
       None
     }
+  }
+
+  pub fn is_pending(&self) -> bool {
+    matches!(self, ModuleSlot::Pending { .. })
   }
 
   pub fn is_pending_asset_load(&self) -> bool {
@@ -2311,7 +2294,7 @@ impl ModuleGraph {
         Module::Node(_) => {
           has_node_specifier = true;
         }
-        Module::Asset(_) | Module::Json(_) | Module::External(_) => {
+        Module::Json(_) | Module::External(_) => {
           // ignore
         }
       }
@@ -2458,8 +2441,7 @@ impl ModuleGraph {
         let dependency = referring_module.dependencies.get(specifier)?;
         self.resolve_dependency_from_dep(dependency, prefer_types)
       }
-      Module::Asset(_)
-      | Module::Json(_)
+      Module::Json(_)
       | Module::Npm(_)
       | Module::Node(_)
       | Module::External(_) => None,
@@ -4450,9 +4432,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               match slot {
                 ModuleSlot::Module(module) => {
                   match module {
-                    Module::Asset(_module) => {
-                      debug_assert!(false, "Should never reach here.")
-                    }
                     Module::Js(module) => {
                       self.module_info_cacher.cache_module_info(
                         &specifier,
@@ -4554,10 +4533,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     for slot in self.graph.module_slots.values_mut() {
       if let ModuleSlot::Module(ref mut module) = slot {
         match module {
-          Module::Asset(module) => {
-            module.maybe_cache_info =
-              self.loader.get_cache_info(&module.specifier);
-          }
           Module::Json(module) => {
             module.maybe_cache_info =
               self.loader.get_cache_info(&module.specifier);
@@ -4570,7 +4545,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             module.maybe_cache_info =
               self.loader.get_cache_info(&module.specifier);
           }
-          Module::External(_) | Module::Npm(_) | Module::Node(_) => {}
+          Module::External(module) => {
+            module.maybe_cache_info =
+              self.loader.get_cache_info(&module.specifier);
+          }
+          Module::Npm(_) | Module::Node(_) => {}
         }
       }
     }
@@ -4770,6 +4749,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             specifier.clone(),
             ModuleSlot::Module(Module::External(ExternalModule {
               specifier: specifier.clone(),
+              maybe_cache_info: None,
             })),
           );
         } else {
@@ -4799,6 +4779,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           self.graph.module_slots.insert(
             specifier.clone(),
             ModuleSlot::Module(Module::External(ExternalModule {
+              maybe_cache_info: None,
               specifier: specifier.clone(),
             })),
           );
@@ -5265,56 +5246,119 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           });
         }
 
-        let result = loader.load(
-          &load_specifier,
-          LoadOptions {
-            in_dynamic_branch: is_dynamic,
-            was_dynamic_root,
-            cache_setting: CacheSetting::Use,
-            maybe_checksum: maybe_checksum.clone(),
-          },
-        );
+        let load_options = LoadOptions {
+          in_dynamic_branch: is_dynamic,
+          was_dynamic_root,
+          cache_setting: CacheSetting::Use,
+          maybe_checksum: maybe_checksum.clone(),
+        };
+
+        let handle_redirect =
+          |specifier: Url,
+           maybe_attribute_type: Option<AttributeTypeWithRange>,
+           maybe_checksum: Option<LoaderChecksum>| {
+            if maybe_version_info.is_some() {
+              // This should never happen on the JSR registry. If we ever
+              // supported this we'd need a way for the registry to express
+              // redirects in the manifest since we don't store checksums
+              // or redirect information within the package.
+              Err(ModuleError::Load {
+                specifier: load_specifier.clone(),
+                maybe_referrer: maybe_range.cloned(),
+                err: JsrLoadError::RedirectInPackage(specifier.clone()).into(),
+              })
+            } else if let Some(expected_checksum) = maybe_checksum {
+              Err(ModuleError::Load {
+                specifier: load_specifier.clone(),
+                maybe_referrer: maybe_range.cloned(),
+                err: ModuleLoadError::HttpsChecksumIntegrity(
+                  ChecksumIntegrityError {
+                    actual: format!("Redirect to {}", specifier),
+                    expected: expected_checksum.into_string(),
+                  },
+                ),
+              })
+            } else if redirect_count >= loader.max_redirects() {
+              Err(ModuleError::Load {
+                specifier: load_specifier.clone(),
+                maybe_referrer: maybe_range.cloned(),
+                err: ModuleLoadError::TooManyRedirects,
+              })
+            } else {
+              Ok(PendingInfoResponse::Redirect {
+                count: redirect_count + 1,
+                specifier,
+                maybe_attribute_type,
+                is_asset: false,
+                is_dynamic,
+                is_root,
+              })
+            }
+          };
+
+        if is_asset {
+          let result = loader.ensure_cached(&load_specifier, load_options);
+          return match result.await {
+            Ok(Some(CacheResponse::Cached)) => {
+              Ok(PendingInfoResponse::External {
+                specifier: load_specifier,
+                is_root,
+              })
+            }
+            Ok(Some(CacheResponse::Redirect { specifier })) => {
+              handle_redirect(specifier, maybe_attribute_type, maybe_checksum)
+            }
+            Ok(None) => Err(ModuleError::Missing {
+              specifier: load_specifier.clone(),
+              maybe_referrer: maybe_range.cloned(),
+            }),
+            Err(LoadError::ChecksumIntegrity(err)) => {
+              if maybe_version_info.is_none() {
+                // attempt to cache bust because the remote server might have changed
+                let result = loader
+                  .ensure_cached(
+                    &load_specifier,
+                    LoadOptions {
+                      in_dynamic_branch: is_dynamic,
+                      was_dynamic_root,
+                      cache_setting: CacheSetting::Reload,
+                      maybe_checksum: maybe_checksum.clone(),
+                    },
+                  )
+                  .await;
+                if let Ok(Some(CacheResponse::Cached)) = result {
+                  return Ok(PendingInfoResponse::External {
+                    specifier: load_specifier,
+                    is_root,
+                  });
+                }
+              }
+
+              Err(ModuleError::Load {
+                specifier: load_specifier.clone(),
+                maybe_referrer: maybe_range.cloned(),
+                err: if maybe_version_info.is_some() {
+                  ModuleLoadError::Jsr(JsrLoadError::ContentChecksumIntegrity(
+                    err,
+                  ))
+                } else {
+                  ModuleLoadError::HttpsChecksumIntegrity(err)
+                },
+              })
+            }
+            Err(err) => Err(ModuleError::Load {
+              specifier: load_specifier.clone(),
+              maybe_referrer: maybe_range.cloned(),
+              err: ModuleLoadError::Loader(Arc::new(err)),
+            }),
+          };
+        }
+
+        let result = loader.load(&load_specifier, load_options);
         match result.await {
           Ok(Some(response)) => match response {
             LoadResponse::Redirect { specifier } => {
-              if maybe_version_info.is_some() {
-                // This should never happen on the JSR registry. If we ever
-                // supported this we'd need a way for the registry to express
-                // redirects in the manifest since we don't store checksums
-                // or redirect information within the package.
-                Err(ModuleError::Load {
-                  specifier: load_specifier.clone(),
-                  maybe_referrer: maybe_range.cloned(),
-                  err: JsrLoadError::RedirectInPackage(specifier.clone())
-                    .into(),
-                })
-              } else if let Some(expected_checksum) = maybe_checksum {
-                Err(ModuleError::Load {
-                  specifier: load_specifier.clone(),
-                  maybe_referrer: maybe_range.cloned(),
-                  err: ModuleLoadError::HttpsChecksumIntegrity(
-                    ChecksumIntegrityError {
-                      actual: format!("Redirect to {}", specifier),
-                      expected: expected_checksum.into_string(),
-                    },
-                  ),
-                })
-              } else if redirect_count >= loader.max_redirects() {
-                Err(ModuleError::Load {
-                  specifier: load_specifier.clone(),
-                  maybe_referrer: maybe_range.cloned(),
-                  err: ModuleLoadError::TooManyRedirects,
-                })
-              } else {
-                Ok(PendingInfoResponse::Redirect {
-                  count: redirect_count + 1,
-                  specifier,
-                  maybe_attribute_type,
-                  is_asset: false,
-                  is_dynamic,
-                  is_root,
-                })
-              }
+              handle_redirect(specifier, maybe_attribute_type, maybe_checksum)
             }
             LoadResponse::External { specifier } => {
               Ok(PendingInfoResponse::External { specifier, is_root })
@@ -5473,11 +5517,22 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         if is_root {
           self.resolved_roots.insert(specifier.clone());
         }
-        let module_slot =
-          ModuleSlot::Module(Module::External(ExternalModule {
-            specifier: specifier.clone(),
-          }));
-        self.graph.module_slots.insert(specifier, module_slot);
+        if let Some(entry) = self.graph.module_slots.get_mut(&specifier) {
+          if entry.is_pending() {
+            *entry = ModuleSlot::Module(Module::External(ExternalModule {
+              maybe_cache_info: None,
+              specifier,
+            }));
+          }
+        } else {
+          self.graph.module_slots.insert(
+            specifier.clone(),
+            ModuleSlot::Module(Module::External(ExternalModule {
+              maybe_cache_info: None,
+              specifier,
+            })),
+          );
+        }
       }
       PendingInfoResponse::Module {
         specifier,
