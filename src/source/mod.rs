@@ -319,6 +319,11 @@ pub trait Loader {
     10
   }
 
+  /// Whether getting cache info is enabled.
+  fn cache_info_enabled(&self) -> bool {
+    false
+  }
+
   /// An optional method which returns cache info for a module specifier.
   fn get_cache_info(&self, _specifier: &ModuleSpecifier) -> Option<CacheInfo> {
     None

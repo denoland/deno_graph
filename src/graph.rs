@@ -4087,7 +4087,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   async fn resolve_pending(&mut self) -> bool {
     while !(self.state.pending.is_empty()
       && self.state.jsr.pending_resolutions.is_empty()
-      && self.state.dynamic_branches.is_empty())
+      && self.state.dynamic_branches.is_empty()
+      && self.state.deferred.is_empty())
     {
       let specifier = match self.state.pending.next().await {
         Some(PendingInfo {
@@ -4138,14 +4139,29 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       }
 
       if self.state.pending.is_empty() {
-        let should_restart = self.resolve_pending_jsr_specifiers().await;
-        if should_restart {
-          return true;
-        }
+        if !self.state.deferred.is_empty() {
+          let items = std::mem::take(&mut self.state.deferred);
+          for (specifier, item) in items {
+            self.load(LoadOptionsRef {
+              specifier: &specifier,
+              maybe_range: item.maybe_range.as_ref(),
+              is_asset: false, // deferred items are asset -> module
+              is_dynamic: item.is_dynamic,
+              is_root: item.is_root,
+              maybe_attribute_type: item.maybe_attribute_type,
+              maybe_version_info: item.maybe_version_info.as_ref(),
+            });
+          }
+        } else {
+          let should_restart = self.resolve_pending_jsr_specifiers().await;
+          if should_restart {
+            return true;
+          }
 
-        // resolving jsr specifiers will load more specifiers
-        if self.state.pending.is_empty() {
-          self.resolve_dynamic_branches();
+          // resolving jsr specifiers will load more specifiers
+          if self.state.pending.is_empty() {
+            self.resolve_dynamic_branches();
+          }
         }
       }
     }
@@ -4389,17 +4405,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       for (specifier, dynamic_branch) in
         std::mem::take(&mut self.state.dynamic_branches)
       {
-        if !self.graph.module_slots.contains_key(&specifier) {
-          self.load(LoadOptionsRef {
-            specifier: &specifier,
-            maybe_range: Some(&dynamic_branch.range),
-            is_asset: dynamic_branch.is_asset,
-            is_dynamic: true,
-            is_root: self.resolved_roots.contains(&specifier),
-            maybe_attribute_type: dynamic_branch.maybe_attribute_type,
-            maybe_version_info: dynamic_branch.maybe_version_info.as_ref(),
-          });
-        }
+        self.load(LoadOptionsRef {
+          specifier: &specifier,
+          maybe_range: Some(&dynamic_branch.range),
+          is_asset: dynamic_branch.is_asset,
+          is_dynamic: true,
+          is_root: self.resolved_roots.contains(&specifier),
+          maybe_attribute_type: dynamic_branch.maybe_attribute_type,
+          maybe_version_info: dynamic_branch.maybe_version_info.as_ref(),
+        });
       }
     }
   }
@@ -4530,6 +4544,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   }
 
   fn fill_graph_with_cache_info(&mut self) {
+    if !self.loader.cache_info_enabled() {
+      return;
+    }
     for slot in self.graph.module_slots.values_mut() {
       if let ModuleSlot::Module(ref mut module) = slot {
         match module {
@@ -4695,7 +4712,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let original_specifier = specifier;
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
     if let Some(module_slot) = self.graph.module_slots.get(specifier) {
-      if module_slot.is_pending_asset_load() {
+      if module_slot.is_pending_asset_load() && !options.is_asset {
         // this will occur when something pending is only being cached
         // and in this case we'll defer loading until after it's been
         // cached as we don't want to start another or cancel the currently
