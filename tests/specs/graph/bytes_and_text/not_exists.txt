@@ -1,0 +1,43 @@
+~~ {"unstableBytesAndTextImports":true} ~~
+# mod.ts
+import data1 from "./a.ts" with { type: "bytes" };
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "specifier": "file:///a.ts",
+      "error": "Module not found \"file:///a.ts\"."
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./a.ts",
+          "code": {
+            "specifier": "file:///a.ts",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 18
+              },
+              "end": {
+                "line": 0,
+                "character": 26
+              }
+            }
+          },
+          "assertionType": "bytes"
+        }
+      ],
+      "size": 51,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}
