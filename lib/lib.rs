@@ -311,6 +311,7 @@ pub async fn js_create_graph(
       BuildOptions {
         is_dynamic: false,
         skip_dynamic_deps: false,
+        unstable_bytes_and_text_imports: true,
         resolver: maybe_resolver.as_ref().map(|r| r as &dyn Resolver),
         // todo(dsherret): actually implement this for Wasm users
         // and don't just use a RealSys here as it would be better

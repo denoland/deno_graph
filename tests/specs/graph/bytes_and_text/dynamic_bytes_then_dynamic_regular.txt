@@ -1,3 +1,4 @@
+~~ {"unstableBytesAndTextImports":true} ~~
 # mod.ts
 await import("./a.ts", {
   with: {

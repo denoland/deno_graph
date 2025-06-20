@@ -1,4 +1,3 @@
-~~ {"unstableBytesAndTextImports":true} ~~
 # mod.ts
 const a = await import("./a.json", {
   with: {
@@ -24,16 +23,16 @@ asdf
   ],
   "modules": [
     {
-      "kind": "external",
-      "specifier": "file:///a.json"
+      "specifier": "file:///a.json",
+      "error": "The import attribute type of \"bytes\" is unsupported.\n  Specifier: file:///a.json"
     },
     {
-      "kind": "external",
-      "specifier": "file:///b.ts"
+      "specifier": "file:///b.ts",
+      "error": "The import attribute type of \"bytes\" is unsupported.\n  Specifier: file:///b.ts"
     },
     {
-      "kind": "external",
-      "specifier": "file:///c.txt"
+      "specifier": "file:///c.txt",
+      "error": "The import attribute type of \"text\" is unsupported.\n  Specifier: file:///c.txt"
     },
     {
       "kind": "esm",

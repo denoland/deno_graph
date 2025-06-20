@@ -426,14 +426,14 @@ pub enum ModuleError {
   #[class(syntax)]
   InvalidTypeAssertion {
     specifier: ModuleSpecifier,
-    range: Range,
+    referrer: Range,
     actual_media_type: MediaType,
     expected_media_type: MediaType,
   },
   #[class(type)]
   UnsupportedImportAttributeType {
     specifier: ModuleSpecifier,
-    range: Range,
+    referrer: Range,
     kind: String,
   },
 }
@@ -454,16 +454,16 @@ impl ModuleError {
 
   pub fn maybe_referrer(&self) -> Option<&Range> {
     match self {
-      Self::Load { maybe_referrer, .. } => maybe_referrer.as_ref(),
-      Self::Missing { maybe_referrer, .. } => maybe_referrer.as_ref(),
-      Self::MissingDynamic { referrer, .. } => Some(referrer),
+      Self::Load { maybe_referrer, .. }
+      | Self::Missing { maybe_referrer, .. } => maybe_referrer.as_ref(),
       Self::UnsupportedMediaType { maybe_referrer, .. } => {
         maybe_referrer.as_ref()
       }
       Self::Parse { .. } => None,
       Self::WasmParse { .. } => None,
-      Self::InvalidTypeAssertion { range, .. } => Some(range),
-      Self::UnsupportedImportAttributeType { range, .. } => Some(range),
+      Self::MissingDynamic { referrer, .. }
+      | Self::InvalidTypeAssertion { referrer, .. }
+      | Self::UnsupportedImportAttributeType { referrer, .. } => Some(referrer),
     }
   }
 
@@ -1525,6 +1525,8 @@ pub struct BuildOptions<'a> {
   pub is_dynamic: bool,
   /// Skip loading statically analyzable dynamic dependencies.
   pub skip_dynamic_deps: bool,
+  /// Support unstable bytes and text imports.
+  pub unstable_bytes_and_text_imports: bool,
   pub executor: &'a dyn Executor,
   pub locker: Option<&'a mut dyn Locker>,
   pub file_system: &'a FileSystem,
@@ -1545,6 +1547,7 @@ impl Default for BuildOptions<'_> {
     Self {
       is_dynamic: false,
       skip_dynamic_deps: false,
+      unstable_bytes_and_text_imports: false,
       executor: Default::default(),
       locker: None,
       file_system: &NullFileSystem,
@@ -2767,14 +2770,14 @@ pub(crate) async fn parse_module_source_and_info(
     if attribute_type.kind == "json" {
       return Err(ModuleError::InvalidTypeAssertion {
         specifier: opts.specifier.clone(),
-        range: attribute_type.range.clone(),
+        referrer: attribute_type.range.clone(),
         actual_media_type: media_type,
         expected_media_type: MediaType::Json,
       });
     } else if !matches!(attribute_type.kind.as_str(), "text" | "bytes") {
       return Err(ModuleError::UnsupportedImportAttributeType {
         specifier: opts.specifier,
-        range: attribute_type.range.clone(),
+        referrer: attribute_type.range.clone(),
         kind: attribute_type.kind.clone(),
       });
     }
@@ -3973,6 +3976,7 @@ struct Builder<'a, 'graph> {
   in_dynamic_branch: bool,
   skip_dynamic_deps: bool,
   was_dynamic_root: bool,
+  unstable_bytes_and_text_imports: bool,
   file_system: &'a FileSystem,
   jsr_url_provider: &'a dyn JsrUrlProvider,
   passthrough_jsr_specifiers: bool,
@@ -4004,6 +4008,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       in_dynamic_branch: options.is_dynamic,
       skip_dynamic_deps: options.skip_dynamic_deps,
       was_dynamic_root: options.is_dynamic,
+      unstable_bytes_and_text_imports: options.unstable_bytes_and_text_imports,
       file_system: options.file_system,
       jsr_url_provider: options.jsr_url_provider,
       passthrough_jsr_specifiers: options.passthrough_jsr_specifiers,
@@ -4720,6 +4725,20 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let maybe_range = options.maybe_range;
     let original_specifier = specifier;
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
+    if options.is_asset && !self.unstable_bytes_and_text_imports {
+      // this will always be set
+      if let Some(attribute) = options.maybe_attribute_type {
+        self.graph.module_slots.insert(
+          specifier.clone(),
+          ModuleSlot::Err(ModuleError::UnsupportedImportAttributeType {
+            specifier: specifier.clone(),
+            referrer: attribute.range,
+            kind: attribute.kind,
+          }),
+        );
+        return;
+      }
+    }
     if let Some(module_slot) = self.graph.module_slots.get(specifier) {
       let should_reload_immediately =
         module_slot.was_external_asset_load() && !options.is_asset;

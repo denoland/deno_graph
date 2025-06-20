@@ -1,3 +1,4 @@
+~~ {"unstableBytesAndTextImports":true} ~~
 # mod.ts
 import data from "./a.ts" with { type: "bytes" };
 import "./b.ts";
