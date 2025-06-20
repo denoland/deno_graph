@@ -486,6 +486,7 @@ version = "0.95.1"
 dependencies = [
  "async-trait",
  "bincode",
+ "boxed_error",
  "capacity_builder",
  "data-url",
  "deno_ast",

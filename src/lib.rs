@@ -53,6 +53,7 @@ pub use graph::JsrLoadError;
 pub use graph::Module;
 pub use graph::ModuleEntryRef;
 pub use graph::ModuleError;
+pub use graph::ModuleErrorKind;
 pub use graph::ModuleGraph;
 pub use graph::ModuleGraphError;
 pub use graph::ModuleLoadError;
@@ -1412,12 +1413,16 @@ console.log(a);
     let result = graph.valid();
     assert!(result.is_err());
     let err = result.unwrap_err();
+    let err = match err {
+      ModuleGraphError::ModuleError(err) => err,
+      _ => unreachable!(),
+    };
     assert!(matches!(
-      err,
-      ModuleGraphError::ModuleError(ModuleError::UnsupportedMediaType {
+      err.as_kind(),
+      ModuleErrorKind::UnsupportedMediaType {
         media_type: MediaType::Json,
         ..
-      }),
+      },
     ));
   }
 

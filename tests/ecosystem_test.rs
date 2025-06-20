@@ -309,14 +309,17 @@ async fn test_version(
     .await;
   if let Err(err) = graph.valid() {
     match err {
-      deno_graph::ModuleGraphError::ModuleError(
-        deno_graph::ModuleError::UnsupportedMediaType {
-          media_type: MediaType::Cjs | MediaType::Cts,
-          ..
-        },
-      ) => {
-        // ignore, old packages with cjs and cts
-        return;
+      deno_graph::ModuleGraphError::ModuleError(err) => {
+        match err.as_kind() {
+          deno_graph::ModuleErrorKind::UnsupportedMediaType {
+            media_type: MediaType::Cjs | MediaType::Cts,
+            ..
+          } => {
+            // ignore, old packages with cjs and cts
+            return;
+          }
+          err => panic!("{}", err),
+        }
       }
       err => panic!("{}", err),
     }

@@ -31,6 +31,7 @@ use crate::rt::Executor;
 use crate::source::*;
 
 use crate::MediaType;
+use boxed_error::Boxed;
 use deno_error::JsError;
 use deno_error::JsErrorBox;
 use deno_error::JsErrorClass;
@@ -380,8 +381,31 @@ impl std::fmt::Display for DecodeError {
   }
 }
 
+#[derive(Debug, Clone, JsError, Boxed)]
+pub struct ModuleError(pub Box<ModuleErrorKind>);
+
+impl ModuleError {
+  pub fn specifier(&self) -> &ModuleSpecifier {
+    self.as_kind().specifier()
+  }
+
+  pub fn maybe_referrer(&self) -> Option<&Range> {
+    self.as_kind().maybe_referrer()
+  }
+
+  /// Gets the mtime (if able) of the loaded file that caused this error.
+  pub fn mtime(&self) -> Option<SystemTime> {
+    self.as_kind().mtime()
+  }
+
+  /// Converts the error into a string along with the range related to the error.
+  pub fn to_string_with_range(&self) -> String {
+    self.as_kind().to_string_with_range()
+  }
+}
+
 #[derive(Debug, Clone, JsError)]
-pub enum ModuleError {
+pub enum ModuleErrorKind {
   #[class(inherit)]
   Load {
     specifier: ModuleSpecifier,
@@ -438,7 +462,7 @@ pub enum ModuleError {
   },
 }
 
-impl ModuleError {
+impl ModuleErrorKind {
   pub fn specifier(&self) -> &ModuleSpecifier {
     match self {
       Self::Load { specifier, .. }
@@ -470,9 +494,8 @@ impl ModuleError {
   /// Gets the mtime (if able) of the loaded file that caused this error.
   pub fn mtime(&self) -> Option<SystemTime> {
     match self {
-      ModuleError::Parse { mtime, .. }
-      | ModuleError::WasmParse { mtime, .. } => *mtime,
-      ModuleError::Load { err, .. } => match err {
+      Self::Parse { mtime, .. } | Self::WasmParse { mtime, .. } => *mtime,
+      Self::Load { err, .. } => match err {
         ModuleLoadError::Decode(decode_error) => decode_error.mtime,
         ModuleLoadError::HttpsChecksumIntegrity { .. }
         | ModuleLoadError::Loader { .. }
@@ -480,11 +503,11 @@ impl ModuleError {
         | ModuleLoadError::Npm { .. }
         | ModuleLoadError::TooManyRedirects => None,
       },
-      ModuleError::Missing { .. }
-      | ModuleError::MissingDynamic { .. }
-      | ModuleError::UnsupportedMediaType { .. }
-      | ModuleError::InvalidTypeAssertion { .. }
-      | ModuleError::UnsupportedImportAttributeType { .. } => None,
+      Self::Missing { .. }
+      | Self::MissingDynamic { .. }
+      | Self::UnsupportedMediaType { .. }
+      | Self::InvalidTypeAssertion { .. }
+      | Self::UnsupportedImportAttributeType { .. } => None,
     }
   }
 
@@ -498,7 +521,7 @@ impl ModuleError {
   }
 }
 
-impl std::error::Error for ModuleError {
+impl std::error::Error for ModuleErrorKind {
   fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
     match self {
       Self::Load { err, .. } => Some(err),
@@ -513,7 +536,7 @@ impl std::error::Error for ModuleError {
   }
 }
 
-impl fmt::Display for ModuleError {
+impl fmt::Display for ModuleErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Self::Load { err, .. } => err.fmt(f),
@@ -1433,6 +1456,13 @@ impl ModuleSlot {
   pub fn is_pending_asset_load(&self) -> bool {
     matches!(self, ModuleSlot::Pending { is_asset: true })
   }
+
+  fn as_err_kind(&self) -> Option<&ModuleErrorKind> {
+    match self {
+      ModuleSlot::Err(err) => Some(err.as_kind()),
+      _ => None,
+    }
+  }
 }
 
 type ModuleResult<'a> =
@@ -1875,22 +1905,28 @@ impl<'a, 'options> ModuleGraphErrorIterator<'a, 'options> {
             self.iterator.graph.resolve(&resolved.specifier);
           let module_slot =
             self.iterator.graph.module_slots.get(resolved_specifier);
-          if let Some(ModuleSlot::Err(ModuleError::Missing {
+          if let Some(ModuleErrorKind::Missing {
             specifier,
             maybe_referrer,
-          })) = module_slot
+          }) = module_slot.and_then(|m| m.as_err_kind())
           {
             // we want to surface module missing errors as dynamic missing errors
             if is_dynamic {
-              Some(ModuleGraphError::ModuleError(ModuleError::MissingDynamic {
-                specifier: specifier.clone(),
-                referrer: resolved.range.clone(),
-              }))
+              Some(ModuleGraphError::ModuleError(
+                ModuleErrorKind::MissingDynamic {
+                  specifier: specifier.clone(),
+                  referrer: resolved.range.clone(),
+                }
+                .into_box(),
+              ))
             } else {
-              Some(ModuleGraphError::ModuleError(ModuleError::Missing {
-                specifier: specifier.clone(),
-                maybe_referrer: maybe_referrer.clone(),
-              }))
+              Some(ModuleGraphError::ModuleError(
+                ModuleErrorKind::Missing {
+                  specifier: specifier.clone(),
+                  maybe_referrer: maybe_referrer.clone(),
+                }
+                .into_box(),
+              ))
             }
           } else {
             None
@@ -1970,8 +2006,8 @@ impl Iterator for ModuleGraphErrorIterator<'_, '_> {
           ModuleEntryRef::Err(error) => {
             // ignore missing modules when following dynamic imports
             // because they will be resolved in place
-            let should_ignore =
-              follow_dynamic && matches!(error, ModuleError::Missing { .. });
+            let should_ignore = follow_dynamic
+              && matches!(error.as_kind(), ModuleErrorKind::Missing { .. });
             if !should_ignore {
               self
                 .next_errors
@@ -2768,29 +2804,38 @@ pub(crate) async fn parse_module_source_and_info(
 
   if let Some(attribute_type) = opts.maybe_attribute_type {
     if attribute_type.kind == "json" {
-      return Err(ModuleError::InvalidTypeAssertion {
-        specifier: opts.specifier.clone(),
-        referrer: attribute_type.range.clone(),
-        actual_media_type: media_type,
-        expected_media_type: MediaType::Json,
-      });
+      return Err(
+        ModuleErrorKind::InvalidTypeAssertion {
+          specifier: opts.specifier.clone(),
+          referrer: attribute_type.range.clone(),
+          actual_media_type: media_type,
+          expected_media_type: MediaType::Json,
+        }
+        .into_box(),
+      );
     } else if !matches!(attribute_type.kind.as_str(), "text" | "bytes") {
-      return Err(ModuleError::UnsupportedImportAttributeType {
-        specifier: opts.specifier,
-        referrer: attribute_type.range.clone(),
-        kind: attribute_type.kind.clone(),
-      });
+      return Err(
+        ModuleErrorKind::UnsupportedImportAttributeType {
+          specifier: opts.specifier,
+          referrer: attribute_type.range.clone(),
+          kind: attribute_type.kind.clone(),
+        }
+        .into_box(),
+      );
     }
   }
 
   if matches!(media_type, MediaType::Cjs | MediaType::Cts)
     && opts.specifier.scheme() != "file"
   {
-    return Err(ModuleError::UnsupportedMediaType {
-      specifier: opts.specifier,
-      media_type,
-      maybe_referrer: opts.maybe_referrer.map(|r| r.to_owned()),
-    });
+    return Err(
+      ModuleErrorKind::UnsupportedMediaType {
+        specifier: opts.specifier,
+        media_type,
+        maybe_referrer: opts.maybe_referrer.map(|r| r.to_owned()),
+      }
+      .into_box(),
+    );
   }
 
   // Here we check for known ES Modules that we will analyze the dependencies of
@@ -2827,11 +2872,14 @@ pub(crate) async fn parse_module_source_and_info(
             module_info: Box::new(module_info),
           })
         }
-        Err(diagnostic) => Err(ModuleError::Parse {
-          specifier: opts.specifier,
-          mtime: opts.mtime,
-          diagnostic: Arc::new(diagnostic),
-        }),
+        Err(diagnostic) => Err(
+          ModuleErrorKind::Parse {
+            specifier: opts.specifier,
+            mtime: opts.mtime,
+            diagnostic: Arc::new(diagnostic),
+          }
+          .into_box(),
+        ),
       }
     }
     MediaType::Wasm => {
@@ -2853,18 +2901,24 @@ pub(crate) async fn parse_module_source_and_info(
                 source_dts,
               })
             }
-            Err(diagnostic) => Err(ModuleError::Parse {
-              specifier: opts.specifier,
-              mtime: opts.mtime,
-              diagnostic: Arc::new(diagnostic),
-            }),
+            Err(diagnostic) => Err(
+              ModuleErrorKind::Parse {
+                specifier: opts.specifier,
+                mtime: opts.mtime,
+                diagnostic: Arc::new(diagnostic),
+              }
+              .into_box(),
+            ),
           }
         }
-        Err(err) => Err(ModuleError::WasmParse {
-          specifier: opts.specifier,
-          mtime: opts.mtime,
-          err,
-        }),
+        Err(err) => Err(
+          ModuleErrorKind::WasmParse {
+            specifier: opts.specifier,
+            mtime: opts.mtime,
+            err,
+          }
+          .into_box(),
+        ),
       }
     }
     MediaType::Css
@@ -2872,11 +2926,14 @@ pub(crate) async fn parse_module_source_and_info(
     | MediaType::SourceMap
     | MediaType::Html
     | MediaType::Sql
-    | MediaType::Unknown => Err(ModuleError::UnsupportedMediaType {
-      specifier: opts.specifier,
-      media_type,
-      maybe_referrer: opts.maybe_referrer.map(|r| r.to_owned()),
-    }),
+    | MediaType::Unknown => Err(
+      ModuleErrorKind::UnsupportedMediaType {
+        specifier: opts.specifier,
+        media_type,
+        maybe_referrer: opts.maybe_referrer.map(|r| r.to_owned()),
+      }
+      .into_box(),
+    ),
   }
 }
 
@@ -4290,12 +4347,17 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               } else {
                 self.graph.module_slots.insert(
                   pending_resolution.specifier.clone(),
-                  ModuleSlot::Err(ModuleError::Load {
-                    specifier: pending_resolution.specifier.clone(),
-                    maybe_referrer: pending_resolution.maybe_range.clone(),
-                    err: JsrLoadError::PackageReqNotFound(package_req.clone())
+                  ModuleSlot::Err(
+                    ModuleErrorKind::Load {
+                      specifier: pending_resolution.specifier.clone(),
+                      maybe_referrer: pending_resolution.maybe_range.clone(),
+                      err: JsrLoadError::PackageReqNotFound(
+                        package_req.clone(),
+                      )
                       .into(),
-                  }),
+                    }
+                    .into_box(),
+                  ),
                 );
               }
             }
@@ -4304,11 +4366,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Err(err) => {
           self.graph.module_slots.insert(
             pending_resolution.specifier.clone(),
-            ModuleSlot::Err(ModuleError::Load {
-              specifier: pending_resolution.specifier,
-              maybe_referrer: pending_resolution.maybe_range,
-              err: err.into(),
-            }),
+            ModuleSlot::Err(
+              ModuleErrorKind::Load {
+                specifier: pending_resolution.specifier,
+                maybe_referrer: pending_resolution.maybe_range,
+                err: err.into(),
+              }
+              .into_box(),
+            ),
           );
         }
       }
@@ -4373,19 +4438,22 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             None => {
               self.graph.module_slots.insert(
                 resolution_item.specifier.clone(),
-                ModuleSlot::Err(ModuleError::Load {
-                  specifier: resolution_item.specifier,
-                  maybe_referrer: resolution_item.maybe_range,
-                  err: JsrLoadError::UnknownExport {
-                    export_name: export_name.to_string(),
-                    nv: Box::new(resolution_item.nv_ref.into_inner().nv),
-                    exports: version_info
-                      .exports()
-                      .map(|(k, _)| k.to_string())
-                      .collect::<Vec<_>>(),
+                ModuleSlot::Err(
+                  ModuleErrorKind::Load {
+                    specifier: resolution_item.specifier,
+                    maybe_referrer: resolution_item.maybe_range,
+                    err: JsrLoadError::UnknownExport {
+                      export_name: export_name.to_string(),
+                      nv: Box::new(resolution_item.nv_ref.into_inner().nv),
+                      exports: version_info
+                        .exports()
+                        .map(|(k, _)| k.to_string())
+                        .collect::<Vec<_>>(),
+                    }
+                    .into(),
                   }
-                  .into(),
-                }),
+                  .into_box(),
+                ),
               );
             }
           }
@@ -4393,11 +4461,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Err(err) => {
           self.graph.module_slots.insert(
             resolution_item.specifier.clone(),
-            ModuleSlot::Err(ModuleError::Load {
-              specifier: resolution_item.specifier,
-              maybe_referrer: resolution_item.maybe_range,
-              err: err.into(),
-            }),
+            ModuleSlot::Err(
+              ModuleErrorKind::Load {
+                specifier: resolution_item.specifier,
+                maybe_referrer: resolution_item.maybe_range,
+                err: err.into(),
+              }
+              .into_box(),
+            ),
           );
         }
       }
@@ -4442,11 +4513,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               // was setup incorrectly, so return an error
               self.graph.module_slots.insert(
                 item.specifier.clone(),
-                ModuleSlot::Err(ModuleError::Load {
-                  specifier: item.specifier,
-                  maybe_referrer: item.maybe_range,
-                  err: JsrLoadError::ContentLoadExternalSpecifier.into(),
-                }),
+                ModuleSlot::Err(
+                  ModuleErrorKind::Load {
+                    specifier: item.specifier,
+                    maybe_referrer: item.maybe_range,
+                    err: JsrLoadError::ContentLoadExternalSpecifier.into(),
+                  }
+                  .into_box(),
+                ),
               );
             }
             LoadResponse::Module {
@@ -4499,11 +4573,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                           module.source_dts = source_dts.into();
                         }
                         Err(err) => {
-                          *slot = ModuleSlot::Err(ModuleError::WasmParse {
-                            specifier: module.specifier.clone(),
-                            mtime: None,
-                            err,
-                          });
+                          *slot = ModuleSlot::Err(
+                            ModuleErrorKind::WasmParse {
+                              specifier: module.specifier.clone(),
+                              mtime: None,
+                              err,
+                            }
+                            .into_box(),
+                          );
                         }
                       }
                     }
@@ -4525,11 +4602,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               // redirects are not supported
               self.graph.module_slots.insert(
                 item.specifier.clone(),
-                ModuleSlot::Err(ModuleError::Load {
-                  specifier: item.specifier,
-                  maybe_referrer: item.maybe_range,
-                  err: JsrLoadError::RedirectInPackage(specifier).into(),
-                }),
+                ModuleSlot::Err(
+                  ModuleErrorKind::Load {
+                    specifier: item.specifier,
+                    maybe_referrer: item.maybe_range,
+                    err: JsrLoadError::RedirectInPackage(specifier).into(),
+                  }
+                  .into_box(),
+                ),
               );
             }
           }
@@ -4537,20 +4617,26 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Ok(None) => {
           self.graph.module_slots.insert(
             item.specifier.clone(),
-            ModuleSlot::Err(ModuleError::Missing {
-              specifier: item.specifier,
-              maybe_referrer: item.maybe_range,
-            }),
+            ModuleSlot::Err(
+              ModuleErrorKind::Missing {
+                specifier: item.specifier,
+                maybe_referrer: item.maybe_range,
+              }
+              .into_box(),
+            ),
           );
         }
         Err(err) => {
           self.graph.module_slots.insert(
             item.specifier.clone(),
-            ModuleSlot::Err(ModuleError::Load {
-              specifier: item.specifier,
-              maybe_referrer: item.maybe_range,
-              err: JsrLoadError::ContentLoad(Arc::new(err)).into(),
-            }),
+            ModuleSlot::Err(
+              ModuleErrorKind::Load {
+                specifier: item.specifier,
+                maybe_referrer: item.maybe_range,
+                err: JsrLoadError::ContentLoad(Arc::new(err)).into(),
+              }
+              .into_box(),
+            ),
           );
         }
       }
@@ -4730,11 +4816,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       if let Some(attribute) = options.maybe_attribute_type {
         self.graph.module_slots.insert(
           specifier.clone(),
-          ModuleSlot::Err(ModuleError::UnsupportedImportAttributeType {
-            specifier: specifier.clone(),
-            referrer: attribute.range,
-            kind: attribute.kind,
-          }),
+          ModuleSlot::Err(
+            ModuleErrorKind::UnsupportedImportAttributeType {
+              specifier: specifier.clone(),
+              referrer: attribute.range,
+              kind: attribute.kind,
+            }
+            .into_box(),
+          ),
         );
         return;
       }
@@ -4867,7 +4956,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         self
           .graph
           .module_slots
-          .insert(specifier.clone(), ModuleSlot::Err(*err));
+          .insert(specifier.clone(), ModuleSlot::Err(err));
       }
     }
   }
@@ -4899,11 +4988,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       Err(err) => {
         self.graph.module_slots.insert(
           specifier.clone(),
-          ModuleSlot::Err(ModuleError::Load {
-            specifier: specifier.clone(),
-            maybe_referrer: options.maybe_range.cloned(),
-            err,
-          }),
+          ModuleSlot::Err(
+            ModuleErrorKind::Load {
+              specifier: specifier.clone(),
+              maybe_referrer: options.maybe_range.cloned(),
+              err,
+            }
+            .into_box(),
+          ),
         );
         return;
       }
@@ -4981,11 +5073,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   is_asset: false,
                 })
               }
-              LoadResponse::Redirect { specifier } => Err(ModuleError::Load {
-                specifier: requested_specifier.clone(),
-                maybe_referrer: maybe_range.clone(),
-                err: JsrLoadError::RedirectInPackage(specifier).into(),
-              }),
+              LoadResponse::Redirect { specifier } => Err(
+                ModuleErrorKind::Load {
+                  specifier: requested_specifier.clone(),
+                  maybe_referrer: maybe_range.clone(),
+                  err: JsrLoadError::RedirectInPackage(specifier).into(),
+                }
+                .into_box(),
+              ),
               LoadResponse::Module {
                 content,
                 specifier,
@@ -5014,11 +5109,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 }
               }),
             },
-            Err(err) => Err(ModuleError::Load {
-              specifier: requested_specifier.clone(),
-              maybe_referrer: maybe_range.clone(),
-              err: ModuleLoadError::Loader(Arc::new(err)),
-            }),
+            Err(err) => Err(
+              ModuleErrorKind::Load {
+                specifier: requested_specifier.clone(),
+                maybe_referrer: maybe_range.clone(),
+                err: ModuleLoadError::Loader(Arc::new(err)),
+              }
+              .into_box(),
+            ),
           };
           PendingInfo {
             requested_specifier,
@@ -5050,6 +5148,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
   }
 
+  #[allow(clippy::too_many_arguments)]
   fn load_jsr_specifier(
     &mut self,
     specifier: Url,
@@ -5112,25 +5211,27 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     &self,
     specifier: &Url,
     maybe_range: Option<&Range>,
-  ) -> Result<LoadSpecifierKind, Box<ModuleError>> {
+  ) -> Result<LoadSpecifierKind, ModuleError> {
     match specifier.scheme() {
       "jsr" => validate_jsr_specifier(specifier)
         .map(LoadSpecifierKind::Jsr)
         .map_err(|err| {
-          Box::new(ModuleError::Load {
+          ModuleErrorKind::Load {
             specifier: specifier.clone(),
             maybe_referrer: maybe_range.cloned(),
             err: JsrLoadError::PackageFormat(err).into(),
-          })
+          }
+          .into_box()
         }),
       "npm" => NpmPackageReqReference::from_specifier(specifier)
         .map(LoadSpecifierKind::Npm)
         .map_err(|err| {
-          Box::new(ModuleError::Load {
+          ModuleErrorKind::Load {
             specifier: specifier.clone(),
             maybe_referrer: maybe_range.cloned(),
             err: NpmLoadError::PackageReqReferenceParse(err).into(),
-          })
+          }
+          .into_box()
         }),
       "node" => Ok(LoadSpecifierKind::Node(specifier.path().to_string())),
       _ => Ok(LoadSpecifierKind::Url),
@@ -5273,10 +5374,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         }
 
         if let Some((package_nv, fut)) = maybe_version_load_fut {
-          let inner = fut.await.map_err(|err| ModuleError::Load {
-            specifier: jsr_url_provider.package_url(&package_nv),
-            maybe_referrer: maybe_range.cloned(),
-            err: err.into(),
+          let inner = fut.await.map_err(|err| {
+            ModuleErrorKind::Load {
+              specifier: jsr_url_provider.package_url(&package_nv),
+              maybe_referrer: maybe_range.cloned(),
+              err: err.into(),
+            }
+            .into_box()
           })?;
           let info = JsrPackageVersionInfoExt {
             base_url: jsr_url_provider.package_url(&package_nv),
@@ -5286,10 +5390,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             maybe_checksum = Some(LoaderChecksum::new(
               info
                 .get_checksum(sub_path)
-                .map_err(|err| ModuleError::Load {
-                  specifier: load_specifier.clone(),
-                  maybe_referrer: maybe_range.cloned(),
-                  err,
+                .map_err(|err| {
+                  ModuleErrorKind::Load {
+                    specifier: load_specifier.clone(),
+                    maybe_referrer: maybe_range.cloned(),
+                    err,
+                  }
+                  .into_box()
                 })?
                 .to_string(),
             ));
@@ -5317,28 +5424,38 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               // supported this we'd need a way for the registry to express
               // redirects in the manifest since we don't store checksums
               // or redirect information within the package.
-              Err(ModuleError::Load {
-                specifier: load_specifier.clone(),
-                maybe_referrer: maybe_range.cloned(),
-                err: JsrLoadError::RedirectInPackage(specifier.clone()).into(),
-              })
+              Err(
+                ModuleErrorKind::Load {
+                  specifier: load_specifier.clone(),
+                  maybe_referrer: maybe_range.cloned(),
+                  err: JsrLoadError::RedirectInPackage(specifier.clone())
+                    .into(),
+                }
+                .into_box(),
+              )
             } else if let Some(expected_checksum) = maybe_checksum {
-              Err(ModuleError::Load {
-                specifier: load_specifier.clone(),
-                maybe_referrer: maybe_range.cloned(),
-                err: ModuleLoadError::HttpsChecksumIntegrity(
-                  ChecksumIntegrityError {
-                    actual: format!("Redirect to {}", specifier),
-                    expected: expected_checksum.into_string(),
-                  },
-                ),
-              })
+              Err(
+                ModuleErrorKind::Load {
+                  specifier: load_specifier.clone(),
+                  maybe_referrer: maybe_range.cloned(),
+                  err: ModuleLoadError::HttpsChecksumIntegrity(
+                    ChecksumIntegrityError {
+                      actual: format!("Redirect to {}", specifier),
+                      expected: expected_checksum.into_string(),
+                    },
+                  ),
+                }
+                .into_box(),
+              )
             } else if redirect_count >= loader.max_redirects() {
-              Err(ModuleError::Load {
-                specifier: load_specifier.clone(),
-                maybe_referrer: maybe_range.cloned(),
-                err: ModuleLoadError::TooManyRedirects,
-              })
+              Err(
+                ModuleErrorKind::Load {
+                  specifier: load_specifier.clone(),
+                  maybe_referrer: maybe_range.cloned(),
+                  err: ModuleLoadError::TooManyRedirects,
+                }
+                .into_box(),
+              )
             } else {
               Ok(PendingInfoResponse::Redirect {
                 count: redirect_count + 1,
@@ -5364,10 +5481,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             Ok(Some(CacheResponse::Redirect { specifier })) => {
               handle_redirect(specifier, maybe_attribute_type, maybe_checksum)
             }
-            Ok(None) => Err(ModuleError::Missing {
-              specifier: load_specifier.clone(),
-              maybe_referrer: maybe_range.cloned(),
-            }),
+            Ok(None) => Err(
+              ModuleErrorKind::Missing {
+                specifier: load_specifier.clone(),
+                maybe_referrer: maybe_range.cloned(),
+              }
+              .into_box(),
+            ),
             Err(LoadError::ChecksumIntegrity(err)) => {
               if maybe_version_info.is_none() {
                 // attempt to cache bust because the remote server might have changed
@@ -5391,23 +5511,29 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 }
               }
 
-              Err(ModuleError::Load {
+              Err(
+                ModuleErrorKind::Load {
+                  specifier: load_specifier.clone(),
+                  maybe_referrer: maybe_range.cloned(),
+                  err: if maybe_version_info.is_some() {
+                    ModuleLoadError::Jsr(
+                      JsrLoadError::ContentChecksumIntegrity(err),
+                    )
+                  } else {
+                    ModuleLoadError::HttpsChecksumIntegrity(err)
+                  },
+                }
+                .into_box(),
+              )
+            }
+            Err(err) => Err(
+              ModuleErrorKind::Load {
                 specifier: load_specifier.clone(),
                 maybe_referrer: maybe_range.cloned(),
-                err: if maybe_version_info.is_some() {
-                  ModuleLoadError::Jsr(JsrLoadError::ContentChecksumIntegrity(
-                    err,
-                  ))
-                } else {
-                  ModuleLoadError::HttpsChecksumIntegrity(err)
-                },
-              })
-            }
-            Err(err) => Err(ModuleError::Load {
-              specifier: load_specifier.clone(),
-              maybe_referrer: maybe_range.cloned(),
-              err: ModuleLoadError::Loader(Arc::new(err)),
-            }),
+                err: ModuleLoadError::Loader(Arc::new(err)),
+              }
+              .into_box(),
+            ),
           };
         }
 
@@ -5447,10 +5573,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               .await
             }
           },
-          Ok(None) => Err(ModuleError::Missing {
-            specifier: load_specifier.clone(),
-            maybe_referrer: maybe_range.cloned(),
-          }),
+          Ok(None) => Err(
+            ModuleErrorKind::Missing {
+              specifier: load_specifier.clone(),
+              maybe_referrer: maybe_range.cloned(),
+            }
+            .into_box(),
+          ),
           Err(LoadError::ChecksumIntegrity(err)) => {
             if maybe_version_info.is_none() {
               // attempt to cache bust because the remote server might have changed
@@ -5490,23 +5619,29 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               }
             }
 
-            Err(ModuleError::Load {
+            Err(
+              ModuleErrorKind::Load {
+                specifier: load_specifier.clone(),
+                maybe_referrer: maybe_range.cloned(),
+                err: if maybe_version_info.is_some() {
+                  ModuleLoadError::Jsr(JsrLoadError::ContentChecksumIntegrity(
+                    err,
+                  ))
+                } else {
+                  ModuleLoadError::HttpsChecksumIntegrity(err)
+                },
+              }
+              .into_box(),
+            )
+          }
+          Err(err) => Err(
+            ModuleErrorKind::Load {
               specifier: load_specifier.clone(),
               maybe_referrer: maybe_range.cloned(),
-              err: if maybe_version_info.is_some() {
-                ModuleLoadError::Jsr(JsrLoadError::ContentChecksumIntegrity(
-                  err,
-                ))
-              } else {
-                ModuleLoadError::HttpsChecksumIntegrity(err)
-              },
-            })
-          }
-          Err(err) => Err(ModuleError::Load {
-            specifier: load_specifier.clone(),
-            maybe_referrer: maybe_range.cloned(),
-            err: ModuleLoadError::Loader(Arc::new(err)),
-          }),
+              err: ModuleLoadError::Loader(Arc::new(err)),
+            }
+            .into_box(),
+          ),
         }
       }
 
@@ -5930,11 +6065,14 @@ impl<'a> NpmSpecifierResolver<'a> {
       for item in self.pending_npm_specifiers.drain(..) {
         self.pending_info.module_slots.insert(
           item.specifier.clone(),
-          ModuleSlot::Err(ModuleError::Load {
-            specifier: item.specifier.clone(),
-            maybe_referrer: item.maybe_range.clone(),
-            err: NpmLoadError::NotSupportedEnvironment.into(),
-          }),
+          ModuleSlot::Err(
+            ModuleErrorKind::Load {
+              specifier: item.specifier.clone(),
+              maybe_referrer: item.maybe_range.clone(),
+              err: NpmLoadError::NotSupportedEnvironment.into(),
+            }
+            .into_box(),
+          ),
         );
       }
       return;
@@ -5980,11 +6118,14 @@ impl<'a> NpmSpecifierResolver<'a> {
             Err(err) => {
               self.pending_info.module_slots.insert(
                 item.specifier.clone(),
-                ModuleSlot::Err(ModuleError::Load {
-                  specifier: item.specifier.clone(),
-                  maybe_referrer: item.maybe_range.clone(),
-                  err: err.clone().into(),
-                }),
+                ModuleSlot::Err(
+                  ModuleErrorKind::Load {
+                    specifier: item.specifier.clone(),
+                    maybe_referrer: item.maybe_range.clone(),
+                    err: err.clone().into(),
+                  }
+                  .into_box(),
+                ),
               );
             }
           }
@@ -6003,11 +6144,14 @@ impl<'a> NpmSpecifierResolver<'a> {
           if let Err(err) = result.dep_graph_result {
             self.pending_info.module_slots.insert(
               item.specifier.clone(),
-              ModuleSlot::Err(ModuleError::Load {
-                specifier: item.specifier,
-                maybe_referrer: item.maybe_range,
-                err: NpmLoadError::PackageReqResolution(err).into(),
-              }),
+              ModuleSlot::Err(
+                ModuleErrorKind::Load {
+                  specifier: item.specifier,
+                  maybe_referrer: item.maybe_range,
+                  err: NpmLoadError::PackageReqResolution(err).into(),
+                }
+                .into_box(),
+              ),
             );
           } else {
             self.add_nv_for_item(
@@ -6020,11 +6164,14 @@ impl<'a> NpmSpecifierResolver<'a> {
         Err(err) => {
           self.pending_info.module_slots.insert(
             item.specifier.clone(),
-            ModuleSlot::Err(ModuleError::Load {
-              specifier: item.specifier,
-              maybe_referrer: item.maybe_range,
-              err: err.into(),
-            }),
+            ModuleSlot::Err(
+              ModuleErrorKind::Load {
+                specifier: item.specifier,
+                maybe_referrer: item.maybe_range,
+                err: err.into(),
+              }
+              .into_box(),
+            ),
           );
         }
       }
@@ -6092,10 +6239,13 @@ fn new_source_with_text(
       text: detail.text,
       decoded_kind: detail.kind,
     })
-    .map_err(|err| ModuleError::Load {
-      specifier: specifier.clone(),
-      maybe_referrer: None,
-      err: ModuleLoadError::Decode(Arc::new(DecodeError { mtime, err })),
+    .map_err(|err| {
+      ModuleErrorKind::Load {
+        specifier: specifier.clone(),
+        maybe_referrer: None,
+        err: ModuleLoadError::Decode(Arc::new(DecodeError { mtime, err })),
+      }
+      .into_box()
     })
 }
 
@@ -6583,8 +6733,9 @@ mod tests {
     assert!(matches!(
       graph
         .try_get(&Url::parse("file:///bar.js").unwrap())
-        .unwrap_err(),
-      ModuleError::Missing { .. }
+        .unwrap_err()
+        .as_kind(),
+      ModuleErrorKind::Missing { .. }
     ));
     let specifiers = graph.specifiers().collect::<HashMap<_, _>>();
     assert_eq!(specifiers.len(), 2);
@@ -6597,8 +6748,9 @@ mod tests {
         .get(&Url::parse("file:///bar.js").unwrap())
         .unwrap()
         .as_ref()
-        .unwrap_err(),
-      ModuleError::Missing { .. }
+        .unwrap_err()
+        .as_kind(),
+      ModuleErrorKind::Missing { .. }
     ));
 
     // should not follow the dynamic import error when walking and not following
@@ -6630,10 +6782,16 @@ mod tests {
       .errors()
       .collect::<Vec<_>>();
     assert_eq!(errors.len(), 1);
-    assert!(matches!(
-      errors[0],
-      ModuleGraphError::ModuleError(ModuleError::MissingDynamic { .. })
-    ));
+    let err = &errors[0];
+    match err {
+      ModuleGraphError::ModuleError(err) => {
+        assert!(matches!(
+          err.as_kind(),
+          ModuleErrorKind::MissingDynamic { .. }
+        ));
+      }
+      _ => unreachable!(),
+    }
   }
 
   #[tokio::test]
@@ -6694,29 +6852,34 @@ mod tests {
       .collect::<Vec<_>>();
     assert_eq!(errors.len(), 1);
     match &errors[0] {
-      ModuleGraphError::ModuleError(ModuleError::Missing {
-        specifier,
-        maybe_referrer,
-      }) => {
-        assert_eq!(specifier.as_str(), "file:///math.ts");
-        assert_eq!(
-          maybe_referrer.clone(),
-          Some(Range {
-            specifier: Url::parse("file:///math_with_import.wasm").unwrap(),
-            // this range is the range in the generated .d.ts file
-            range: PositionRange {
-              start: Position {
-                line: 0,
-                character: 92,
-              },
-              end: Position {
-                line: 0,
-                character: 103,
-              }
-            },
-            resolution_mode: Some(ResolutionMode::Import),
-          })
-        );
+      ModuleGraphError::ModuleError(err) => {
+        match err.as_kind() {
+          ModuleErrorKind::Missing {
+            specifier,
+            maybe_referrer,
+          } => {
+            assert_eq!(specifier.as_str(), "file:///math.ts");
+            assert_eq!(
+              maybe_referrer.clone(),
+              Some(Range {
+                specifier: Url::parse("file:///math_with_import.wasm").unwrap(),
+                // this range is the range in the generated .d.ts file
+                range: PositionRange {
+                  start: Position {
+                    line: 0,
+                    character: 92,
+                  },
+                  end: Position {
+                    line: 0,
+                    character: 103,
+                  }
+                },
+                resolution_mode: Some(ResolutionMode::Import),
+              })
+            );
+          }
+          _ => unreachable!(),
+        }
       }
       _ => unreachable!(),
     }
@@ -6779,16 +6942,18 @@ mod tests {
         .get(&Url::parse("file:///bar.js").unwrap())
         .unwrap()
         .as_ref()
-        .unwrap_err(),
-      ModuleError::Parse { .. }
+        .unwrap_err()
+        .as_kind(),
+      ModuleErrorKind::Parse { .. }
     ));
     assert!(matches!(
       specifiers
         .get(&Url::parse("file:///bar_actual.js").unwrap())
         .unwrap()
         .as_ref()
-        .unwrap_err(),
-      ModuleError::Parse { .. }
+        .unwrap_err()
+        .as_kind(),
+      ModuleErrorKind::Parse { .. }
     ));
   }
 
