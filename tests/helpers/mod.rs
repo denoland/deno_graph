@@ -158,7 +158,8 @@ pub struct TestBuilder {
   skip_dynamic_deps: bool,
   workspace_members: Vec<WorkspaceMember>,
   workspace_fast_check: bool,
-  unstable_bytes_and_text_imports: bool,
+  unstable_bytes_imports: bool,
+  unstable_text_imports: bool,
 }
 
 impl TestBuilder {
@@ -174,7 +175,8 @@ impl TestBuilder {
       skip_dynamic_deps: false,
       workspace_members: Default::default(),
       workspace_fast_check: false,
-      unstable_bytes_and_text_imports: false,
+      unstable_bytes_imports: false,
+      unstable_text_imports: false,
     }
   }
 
@@ -235,8 +237,14 @@ impl TestBuilder {
   }
 
   #[allow(unused)]
-  pub fn unstable_bytes_and_text_imports(&mut self, value: bool) -> &mut Self {
-    self.unstable_bytes_and_text_imports = value;
+  pub fn unstable_bytes_imports(&mut self, value: bool) -> &mut Self {
+    self.unstable_bytes_imports = value;
+    self
+  }
+
+  #[allow(unused)]
+  pub fn unstable_text_imports(&mut self, value: bool) -> &mut Self {
+    self.unstable_text_imports = value;
     self
   }
 
@@ -294,7 +302,8 @@ impl TestBuilder {
           locker: self.locker.as_mut().map(|l| l as _),
           resolver: Some(&resolver),
           skip_dynamic_deps: self.skip_dynamic_deps,
-          unstable_bytes_and_text_imports: self.unstable_bytes_and_text_imports,
+          unstable_bytes_imports: self.unstable_bytes_imports,
+          unstable_text_imports: self.unstable_text_imports,
           ..Default::default()
         },
       )

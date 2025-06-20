@@ -1,4 +1,4 @@
-~~ {"unstableBytesAndTextImports":true} ~~
+~~ {"unstableBytesImports":true,"unstableTextImports":true} ~~
 # mod.ts
 const a = await import("./a.json", {
   with: {

@@ -1555,8 +1555,10 @@ pub struct BuildOptions<'a> {
   pub is_dynamic: bool,
   /// Skip loading statically analyzable dynamic dependencies.
   pub skip_dynamic_deps: bool,
-  /// Support unstable bytes and text imports.
-  pub unstable_bytes_and_text_imports: bool,
+  /// Support unstable bytes imports.
+  pub unstable_bytes_imports: bool,
+  /// Support unstable text imports.
+  pub unstable_text_imports: bool,
   pub executor: &'a dyn Executor,
   pub locker: Option<&'a mut dyn Locker>,
   pub file_system: &'a FileSystem,
@@ -1577,7 +1579,8 @@ impl Default for BuildOptions<'_> {
     Self {
       is_dynamic: false,
       skip_dynamic_deps: false,
-      unstable_bytes_and_text_imports: false,
+      unstable_bytes_imports: false,
+      unstable_text_imports: false,
       executor: Default::default(),
       locker: None,
       file_system: &NullFileSystem,
@@ -4033,7 +4036,8 @@ struct Builder<'a, 'graph> {
   in_dynamic_branch: bool,
   skip_dynamic_deps: bool,
   was_dynamic_root: bool,
-  unstable_bytes_and_text_imports: bool,
+  unstable_bytes_imports: bool,
+  unstable_text_imports: bool,
   file_system: &'a FileSystem,
   jsr_url_provider: &'a dyn JsrUrlProvider,
   passthrough_jsr_specifiers: bool,
@@ -4065,7 +4069,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       in_dynamic_branch: options.is_dynamic,
       skip_dynamic_deps: options.skip_dynamic_deps,
       was_dynamic_root: options.is_dynamic,
-      unstable_bytes_and_text_imports: options.unstable_bytes_and_text_imports,
+      unstable_bytes_imports: options.unstable_bytes_imports,
+      unstable_text_imports: options.unstable_text_imports,
       file_system: options.file_system,
       jsr_url_provider: options.jsr_url_provider,
       passthrough_jsr_specifiers: options.passthrough_jsr_specifiers,
@@ -4811,21 +4816,28 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let maybe_range = options.maybe_range;
     let original_specifier = specifier;
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
-    if options.is_asset && !self.unstable_bytes_and_text_imports {
-      // this will always be set
-      if let Some(attribute) = options.maybe_attribute_type {
-        self.graph.module_slots.insert(
-          specifier.clone(),
-          ModuleSlot::Err(
-            ModuleErrorKind::UnsupportedImportAttributeType {
-              specifier: specifier.clone(),
-              referrer: attribute.range,
-              kind: attribute.kind,
-            }
-            .into_box(),
-          ),
-        );
-        return;
+    if options.is_asset {
+      // this will always be set when an asset
+      if let Some(attribute) = &options.maybe_attribute_type {
+        let is_allowed = match attribute.kind.as_str() {
+          "bytes" => self.unstable_bytes_imports,
+          "text" => self.unstable_text_imports,
+          _ => false,
+        };
+        if !is_allowed {
+          self.graph.module_slots.insert(
+            specifier.clone(),
+            ModuleSlot::Err(
+              ModuleErrorKind::UnsupportedImportAttributeType {
+                specifier: specifier.clone(),
+                referrer: attribute.range.clone(),
+                kind: attribute.kind.clone(),
+              }
+              .into_box(),
+            ),
+          );
+          return;
+        }
       }
     }
     if let Some(module_slot) = self.graph.module_slots.get(specifier) {

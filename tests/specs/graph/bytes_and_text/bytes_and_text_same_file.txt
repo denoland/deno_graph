@@ -1,4 +1,4 @@
-~~ {"unstableBytesAndTextImports":true} ~~
+~~ {"unstableBytesImports":true,"unstableTextImports":true} ~~
 # mod.ts
 import json from "./data.json" with { type: "json" };
 import text from "./data.json" with { type: "text" };
