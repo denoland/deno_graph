@@ -807,7 +807,7 @@ async fn test_fill_from_lockfile() {
   assert_eq!(modules.len(), 1);
   let module = modules.into_iter().next().unwrap().js().unwrap();
   assert_eq!(
-    module.source.as_ref(),
+    module.source.text.as_ref(),
     "// This is version 1.0.1 of this package."
   );
 

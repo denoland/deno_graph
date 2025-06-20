@@ -1,0 +1,50 @@
+~~ {"unstableBytesImports":true,"unstableTextImports":true} ~~
+# mod.ts
+import json from "./data.json" with { type: "json" };
+import text from "./data.json" with { type: "text" };
+import bytes from "./data.json" with { type: "bytes" };
+
+# data.json
+{"a":"b"}
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "asserted",
+      "specifier": "file:///data.json",
+      "size": 10,
+      "mediaType": "Json"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./data.json",
+          "code": {
+            "specifier": "file:///data.json",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 17
+              },
+              "end": {
+                "line": 0,
+                "character": 30
+              }
+            }
+          },
+          "assertionType": "json"
+        }
+      ],
+      "size": 164,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}

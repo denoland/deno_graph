@@ -1217,13 +1217,13 @@ mod tests {
       assert_eq!(dependencies.len(), 2);
       let dep = dependencies[0].as_static().unwrap();
       assert_eq!(dep.specifier.to_string(), "./a.json");
-      assert_eq!(dep.import_attributes.get("type"), Some(&"json".to_string()));
+      assert_eq!(dep.import_attributes.get("type"), Some("json"));
       let dep = dependencies[1].as_dynamic().unwrap();
       assert_eq!(
         dep.argument,
         DynamicArgument::String("./b.json".to_string())
       );
-      assert_eq!(dep.import_attributes.get("type"), Some(&"json".to_string()));
+      assert_eq!(dep.import_attributes.get("type"), Some("json"));
     }
   }
 

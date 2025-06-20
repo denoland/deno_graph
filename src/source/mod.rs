@@ -16,6 +16,7 @@ use deno_semver::package::PackageReq;
 use deno_semver::StackString;
 use futures::future;
 use futures::future::LocalBoxFuture;
+use futures::FutureExt;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde::Serialize;
@@ -113,6 +114,17 @@ pub enum LoadError {
 
 pub type LoadResult = Result<Option<LoadResponse>, LoadError>;
 pub type LoadFuture = LocalBoxFuture<'static, LoadResult>;
+
+pub enum CacheResponse {
+  Cached,
+  Redirect {
+    /// The final specifier of the module.
+    specifier: ModuleSpecifier,
+  },
+}
+
+pub type EnsureCachedResult = Result<Option<CacheResponse>, LoadError>;
+pub type EnsureCachedFuture = LocalBoxFuture<'static, EnsureCachedResult>;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum CacheSetting {
@@ -307,6 +319,11 @@ pub trait Loader {
     10
   }
 
+  /// Whether getting cache info is enabled.
+  fn cache_info_enabled(&self) -> bool {
+    false
+  }
+
   /// An optional method which returns cache info for a module specifier.
   fn get_cache_info(&self, _specifier: &ModuleSpecifier) -> Option<CacheInfo> {
     None
@@ -323,6 +340,33 @@ pub trait Loader {
     specifier: &ModuleSpecifier,
     options: LoadOptions,
   ) -> LoadFuture;
+
+  /// Ensures the specified module is cached.
+  ///
+  /// By default, this will just call `load`, but you can override
+  /// this to provide a more optimal way of caching that doesn't
+  /// load the bytes into memory.
+  fn ensure_cached(
+    &self,
+    specifier: &ModuleSpecifier,
+    options: LoadOptions,
+  ) -> EnsureCachedFuture {
+    self
+      .load(specifier, options)
+      .map(|r| {
+        r.map(|v| {
+          v.map(|r| match r {
+            LoadResponse::Redirect { specifier } => {
+              CacheResponse::Redirect { specifier }
+            }
+            LoadResponse::External { .. } | LoadResponse::Module { .. } => {
+              CacheResponse::Cached
+            }
+          })
+        })
+      })
+      .boxed_local()
+  }
 }
 
 pub trait ModuleInfoCacher {
