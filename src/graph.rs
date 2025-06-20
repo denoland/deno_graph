@@ -1205,6 +1205,9 @@ pub struct ExternalModule {
   pub specifier: ModuleSpecifier,
   #[serde(flatten, skip_serializing_if = "Option::is_none")]
   pub maybe_cache_info: Option<CacheInfo>,
+  /// If this external module was the result of loading a "bytes" or "text" import.
+  #[serde(skip_serializing)]
+  pub was_asset_load: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -1293,11 +1296,6 @@ impl ModuleTextSource {
         Some(Arc::from(bytes))
       }
     }
-  }
-
-  #[inline]
-  pub fn as_bytes(&self) -> &[u8] {
-    self.text.as_bytes()
   }
 }
 
@@ -1420,6 +1418,16 @@ impl ModuleSlot {
 
   pub fn is_pending(&self) -> bool {
     matches!(self, ModuleSlot::Pending { .. })
+  }
+
+  pub fn was_external_asset_load(&self) -> bool {
+    matches!(
+      self,
+      ModuleSlot::Module(Module::External(ExternalModule {
+        was_asset_load: true,
+        ..
+      }))
+    )
   }
 
   pub fn is_pending_asset_load(&self) -> bool {
@@ -2696,8 +2704,8 @@ impl ModuleSourceAndInfo {
 
   pub fn source_bytes(&self) -> &[u8] {
     match self {
-      Self::Json { source, .. } => source.as_bytes(),
-      Self::Js { source, .. } => source.as_bytes(),
+      Self::Json { source, .. } => source.text.as_bytes(),
+      Self::Js { source, .. } => source.text.as_bytes(),
       Self::Wasm { source, .. } => source,
     }
   }
@@ -2763,7 +2771,7 @@ pub(crate) async fn parse_module_source_and_info(
         actual_media_type: media_type,
         expected_media_type: MediaType::Json,
       });
-    } else {
+    } else if !matches!(attribute_type.kind.as_str(), "text" | "bytes") {
       return Err(ModuleError::UnsupportedImportAttributeType {
         specifier: opts.specifier,
         range: attribute_type.range.clone(),
@@ -3758,6 +3766,7 @@ enum PendingInfoResponse {
   External {
     specifier: ModuleSpecifier,
     is_root: bool,
+    is_asset: bool,
   },
   Module {
     specifier: ModuleSpecifier,
@@ -4712,34 +4721,41 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let original_specifier = specifier;
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
     if let Some(module_slot) = self.graph.module_slots.get(specifier) {
-      if module_slot.is_pending_asset_load() && !options.is_asset {
-        // this will occur when something pending is only being cached
-        // and in this case we'll defer loading until after it's been
-        // cached as we don't want to start another or cancel the currently
-        // loading specifier
-        self
-          .state
-          .deferred
-          .entry(specifier.clone())
-          .or_insert_with(|| DeferredLoad {
-            maybe_range: maybe_range.cloned(),
-            is_dynamic: options.is_dynamic,
-            is_root: options.is_root,
-            maybe_attribute_type: options.maybe_attribute_type,
-            maybe_version_info: options.maybe_version_info.cloned(),
-          });
-      }
-      // ensure any jsr/npm dependencies that we've already seen are marked
-      // as a dependency of the referrer
-      if matches!(original_specifier.scheme(), "jsr" | "npm") {
-        if let Ok(load_specifier) =
-          self.parse_load_specifier_kind(original_specifier, maybe_range)
-        {
-          self.maybe_mark_dep(&load_specifier, maybe_range);
+      let should_reload_immediately =
+        module_slot.was_external_asset_load() && !options.is_asset;
+      if !should_reload_immediately {
+        let should_defer_reload =
+          module_slot.is_pending_asset_load() && !options.is_asset;
+        if should_defer_reload {
+          // this will occur when something pending is only being cached
+          // and in this case we'll defer loading until after it's been
+          // cached as we don't want to start another or cancel the currently
+          // loading specifier
+          self
+            .state
+            .deferred
+            .entry(specifier.clone())
+            .or_insert_with(|| DeferredLoad {
+              maybe_range: maybe_range.cloned(),
+              is_dynamic: options.is_dynamic,
+              is_root: options.is_root,
+              maybe_attribute_type: options.maybe_attribute_type,
+              maybe_version_info: options.maybe_version_info.cloned(),
+            });
         }
-      }
 
-      return;
+        // ensure any jsr/npm dependencies that we've already seen are marked
+        // as a dependency of the referrer
+        if matches!(original_specifier.scheme(), "jsr" | "npm") {
+          if let Ok(load_specifier) =
+            self.parse_load_specifier_kind(original_specifier, maybe_range)
+          {
+            self.maybe_mark_dep(&load_specifier, maybe_range);
+          }
+        }
+
+        return;
+      }
     }
 
     if let Some(version_info) = options.maybe_version_info {
@@ -4767,6 +4783,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             ModuleSlot::Module(Module::External(ExternalModule {
               specifier: specifier.clone(),
               maybe_cache_info: None,
+              was_asset_load: false,
             })),
           );
         } else {
@@ -4798,6 +4815,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             ModuleSlot::Module(Module::External(ExternalModule {
               maybe_cache_info: None,
               specifier: specifier.clone(),
+              was_asset_load: false,
             })),
           );
         }
@@ -4941,6 +4959,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 Ok(PendingInfoResponse::External {
                   specifier,
                   is_root: options.is_root,
+                  is_asset: false,
                 })
               }
               LoadResponse::Redirect { specifier } => Err(ModuleError::Load {
@@ -5320,6 +5339,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               Ok(PendingInfoResponse::External {
                 specifier: load_specifier,
                 is_root,
+                is_asset,
               })
             }
             Ok(Some(CacheResponse::Redirect { specifier })) => {
@@ -5347,6 +5367,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   return Ok(PendingInfoResponse::External {
                     specifier: load_specifier,
                     is_root,
+                    is_asset,
                   });
                 }
               }
@@ -5378,7 +5399,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               handle_redirect(specifier, maybe_attribute_type, maybe_checksum)
             }
             LoadResponse::External { specifier } => {
-              Ok(PendingInfoResponse::External { specifier, is_root })
+              Ok(PendingInfoResponse::External {
+                specifier,
+                is_root,
+                is_asset,
+              })
             }
             LoadResponse::Module {
               content,
@@ -5530,7 +5555,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) {
     match response {
-      PendingInfoResponse::External { specifier, is_root } => {
+      PendingInfoResponse::External {
+        specifier,
+        is_root,
+        is_asset,
+      } => {
         if is_root {
           self.resolved_roots.insert(specifier.clone());
         }
@@ -5539,6 +5568,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             *entry = ModuleSlot::Module(Module::External(ExternalModule {
               maybe_cache_info: None,
               specifier,
+              was_asset_load: is_asset,
             }));
           }
         } else {
@@ -5547,6 +5577,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             ModuleSlot::Module(Module::External(ExternalModule {
               maybe_cache_info: None,
               specifier,
+              was_asset_load: is_asset,
             })),
           );
         }

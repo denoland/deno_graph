@@ -1,0 +1,102 @@
+# mod.ts
+const a = await import("./a.json", {
+  with: {
+    "type": "bytes",
+  }
+});
+import data1 from "./b.ts" with { type: "bytes" };
+import data2 from "./c.txt" with { type: "text" };
+
+# a.json
+{"a":"b"}
+
+# b.ts
+{"a":"b"}
+
+# c.txt
+asdf
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "external",
+      "specifier": "file:///a.json"
+    },
+    {
+      "kind": "external",
+      "specifier": "file:///b.ts"
+    },
+    {
+      "kind": "external",
+      "specifier": "file:///c.txt"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./a.json",
+          "code": {
+            "specifier": "file:///a.json",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 23
+              },
+              "end": {
+                "line": 0,
+                "character": 33
+              }
+            }
+          },
+          "isDynamic": true,
+          "assertionType": "bytes"
+        },
+        {
+          "specifier": "./b.ts",
+          "code": {
+            "specifier": "file:///b.ts",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 5,
+                "character": 18
+              },
+              "end": {
+                "line": 5,
+                "character": 26
+              }
+            }
+          },
+          "assertionType": "bytes"
+        },
+        {
+          "specifier": "./c.txt",
+          "code": {
+            "specifier": "file:///c.txt",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 6,
+                "character": 18
+              },
+              "end": {
+                "line": 6,
+                "character": 27
+              }
+            }
+          },
+          "assertionType": "text"
+        }
+      ],
+      "size": 178,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}

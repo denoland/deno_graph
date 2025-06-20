@@ -1,0 +1,98 @@
+# mod.ts
+await import("./a.ts", {
+  with: {
+    type: "bytes"
+  }
+});
+import "./b.ts";
+
+# a.ts
+export {};
+
+# b.ts
+import "./a.ts"; // should cause it not to be external
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "size": 11,
+      "mediaType": "TypeScript",
+      "specifier": "file:///a.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./a.ts",
+          "code": {
+            "specifier": "file:///a.ts",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 15
+              }
+            }
+          }
+        }
+      ],
+      "size": 55,
+      "mediaType": "TypeScript",
+      "specifier": "file:///b.ts"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./a.ts",
+          "code": {
+            "specifier": "file:///a.ts",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 13
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          },
+          "isDynamic": true,
+          "assertionType": "bytes"
+        },
+        {
+          "specifier": "./b.ts",
+          "code": {
+            "specifier": "file:///b.ts",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 5,
+                "character": 7
+              },
+              "end": {
+                "line": 5,
+                "character": 15
+              }
+            }
+          }
+        }
+      ],
+      "size": 78,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}
