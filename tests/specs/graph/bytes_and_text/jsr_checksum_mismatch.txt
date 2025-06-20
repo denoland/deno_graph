@@ -1,0 +1,104 @@
+~~ {"unstableBytesAndTextImports":true} ~~
+# https://jsr.io/@scope/a/meta.json
+{
+  "versions": {
+    "1.0.0": {}
+  }
+}
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{
+  "exports": {
+    ".": "./mod.ts"
+  },
+  "manifest": {
+    "/mod.ts": {
+      "size": 1,
+      "checksum": "sha256-d75a9e4cfc094bf1e737a9ec77ebfa95a092e19ce48fc6ff34157f9ebd7c536c"
+    },
+    "/data.txt": {
+      "size": 1,
+      "checksum": "sha256-somechecksum"
+    }
+  }
+}
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+import bytes from "./data.txt" with { type: "bytes" };
+console.log(bytes);
+
+# https://jsr.io/@scope/a/1.0.0/data.txt
+data
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "specifier": "https://jsr.io/@scope/a/1.0.0/data.txt",
+      "error": "Integrity check failed.\n\nActual: 6667b2d1aab6a00caa5aee5af8ad9f1465e567abf1c209d15727d57b3e8f6e5f\nExpected: somechecksum"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./data.txt",
+          "code": {
+            "specifier": "https://jsr.io/@scope/a/1.0.0/data.txt",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 18
+              },
+              "end": {
+                "line": 0,
+                "character": 30
+              }
+            }
+          },
+          "assertionType": "bytes"
+        }
+      ],
+      "size": 75,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a@*": "@scope/a@1.0.0"
+  }
+}
