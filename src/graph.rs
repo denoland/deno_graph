@@ -568,6 +568,13 @@ pub enum ModuleGraphError {
 }
 
 impl ModuleGraphError {
+  pub fn as_module_error_kind(&self) -> Option<&ModuleErrorKind> {
+    match self {
+      Self::ModuleError(err) => Some(err.as_kind()),
+      _ => None,
+    }
+  }
+
   fn for_resolution_kind(kind: ResolutionKind, error: ResolutionError) -> Self {
     match kind {
       ResolutionKind::Execution => Self::ResolutionError(error),
