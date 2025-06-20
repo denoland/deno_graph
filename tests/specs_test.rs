@@ -340,6 +340,7 @@ pub struct SpecOptions {
   #[serde(default)]
   #[serde(skip_serializing_if = "is_false")]
   pub skip_dynamic_deps: bool,
+  #[serde(default)]
   #[serde(skip_serializing_if = "is_false")]
   pub unstable_bytes_and_text_imports: bool,
 }
