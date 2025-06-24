@@ -293,6 +293,8 @@ async fn test_version(
       BuildOptions {
         is_dynamic: false,
         skip_dynamic_deps: false,
+        unstable_bytes_imports: false,
+        unstable_text_imports: false,
         module_analyzer: &module_analyzer,
         module_info_cacher: Default::default(),
         file_system: &NullFileSystem,
@@ -308,14 +310,17 @@ async fn test_version(
     .await;
   if let Err(err) = graph.valid() {
     match err {
-      deno_graph::ModuleGraphError::ModuleError(
-        deno_graph::ModuleError::UnsupportedMediaType {
-          media_type: MediaType::Cjs | MediaType::Cts,
-          ..
-        },
-      ) => {
-        // ignore, old packages with cjs and cts
-        return;
+      deno_graph::ModuleGraphError::ModuleError(err) => {
+        match err.as_kind() {
+          deno_graph::ModuleErrorKind::UnsupportedMediaType {
+            media_type: MediaType::Cjs | MediaType::Cts,
+            ..
+          } => {
+            // ignore, old packages with cjs and cts
+            return;
+          }
+          err => panic!("{}", err),
+        }
       }
       err => panic!("{}", err),
     }

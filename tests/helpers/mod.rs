@@ -154,10 +154,12 @@ pub struct TestBuilder {
   entry_point: String,
   entry_point_types: String,
   fast_check_cache: bool,
+  lockfile_jsr_packages: BTreeMap<PackageReq, PackageNv>,
   skip_dynamic_deps: bool,
   workspace_members: Vec<WorkspaceMember>,
   workspace_fast_check: bool,
-  lockfile_jsr_packages: BTreeMap<PackageReq, PackageNv>,
+  unstable_bytes_imports: bool,
+  unstable_text_imports: bool,
 }
 
 impl TestBuilder {
@@ -169,10 +171,12 @@ impl TestBuilder {
       entry_point: "file:///mod.ts".to_string(),
       entry_point_types: "file:///mod.ts".to_string(),
       fast_check_cache: false,
+      lockfile_jsr_packages: Default::default(),
       skip_dynamic_deps: false,
       workspace_members: Default::default(),
       workspace_fast_check: false,
-      lockfile_jsr_packages: Default::default(),
+      unstable_bytes_imports: false,
+      unstable_text_imports: false,
     }
   }
 
@@ -197,21 +201,6 @@ impl TestBuilder {
   }
 
   #[allow(unused)]
-  pub fn workspace_members(
-    &mut self,
-    members: Vec<WorkspaceMember>,
-  ) -> &mut Self {
-    self.workspace_members = members;
-    self
-  }
-
-  #[allow(unused)]
-  pub fn workspace_fast_check(&mut self, value: bool) -> &mut Self {
-    self.workspace_fast_check = value;
-    self
-  }
-
-  #[allow(unused)]
   pub fn lockfile_jsr_packages(
     &mut self,
     lockfile_jsr_packages: BTreeMap<PackageReq, PackageNv>,
@@ -229,6 +218,33 @@ impl TestBuilder {
   #[allow(unused)]
   pub fn skip_dynamic_deps(&mut self, value: bool) -> &mut Self {
     self.skip_dynamic_deps = value;
+    self
+  }
+
+  #[allow(unused)]
+  pub fn workspace_members(
+    &mut self,
+    members: Vec<WorkspaceMember>,
+  ) -> &mut Self {
+    self.workspace_members = members;
+    self
+  }
+
+  #[allow(unused)]
+  pub fn workspace_fast_check(&mut self, value: bool) -> &mut Self {
+    self.workspace_fast_check = value;
+    self
+  }
+
+  #[allow(unused)]
+  pub fn unstable_bytes_imports(&mut self, value: bool) -> &mut Self {
+    self.unstable_bytes_imports = value;
+    self
+  }
+
+  #[allow(unused)]
+  pub fn unstable_text_imports(&mut self, value: bool) -> &mut Self {
+    self.unstable_text_imports = value;
     self
   }
 
@@ -286,6 +302,8 @@ impl TestBuilder {
           locker: self.locker.as_mut().map(|l| l as _),
           resolver: Some(&resolver),
           skip_dynamic_deps: self.skip_dynamic_deps,
+          unstable_bytes_imports: self.unstable_bytes_imports,
+          unstable_text_imports: self.unstable_text_imports,
           ..Default::default()
         },
       )
