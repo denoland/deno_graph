@@ -3921,8 +3921,8 @@ struct PendingModuleLoadItem {
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_range: Option<Range>,
   load_specifier: Url,
+  in_dynamic_branch: bool,
   is_asset: bool,
-  is_dynamic: bool,
   is_root: bool,
   maybe_checksum: Option<LoaderChecksum>,
   maybe_version_info: Option<JsrPackageVersionInfoExt>,
@@ -3954,8 +3954,8 @@ struct PendingJsrReqResolutionItem {
   package_ref: JsrPackageReqReference,
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_range: Option<Range>,
+  in_dynamic_branch: bool,
   is_asset: bool,
-  is_dynamic: bool,
   is_root: bool,
 }
 
@@ -3997,7 +3997,7 @@ struct PendingDynamicBranch {
 #[derive(Debug)]
 struct DeferredLoad {
   maybe_range: Option<Range>,
-  is_dynamic: bool,
+  in_dynamic_branch: bool,
   is_root: bool,
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_version_info: Option<JsrPackageVersionInfoExt>,
@@ -4007,7 +4007,7 @@ struct LoadOptionsRef<'a> {
   specifier: &'a ModuleSpecifier,
   maybe_range: Option<&'a Range>,
   is_asset: bool,
-  is_dynamic: bool,
+  in_dynamic_branch: bool,
   is_root: bool,
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_version_info: Option<&'a JsrPackageVersionInfoExt>,
@@ -4121,7 +4121,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         specifier: &root,
         maybe_range: None,
         is_asset: false,
-        is_dynamic: self.in_dynamic_branch,
+        in_dynamic_branch: self.in_dynamic_branch,
         is_root: true,
         maybe_attribute_type: None,
         maybe_version_info: None,
@@ -4158,7 +4158,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         specifier,
         maybe_range: None,
         is_asset: false,
-        is_dynamic: self.in_dynamic_branch,
+        in_dynamic_branch: self.in_dynamic_branch,
         is_root: true,
         maybe_attribute_type: None,
         maybe_version_info: None,
@@ -4229,7 +4229,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               specifier: &specifier,
               maybe_range: item.maybe_range.as_ref(),
               is_asset: false, // deferred items are asset -> module
-              is_dynamic: item.is_dynamic,
+              in_dynamic_branch: item.in_dynamic_branch,
               is_root: item.is_root,
               maybe_attribute_type: item.maybe_attribute_type,
               maybe_version_info: item.maybe_version_info.as_ref(),
@@ -4277,7 +4277,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             specifier: &resolved.specifier,
             maybe_range: Some(&resolved.range),
             is_asset: false,
-            is_dynamic: self.in_dynamic_branch,
+            in_dynamic_branch: self.in_dynamic_branch,
             is_root: self.resolved_roots.contains(&resolved.specifier),
             maybe_attribute_type: None,
             maybe_version_info: None,
@@ -4326,7 +4326,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 maybe_attribute_type: pending_resolution.maybe_attribute_type,
                 maybe_range: pending_resolution.maybe_range,
                 is_asset: pending_resolution.is_asset,
-                is_dynamic: pending_resolution.is_dynamic,
+                is_dynamic: pending_resolution.in_dynamic_branch,
                 is_root: pending_resolution.is_root,
               });
             }
@@ -4441,7 +4441,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 specifier: &specifier,
                 maybe_range: resolution_item.maybe_range.as_ref(),
                 is_asset: resolution_item.is_asset,
-                is_dynamic: resolution_item.is_dynamic,
+                in_dynamic_branch: resolution_item.is_dynamic,
                 is_root: resolution_item.is_root,
                 maybe_attribute_type: resolution_item.maybe_attribute_type,
                 maybe_version_info: Some(&version_info),
@@ -4506,7 +4506,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           specifier: &specifier,
           maybe_range: Some(&dynamic_branch.range),
           is_asset: dynamic_branch.is_asset,
-          is_dynamic: true,
+          in_dynamic_branch: true,
           is_root: self.resolved_roots.contains(&specifier),
           maybe_attribute_type: dynamic_branch.maybe_attribute_type,
           maybe_version_info: dynamic_branch.maybe_version_info.as_ref(),
@@ -4864,7 +4864,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             .entry(specifier.clone())
             .or_insert_with(|| DeferredLoad {
               maybe_range: maybe_range.cloned(),
-              is_dynamic: options.is_dynamic,
+              in_dynamic_branch: options.in_dynamic_branch,
               is_root: options.is_root,
               maybe_attribute_type: options.maybe_attribute_type,
               maybe_version_info: options.maybe_version_info.cloned(),
@@ -4920,7 +4920,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             options.maybe_attribute_type,
             maybe_range,
             options.is_asset,
-            options.is_dynamic,
+            options.in_dynamic_branch,
             options.is_root,
           );
         }
@@ -4933,7 +4933,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             specifier.clone(),
             package_req_ref,
             maybe_range,
-            options.is_dynamic,
+            options.in_dynamic_branch,
           );
         } else {
           // mark external
@@ -4965,7 +4965,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           maybe_range: maybe_range.cloned(),
           load_specifier: specifier.clone(),
           is_asset: options.is_asset,
-          is_dynamic: options.is_dynamic,
+          in_dynamic_branch: options.in_dynamic_branch,
           is_root: options.is_root,
           maybe_checksum: None,
           maybe_version_info: None,
@@ -5159,7 +5159,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         maybe_range: options.maybe_range.cloned(),
         load_specifier: specifier.clone(),
         is_asset: options.is_asset,
-        is_dynamic: options.is_dynamic,
+        in_dynamic_branch: options.in_dynamic_branch,
         is_root: options.is_root,
         maybe_checksum: Some(checksum),
         maybe_version_info: Some(version_info.clone()),
@@ -5175,7 +5175,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     maybe_attribute_type: Option<AttributeTypeWithRange>,
     maybe_range: Option<&Range>,
     is_asset: bool,
-    is_dynamic: bool,
+    in_dynamic_branch: bool,
     is_root: bool,
   ) {
     let package_name = &package_ref.req().name;
@@ -5190,8 +5190,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         package_ref,
         maybe_attribute_type,
         maybe_range: maybe_range.cloned(),
+        in_dynamic_branch,
         is_asset,
-        is_dynamic,
         is_root,
       });
   }
@@ -5202,7 +5202,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     specifier: Url,
     package_ref: NpmPackageReqReference,
     maybe_range: Option<&Range>,
-    is_dynamic: bool,
+    in_dynamic_branch: bool,
   ) {
     if self
       .state
@@ -5222,7 +5222,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         specifier,
         package_ref,
         maybe_range: maybe_range.cloned(),
-        is_dynamic,
+        in_dynamic_branch,
       });
   }
 
@@ -5316,8 +5316,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       maybe_attribute_type,
       maybe_range,
       load_specifier,
+      in_dynamic_branch,
       is_asset,
-      is_dynamic,
       is_root,
       mut maybe_checksum,
       mut maybe_version_info,
@@ -5370,7 +5370,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           PendingResult<PendingJsrPackageVersionInfoLoadItem>,
         )>,
         is_asset: bool,
-        is_dynamic: bool,
+        in_dynamic_branch: bool,
         was_dynamic_root: bool,
         loader: &dyn Loader,
         jsr_url_provider: &dyn JsrUrlProvider,
@@ -5428,7 +5428,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         }
 
         let load_options = LoadOptions {
-          in_dynamic_branch: is_dynamic,
+          in_dynamic_branch,
           was_dynamic_root,
           cache_setting: CacheSetting::Use,
           maybe_checksum: maybe_checksum.clone(),
@@ -5481,7 +5481,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 specifier,
                 maybe_attribute_type,
                 is_asset: false,
-                is_dynamic,
+                is_dynamic: in_dynamic_branch,
                 is_root,
               })
             }
@@ -5514,7 +5514,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   .ensure_cached(
                     &load_specifier,
                     LoadOptions {
-                      in_dynamic_branch: is_dynamic,
+                      in_dynamic_branch,
                       was_dynamic_root,
                       cache_setting: CacheSetting::Reload,
                       maybe_checksum: maybe_checksum.clone(),
@@ -5586,7 +5586,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   maybe_attribute_type: maybe_attribute_type.as_ref(),
                   maybe_referrer: maybe_range,
                   is_root,
-                  is_dynamic_branch: is_dynamic,
+                  is_dynamic_branch: in_dynamic_branch,
                 },
               )
               .await
@@ -5606,7 +5606,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 .load(
                   &load_specifier,
                   LoadOptions {
-                    in_dynamic_branch: is_dynamic,
+                    in_dynamic_branch,
                     was_dynamic_root,
                     cache_setting: CacheSetting::Reload,
                     maybe_checksum: maybe_checksum.clone(),
@@ -5631,7 +5631,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     maybe_attribute_type: maybe_attribute_type.as_ref(),
                     maybe_referrer: maybe_range,
                     is_root,
-                    is_dynamic_branch: is_dynamic,
+                    is_dynamic_branch: in_dynamic_branch,
                   },
                 )
                 .await;
@@ -5676,7 +5676,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         &mut loaded_package_via_https_url,
         maybe_version_load_fut,
         is_asset,
-        is_dynamic,
+        in_dynamic_branch,
         was_dynamic_root,
         loader,
         jsr_url_provider,
@@ -5835,7 +5835,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             specifier: &specifier,
             maybe_range: maybe_referrer.as_ref(),
             is_asset,
-            is_dynamic,
+            in_dynamic_branch: is_dynamic,
             is_root,
             maybe_attribute_type,
             maybe_version_info: None,
@@ -5886,7 +5886,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               specifier: &resolved.specifier,
               maybe_range: Some(&resolved.range),
               is_asset: false, // types dependency can't be an asset
-              is_dynamic: false,
+              in_dynamic_branch: false,
               is_root: self.resolved_roots.contains(&resolved.specifier),
               maybe_attribute_type: None,
               maybe_version_info,
@@ -5930,7 +5930,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 kind: attribute_type.clone(),
               }
             });
-          // todo(THIS PR): shouldn't this just be `dep.is_dynamic`?
           if dep.is_dynamic && !self.in_dynamic_branch {
             let value = self
               .state
@@ -5951,8 +5950,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               specifier,
               maybe_range: Some(range),
               is_asset,
-              // todo(THIS PR): shouldn't this be `dep.is_dynamic`?
-              is_dynamic: self.in_dynamic_branch,
+              in_dynamic_branch: self.in_dynamic_branch,
               is_root: self.resolved_roots.contains(specifier),
               maybe_attribute_type,
               maybe_version_info,
@@ -5989,7 +5987,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               specifier,
               maybe_range: Some(range),
               is_asset,
-              is_dynamic: self.in_dynamic_branch,
+              in_dynamic_branch: self.in_dynamic_branch,
               is_root: self.resolved_roots.contains(specifier),
               maybe_attribute_type,
               maybe_version_info,
@@ -6041,7 +6039,7 @@ struct PendingNpmResolutionItem {
   specifier: ModuleSpecifier,
   package_ref: NpmPackageReqReference,
   maybe_range: Option<Range>,
-  is_dynamic: bool,
+  in_dynamic_branch: bool,
 }
 
 struct NpmSpecifierResolver<'a> {
@@ -6100,7 +6098,7 @@ impl<'a> NpmSpecifierResolver<'a> {
     let (main_items, dynamic_items) = self
       .pending_npm_specifiers
       .drain(..)
-      .partition::<Vec<_>, _>(|item| !item.is_dynamic);
+      .partition::<Vec<_>, _>(|item| !item.in_dynamic_branch);
 
     if !main_items.is_empty() {
       let items_by_req: IndexMap<_, Vec<_>> =
