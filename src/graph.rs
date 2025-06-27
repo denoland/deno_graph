@@ -5503,7 +5503,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 count: redirect_count + 1,
                 specifier,
                 maybe_attribute_type,
-                is_asset: false,
+                is_asset,
                 is_dynamic: in_dynamic_branch,
                 is_root,
               })
