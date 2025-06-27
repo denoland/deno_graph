@@ -1,0 +1,53 @@
+~~ {"unstableBytesImports":true,"unstableTextImports":true} ~~
+# mod.ts
+import data1 from "https://example.com" with { type: "bytes" };
+
+console.log(data1);
+
+# https://example.com
+HEADERS: {"location":"./data.txt"}
+
+# https://example.com/data.txt
+Hello!
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "https://example.com",
+          "code": {
+            "specifier": "https://example.com/",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 18
+              },
+              "end": {
+                "line": 0,
+                "character": 39
+              }
+            }
+          },
+          "assertionType": "bytes"
+        }
+      ],
+      "size": 85,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "external",
+      "specifier": "https://example.com/data.txt"
+    }
+  ],
+  "redirects": {
+    "https://example.com/": "https://example.com/data.txt"
+  }
+}
