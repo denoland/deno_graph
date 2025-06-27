@@ -1321,7 +1321,7 @@ impl ModuleTextSource {
         // add back the BOM
         let mut bytes =
           Vec::with_capacity(self.text.len() + BOM_CHAR.len_utf8());
-        BOM_CHAR.encode_utf8(&mut bytes);
+        bytes.extend([0xEF, 0xBB, 0xBF]);
         bytes.extend(self.text.as_bytes());
         Some(Arc::from(bytes))
       }
@@ -2410,7 +2410,30 @@ impl ModuleGraph {
     }
   }
 
-  /// Return a vector of references to module objects in the graph. Only modules
+  /// List of all the url in the graph that are statically known to be
+  /// imported with type "text" or "bytes".
+  pub fn asset_module_urls(&self) -> IndexSet<&Url> {
+    let mut result = IndexSet::with_capacity(self.module_slots.len());
+    for module in self.module_slots.values() {
+      match module {
+        ModuleSlot::Module(module) => {
+          for dep in module.dependencies().values() {
+            let is_asset = dep.imports.iter().all(|i| i.attributes.has_asset());
+            if is_asset {
+              if let Some(url) = dep.get_code() {
+                let url = self.resolve(url);
+                result.insert(url);
+              }
+            }
+          }
+        }
+        ModuleSlot::Pending { .. } | ModuleSlot::Err { .. } => {}
+      }
+    }
+    result
+  }
+
+  /// Return an iterator of references to module objects in the graph. Only modules
   /// that were fully resolved are present, as "errors" are omitted. If
   /// you need to know what errors are in the graph, walk the graph via `.walk`
   /// or if you just need to check if everything is "ok" with the graph, use the
@@ -7860,5 +7883,20 @@ mod tests {
 
     // should only be 1 for true.js and not false.js
     assert_eq!(errors.len(), 1);
+  }
+
+  #[test]
+  fn module_text_source_bom() {
+    let module_text_source = ModuleTextSource {
+      text: "test".into(),
+      decoded_kind: DecodedArcSourceDetailKind::OnlyUtf8Bom,
+    };
+    assert_eq!(
+      module_text_source
+        .try_get_original_bytes()
+        .unwrap()
+        .to_vec(),
+      vec![0xEF, 0xBB, 0xBF, b't', b'e', b's', b't']
+    )
   }
 }
