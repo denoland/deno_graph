@@ -936,11 +936,11 @@ pub struct Dependency {
   pub maybe_deno_types_specifier: Option<String>,
   #[serde(skip_serializing_if = "is_false")]
   pub is_dynamic: bool,
-  // todo(dsherret): rename to attributeType in 2.0
+  // todo(dsherret): rename to attributeType in 3.0
   #[serde(rename = "assertionType", skip_serializing_if = "Option::is_none")]
   pub maybe_attribute_type: Option<String>,
   // TODO(nayeemrmn): Replace `maybe_attribute_type` with this in the serialization
-  // for 2.0.
+  // for 3.0.
   #[serde(skip_serializing)]
   pub imports: Vec<Import>,
 }

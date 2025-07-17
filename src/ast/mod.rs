@@ -98,10 +98,7 @@ pub trait ParsedSourceStore {
   fn remove_parsed_source(
     &self,
     specifier: &ModuleSpecifier,
-  ) -> Option<ParsedSource> {
-    // todo(dsherret): remove this default implementation once a breaking change is done to deno_graph
-    self.get_parsed_source(specifier)
-  }
+  ) -> Option<ParsedSource>;
   /// Gets a `deno_ast::ParsedSource` from the store, upgrading it
   /// to have scope analysis if it doesn't already.
   fn get_scope_analysis_parsed_source(
