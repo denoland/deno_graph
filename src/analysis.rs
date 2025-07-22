@@ -881,6 +881,35 @@ mod test {
   }
 
   #[test]
+  fn static_dependency_descriptor_side_effect_serialization() {
+    // with dependencies
+    let descriptor = DependencyDescriptor::Static(StaticDependencyDescriptor {
+      kind: StaticDependencyKind::ExportEquals,
+      types_specifier: None,
+      specifier: "./test".to_string(),
+      specifier_range: PositionRange {
+        start: Position::zeroed(),
+        end: Position::zeroed(),
+      },
+      import_attributes: ImportAttributes::Unknown,
+      is_side_effect: true,
+    });
+    run_serialization_test(
+      &descriptor,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
+      json!({
+        "type": "static",
+        "kind": "exportEquals",
+        "specifier": "./test",
+        "specifierRange": [[0, 0], [0, 0]],
+        "importAttributes": "unknown",
+        "sideEffect": true,
+      }),
+    );
+  }
+
+  #[test]
   fn dynamic_dependency_descriptor_serialization() {
     run_serialization_test(
       &DependencyDescriptor::Dynamic(DynamicDependencyDescriptor {
