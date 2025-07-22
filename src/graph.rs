@@ -919,6 +919,9 @@ pub struct Import {
   pub specifier_range: Range,
   #[serde(skip_serializing_if = "is_false")]
   pub is_dynamic: bool,
+  /// If this is an import for only side effects (ex. `import './load.js';`)
+  #[serde(skip_serializing)]
+  pub is_side_effect: bool,
   // Don't include attributes in `deno info --json` until someone has a need.
   // Attribute error strings eventually will be included in a separate `Import::errors`, however.
   #[serde(skip_serializing)]
@@ -3107,6 +3110,7 @@ pub(crate) fn parse_js_module_from_module_info(
             specifier_range: range,
             is_dynamic: false,
             attributes: Default::default(),
+            is_side_effect: false,
           });
         }
         TypeScriptReference::Types {
@@ -3148,6 +3152,7 @@ pub(crate) fn parse_js_module_from_module_info(
               specifier_range: range,
               is_dynamic: false,
               attributes: Default::default(),
+              is_side_effect: false,
             });
           }
         }
@@ -3269,6 +3274,7 @@ pub(crate) fn parse_js_module_from_module_info(
         specifier_range: range,
         is_dynamic: false,
         attributes: Default::default(),
+        is_side_effect: false,
       });
     }
   }
@@ -3303,6 +3309,7 @@ pub(crate) fn parse_js_module_from_module_info(
         specifier_range,
         is_dynamic: false,
         attributes: Default::default(),
+        is_side_effect: false,
       });
     }
   }
@@ -3483,6 +3490,7 @@ fn fill_module_dependencies(
             specifier_range,
             is_dynamic: false,
             attributes: desc.import_attributes,
+            is_side_effect: desc.is_side_effect,
           }],
           desc.types_specifier,
         )
@@ -3536,6 +3544,7 @@ fn fill_module_dependencies(
               specifier_range: specifier_range.clone(),
               is_dynamic: true,
               attributes: import_attributes.clone(),
+              is_side_effect: false,
             })
             .collect::<Vec<_>>(),
           desc.types_specifier,
@@ -6477,6 +6486,7 @@ mod tests {
           },
           is_dynamic: false,
           attributes: Default::default(),
+          is_side_effect: false,
         },
         Import {
           specifier: "./b.ts".to_string(),
@@ -6497,6 +6507,7 @@ mod tests {
           },
           is_dynamic: false,
           attributes: Default::default(),
+          is_side_effect: false,
         },
       ],
       ..Default::default()
@@ -7288,6 +7299,7 @@ mod tests {
           },
           is_dynamic: false,
           attributes: ImportAttributes::None,
+          is_side_effect: false,
         },
         Import {
           specifier: "file:///bar.ts".to_string(),
@@ -7308,6 +7320,7 @@ mod tests {
           },
           is_dynamic: false,
           attributes: ImportAttributes::None,
+          is_side_effect: false,
         },
         Import {
           specifier: "file:///bar.ts".to_string(),
@@ -7328,6 +7341,7 @@ mod tests {
           },
           is_dynamic: false,
           attributes: ImportAttributes::None,
+          is_side_effect: true,
         },
         Import {
           specifier: "file:///bar.ts".to_string(),
@@ -7348,6 +7362,7 @@ mod tests {
           },
           is_dynamic: true,
           attributes: ImportAttributes::None,
+          is_side_effect: false,
         },
         Import {
           specifier: "file:///bar.ts".to_string(),
@@ -7368,6 +7383,7 @@ mod tests {
           },
           is_dynamic: true,
           attributes: ImportAttributes::Unknown,
+          is_side_effect: false,
         },
         Import {
           specifier: "file:///bar.ts".to_string(),
@@ -7388,6 +7404,7 @@ mod tests {
           },
           is_dynamic: false,
           attributes: ImportAttributes::None,
+          is_side_effect: true,
         },
       ]
     );
@@ -7415,6 +7432,7 @@ mod tests {
           "type".to_string(),
           ImportAttribute::Known("json".to_string())
         )])),
+        is_side_effect: true,
       }]
     );
   }

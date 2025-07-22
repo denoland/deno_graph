@@ -60,6 +60,8 @@ pub struct StaticDependencyDescriptor {
   pub specifier_range: SourceRange,
   /// Import attributes for this dependency.
   pub import_attributes: ImportAttributes,
+  /// If this is an import for side effects only (ex. `import './load.js';`)
+  pub is_side_effect: bool,
 }
 
 impl From<StaticDependencyDescriptor> for DependencyDescriptor {
@@ -157,6 +159,7 @@ impl Visit for DependencyCollector<'_> {
         specifier,
         specifier_range: node.src.range(),
         import_attributes: parse_import_attributes(node.with.as_deref()),
+        is_side_effect: node.specifiers.is_empty(),
       }
       .into(),
     );
@@ -179,6 +182,7 @@ impl Visit for DependencyCollector<'_> {
           specifier,
           specifier_range: src.range(),
           import_attributes: parse_import_attributes(node.with.as_deref()),
+          is_side_effect: false,
         }
         .into(),
       );
@@ -201,6 +205,7 @@ impl Visit for DependencyCollector<'_> {
         specifier,
         specifier_range: node.src.range(),
         import_attributes: parse_import_attributes(node.with.as_deref()),
+        is_side_effect: false,
       }
       .into(),
     );
@@ -221,6 +226,7 @@ impl Visit for DependencyCollector<'_> {
           .as_ref()
           .map(|a| parse_import_attributes_from_object_lit(&a.with))
           .unwrap_or_default(),
+        is_side_effect: false,
       }
       .into(),
     );
@@ -357,6 +363,7 @@ impl Visit for DependencyCollector<'_> {
           specifier,
           specifier_range: expr.range(),
           import_attributes: Default::default(),
+          is_side_effect: false,
         }
         .into(),
       );
@@ -566,6 +573,7 @@ try {
           specifier: Atom::from("./test.ts"),
           specifier_range: SourceRange::new(start_pos + 21, start_pos + 32),
           import_attributes: Default::default(),
+          is_side_effect: false,
         }
         .into(),
         StaticDependencyDescriptor {
@@ -579,6 +587,7 @@ try {
           specifier: Atom::from("./foo.d.ts"),
           specifier_range: SourceRange::new(start_pos + 72, start_pos + 84),
           import_attributes: Default::default(),
+          is_side_effect: false,
         }
         .into(),
         StaticDependencyDescriptor {
@@ -592,6 +601,7 @@ try {
           specifier: Atom::from("./buzz.ts"),
           specifier_range: SourceRange::new(start_pos + 136, start_pos + 147),
           import_attributes: Default::default(),
+          is_side_effect: false,
         }
         .into(),
         StaticDependencyDescriptor {
@@ -612,6 +622,7 @@ try {
           specifier: Atom::from("./fizz.d.ts"),
           specifier_range: SourceRange::new(start_pos + 206, start_pos + 219),
           import_attributes: Default::default(),
+          is_side_effect: false,
         }
         .into(),
         DynamicDependencyDescriptor {
@@ -657,6 +668,7 @@ try {
           specifier: Atom::from("some_package_foo"),
           specifier_range: SourceRange::new(start_pos + 466, start_pos + 484),
           import_attributes: Default::default(),
+          is_side_effect: false,
         }
         .into(),
         StaticDependencyDescriptor {
@@ -666,6 +678,7 @@ try {
           specifier: Atom::from("some_package_foo_type"),
           specifier_range: SourceRange::new(start_pos + 517, start_pos + 540),
           import_attributes: Default::default(),
+          is_side_effect: false,
         }
         .into(),
         StaticDependencyDescriptor {
@@ -675,6 +688,7 @@ try {
           specifier: Atom::from("some_package_bar"),
           specifier_range: SourceRange::new(start_pos + 572, start_pos + 590),
           import_attributes: Default::default(),
+          is_side_effect: false,
         }
         .into(),
       ]
@@ -735,6 +749,7 @@ const d10 = await import("./d10.json", { with: { type: "json", ["type"]: "bad" }
           specifier: Atom::from("./test.ts"),
           specifier_range: SourceRange::new(start_pos + 21, start_pos + 32),
           import_attributes: expected_attributes1.clone(),
+          is_side_effect: false,
         }
         .into(),
         StaticDependencyDescriptor {
@@ -744,6 +759,7 @@ const d10 = await import("./d10.json", { with: { type: "json", ["type"]: "bad" }
           specifier: Atom::from("./test.ts"),
           specifier_range: SourceRange::new(start_pos + 78, start_pos + 89),
           import_attributes: expected_attributes1,
+          is_side_effect: false,
         }
         .into(),
         StaticDependencyDescriptor {
@@ -753,6 +769,7 @@ const d10 = await import("./d10.json", { with: { type: "json", ["type"]: "bad" }
           specifier: Atom::from("./test.json"),
           specifier_range: SourceRange::new(start_pos + 141, start_pos + 154),
           import_attributes: expected_attributes2.clone(),
+          is_side_effect: false,
         }
         .into(),
         StaticDependencyDescriptor {
@@ -762,6 +779,7 @@ const d10 = await import("./d10.json", { with: { type: "json", ["type"]: "bad" }
           specifier: Atom::from("./foo.json"),
           specifier_range: SourceRange::new(start_pos + 196, start_pos + 208),
           import_attributes: expected_attributes2,
+          is_side_effect: false,
         }
         .into(),
         DynamicDependencyDescriptor {
@@ -1055,6 +1073,7 @@ export declare const SomeValue: typeof Core & import("./a.d.ts").Constructor<{
           specifier: Atom::from("./a.d.ts"),
           specifier_range: SourceRange::new(start_pos + 53, start_pos + 63),
           import_attributes: ImportAttributes::None,
+          is_side_effect: false,
         }
         .into(),
         StaticDependencyDescriptor {
@@ -1064,6 +1083,7 @@ export declare const SomeValue: typeof Core & import("./a.d.ts").Constructor<{
           specifier: Atom::from("./b.d.ts"),
           specifier_range: SourceRange::new(start_pos + 100, start_pos + 110),
           import_attributes: ImportAttributes::None,
+          is_side_effect: false,
         }
         .into(),
         StaticDependencyDescriptor {
@@ -1076,6 +1096,7 @@ export declare const SomeValue: typeof Core & import("./a.d.ts").Constructor<{
             "resolution-mode".to_string(),
             ImportAttribute::Known("import".to_string())
           )])),
+          is_side_effect: false,
         }
         .into()
       ]

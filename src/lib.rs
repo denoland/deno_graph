@@ -3374,6 +3374,7 @@ export const foo = 'bar';"#,
             },
             is_dynamic: false,
             attributes: Default::default(),
+            is_side_effect: false,
           }],
           ..Default::default()
         },
