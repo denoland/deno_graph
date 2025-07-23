@@ -155,6 +155,7 @@ pub struct TestBuilder {
   entry_point_types: String,
   fast_check_cache: bool,
   lockfile_jsr_packages: BTreeMap<PackageReq, PackageNv>,
+  resolver: Option<Box<dyn deno_graph::source::Resolver>>,
   skip_dynamic_deps: bool,
   workspace_members: Vec<WorkspaceMember>,
   workspace_fast_check: bool,
@@ -173,6 +174,7 @@ impl TestBuilder {
       fast_check_cache: false,
       lockfile_jsr_packages: Default::default(),
       skip_dynamic_deps: false,
+      resolver: None,
       workspace_members: Default::default(),
       workspace_fast_check: false,
       unstable_bytes_imports: false,
@@ -212,6 +214,15 @@ impl TestBuilder {
   #[allow(unused)]
   pub fn fast_check_cache(&mut self, value: bool) -> &mut Self {
     self.fast_check_cache = value;
+    self
+  }
+
+  #[allow(unused)]
+  pub fn resolver(
+    &mut self,
+    resolver: impl deno_graph::source::Resolver + 'static,
+  ) -> &mut Self {
+    self.resolver = Some(Box::new(resolver));
     self
   }
 
@@ -288,7 +299,7 @@ impl TestBuilder {
     let entry_point_url = ModuleSpecifier::parse(&self.entry_point).unwrap();
     let roots = vec![entry_point_url.clone()];
     let capturing_analyzer = CapturingModuleAnalyzer::default();
-    let resolver = WorkspaceMemberResolver {
+    let workspace_resolver = WorkspaceMemberResolver {
       members: self.workspace_members.clone(),
     };
     graph
@@ -300,7 +311,13 @@ impl TestBuilder {
           module_analyzer: &capturing_analyzer,
           npm_resolver: Some(&TestNpmResolver),
           locker: self.locker.as_mut().map(|l| l as _),
-          resolver: Some(&resolver),
+          resolver: Some(if let Some(resolver) = &self.resolver {
+            // providing a custom resolver while using workspace members hasn't been implemented
+            assert_eq!(self.workspace_members.len(), 0);
+            &**resolver
+          } else {
+            &workspace_resolver
+          }),
           skip_dynamic_deps: self.skip_dynamic_deps,
           unstable_bytes_imports: self.unstable_bytes_imports,
           unstable_text_imports: self.unstable_text_imports,
