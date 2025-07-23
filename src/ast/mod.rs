@@ -439,6 +439,7 @@ fn analyze_dependencies(
             text_info,
           ),
           import_attributes: d.import_attributes,
+          is_side_effect: d.is_side_effect,
         })
       }
       self::dep::DependencyDescriptor::Dynamic(d) => {

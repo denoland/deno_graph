@@ -125,6 +125,8 @@ pub struct StaticDependencyDescriptor {
   pub specifier: String,
   /// The range of the specifier.
   pub specifier_range: PositionRange,
+  #[serde(skip_serializing_if = "is_false", default, rename = "sideEffect")]
+  pub is_side_effect: bool,
   /// Import attributes for this dependency.
   #[serde(skip_serializing_if = "ImportAttributes::is_none", default)]
   pub import_attributes: ImportAttributes,
@@ -535,6 +537,7 @@ mod test {
             },
           },
           import_attributes: ImportAttributes::None,
+          is_side_effect: false,
         }
         .into(),
         DynamicDependencyDescriptor {
@@ -857,6 +860,7 @@ mod test {
         end: Position::zeroed(),
       },
       import_attributes: ImportAttributes::Unknown,
+      is_side_effect: false,
     });
     run_serialization_test(
       &descriptor,
@@ -872,6 +876,35 @@ mod test {
         "specifier": "./test",
         "specifierRange": [[0, 0], [0, 0]],
         "importAttributes": "unknown",
+      }),
+    );
+  }
+
+  #[test]
+  fn static_dependency_descriptor_side_effect_serialization() {
+    // with dependencies
+    let descriptor = DependencyDescriptor::Static(StaticDependencyDescriptor {
+      kind: StaticDependencyKind::ExportEquals,
+      types_specifier: None,
+      specifier: "./test".to_string(),
+      specifier_range: PositionRange {
+        start: Position::zeroed(),
+        end: Position::zeroed(),
+      },
+      import_attributes: ImportAttributes::Unknown,
+      is_side_effect: true,
+    });
+    run_serialization_test(
+      &descriptor,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
+      json!({
+        "type": "static",
+        "kind": "exportEquals",
+        "specifier": "./test",
+        "specifierRange": [[0, 0], [0, 0]],
+        "importAttributes": "unknown",
+        "sideEffect": true,
       }),
     );
   }
@@ -1013,6 +1046,7 @@ mod test {
             },
           }),
           import_attributes: ImportAttributes::None,
+          is_side_effect: false,
         },
       )],
       ts_references: Vec::new(),
@@ -1056,6 +1090,7 @@ mod test {
           },
           types_specifier: None,
           import_attributes: ImportAttributes::None,
+          is_side_effect: false,
         },
       )],
       ts_references: Vec::new(),
