@@ -3615,9 +3615,13 @@ fn fill_module_dependencies(
           jsr_url_provider,
           maybe_resolver,
         );
-        // only bother setting if the resolved specifier
-        // does not match the code specifier
-        if maybe_type.maybe_specifier() != dep.maybe_code.maybe_specifier() {
+        // don't surface type only errors for side effect imports that fail to resolve
+        let is_side_effect_import_error =
+          import.is_side_effect && maybe_type.err().is_some();
+        if !is_side_effect_import_error
+          // don't bother setting if the resolved specifier matches the code specifier
+          && maybe_type.maybe_specifier() != dep.maybe_code.maybe_specifier()
+        {
           dep.maybe_type = maybe_type
         }
       }

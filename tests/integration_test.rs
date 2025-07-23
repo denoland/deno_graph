@@ -9,6 +9,7 @@
 use std::cell::RefCell;
 
 use deno_ast::ModuleSpecifier;
+use deno_error::JsErrorBox;
 use deno_graph::packages::JsrPackageInfo;
 use deno_graph::packages::JsrPackageInfoVersion;
 use deno_graph::packages::JsrPackageVersionInfo;
@@ -19,10 +20,13 @@ use deno_graph::source::LoadFuture;
 use deno_graph::source::LoadOptions;
 use deno_graph::source::LoadResponse;
 use deno_graph::source::MemoryLoader;
+use deno_graph::source::ResolutionKind;
+use deno_graph::source::ResolveError;
 use deno_graph::BuildOptions;
 use deno_graph::FillFromLockfileOptions;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
+use deno_graph::Range;
 use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
@@ -1240,4 +1244,60 @@ async fn test_reload() {
       "redirects": { "npm:chalk@1.0.0": "npm:/chalk@1.0.0" }
     })
   );
+}
+
+#[tokio::test]
+async fn test_types_resolution_side_effect_import_not_surfaced() {
+  #[derive(Debug)]
+  struct TestResolver;
+
+  impl deno_graph::source::Resolver for TestResolver {
+    fn resolve(
+      &self,
+      specifier_text: &str,
+      referrer_range: &Range,
+      kind: ResolutionKind,
+    ) -> Result<ModuleSpecifier, ResolveError> {
+      match kind {
+        ResolutionKind::Execution => Ok(deno_graph::resolve_import(
+          specifier_text,
+          &referrer_range.specifier,
+        )?),
+        ResolutionKind::Types => {
+          Err(ResolveError::Other(JsErrorBox::generic("fail")))
+        }
+      }
+    }
+  }
+
+  let result = TestBuilder::new()
+    .with_loader(|loader| {
+      loader.remote.add_source_with_text(
+        "file:///mod.ts",
+        r#"import './side_effect.ts'; import example from './non_side_effect.ts';"#,
+      );
+      loader
+        .remote
+        .add_source_with_text("file:///side_effect.ts", r#""#);
+      loader.remote.add_source_with_text("file:///non_side_effect.ts", r#""#);
+      loader.remote.add_external_source("external:other");
+    })
+    .resolver(TestResolver)
+    .build()
+    .await;
+
+  let module = result
+    .graph
+    .get(&Url::parse("file:///mod.ts").unwrap())
+    .unwrap();
+  {
+    let dep = module.dependencies().get("./side_effect.ts").unwrap();
+    assert!(dep.maybe_code.ok().is_some());
+    assert!(dep.maybe_type.err().is_none()); // no error surfaced
+  }
+  {
+    let dep = module.dependencies().get("./non_side_effect.ts").unwrap();
+    assert!(dep.maybe_code.ok().is_some());
+    assert!(dep.maybe_type.err().is_some()); // error surfaced
+  }
 }
