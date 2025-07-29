@@ -4,7 +4,6 @@ import { assert, assertEquals, assertRejects } from "@std/assert";
 import type { LoadResponseModule } from "./types.ts";
 import {
   createGraph,
-  init,
   load,
   type LoadResponse,
   MediaType,
@@ -539,7 +538,6 @@ Deno.test({
 Deno.test({
   name: "parseModule()",
   async fn() {
-    await init();
     const module = await parseModule(
       "file:///a/test01.js",
       new TextEncoder().encode(`
@@ -614,7 +612,6 @@ Deno.test({
 Deno.test({
   name: "parseModule() - with headers",
   async fn() {
-    await init();
     const module = await parseModule(
       `https://example.com/a`,
       new TextEncoder().encode(`declare interface A {
@@ -633,7 +630,6 @@ Deno.test({
 Deno.test({
   name: "parseModule() - with jsxImportSource pragma",
   async fn() {
-    await init();
     const module = await parseModule(
       `file:///a/test01.tsx`,
       new TextEncoder().encode(`/* @jsxImportSource http://example.com/preact */
@@ -656,7 +652,6 @@ Deno.test({
 Deno.test({
   name: "parseModule() - with defaultJsxImportSource",
   async fn() {
-    await init();
     const module = await parseModule(
       `file:///a/test01.tsx`,
       new TextEncoder().encode(`
@@ -678,7 +673,6 @@ Deno.test({
 Deno.test({
   name: "parseModule() - with defaultJsxImportSourceTypes",
   async fn() {
-    await init();
     const module = await parseModule(
       `file:///a/test01.tsx`,
       new TextEncoder().encode(`
@@ -706,7 +700,6 @@ Deno.test({
 Deno.test({
   name: "parseModule() - invalid URL",
   async fn() {
-    await init();
     await assertRejects(
       async () => {
         await parseModule(
@@ -723,7 +716,6 @@ Deno.test({
 Deno.test({
   name: "parseModule() - syntax error",
   async fn() {
-    await init();
     await assertRejects(
       async () => {
         await parseModule(
@@ -740,7 +732,6 @@ Deno.test({
 Deno.test({
   name: "parseModule() - import attributes",
   async fn() {
-    await init();
     const module = await parseModule(
       "file:///a/test01.js",
       new TextEncoder().encode(`
@@ -799,7 +790,6 @@ Deno.test({
 Deno.test({
   name: "parseModule() - triple slash directives in typescript",
   async fn() {
-    await init();
     const module = await parseModule(
       "file:///a/foo.ts",
       new TextEncoder().encode(`
