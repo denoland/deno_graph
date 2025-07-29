@@ -17,13 +17,13 @@ crate-type = ["cdylib"]
 console_error_panic_hook = "0.1.7"
 deno_graph = { path = "../", features = ["swc"], default-features = false }
 futures = "0.3.17"
-js-sys = "0.3.68"
+js-sys = "0.3.77"
 serde = { version = "1.0.130", features = ["derive", "rc"] }
 serde_json = { version = "1.0.67", features = ["preserve_order"] }
 serde-wasm-bindgen = "0.5.0"
 sys_traits = { workspace = true, features = ["real", "wasm"] }
-wasm-bindgen = { version = "=0.2.91" }
-wasm-bindgen-futures = { version = "=0.4.41" }
+wasm-bindgen = { version = "=0.2.100" }
+wasm-bindgen-futures = { version = "=0.4.50" }
 thiserror.workspace = true
 deno_error.workspace = true
 

@@ -2,8 +2,10 @@
 /npm
 .vs
 .vscode
-js/deno_graph_wasm_bg.wasm
-js/deno_graph_wasm.generated.d.ts
-js/deno_graph_wasm.generated.js
+js/deno_graph_wasm.wasm
+js/deno_graph_wasm.d.ts
+js/deno_graph_wasm.js
+js/deno_graph_wasm.internal.js
 js/LICENSE
+js/snippets
 /tests/ecosystem/jsr_mirror/
