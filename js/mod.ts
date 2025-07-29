@@ -18,7 +18,7 @@
  * @module
  */
 
-import * as wasm from "./deno_graph_wasm.generated.js";
+import * as wasm from "./deno_graph_wasm.js";
 import { load as defaultLoad } from "./loader.ts";
 import type {
   CacheInfo,
@@ -145,8 +145,7 @@ export async function createGraph(
     kind,
     imports,
   } = options;
-  const { createGraph } = await wasm.instantiate();
-  return await createGraph(
+  return await wasm.createGraph(
     rootSpecifiers,
     async (
       specifier: string,
@@ -215,11 +214,6 @@ export interface ParseModuleOptions {
   resolveTypes?(specifier: string): string | undefined;
 }
 
-/** Instantiates the Wasm module used within deno_graph. */
-export async function init(opts?: wasm.InstantiateOptions) {
-  await wasm.instantiate(opts);
-}
-
 /** Parse a module based on the supplied information and return its analyzed
  * representation. If an error is encountered when parsing, the function will
  * throw.
@@ -241,12 +235,6 @@ export function parseModule(
     resolve,
     resolveTypes,
   } = options;
-
-  if (!wasm.isInstantiated()) {
-    throw new Error(
-      "Please call `init()` at least once before calling `parseModule`.",
-    );
-  }
 
   return wasm.parseModule(
     specifier,

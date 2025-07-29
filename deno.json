@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "build": "cp LICENSE js/LICENSE && deno run -A jsr:@deno/wasmbuild@0.16.0 --no-default-features --project deno_graph_wasm --out js",
+    "build": "cp LICENSE js/LICENSE && deno run -A jsr:@deno/wasmbuild@0.19.2 --no-default-features --project deno_graph_wasm --out js",
     "build:npm": "deno run -A _build_npm.ts",
     "test": "deno test --allow-read --allow-net"
   },
