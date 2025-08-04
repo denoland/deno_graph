@@ -118,7 +118,7 @@ import 'jsr:@scope/a/foo'
       "dependencies": [
         {
           "specifier": "./other.d.ts",
-          "code": {
+          "type": {
             "specifier": "https://jsr.io/@scope/a/1.0.0/other.d.ts",
             "span": {
               "start": {
