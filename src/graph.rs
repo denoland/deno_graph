@@ -3589,25 +3589,25 @@ fn fill_module_dependencies(
             maybe_resolver,
           );
         }
-      } else if media_type.is_declaration() {
-        // ignore
-      } else if dep.maybe_code.is_none() {
-        // This is a code import, the first one of that specifier in this module.
-        // Resolve and determine the initial `is_dynamic` value from it.
-        dep.maybe_code = resolve(
-          &import.specifier,
-          import.specifier_range.clone(),
-          ResolutionKind::Execution,
-          jsr_url_provider,
-          maybe_resolver,
-        );
-        dep.is_dynamic = import.is_dynamic;
-      } else {
-        // This is a code import, but not the first one of that specifier in this
-        // module. Maybe update the `is_dynamic` value. Static imports take
-        // precedence. Note that `@jsxImportSource` and `/// <reference path />`
-        // count as static imports for this purpose.
-        dep.is_dynamic = dep.is_dynamic && import.is_dynamic;
+      } else if !media_type.is_declaration() {
+        if dep.maybe_code.is_none() {
+          // This is a code import, the first one of that specifier in this module.
+          // Resolve and determine the initial `is_dynamic` value from it.
+          dep.maybe_code = resolve(
+            &import.specifier,
+            import.specifier_range.clone(),
+            ResolutionKind::Execution,
+            jsr_url_provider,
+            maybe_resolver,
+          );
+          dep.is_dynamic = import.is_dynamic;
+        } else {
+          // This is a code import, but not the first one of that specifier in this
+          // module. Maybe update the `is_dynamic` value. Static imports take
+          // precedence. Note that `@jsxImportSource` and `/// <reference path />`
+          // count as static imports for this purpose.
+          dep.is_dynamic = dep.is_dynamic && import.is_dynamic;
+        }
       }
       if graph_kind.include_types() && dep.maybe_type.is_none() {
         let maybe_type = resolve(
