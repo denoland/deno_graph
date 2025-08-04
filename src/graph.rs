@@ -3589,6 +3589,8 @@ fn fill_module_dependencies(
             maybe_resolver,
           );
         }
+      } else if media_type.is_declaration() {
+        // ignore
       } else if dep.maybe_code.is_none() {
         // This is a code import, the first one of that specifier in this module.
         // Resolve and determine the initial `is_dynamic` value from it.
