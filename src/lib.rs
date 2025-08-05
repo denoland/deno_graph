@@ -179,8 +179,11 @@ mod tests {
 
   use super::*;
   use deno_error::JsErrorBox;
+  use deno_semver::package::PackageNv;
+  use deno_semver::package::PackageReq;
   use indexmap::IndexMap;
   use indexmap::IndexSet;
+  use parking_lot::Mutex;
   use pretty_assertions::assert_eq;
   use serde_json::json;
   use source::tests::MockResolver;
@@ -189,7 +192,6 @@ mod tests {
   use source::ResolutionMode;
   use source::Source;
   use source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
-  use std::cell::RefCell;
   use std::collections::BTreeMap;
 
   type Sources<'a> = Vec<(&'a str, Source<&'a str>)>;
@@ -2590,9 +2592,10 @@ export const foo = 'bar';"#,
     );
   }
 
-  #[derive(Debug)]
+  #[derive(Debug, Default)]
   struct CollectingReporter {
-    on_loads: RefCell<Vec<(ModuleSpecifier, usize, usize)>>,
+    on_loads: Mutex<Vec<(ModuleSpecifier, usize, usize)>>,
+    on_resolves: Mutex<Vec<(PackageReq, PackageNv)>>,
   }
 
   impl source::Reporter for CollectingReporter {
@@ -2602,11 +2605,18 @@ export const foo = 'bar';"#,
       modules_done: usize,
       modules_total: usize,
     ) {
-      self.on_loads.borrow_mut().push((
+      self.on_loads.lock().push((
         specifier.clone(),
         modules_done,
         modules_total,
       ));
+    }
+
+    fn on_resolve(&self, req: &PackageReq, package_nv: &PackageNv) {
+      self
+        .on_resolves
+        .lock()
+        .push((req.clone(), package_nv.clone()));
     }
   }
 
@@ -2661,9 +2671,7 @@ export const foo = 'bar';"#,
     );
     let root_specifier =
       ModuleSpecifier::parse("file:///a/test01.ts").expect("bad url");
-    let reporter = CollectingReporter {
-      on_loads: RefCell::new(vec![]),
-    };
+    let reporter = CollectingReporter::default();
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(

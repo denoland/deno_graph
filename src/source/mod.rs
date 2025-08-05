@@ -770,7 +770,8 @@ impl Loader for MemoryLoader {
 
 /// A trait which can be used to allow the module graph to report status events
 /// to the user.
-pub trait Reporter: fmt::Debug {
+pub trait Reporter: fmt::Debug + Send + Sync {
+  #[allow(unused_variables)]
   /// A handler that is called after each load of a module. It contains the
   /// module specifier of the module that was loaded, and the number of modules
   /// seen (total number of unique specifiers seen), and the number of modules
@@ -781,7 +782,11 @@ pub trait Reporter: fmt::Debug {
     specifier: &ModuleSpecifier,
     modules_done: usize,
     modules_total: usize,
-  );
+  ) {
+  }
+
+  #[allow(unused_variables)]
+  fn on_resolve(&self, req: &PackageReq, package_nv: &PackageNv) {}
 }
 
 /// Resolve a media type and optionally the charset from a module specifier and
