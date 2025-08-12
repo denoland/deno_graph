@@ -786,6 +786,9 @@ pub trait Reporter: fmt::Debug + Send + Sync {
   }
 
   #[allow(unused_variables)]
+  /// A handler that is called after each resolution of a package requirement.
+  /// It contains the package requirement and the package name and version that
+  /// was resolved.
   fn on_resolve(&self, req: &PackageReq, package_nv: &PackageNv) {}
 }
 
