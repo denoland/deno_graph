@@ -4806,6 +4806,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       name: package_req.name.clone(),
       version,
     };
+    if let Some(reporter) = &self.reporter {
+      reporter.on_resolve(package_req, &package_nv);
+    }
     self
       .graph
       .packages
