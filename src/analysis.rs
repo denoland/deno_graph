@@ -110,6 +110,7 @@ pub enum StaticDependencyKind {
   Export,
   ExportType,
   ExportEquals,
+  MaybeTsModuleAugmentation,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
