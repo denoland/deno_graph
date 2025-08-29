@@ -10,6 +10,9 @@ molikodev/twitchts/0.1.6
 -- stdout --
 
 -- stderr --
+TS2307 [ERROR]: Cannot find module 'file://<tmpdir>/src/util/session'.
+    at file://<tmpdir>/src/helix/EventSub/EventSub.ts:1:30
+
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventEmitter<DefaultEventMap>'.
   on(event: 'ChannelBan', listener: (event: {
   ~~
@@ -275,7 +278,7 @@ TS2580 [ERROR]: Cannot find name 'Buffer'.
                                                           ~~~~~~
     at file://<tmpdir>/src/irc/IrcBase.ts:26:59
 
-Found 53 errors.
+Found 54 errors.
 
 error: Type checking failed.
 
