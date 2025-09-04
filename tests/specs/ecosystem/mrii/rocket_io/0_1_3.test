@@ -77,10 +77,10 @@ error: Error: [ERR_PACKAGE_PATH_NOT_EXPORTED] Package subpath './build/esm/socke
     at ext:deno_cli_tsc/97_ts_host.js:788:49
     at spanned (ext:deno_cli_tsc/97_ts_host.js:16:12)
     at Object.host.<computed> [as resolveModuleNameLiterals] (ext:deno_cli_tsc/97_ts_host.js:788:14)
-    at resolveModuleNamesWorker (ext:deno_cli_tsc/00_typescript.js:126625:20)
-    at resolveNamesReusingOldState (ext:deno_cli_tsc/00_typescript.js:126770:14)
-    at resolveModuleNamesReusingOldState (ext:deno_cli_tsc/00_typescript.js:126726:12)
-    at processImportedModules (ext:deno_cli_tsc/00_typescript.js:128224:118)
-    at findSourceFileWorker (ext:deno_cli_tsc/00_typescript.js:127989:7)
-    at findSourceFile (ext:deno_cli_tsc/00_typescript.js:127840:20)
+    at resolveModuleNamesWorker (ext:deno_cli_tsc/00_typescript.js:127650:20)
+    at resolveNamesReusingOldState (ext:deno_cli_tsc/00_typescript.js:127786:14)
+    at resolveModuleNamesReusingOldState (ext:deno_cli_tsc/00_typescript.js:127742:12)
+    at processImportedModules (ext:deno_cli_tsc/00_typescript.js:129196:118)
+    at findSourceFileWorker (ext:deno_cli_tsc/00_typescript.js:129003:7)
+    at findSourceFile (ext:deno_cli_tsc/00_typescript.js:128855:20)
 
