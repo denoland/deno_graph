@@ -72,7 +72,7 @@ impl<'a> RootSymbol<'a> {
   pub fn module_from_specifier(
     &self,
     specifier: &ModuleSpecifier,
-  ) -> Option<ModuleInfoRef> {
+  ) -> Option<ModuleInfoRef<'_>> {
     if let Some(module_id) = self.specifiers_to_ids.get(specifier) {
       let module_symbol = self.ids_to_modules.get(&module_id).unwrap();
       return Some(module_symbol.as_ref());
@@ -105,7 +105,10 @@ impl<'a> RootSymbol<'a> {
     }
   }
 
-  pub fn module_from_id(&self, module_id: ModuleId) -> Option<ModuleInfoRef> {
+  pub fn module_from_id(
+    &self,
+    module_id: ModuleId,
+  ) -> Option<ModuleInfoRef<'_>> {
     self.ids_to_modules.get(&module_id).map(|s| s.as_ref())
   }
 
@@ -164,14 +167,14 @@ impl<'a> RootSymbol<'a> {
   fn analyze_js_module(
     &self,
     script_module: &JsModule,
-  ) -> Option<ModuleInfoRef> {
+  ) -> Option<ModuleInfoRef<'_>> {
     let Ok(source) = self.parsed_source(script_module) else {
       return None;
     };
     Some(self.build_raw_es_module_info(&script_module.specifier, &source))
   }
 
-  fn analyze_json_module(&self, json_module: &JsonModule) -> ModuleInfoRef {
+  fn analyze_json_module(&self, json_module: &JsonModule) -> ModuleInfoRef<'_> {
     let specifier = &json_module.specifier;
     // it's not ideal having to use SourceTextInfo here, but it makes
     // it easier to interop with ParsedSource
@@ -222,7 +225,7 @@ impl<'a> RootSymbol<'a> {
   fn analyze_wasm_module(
     &self,
     wasm_module: &WasmModule,
-  ) -> Option<ModuleInfoRef> {
+  ) -> Option<ModuleInfoRef<'_>> {
     let maybe_parsed_source = self.parser.parse_program(ParseOptions {
       specifier: &wasm_module.specifier,
       source: wasm_module.source_dts.clone(),
@@ -239,7 +242,7 @@ impl<'a> RootSymbol<'a> {
     &self,
     specifier: &ModuleSpecifier,
     source: &ParsedSource,
-  ) -> ModuleInfoRef {
+  ) -> ModuleInfoRef<'_> {
     let program = source.program();
 
     let module_id = ModuleId(self.ids_to_modules.len() as u32);
@@ -265,7 +268,7 @@ impl<'a> RootSymbol<'a> {
     self.finalize_insert(ModuleInfo::Esm(module_symbol))
   }
 
-  fn finalize_insert(&self, module: ModuleInfo) -> ModuleInfoRef {
+  fn finalize_insert(&self, module: ModuleInfo) -> ModuleInfoRef<'_> {
     self
       .specifiers_to_ids
       .insert(module.specifier().clone(), module.module_id());
@@ -460,15 +463,17 @@ impl std::fmt::Debug for SymbolNode {
 }
 
 impl SymbolNode {
-  pub fn maybe_name(&self) -> Option<Cow<str>> {
+  pub fn maybe_name(&self) -> Option<Cow<'_, str>> {
     self.maybe_ref().and_then(|r| r.maybe_name())
   }
 
-  pub fn maybe_ref(&self) -> Option<SymbolNodeRef> {
+  pub fn maybe_ref(&self) -> Option<SymbolNodeRef<'_>> {
     self.maybe_ref_and_source().map(|(n, _)| n)
   }
 
-  pub fn maybe_ref_and_source(&self) -> Option<(SymbolNodeRef, &ParsedSource)> {
+  pub fn maybe_ref_and_source(
+    &self,
+  ) -> Option<(SymbolNodeRef<'_>, &ParsedSource)> {
     match &self.0 {
       SymbolNodeInner::Json => None,
       SymbolNodeInner::Module(n) => {
@@ -670,14 +675,14 @@ impl<'a> SymbolNodeRef<'a> {
       }
     }
 
-    fn maybe_key_name(key: &Key) -> Option<Cow<str>> {
+    fn maybe_key_name(key: &Key) -> Option<Cow<'_, str>> {
       match key {
         Key::Private(n) => Some(Cow::Owned(format!("#{}", n.name))),
         Key::Public(n) => maybe_prop_name(n),
       }
     }
 
-    fn maybe_prop_name(prop_name: &PropName) -> Option<Cow<str>> {
+    fn maybe_prop_name(prop_name: &PropName) -> Option<Cow<'_, str>> {
       match prop_name {
         PropName::Ident(n) => Some(Cow::Borrowed(&n.sym)),
         PropName::Str(n) => Some(Cow::Borrowed(&n.value)),
@@ -687,7 +692,7 @@ impl<'a> SymbolNodeRef<'a> {
       }
     }
 
-    fn maybe_param_prop_name(param: &TsParamPropParam) -> Option<Cow<str>> {
+    fn maybe_param_prop_name(param: &TsParamPropParam) -> Option<Cow<'_, str>> {
       match param {
         TsParamPropParam::Ident(ident) => Some(Cow::Borrowed(&ident.sym)),
         TsParamPropParam::Assign(assign_pat) => match &*assign_pat.left {
@@ -702,7 +707,7 @@ impl<'a> SymbolNodeRef<'a> {
       }
     }
 
-    fn maybe_expr(expr: &Expr) -> Option<Cow<str>> {
+    fn maybe_expr(expr: &Expr) -> Option<Cow<'_, str>> {
       match expr {
         Expr::Ident(n) => Some(Cow::Borrowed(&n.sym)),
         Expr::Lit(n) => match n {
@@ -1112,7 +1117,7 @@ impl SymbolDeclKind {
 
   pub fn maybe_node_and_source(
     &self,
-  ) -> Option<(SymbolNodeRef, &ParsedSource)> {
+  ) -> Option<(SymbolNodeRef<'_>, &ParsedSource)> {
     match self {
       SymbolDeclKind::Definition(node) => node.maybe_ref_and_source(),
       _ => None,
@@ -1162,18 +1167,18 @@ impl SymbolDecl {
     self.maybe_node_and_source().map(|n| n.1)
   }
 
-  pub fn maybe_node(&self) -> Option<SymbolNodeRef> {
+  pub fn maybe_node(&self) -> Option<SymbolNodeRef<'_>> {
     self.maybe_node_and_source().map(|n| n.0)
   }
 
   pub fn maybe_node_and_source(
     &self,
-  ) -> Option<(SymbolNodeRef, &ParsedSource)> {
+  ) -> Option<(SymbolNodeRef<'_>, &ParsedSource)> {
     self.kind.maybe_node_and_source()
   }
 
   /// The local name of the decl, if it has a name or node.
-  pub fn maybe_name(&self) -> Option<Cow<str>> {
+  pub fn maybe_name(&self) -> Option<Cow<'_, str>> {
     self.maybe_node().and_then(|n| n.maybe_name())
   }
 
@@ -1273,7 +1278,7 @@ impl Symbol {
   }
 
   /// The local name of the symbol if it has one.
-  pub fn maybe_name(&self) -> Option<Cow<str>> {
+  pub fn maybe_name(&self) -> Option<Cow<'_, str>> {
     self.decls.first().and_then(|d| d.maybe_name())
   }
 
@@ -1516,6 +1521,7 @@ impl<'a> ModuleInfoRef<'a> {
 
 /// Holds information about the module like symbols and re-exports.
 #[derive(Debug, Clone)]
+#[allow(clippy::large_enum_variant)] // ok because EsModuleInfo is way more common
 pub enum ModuleInfo {
   Json(Box<JsonModuleInfo>),
   Esm(EsModuleInfo),
@@ -1536,7 +1542,7 @@ impl ModuleInfo {
     }
   }
 
-  pub fn as_ref(&self) -> ModuleInfoRef {
+  pub fn as_ref(&self) -> ModuleInfoRef<'_> {
     match self {
       ModuleInfo::Json(m) => (**m).as_ref(),
       ModuleInfo::Esm(m) => m.as_ref(),
@@ -1583,7 +1589,7 @@ impl std::fmt::Debug for JsonModuleInfo {
 }
 
 impl JsonModuleInfo {
-  pub fn as_ref(&self) -> ModuleInfoRef {
+  pub fn as_ref(&self) -> ModuleInfoRef<'_> {
     ModuleInfoRef::Json(self)
   }
 
@@ -1644,7 +1650,7 @@ impl std::fmt::Debug for EsModuleInfo {
 }
 
 impl EsModuleInfo {
-  pub fn as_ref(&self) -> ModuleInfoRef {
+  pub fn as_ref(&self) -> ModuleInfoRef<'_> {
     ModuleInfoRef::Esm(self)
   }
 

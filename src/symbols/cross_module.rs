@@ -755,7 +755,7 @@ pub struct ResolvedReExportAllPath<'a> {
 }
 
 impl ResolvedReExportAllPath<'_> {
-  pub fn resolved_module(&self) -> ModuleInfoRef {
+  pub fn resolved_module(&self) -> ModuleInfoRef<'_> {
     match &*self.next {
       ResolvedExportOrReExportAllPath::Export(e) => e.module,
       ResolvedExportOrReExportAllPath::ReExportAllPath(e) => e.referrer_module,
