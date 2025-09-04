@@ -1341,7 +1341,7 @@ impl<'a> FastCheckTransformer<'a> {
           },
         )?;
       }
-      (ReturnStatementAnalysis::Single { .. }, _) => {
+      (ReturnStatementAnalysis::Single, _) => {
         // TODO: infer return type based on return type
         self.mark_diagnostic(
           FastCheckDiagnostic::MissingExplicitReturnType {

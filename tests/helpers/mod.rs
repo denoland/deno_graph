@@ -91,7 +91,7 @@ pub struct BuildResult {
 
 #[cfg(feature = "symbols")]
 impl BuildResult {
-  pub fn root_symbol(&self) -> deno_graph::symbols::RootSymbol {
+  pub fn root_symbol(&self) -> deno_graph::symbols::RootSymbol<'_> {
     self.graph.valid().unwrap(); // assert valid
     deno_graph::symbols::RootSymbol::new(&self.graph, &self.analyzer)
   }

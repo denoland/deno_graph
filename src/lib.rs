@@ -4022,7 +4022,7 @@ export function a(a: A): B {
 
     let example_a_url =
       ModuleSpecifier::parse("https://example.com/a.ts").unwrap();
-    let graph = graph.segment(&[example_a_url.clone()]);
+    let graph = graph.segment(std::slice::from_ref(&example_a_url));
     assert_eq!(graph.roots, IndexSet::from([example_a_url]));
     // should get the redirect
     assert_eq!(
