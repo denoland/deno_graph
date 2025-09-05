@@ -3662,15 +3662,17 @@ fn fill_module_dependencies(
   // Remove any import of kind `TsModuleAugmentation` which doesn't have a type
   // resolution. If it doesn't point at something to augment, it doesn't induce
   // a dependency.
-  module_dependencies.retain(|_, dep| {
-    if dep.get_type().is_some() {
-      return true;
-    }
-    dep
-      .imports
-      .retain(|i| i.kind != ImportKind::TsModuleAugmentation);
-    !dep.imports.is_empty()
-  });
+  if media_type.is_typed() {
+    module_dependencies.retain(|_, dep| {
+      if dep.get_type().is_some() {
+        return true;
+      }
+      dep
+        .imports
+        .retain(|i| i.kind != ImportKind::TsModuleAugmentation);
+      !dep.imports.is_empty()
+    });
+  }
 }
 
 fn analyze_dynamic_arg_template_parts(
