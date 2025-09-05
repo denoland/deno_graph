@@ -369,6 +369,32 @@ impl Visit for DependencyCollector<'_> {
       );
     }
   }
+
+  fn visit_ts_module_decl(&mut self, node: &ast::TsModuleDecl) {
+    if let Some(id_str) = node.id.as_str() {
+      let value_str = id_str.value.as_str();
+      if !value_str.contains('*')
+        || value_str.starts_with("./")
+        || value_str.starts_with("../")
+        || value_str.starts_with('/')
+      {
+        let leading_comments = self.get_leading_comments(node.start());
+        self.items.push(
+          StaticDependencyDescriptor {
+            kind: StaticDependencyKind::MaybeTsModuleAugmentation,
+            leading_comments,
+            range: id_str.range(),
+            specifier: id_str.value.clone(),
+            specifier_range: id_str.range(),
+            import_attributes: Default::default(),
+            is_side_effect: false,
+          }
+          .into(),
+        );
+      }
+    }
+    node.visit_children_with(self);
+  }
 }
 
 /// Parses import attributes into a hashmap. According to proposal the values
@@ -1100,6 +1126,68 @@ export declare const SomeValue: typeof Core & import("./a.d.ts").Constructor<{
         }
         .into()
       ]
+    );
+  }
+
+  #[test]
+  fn test_declare_module() {
+    let source = r#"
+      declare module "*.css" {}
+      declare module "./*.css" {} // not a wildcard
+      declare module "../*.css" {} // not a wildcard
+      declare module "/*.css" {} // not a wildcard
+      // @some-pragma
+      declare module "foo" {}
+    "#;
+    let (start_pos, dependencies) = helper("file:///test.ts", source);
+    assert_eq!(
+      dependencies,
+      vec![
+        StaticDependencyDescriptor {
+          kind: StaticDependencyKind::MaybeTsModuleAugmentation,
+          leading_comments: Vec::new(),
+          range: SourceRange::new(start_pos + 47, start_pos + 56),
+          specifier: Atom::from("./*.css"),
+          specifier_range: SourceRange::new(start_pos + 47, start_pos + 56),
+          import_attributes: Default::default(),
+          is_side_effect: false,
+        }
+        .into(),
+        StaticDependencyDescriptor {
+          kind: StaticDependencyKind::MaybeTsModuleAugmentation,
+          leading_comments: Vec::new(),
+          range: SourceRange::new(start_pos + 99, start_pos + 109),
+          specifier: Atom::from("../*.css"),
+          specifier_range: SourceRange::new(start_pos + 99, start_pos + 109),
+          import_attributes: Default::default(),
+          is_side_effect: false,
+        }
+        .into(),
+        StaticDependencyDescriptor {
+          kind: StaticDependencyKind::MaybeTsModuleAugmentation,
+          leading_comments: Vec::new(),
+          range: SourceRange::new(start_pos + 152, start_pos + 160),
+          specifier: Atom::from("/*.css"),
+          specifier_range: SourceRange::new(start_pos + 152, start_pos + 160),
+          import_attributes: Default::default(),
+          is_side_effect: false,
+        }
+        .into(),
+        StaticDependencyDescriptor {
+          kind: StaticDependencyKind::MaybeTsModuleAugmentation,
+          leading_comments: vec![DependencyComment {
+            kind: CommentKind::Line,
+            text: r#" @some-pragma"#.into(),
+            range: SourceRange::new(start_pos + 188, start_pos + 203),
+          },],
+          range: SourceRange::new(start_pos + 225, start_pos + 230),
+          specifier: Atom::from("foo"),
+          specifier_range: SourceRange::new(start_pos + 225, start_pos + 230),
+          import_attributes: Default::default(),
+          is_side_effect: false,
+        }
+        .into(),
+      ],
     );
   }
 }

@@ -881,6 +881,8 @@ pub enum ImportKind {
   Require,
   /// `import type`/`export type`
   TsType,
+  /// `declare module "@tanstack/react-router" {}`
+  TsModuleAugmentation,
   /// `/// <reference path="..." />`
   TsReferencePath,
   /// `/// <reference types="..." />`
@@ -898,6 +900,7 @@ impl ImportKind {
         true
       }
       ImportKind::TsType
+      | ImportKind::TsModuleAugmentation
       | ImportKind::TsReferencePath
       | ImportKind::TsReferenceTypes
       | ImportKind::JsDoc => false,
@@ -3442,6 +3445,28 @@ fn fill_module_dependencies(
 ) {
   for desc in dependencies {
     let (imports, types_specifier) = match desc {
+      DependencyDescriptor::Static(desc)
+        if desc.kind == StaticDependencyKind::MaybeTsModuleAugmentation =>
+      {
+        if !graph_kind.include_types() {
+          continue;
+        }
+        (
+          vec![Import {
+            specifier: desc.specifier,
+            kind: ImportKind::TsModuleAugmentation,
+            specifier_range: Range {
+              specifier: module_specifier.clone(),
+              range: desc.specifier_range,
+              resolution_mode: Some(ResolutionMode::Import),
+            },
+            is_dynamic: false,
+            attributes: desc.import_attributes,
+            is_side_effect: desc.is_side_effect,
+          }],
+          desc.types_specifier,
+        )
+      }
       DependencyDescriptor::Static(desc) => {
         let is_import_or_export_type = matches!(
           desc.kind,
@@ -3478,6 +3503,7 @@ fn fill_module_dependencies(
             | StaticDependencyKind::ExportEquals => {
               Some(ResolutionMode::Require)
             }
+            StaticDependencyKind::MaybeTsModuleAugmentation => unreachable!(),
           },
         };
         (
@@ -3579,7 +3605,10 @@ fn fill_module_dependencies(
           );
         }
       }
-      if import.kind == ImportKind::TsType {
+      if matches!(
+        import.kind,
+        ImportKind::TsType | ImportKind::TsModuleAugmentation
+      ) {
         if dep.maybe_type.is_none() {
           dep.maybe_type = resolve(
             &import.specifier,
@@ -3629,6 +3658,20 @@ fn fill_module_dependencies(
       }
       dep.imports.push(import);
     }
+  }
+  // Remove any import of kind `TsModuleAugmentation` which doesn't have a type
+  // resolution. If it doesn't point at something to augment, it doesn't induce
+  // a dependency.
+  if media_type.is_typed() {
+    module_dependencies.retain(|_, dep| {
+      if dep.get_type().is_some() {
+        return true;
+      }
+      dep
+        .imports
+        .retain(|i| i.kind != ImportKind::TsModuleAugmentation);
+      !dep.imports.is_empty()
+    });
   }
 }
 
@@ -6987,7 +7030,6 @@ mod tests {
       )
       .await;
     let specifiers = graph.specifiers().collect::<HashMap<_, _>>();
-    dbg!(&specifiers);
     assert_eq!(specifiers.len(), 4);
     assert!(specifiers
       .get(&Url::parse("file:///foo.js").unwrap())
@@ -7502,6 +7544,80 @@ mod tests {
     assert_eq!(
       dependency.maybe_type.maybe_specifier().unwrap().as_str(),
       "file:///bar.d.ts",
+    );
+  }
+
+  #[tokio::test]
+  async fn dependency_declare_module() {
+    #[derive(Debug)]
+    struct TestLoader;
+    impl Loader for TestLoader {
+      fn load(
+        &self,
+        specifier: &ModuleSpecifier,
+        _options: LoadOptions,
+      ) -> LoadFuture {
+        let specifier = specifier.clone();
+        match specifier.as_str() {
+          "file:///main.ts" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              mtime: None,
+              content: b"
+                declare module 'foo' {}
+              "
+              .to_vec()
+              .into(),
+            }))
+          }),
+          "file:///foo.d.ts" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              mtime: None,
+              content: vec![].into(),
+            }))
+          }),
+          s => unreachable!("{s}"),
+        }
+      }
+    }
+    impl Resolver for TestLoader {
+      fn resolve(
+        &self,
+        specifier_text: &str,
+        _referrer_range: &Range,
+        kind: ResolutionKind,
+      ) -> Result<ModuleSpecifier, ResolveError> {
+        match (specifier_text, kind) {
+          ("foo", ResolutionKind::Types) => {
+            Ok(ModuleSpecifier::parse("file:///foo.d.ts").unwrap())
+          }
+          e => unreachable!("{e:?}"),
+        }
+      }
+    }
+    let mut graph = ModuleGraph::new(GraphKind::TypesOnly);
+    graph
+      .build(
+        vec![Url::parse("file:///main.ts").unwrap()],
+        Vec::new(),
+        &TestLoader,
+        BuildOptions {
+          resolver: Some(&TestLoader),
+          ..Default::default()
+        },
+      )
+      .await;
+    graph.valid().unwrap();
+    let module = graph.get(&Url::parse("file:///main.ts").unwrap()).unwrap();
+    let module = module.js().unwrap();
+    let dependency = module.dependencies.get("foo").unwrap();
+    assert_eq!(dependency.maybe_code, Resolution::None);
+    assert_eq!(
+      dependency.maybe_type.maybe_specifier().unwrap().as_str(),
+      "file:///foo.d.ts",
     );
   }
 
