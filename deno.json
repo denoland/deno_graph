@@ -13,7 +13,9 @@
     "./js"
   ],
   "imports": {
-    "@std/assert": "jsr:@std/assert@^0.218.2",
-    "@std/path": "jsr:@std/path@^0.218.2"
+    "@std/assert": "jsr:@std/assert@1",
+    "@std/async": "jsr:@std/async@^1.0.14",
+    "@std/fmt": "jsr:@std/fmt@^1.0.8",
+    "@std/path": "jsr:@std/path@1"
   }
 }

@@ -402,7 +402,7 @@ pub fn is_comment_triple_slash_reference(comment_text: &str) -> bool {
 }
 
 /// Matches a path reference, which adds a dependency to a module
-pub fn find_path_reference(text: &str) -> Option<regex::Match> {
+pub fn find_path_reference(text: &str) -> Option<regex::Match<'_>> {
   static PATH_REFERENCE_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r#"(?i)\spath\s*=\s*["']([^"']*)["']"#).unwrap());
   PATH_REFERENCE_RE
@@ -413,14 +413,14 @@ pub fn find_path_reference(text: &str) -> Option<regex::Match> {
 /// Matches a types reference, which for JavaScript files indicates the
 /// location of types to use when type checking a program that includes it as
 /// a dependency.
-pub fn find_types_reference(text: &str) -> Option<regex::Match> {
+pub fn find_types_reference(text: &str) -> Option<regex::Match<'_>> {
   static TYPES_REFERENCE_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r#"(?i)\stypes\s*=\s*["']([^"']*)["']"#).unwrap());
   TYPES_REFERENCE_RE.captures(text).and_then(|c| c.get(1))
 }
 
 /// Ex. `resolution-mode="require"` in `/// <reference types="pkg" resolution-mode="require" />`
-pub fn find_resolution_mode(text: &str) -> Option<regex::Match> {
+pub fn find_resolution_mode(text: &str) -> Option<regex::Match<'_>> {
   static RESOLUTION_MODE_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r#"(?i)\sresolution-mode\s*=\s*["']([^"']*)["']"#).unwrap()
   });
@@ -428,14 +428,14 @@ pub fn find_resolution_mode(text: &str) -> Option<regex::Match> {
 }
 
 /// Matches the `@jsxImportSource` pragma.
-pub fn find_jsx_import_source(text: &str) -> Option<regex::Match> {
+pub fn find_jsx_import_source(text: &str) -> Option<regex::Match<'_>> {
   static JSX_IMPORT_SOURCE_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?i)^[\s*]*@jsxImportSource\s+(\S+)").unwrap());
   JSX_IMPORT_SOURCE_RE.captures(text).and_then(|c| c.get(1))
 }
 
 /// Matches the `@jsxImportSourceTypes` pragma.
-pub fn find_jsx_import_source_types(text: &str) -> Option<regex::Match> {
+pub fn find_jsx_import_source_types(text: &str) -> Option<regex::Match<'_>> {
   static JSX_IMPORT_SOURCE_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"(?i)^[\s*]*@jsxImportSourceTypes\s+(\S+)").unwrap()
   });
@@ -445,7 +445,7 @@ pub fn find_jsx_import_source_types(text: &str) -> Option<regex::Match> {
 }
 
 /// Matches the `@ts-self-types` pragma.
-pub fn find_ts_self_types(text: &str) -> Option<regex::Match> {
+pub fn find_ts_self_types(text: &str) -> Option<regex::Match<'_>> {
   static TS_SELF_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r#"(?i)^\s*@ts-self-types\s*=\s*["']([^"']+)["']"#).unwrap()
   });
@@ -453,14 +453,14 @@ pub fn find_ts_self_types(text: &str) -> Option<regex::Match> {
 }
 
 /// Matches the `@ts-types` pragma.
-pub fn find_ts_types(text: &str) -> Option<regex::Match> {
+pub fn find_ts_types(text: &str) -> Option<regex::Match<'_>> {
   static TS_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r#"(?i)^\s*@ts-types\s*=\s*["']([^"']+)["']"#).unwrap()
   });
   TS_TYPES_RE.captures(text).and_then(|c| c.get(1))
 }
 
-pub fn find_deno_types(text: &str) -> Option<DenoTypesPragmaMatch> {
+pub fn find_deno_types(text: &str) -> Option<DenoTypesPragmaMatch<'_>> {
   /// Matches the `@deno-types` pragma.
   static DENO_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r#"(?i)^\s*@deno-types\s*=\s*(?:["']([^"']+)["']|(\S+))"#)

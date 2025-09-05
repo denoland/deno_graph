@@ -356,7 +356,7 @@ impl CapturingModuleAnalyzer {
     }
   }
 
-  pub fn as_capturing_parser(&self) -> CapturingEsParser {
+  pub fn as_capturing_parser(&self) -> CapturingEsParser<'_> {
     CapturingEsParser::new(Some(&*self.parser), &*self.store)
   }
 }
@@ -699,10 +699,10 @@ struct JsDocImport {
   resolution_mode: Option<TypeScriptTypesResolutionMode>,
 }
 
-fn parse_jsdoc_import_decl(input: &str) -> monch::ParseResult<JsDocImport> {
+fn parse_jsdoc_import_decl(input: &str) -> monch::ParseResult<'_, JsDocImport> {
   use monch::*;
 
-  fn skip_named_imports(input: &str) -> monch::ParseResult<()> {
+  fn skip_named_imports(input: &str) -> monch::ParseResult<'_, ()> {
     // { ... }
     let (input, _) = ch('{')(input)?;
     let (input, _) = monch::take_while(|c| c != '}')(input)?;
@@ -710,7 +710,7 @@ fn parse_jsdoc_import_decl(input: &str) -> monch::ParseResult<JsDocImport> {
     Ok((input, ()))
   }
 
-  fn skip_namespace_import(input: &str) -> monch::ParseResult<()> {
+  fn skip_namespace_import(input: &str) -> monch::ParseResult<'_, ()> {
     // * as ns
     let (input, _) = ch('*')(input)?;
     let (input, _) = skip_whitespace(input)?;
@@ -722,7 +722,7 @@ fn parse_jsdoc_import_decl(input: &str) -> monch::ParseResult<JsDocImport> {
 
   fn parse_attributes(
     input: &str,
-  ) -> ParseResult<Option<TypeScriptTypesResolutionMode>> {
+  ) -> ParseResult<'_, Option<TypeScriptTypesResolutionMode>> {
     let (input, _) = tag("with")(input)?;
     let (input, _) = skip_whitespace(input)?;
     let (input, maybe_resolution_mode) =
@@ -759,10 +759,12 @@ fn parse_jsdoc_import_decl(input: &str) -> monch::ParseResult<JsDocImport> {
 }
 
 /// Matches a JSDoc import type reference (`{import("./example.js")}`
-fn parse_jsdoc_dynamic_import(input: &str) -> monch::ParseResult<JsDocImport> {
+fn parse_jsdoc_dynamic_import(
+  input: &str,
+) -> monch::ParseResult<'_, JsDocImport> {
   fn parse_second_param_obj_with_leading_comma(
     input: &str,
-  ) -> monch::ParseResult<Option<TypeScriptTypesResolutionMode>> {
+  ) -> monch::ParseResult<'_, Option<TypeScriptTypesResolutionMode>> {
     let (input, _) = ch(',')(input)?;
     let (input, _) = skip_whitespace(input)?;
     let (input, _) = ch('{')(input)?;
@@ -824,7 +826,7 @@ fn parse_jsdoc_dynamic_import(input: &str) -> monch::ParseResult<JsDocImport> {
 
 fn parse_import_attribute_block_for_resolution_mode(
   input: &str,
-) -> monch::ParseResult<Option<TypeScriptTypesResolutionMode>> {
+) -> monch::ParseResult<'_, Option<TypeScriptTypesResolutionMode>> {
   use monch::*;
   map(parse_import_attribute_block, |attributes| {
     attributes
@@ -836,9 +838,9 @@ fn parse_import_attribute_block_for_resolution_mode(
 
 fn parse_import_attribute_block(
   input: &str,
-) -> monch::ParseResult<Vec<(&str, &str)>> {
+) -> monch::ParseResult<'_, Vec<(&str, &str)>> {
   use monch::*;
-  fn parse_attribute(input: &str) -> ParseResult<(&str, &str)> {
+  fn parse_attribute(input: &str) -> ParseResult<'_, (&str, &str)> {
     let (input, key) = or(parse_quote, parse_ident)(input)?;
     let (input, _) = skip_whitespace(input)?;
     let (input, _) = ch(':')(input)?;
@@ -859,7 +861,7 @@ fn parse_import_attribute_block(
   Ok((input, attributes))
 }
 
-fn parse_ident(input: &str) -> monch::ParseResult<&str> {
+fn parse_ident(input: &str) -> monch::ParseResult<'_, &str> {
   use monch::*;
   let start_input = input;
   let (input, c) = next_char(input)?;
@@ -872,7 +874,7 @@ fn parse_ident(input: &str) -> monch::ParseResult<&str> {
   Ok((input, &start_input[..start_input.len() - input.len()]))
 }
 
-fn parse_quote(input: &str) -> monch::ParseResult<&str> {
+fn parse_quote(input: &str) -> monch::ParseResult<'_, &str> {
   use monch::*;
   let (input, open_char) = or(ch('"'), ch('\''))(input)?;
   let (input, text) = take_while(|c| c != open_char)(input)?;

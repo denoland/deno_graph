@@ -45,7 +45,7 @@ pub fn analyze_return_stmts_in_function_body(
     ReturnStatementAnalysis::Void
   } else {
     let mut analysis = ReturnStatementAnalysis::None;
-    analyze_return_stmts_from_stmts(&body.stmts, &mut analysis);
+    _ = analyze_return_stmts_from_stmts(&body.stmts, &mut analysis);
     analysis
   }
 }
@@ -77,7 +77,7 @@ fn analyze_return_stmts_from_stmt(
         | (Some(_), ReturnStatementAnalysis::Void) => {
           *analysis = ReturnStatementAnalysis::Single;
         }
-        (_, ReturnStatementAnalysis::Single { .. }) => {
+        (_, ReturnStatementAnalysis::Single) => {
           *analysis = ReturnStatementAnalysis::Multiple;
           return ControlFlow::Break(());
         }

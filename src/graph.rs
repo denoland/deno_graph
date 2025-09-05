@@ -4767,7 +4767,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     &mut self,
     roots: Vec<ModuleSpecifier>,
     imports: Vec<ReferrerImports>,
-  ) -> LocalBoxFuture<()> {
+  ) -> LocalBoxFuture<'_, ()> {
     // if restarting is allowed, then the graph will have been empty at the start
     *self.graph = ModuleGraph::new(self.graph.graph_kind);
     self.state = PendingState::default();
