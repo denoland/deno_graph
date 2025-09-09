@@ -198,13 +198,15 @@ fireproof/encrypted-blockstore/0.17.6
 -- stdout --
 
 -- stderr --
-Warning The following packages contained npm lifecycle scripts (preinstall/install/postinstall) that were not executed:
-┠─ npm:es5-ext@0.10.64
-┃
-┠─ This may cause the packages to not work correctly.
-┠─ Lifecycle scripts are only supported when using a `node_modules` directory.
-┠─ Enable it in your deno config file:
-┖─ "nodeModulesDir": "auto"
+╭ Warning
+│
+│  Ignored build scripts for packages:
+│  npm:es5-ext@0.10.64
+│
+│  Lifecycle scripts are only supported when using a `node_modules` directory.
+│  Enable it in your deno config file:
+│  "nodeModulesDir": "auto"
+╰─
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
 export { EncryptedBlockstore, CompactionFetcher, BlockFetcher, CarTransaction, TransactionMeta } from "./transaction.ts";
                                                  ~~~~~~~~~~~~
