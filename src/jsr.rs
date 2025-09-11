@@ -1,5 +1,6 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -42,37 +43,51 @@ pub struct JsrMetadataStoreServices<'a> {
 #[derive(Debug, Default)]
 pub struct JsrMetadataStore {
   pending_package_info_loads:
-    HashMap<String, PendingResult<Arc<JsrPackageInfo>>>,
-  pending_package_version_info_loads:
+    RefCell<HashMap<String, PendingResult<Arc<JsrPackageInfo>>>>,
+  pending_package_version_info_loads: RefCell<
     HashMap<PackageNv, PendingResult<PendingJsrPackageVersionInfoLoadItem>>,
+  >,
 }
 
 impl JsrMetadataStore {
-  pub fn get_package_metadata(
+  pub(crate) fn get_package_metadata(
     &self,
     package_name: &str,
   ) -> Option<PendingResult<Arc<JsrPackageInfo>>> {
-    self.pending_package_info_loads.get(package_name).cloned()
+    self
+      .pending_package_info_loads
+      .borrow()
+      .get(package_name)
+      .cloned()
   }
 
-  pub fn remove_package_metadata(&mut self, package_name: &str) {
-    self.pending_package_info_loads.remove(package_name);
+  pub(crate) fn remove_package_metadata(&self, package_name: &str) {
+    self
+      .pending_package_info_loads
+      .borrow_mut()
+      .remove(package_name);
   }
 
-  pub fn get_package_version_metadata(
+  pub(crate) fn get_package_version_metadata(
     &self,
     nv: &PackageNv,
   ) -> Option<PendingResult<PendingJsrPackageVersionInfoLoadItem>> {
-    self.pending_package_version_info_loads.get(nv).cloned()
+    self
+      .pending_package_version_info_loads
+      .borrow()
+      .get(nv)
+      .cloned()
   }
 
-  pub fn queue_load_package_info(
-    &mut self,
+  pub(crate) fn queue_load_package_info(
+    &self,
     package_name: &str,
     cache_setting: CacheSetting,
     services: JsrMetadataStoreServices,
   ) {
-    if self.pending_package_info_loads.contains_key(package_name) {
+    let mut loads = self.pending_package_info_loads.borrow_mut();
+
+    if loads.contains_key(package_name) {
       return; // already queued
     }
 
@@ -100,22 +115,19 @@ impl JsrMetadataStore {
         || JsrLoadError::PackageNotFound(package_name)
       },
     );
-    self
-      .pending_package_info_loads
-      .insert(package_name.to_string(), fut);
+    loads.insert(package_name.to_string(), fut);
   }
 
-  pub fn queue_load_package_version_info(
-    &mut self,
+  pub(crate) fn queue_load_package_version_info(
+    &self,
     package_nv: &PackageNv,
     cache_setting: CacheSetting,
     maybe_locker: Option<&dyn Locker>,
     services: JsrMetadataStoreServices,
   ) {
-    if self
-      .pending_package_version_info_loads
-      .contains_key(package_nv)
-    {
+    let mut loads = self.pending_package_version_info_loads.borrow_mut();
+
+    if loads.contains_key(package_nv) {
       return; // already queued
     }
 
@@ -178,9 +190,7 @@ impl JsrMetadataStore {
         || JsrLoadError::PackageVersionNotFound(Box::new(package_nv))
       },
     );
-    self
-      .pending_package_version_info_loads
-      .insert(package_nv.clone(), fut);
+    loads.insert(package_nv.clone(), fut);
   }
 
   #[allow(clippy::too_many_arguments)]
