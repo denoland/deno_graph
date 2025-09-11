@@ -74,6 +74,7 @@ use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::fmt;
 use std::path::Path;
+use std::rc::Rc;
 use std::sync::Arc;
 use std::time::SystemTime;
 use sys_traits::FileType;
@@ -1585,6 +1586,7 @@ pub struct BuildOptions<'a> {
   pub npm_resolver: Option<&'a dyn NpmResolver>,
   pub reporter: Option<&'a dyn Reporter>,
   pub resolver: Option<&'a dyn Resolver>,
+  pub jsr_metadata_store: Option<Rc<JsrMetadataStore>>,
 }
 
 impl Default for BuildOptions<'_> {
@@ -1604,6 +1606,7 @@ impl Default for BuildOptions<'_> {
       npm_resolver: None,
       reporter: None,
       resolver: None,
+      jsr_metadata_store: None,
     }
   }
 }
@@ -4064,7 +4067,7 @@ struct PendingJsrState {
   pending_resolutions: VecDeque<PendingJsrReqResolutionItem>,
   pending_content_loads:
     FuturesUnordered<LocalBoxFuture<'static, PendingContentLoadItem>>,
-  metadata: JsrMetadataStore,
+  metadata: Rc<JsrMetadataStore>,
 }
 
 #[derive(Debug)]
@@ -4170,7 +4173,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       module_info_cacher: options.module_info_cacher,
       reporter: options.reporter,
       graph,
-      state: PendingState::default(),
+      state: PendingState {
+        jsr: PendingJsrState {
+          metadata: options
+            .jsr_metadata_store
+            .unwrap_or(Rc::new(JsrMetadataStore::default())),
+          ..Default::default()
+        },
+        ..Default::default()
+      },
       fill_pass_mode,
       executor: options.executor,
       resolved_roots: Default::default(),

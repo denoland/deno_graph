@@ -305,6 +305,7 @@ async fn test_version(
         jsr_url_provider: &PassthroughJsrUrlProvider,
         passthrough_jsr_specifiers: true,
         executor: Default::default(),
+        jsr_metadata_store: None,
       },
     )
     .await;

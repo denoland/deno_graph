@@ -72,6 +72,7 @@ pub use graph::WasmModule;
 #[cfg(feature = "fast_check")]
 pub use graph::WorkspaceFastCheckOption;
 pub use graph::WorkspaceMember;
+pub use jsr::JsrMetadataStore;
 pub use module_specifier::resolve_import;
 pub use module_specifier::ModuleSpecifier;
 pub use module_specifier::SpecifierError;
