@@ -327,6 +327,7 @@ pub async fn js_create_graph(
         module_info_cacher: Default::default(),
         reporter: None,
         executor: Default::default(),
+        jsr_metadata_store: None,
       },
     )
     .await;
