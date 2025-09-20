@@ -28,6 +28,8 @@ fn is_false(v: &bool) -> bool {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct JsrPackageInfoVersion {
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub created_at: Option<chrono::DateTime<chrono::Utc>>,
   #[serde(default, skip_serializing_if = "is_false")]
   pub yanked: bool,
 }
@@ -242,11 +244,14 @@ impl PackageSpecifiers {
 
 pub fn resolve_version<'a>(
   version_req: &VersionReq,
-  versions: impl Iterator<Item = &'a Version>,
+  minimum_dependency_age: Option<&chrono::DateTime<chrono::Utc>>,
+  versions: impl Iterator<Item = (&'a Version, Option<&'a JsrPackageInfoVersion>)>,
 ) -> Option<&'a Version> {
   let mut maybe_best_version: Option<&Version> = None;
-  for version in versions {
-    if version_req.matches(version) {
+  for (version, version_info) in versions {
+    if version_req.matches(version)
+      && matches_min_release_cutoff_date(version_info, minimum_dependency_age)
+    {
       let is_best_version = maybe_best_version
         .as_ref()
         .map(|best_version| (*best_version).cmp(version).is_lt())
@@ -257,4 +262,21 @@ pub fn resolve_version<'a>(
     }
   }
   maybe_best_version
+}
+
+fn matches_min_release_cutoff_date(
+  info: Option<&JsrPackageInfoVersion>,
+  minimum_release_cutoff_date: Option<&chrono::DateTime<chrono::Utc>>,
+) -> bool {
+  minimum_release_cutoff_date
+    .and_then(|cutoff| {
+      // assume versions not in the time hashmap are really old
+      info.as_ref().and_then(|info| {
+        info
+          .created_at
+          .as_ref()
+          .map(|package_age| package_age < cutoff)
+      })
+    })
+    .unwrap_or(true)
 }

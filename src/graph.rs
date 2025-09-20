@@ -1569,6 +1569,8 @@ pub struct BuildOptions<'a> {
   pub is_dynamic: bool,
   /// Skip loading statically analyzable dynamic dependencies.
   pub skip_dynamic_deps: bool,
+  /// Minimum age for a dependency to be installed.
+  pub minimum_dependency_age: Option<chrono::DateTime<chrono::Utc>>,
   /// Support unstable bytes imports.
   pub unstable_bytes_imports: bool,
   /// Support unstable text imports.
@@ -1600,6 +1602,7 @@ impl Default for BuildOptions<'_> {
       locker: None,
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
+      minimum_dependency_age: None,
       passthrough_jsr_specifiers: false,
       module_analyzer: Default::default(),
       module_info_cacher: Default::default(),
@@ -4135,9 +4138,10 @@ struct Builder<'a, 'graph> {
   loader: &'a dyn Loader,
   locker: Option<&'a mut dyn Locker>,
   resolver: Option<&'a dyn Resolver>,
-  npm_resolver: Option<&'a dyn NpmResolver>,
+  minimum_dependency_age: Option<chrono::DateTime<chrono::Utc>>,
   module_analyzer: &'a dyn ModuleAnalyzer,
   module_info_cacher: &'a dyn ModuleInfoCacher,
+  npm_resolver: Option<&'a dyn NpmResolver>,
   reporter: Option<&'a dyn Reporter>,
   graph: &'graph mut ModuleGraph,
   state: PendingState<'a>,
@@ -4168,6 +4172,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       loader,
       locker: options.locker,
       resolver: options.resolver,
+      minimum_dependency_age: options.minimum_dependency_age,
       npm_resolver: options.npm_resolver,
       module_analyzer: options.module_analyzer,
       module_info_cacher: options.module_info_cacher,
@@ -4802,7 +4807,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       {
         if let Some(version) = resolve_version(
           &package_req.version_req,
-          existing_versions.iter().map(|nv| &nv.version),
+          None,
+          existing_versions.iter().map(|nv| (&nv.version, None)),
         ) {
           let is_yanked = package_info
             .versions
@@ -4824,14 +4830,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let unyanked_versions =
         package_info.versions.iter().filter_map(|(v, i)| {
           if !i.yanked {
-            Some(v)
+            Some((v, Some(i)))
           } else {
             None
           }
         });
-      if let Some(version) =
-        resolve_version(&package_req.version_req, unyanked_versions)
-      {
+      if let Some(version) = resolve_version(
+        &package_req.version_req,
+        self.minimum_dependency_age.as_ref(),
+        unyanked_versions,
+      ) {
         return Some(version.clone());
       }
 
@@ -4839,14 +4847,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let yanked_versions =
         package_info.versions.iter().filter_map(|(v, i)| {
           if i.yanked {
-            Some(v)
+            Some((v, Some(i)))
           } else {
             None
           }
         });
-      if let Some(version) =
-        resolve_version(&package_req.version_req, yanked_versions)
-      {
+      if let Some(version) = resolve_version(
+        &package_req.version_req,
+        self.minimum_dependency_age.as_ref(),
+        yanked_versions,
+      ) {
         self.graph.packages.add_used_yanked_package(PackageNv {
           name: package_req.name.clone(),
           version: version.clone(),
