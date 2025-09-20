@@ -16,6 +16,7 @@ use crate::jsr::JsrMetadataStore;
 use crate::jsr::JsrMetadataStoreServices;
 use crate::jsr::PendingJsrPackageVersionInfoLoadItem;
 use crate::jsr::PendingResult;
+use crate::packages::ResolveVersionOptions;
 use crate::ReferrerImports;
 
 use crate::module_specifier::is_fs_root_specifier;
@@ -1567,10 +1568,10 @@ pub struct BuildFastCheckTypeGraphOptions<'a> {
 
 pub struct BuildOptions<'a> {
   pub is_dynamic: bool,
+  /// Minimum age for a dependency to be installed.
+  pub minimum_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
   /// Skip loading statically analyzable dynamic dependencies.
   pub skip_dynamic_deps: bool,
-  /// Minimum age for a dependency to be installed.
-  pub minimum_dependency_age: Option<chrono::DateTime<chrono::Utc>>,
   /// Support unstable bytes imports.
   pub unstable_bytes_imports: bool,
   /// Support unstable text imports.
@@ -1602,7 +1603,7 @@ impl Default for BuildOptions<'_> {
       locker: None,
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
-      minimum_dependency_age: None,
+      minimum_dependency_date: None,
       passthrough_jsr_specifiers: false,
       module_analyzer: Default::default(),
       module_info_cacher: Default::default(),
@@ -4138,7 +4139,7 @@ struct Builder<'a, 'graph> {
   loader: &'a dyn Loader,
   locker: Option<&'a mut dyn Locker>,
   resolver: Option<&'a dyn Resolver>,
-  minimum_dependency_age: Option<chrono::DateTime<chrono::Utc>>,
+  minimum_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
   module_analyzer: &'a dyn ModuleAnalyzer,
   module_info_cacher: &'a dyn ModuleInfoCacher,
   npm_resolver: Option<&'a dyn NpmResolver>,
@@ -4172,7 +4173,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       loader,
       locker: options.locker,
       resolver: options.resolver,
-      minimum_dependency_age: options.minimum_dependency_age,
+      minimum_dependency_date: options.minimum_dependency_date,
       npm_resolver: options.npm_resolver,
       module_analyzer: options.module_analyzer,
       module_info_cacher: options.module_info_cacher,
@@ -4806,8 +4807,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         self.graph.packages.versions_by_name(&package_req.name)
       {
         if let Some(version) = resolve_version(
-          &package_req.version_req,
-          None,
+          ResolveVersionOptions {
+            version_req: &package_req.version_req,
+            // don't use this here because it's
+            // resolving an existing version
+            minimum_dependency_date: None,
+          },
           existing_versions.iter().map(|nv| (&nv.version, None)),
         ) {
           let is_yanked = package_info
@@ -4836,8 +4841,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           }
         });
       if let Some(version) = resolve_version(
-        &package_req.version_req,
-        self.minimum_dependency_age.as_ref(),
+        ResolveVersionOptions {
+          version_req: &package_req.version_req,
+          minimum_dependency_date: self.minimum_dependency_date.as_ref(),
+        },
         unyanked_versions,
       ) {
         return Some(version.clone());
@@ -4853,8 +4860,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           }
         });
       if let Some(version) = resolve_version(
-        &package_req.version_req,
-        self.minimum_dependency_age.as_ref(),
+        ResolveVersionOptions {
+          version_req: &package_req.version_req,
+          minimum_dependency_date: self.minimum_dependency_date.as_ref(),
+        },
         yanked_versions,
       ) {
         self.graph.packages.add_used_yanked_package(PackageNv {

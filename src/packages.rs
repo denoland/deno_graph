@@ -242,15 +242,22 @@ impl PackageSpecifiers {
   }
 }
 
+pub struct ResolveVersionOptions<'a> {
+  pub version_req: &'a VersionReq,
+  pub minimum_dependency_date: Option<&'a chrono::DateTime<chrono::Utc>>,
+}
+
 pub fn resolve_version<'a>(
-  version_req: &VersionReq,
-  minimum_dependency_age: Option<&chrono::DateTime<chrono::Utc>>,
+  options: ResolveVersionOptions<'_>,
   versions: impl Iterator<Item = (&'a Version, Option<&'a JsrPackageInfoVersion>)>,
 ) -> Option<&'a Version> {
   let mut maybe_best_version: Option<&Version> = None;
   for (version, version_info) in versions {
-    if version_req.matches(version)
-      && matches_min_release_cutoff_date(version_info, minimum_dependency_age)
+    if options.version_req.matches(version)
+      && matches_min_release_cutoff_date(
+        version_info,
+        options.minimum_dependency_date,
+      )
     {
       let is_best_version = maybe_best_version
         .as_ref()
