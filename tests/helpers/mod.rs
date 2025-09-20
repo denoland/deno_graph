@@ -155,6 +155,7 @@ pub struct TestBuilder {
   entry_point_types: String,
   fast_check_cache: bool,
   lockfile_jsr_packages: BTreeMap<PackageReq, PackageNv>,
+  minimum_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
   resolver: Option<Box<dyn deno_graph::source::Resolver>>,
   skip_dynamic_deps: bool,
   workspace_members: Vec<WorkspaceMember>,
@@ -173,6 +174,7 @@ impl TestBuilder {
       entry_point_types: "file:///mod.ts".to_string(),
       fast_check_cache: false,
       lockfile_jsr_packages: Default::default(),
+      minimum_dependency_date: None,
       skip_dynamic_deps: false,
       resolver: None,
       workspace_members: Default::default(),
@@ -199,6 +201,15 @@ impl TestBuilder {
   #[allow(unused)]
   pub fn entry_point_types(&mut self, value: impl AsRef<str>) -> &mut Self {
     self.entry_point_types = value.as_ref().to_string();
+    self
+  }
+
+  #[allow(unused)]
+  pub fn minimum_dependency_date(
+    &mut self,
+    value: Option<chrono::DateTime<chrono::Utc>>,
+  ) -> &mut Self {
+    self.minimum_dependency_date = value;
     self
   }
 
@@ -321,6 +332,7 @@ impl TestBuilder {
           skip_dynamic_deps: self.skip_dynamic_deps,
           unstable_bytes_imports: self.unstable_bytes_imports,
           unstable_text_imports: self.unstable_text_imports,
+          minimum_dependency_date: self.minimum_dependency_date.clone(),
           ..Default::default()
         },
       )

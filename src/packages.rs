@@ -27,6 +27,7 @@ fn is_false(v: &bool) -> bool {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct JsrPackageInfoVersion {
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub created_at: Option<chrono::DateTime<chrono::Utc>>,
@@ -35,6 +36,7 @@ pub struct JsrPackageInfoVersion {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct JsrPackageVersionManifestEntry {
   pub checksum: String,
 }

@@ -94,6 +94,7 @@ fn run_graph_test(test: &CollectedTest) {
     if let Some(entrypoint) = &options.entrypoint {
       builder.entry_point(entrypoint);
     }
+    builder.minimum_dependency_date(options.minimum_dependency_date);
     builder.skip_dynamic_deps(options.skip_dynamic_deps);
     builder.unstable_bytes_imports(options.unstable_bytes_imports);
     builder.unstable_text_imports(options.unstable_text_imports);
@@ -325,6 +326,9 @@ pub struct SpecOptions {
   #[serde(default)]
   #[serde(skip_serializing_if = "Option::is_none")]
   pub entrypoint: Option<String>,
+  #[serde(default)]
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub minimum_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
   #[serde(default)]
   #[serde(skip_serializing_if = "Option::is_none")]
   pub remote_checksums: Option<HashMap<String, String>>,
