@@ -332,7 +332,7 @@ impl TestBuilder {
           skip_dynamic_deps: self.skip_dynamic_deps,
           unstable_bytes_imports: self.unstable_bytes_imports,
           unstable_text_imports: self.unstable_text_imports,
-          newest_dependency_date: self.newest_dependency_date.clone(),
+          newest_dependency_date: self.newest_dependency_date,
           ..Default::default()
         },
       )
