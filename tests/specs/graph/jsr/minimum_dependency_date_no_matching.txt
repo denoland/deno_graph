@@ -1,4 +1,4 @@
-~~ {"maximumDependencyDate":"2019-11-07T00:00:00Z"} ~~
+~~ {"newestDependencyDate":"2019-11-07T00:00:00Z"} ~~
 # https://jsr.io/@scope/a/meta.json
 {
   "versions": {

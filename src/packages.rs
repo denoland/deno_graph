@@ -246,7 +246,7 @@ impl PackageSpecifiers {
 
 pub struct ResolveVersionOptions<'a> {
   pub version_req: &'a VersionReq,
-  pub maximum_dependency_date: Option<&'a chrono::DateTime<chrono::Utc>>,
+  pub newest_dependency_date: Option<&'a chrono::DateTime<chrono::Utc>>,
 }
 
 pub enum ResolveVersionResult<'a> {
@@ -265,7 +265,7 @@ pub fn resolve_version<'a>(
       had_higher_date_version = true;
       if matches_min_release_cutoff_date(
         version_info,
-        options.maximum_dependency_date,
+        options.newest_dependency_date,
       ) {
         let is_best_version = maybe_best_version
           .as_ref()
