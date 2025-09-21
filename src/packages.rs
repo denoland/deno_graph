@@ -249,28 +249,40 @@ pub struct ResolveVersionOptions<'a> {
   pub minimum_dependency_date: Option<&'a chrono::DateTime<chrono::Utc>>,
 }
 
+pub enum ResolveVersionResult<'a> {
+  Some(&'a Version),
+  None { had_higher_date_version: bool },
+}
+
 pub fn resolve_version<'a>(
   options: ResolveVersionOptions<'_>,
   versions: impl Iterator<Item = (&'a Version, Option<&'a JsrPackageInfoVersion>)>,
-) -> Option<&'a Version> {
+) -> ResolveVersionResult<'a> {
   let mut maybe_best_version: Option<&Version> = None;
+  let mut had_higher_date_version = false;
   for (version, version_info) in versions {
-    if options.version_req.matches(version)
-      && matches_min_release_cutoff_date(
+    if options.version_req.matches(version) {
+      had_higher_date_version = true;
+      if matches_min_release_cutoff_date(
         version_info,
         options.minimum_dependency_date,
-      )
-    {
-      let is_best_version = maybe_best_version
-        .as_ref()
-        .map(|best_version| (*best_version).cmp(version).is_lt())
-        .unwrap_or(true);
-      if is_best_version {
-        maybe_best_version = Some(version);
+      ) {
+        let is_best_version = maybe_best_version
+          .as_ref()
+          .map(|best_version| (*best_version).cmp(version).is_lt())
+          .unwrap_or(true);
+        if is_best_version {
+          maybe_best_version = Some(version);
+        }
       }
     }
   }
-  maybe_best_version
+  match maybe_best_version {
+    Some(version) => ResolveVersionResult::Some(version),
+    None => ResolveVersionResult::None {
+      had_higher_date_version,
+    },
+  }
 }
 
 fn matches_min_release_cutoff_date(

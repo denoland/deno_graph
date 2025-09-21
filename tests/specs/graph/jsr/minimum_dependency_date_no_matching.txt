@@ -1,0 +1,54 @@
+~~ {"minimumDependencyDate":"2019-11-07T00:00:00Z"} ~~
+# https://jsr.io/@scope/a/meta.json
+{
+  "versions": {
+    "1.0.0": {
+      "createdAt": "2020-11-07T00:00:00.000Z"
+    },
+    "1.0.1": {
+      "createdAt": "2023-11-07T00:00:00.000Z"
+    }
+  }
+}
+
+# mod.ts
+import 'jsr:@scope/a';
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 23,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "specifier": "jsr:@scope/a",
+      "error": "Could not find version of '@scope/a' that matches specified version constraint '*'\n\nA newer matching version was found, but it was not used because it was newer than the specified minimum dependency date of 2019-11-07 00:00:00 UTC"
+    }
+  ],
+  "redirects": {}
+}

@@ -17,6 +17,7 @@ use crate::jsr::JsrMetadataStoreServices;
 use crate::jsr::PendingJsrPackageVersionInfoLoadItem;
 use crate::jsr::PendingResult;
 use crate::packages::ResolveVersionOptions;
+use crate::packages::ResolveVersionResult;
 use crate::ReferrerImports;
 
 use crate::module_specifier::is_fs_root_specifier;
@@ -294,8 +295,11 @@ pub enum JsrLoadError {
   #[error(transparent)]
   PackageFormat(JsrPackageFormatError),
   #[class("NotFound")]
-  #[error("Could not find version of '{}' that matches specified version constraint '{}'", .0.name, .0.version_req)]
-  PackageReqNotFound(PackageReq),
+  #[error("Could not find version of '{}' that matches specified version constraint '{}'{}", req.name, req.version_req, minimum_dependency_date.map(|v| format!("\n\nA newer matching version was found, but it was not used because it was newer than the specified minimum dependency date of {}", v)).unwrap_or_else(String::new))]
+  PackageReqNotFound {
+    req: PackageReq,
+    minimum_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
+  },
   #[class(generic)]
   #[error("Redirects in the JSR registry are not supported (redirected to '{}')", .0)]
   RedirectInPackage(ModuleSpecifier),
@@ -4408,7 +4412,12 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       match fut.await {
         Ok(info) => {
           let package_req = pending_resolution.package_ref.req();
-          match self.resolve_jsr_nv(&info, package_req) {
+          let mut had_higher_minimum_date_version = false;
+          match self.resolve_jsr_nv(
+            &info,
+            package_req,
+            &mut had_higher_minimum_date_version,
+          ) {
             Some(package_nv) => {
               // now queue a pending load for that version information
               self.queue_load_package_version_info(&package_nv);
@@ -4461,9 +4470,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     ModuleErrorKind::Load {
                       specifier: pending_resolution.specifier.clone(),
                       maybe_referrer: pending_resolution.maybe_range.clone(),
-                      err: JsrLoadError::PackageReqNotFound(
-                        package_req.clone(),
-                      )
+                      err: JsrLoadError::PackageReqNotFound {
+                        req: package_req.clone(),
+                        minimum_dependency_date:
+                          had_higher_minimum_date_version
+                            .then_some(self.minimum_dependency_date)
+                            .flatten(),
+                      }
                       .into(),
                     }
                     .into_box(),
@@ -4800,13 +4813,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     &mut self,
     package_info: &JsrPackageInfo,
     package_req: &PackageReq,
+    any_had_higher_minimum_date_version: &mut bool,
   ) -> Option<PackageNv> {
     let version = (|| {
       // 1. try to resolve with the list of existing versions
       if let Some(existing_versions) =
         self.graph.packages.versions_by_name(&package_req.name)
       {
-        if let Some(version) = resolve_version(
+        if let ResolveVersionResult::Some(version) = resolve_version(
           ResolveVersionOptions {
             version_req: &package_req.version_req,
             // don't use this here because it's
@@ -4840,14 +4854,21 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             None
           }
         });
-      if let Some(version) = resolve_version(
+      match resolve_version(
         ResolveVersionOptions {
           version_req: &package_req.version_req,
           minimum_dependency_date: self.minimum_dependency_date.as_ref(),
         },
         unyanked_versions,
       ) {
-        return Some(version.clone());
+        ResolveVersionResult::Some(version) => {
+          return Some(version.clone());
+        }
+        ResolveVersionResult::None {
+          had_higher_date_version,
+        } => {
+          *any_had_higher_minimum_date_version |= had_higher_date_version;
+        }
       }
 
       // 3. attempt to resolve with the the yanked versions
@@ -4859,18 +4880,25 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             None
           }
         });
-      if let Some(version) = resolve_version(
+      match resolve_version(
         ResolveVersionOptions {
           version_req: &package_req.version_req,
           minimum_dependency_date: self.minimum_dependency_date.as_ref(),
         },
         yanked_versions,
       ) {
-        self.graph.packages.add_used_yanked_package(PackageNv {
-          name: package_req.name.clone(),
-          version: version.clone(),
-        });
-        return Some(version.clone());
+        ResolveVersionResult::Some(version) => {
+          self.graph.packages.add_used_yanked_package(PackageNv {
+            name: package_req.name.clone(),
+            version: version.clone(),
+          });
+          return Some(version.clone());
+        }
+        ResolveVersionResult::None {
+          had_higher_date_version,
+        } => {
+          *any_had_higher_minimum_date_version |= had_higher_date_version;
+        }
       }
 
       None
