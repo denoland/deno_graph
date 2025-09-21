@@ -295,10 +295,10 @@ pub enum JsrLoadError {
   #[error(transparent)]
   PackageFormat(JsrPackageFormatError),
   #[class("NotFound")]
-  #[error("Could not find version of '{}' that matches specified version constraint '{}'{}", req.name, req.version_req, minimum_dependency_date.map(|v| format!("\n\nA newer matching version was found, but it was not used because it was newer than the specified minimum dependency date of {}", v)).unwrap_or_else(String::new))]
+  #[error("Could not find version of '{}' that matches specified version constraint '{}'{}", req.name, req.version_req, maximum_dependency_date.map(|v| format!("\n\nA newer matching version was found, but it was not used because it was newer than the specified minimum dependency date of {}", v)).unwrap_or_else(String::new))]
   PackageReqNotFound {
     req: PackageReq,
-    minimum_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
+    maximum_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
   },
   #[class(generic)]
   #[error("Redirects in the JSR registry are not supported (redirected to '{}')", .0)]
@@ -1573,7 +1573,7 @@ pub struct BuildFastCheckTypeGraphOptions<'a> {
 pub struct BuildOptions<'a> {
   pub is_dynamic: bool,
   /// Minimum age for a dependency to be installed.
-  pub minimum_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
+  pub maximum_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
   /// Skip loading statically analyzable dynamic dependencies.
   pub skip_dynamic_deps: bool,
   /// Support unstable bytes imports.
@@ -1607,7 +1607,7 @@ impl Default for BuildOptions<'_> {
       locker: None,
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
-      minimum_dependency_date: None,
+      maximum_dependency_date: None,
       passthrough_jsr_specifiers: false,
       module_analyzer: Default::default(),
       module_info_cacher: Default::default(),
@@ -4143,7 +4143,7 @@ struct Builder<'a, 'graph> {
   loader: &'a dyn Loader,
   locker: Option<&'a mut dyn Locker>,
   resolver: Option<&'a dyn Resolver>,
-  minimum_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
+  maximum_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
   module_analyzer: &'a dyn ModuleAnalyzer,
   module_info_cacher: &'a dyn ModuleInfoCacher,
   npm_resolver: Option<&'a dyn NpmResolver>,
@@ -4177,7 +4177,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       loader,
       locker: options.locker,
       resolver: options.resolver,
-      minimum_dependency_date: options.minimum_dependency_date,
+      maximum_dependency_date: options.maximum_dependency_date,
       npm_resolver: options.npm_resolver,
       module_analyzer: options.module_analyzer,
       module_info_cacher: options.module_info_cacher,
@@ -4472,9 +4472,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                       maybe_referrer: pending_resolution.maybe_range.clone(),
                       err: JsrLoadError::PackageReqNotFound {
                         req: package_req.clone(),
-                        minimum_dependency_date:
+                        maximum_dependency_date:
                           had_higher_minimum_date_version
-                            .then_some(self.minimum_dependency_date)
+                            .then_some(self.maximum_dependency_date)
                             .flatten(),
                       }
                       .into(),
@@ -4825,7 +4825,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             version_req: &package_req.version_req,
             // don't use this here because it's
             // resolving an existing version
-            minimum_dependency_date: None,
+            maximum_dependency_date: None,
           },
           existing_versions.iter().map(|nv| (&nv.version, None)),
         ) {
@@ -4857,7 +4857,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       match resolve_version(
         ResolveVersionOptions {
           version_req: &package_req.version_req,
-          minimum_dependency_date: self.minimum_dependency_date.as_ref(),
+          maximum_dependency_date: self.maximum_dependency_date.as_ref(),
         },
         unyanked_versions,
       ) {
@@ -4883,7 +4883,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       match resolve_version(
         ResolveVersionOptions {
           version_req: &package_req.version_req,
-          minimum_dependency_date: self.minimum_dependency_date.as_ref(),
+          maximum_dependency_date: self.maximum_dependency_date.as_ref(),
         },
         yanked_versions,
       ) {
