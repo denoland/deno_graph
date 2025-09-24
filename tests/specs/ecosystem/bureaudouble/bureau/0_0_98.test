@@ -1,15 +1,574 @@
 bureaudouble/bureau/0.0.98
 -- deno.lock --
-{}
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@bureaudouble-forks/aria-hidden@0.0.1": "0.0.1",
+    "jsr:@bureaudouble-forks/floating-ui-react-dom@0.0.2": "0.0.2",
+    "jsr:@bureaudouble-forks/react-remove-scroll-bar@0.0.3": "0.0.3",
+    "jsr:@bureaudouble-forks/react-remove-scroll@0.0.2": "0.0.2",
+    "jsr:@bureaudouble-forks/react-style-singleton@0.0.2": "0.0.2",
+    "jsr:@bureaudouble-forks/react-style-singleton@^0.0.2": "0.0.2",
+    "jsr:@bureaudouble-forks/use-callback-ref@0.0.2": "0.0.2",
+    "jsr:@bureaudouble-forks/use-isomorphic-layout-effect@0.0.2": "0.0.2",
+    "jsr:@bureaudouble-forks/use-sidecar@0.0.2": "0.0.2",
+    "jsr:@bureaudouble/class-variance-authority@0.0.2": "0.0.2",
+    "jsr:@bureaudouble/clsx@0.0.2": "0.0.2",
+    "jsr:@bureaudouble/islet@0.0.43": "0.0.43",
+    "jsr:@bureaudouble/outils@0.0.63": "0.0.63",
+    "jsr:@bureaudouble/sonner@^0.0.3": "0.0.3",
+    "jsr:@radix-ui-fork/primitive@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-alert-dialog@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-arrow@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-checkbox@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-collection@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-compose-refs@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-context@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-dialog@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-direction@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-dismissable-layer@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-dropdown-menu@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-focus-guards@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-focus-scope@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-id@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-menu@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-popper@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-portal@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-presence@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-primitive@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-roving-focus@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-slot@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-switch@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-tabs@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-use-callback-ref@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-use-controllable-state@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-use-escape-keydown@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-use-layout-effect@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-use-previous@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/react-use-size@0.0.8": "0.0.8",
+    "jsr:@radix-ui-fork/rect@0.0.8": "0.0.8",
+    "npm:@codemirror/lang-sql@6.5.5": "6.5.5",
+    "npm:@floating-ui/dom@1.6.3": "1.6.3",
+    "npm:@types/react-dom@^18.2.0": "18.3.7_@types+react@18.3.24",
+    "npm:@types/react@^18.2.0": "18.3.24",
+    "npm:@types/resize-observer-browser@0.1.11": "0.1.11",
+    "npm:amuchina@^1.0.12": "1.0.12",
+    "npm:kysely@0.27.2": "0.27.2",
+    "npm:react@^18.2.0": "18.3.1",
+    "npm:react@beta": "19.0.0-beta-26f2496093-20240514"
+  },
+  "jsr": {
+    "@bureaudouble-forks/aria-hidden@0.0.1": {
+      "integrity": "9f5900d6e362bc1000d1c2db284841140ab3633066a48b0949cd1c5270142908"
+    },
+    "@bureaudouble-forks/floating-ui-react-dom@0.0.2": {
+      "integrity": "479e0b1ee7938fffbb3e84cd3ec51982f4ea0234fc3a8baba47450999ef1229e",
+      "dependencies": [
+        "jsr:@bureaudouble-forks/use-isomorphic-layout-effect",
+        "npm:@floating-ui/dom",
+        "npm:@types/react",
+        "npm:@types/react-dom"
+      ]
+    },
+    "@bureaudouble-forks/react-remove-scroll@0.0.2": {
+      "integrity": "4e3dae0de3445091f68976072d2393d5e4e4be0356b7688870194be3c668eeaa",
+      "dependencies": [
+        "jsr:@bureaudouble-forks/react-remove-scroll-bar",
+        "jsr:@bureaudouble-forks/react-style-singleton@0.0.2",
+        "jsr:@bureaudouble-forks/use-callback-ref",
+        "jsr:@bureaudouble-forks/use-sidecar",
+        "npm:@types/react"
+      ]
+    },
+    "@bureaudouble-forks/react-remove-scroll-bar@0.0.3": {
+      "integrity": "2111f669ac506dd280102bd412f346980f98eefeb06670620ccb7858d1725a9f",
+      "dependencies": [
+        "jsr:@bureaudouble-forks/react-style-singleton@0.0.2",
+        "npm:@types/react"
+      ]
+    },
+    "@bureaudouble-forks/react-style-singleton@0.0.2": {
+      "integrity": "319aad655399b42c210c16cac9be25ccb73bf2156d7a227260d77a2083014d43",
+      "dependencies": [
+        "npm:@types/react"
+      ]
+    },
+    "@bureaudouble-forks/use-callback-ref@0.0.2": {
+      "integrity": "9725f1fb3640a4e276ccc5dd70826327c6cb4fd0075e1db375870703a0285d80",
+      "dependencies": [
+        "npm:@types/react",
+        "npm:react@^18.2.0"
+      ]
+    },
+    "@bureaudouble-forks/use-isomorphic-layout-effect@0.0.2": {
+      "integrity": "00f7f232d968145f014145860066ee0f5d3ab8bcfd22a1eec783f5d4b7eb903a",
+      "dependencies": [
+        "npm:@types/react"
+      ]
+    },
+    "@bureaudouble-forks/use-sidecar@0.0.2": {
+      "integrity": "47ed9f8c644cffe3838d4be057096054eda146d5dae6a1e9e04ab1a3f3baeab0",
+      "dependencies": [
+        "npm:@types/react",
+        "npm:react@^18.2.0"
+      ]
+    },
+    "@bureaudouble/class-variance-authority@0.0.2": {
+      "integrity": "5824df8818863fbe9442863773b3d1bbb05ab1fbeabc793e5255a328bdf9921d",
+      "dependencies": [
+        "jsr:@bureaudouble/clsx"
+      ]
+    },
+    "@bureaudouble/clsx@0.0.2": {
+      "integrity": "122d54f8458a69d03818ed8f1c97428ad43ef706bd2b2f37b76e865e0a7736e5"
+    },
+    "@bureaudouble/islet@0.0.43": {
+      "integrity": "826d17d096f7c8dc20e50f2af13d834754af86a3e3d2b678f892c9d9f943ce91"
+    },
+    "@bureaudouble/outils@0.0.63": {
+      "integrity": "4eb0002c1cf5b6b7ab9f62a82085ffe7d793cd36a5e40da41574e7db2d4735d8",
+      "dependencies": [
+        "npm:kysely"
+      ]
+    },
+    "@bureaudouble/sonner@0.0.3": {
+      "integrity": "c8abd4824209c6cc6c5966d92eda6d280517e3a48441817e61c7962e3c592ae8",
+      "dependencies": [
+        "jsr:@bureaudouble-forks/react-style-singleton@^0.0.2",
+        "npm:@types/react",
+        "npm:@types/react-dom",
+        "npm:amuchina"
+      ]
+    },
+    "@radix-ui-fork/primitive@0.0.8": {
+      "integrity": "e8d3c9f74236a4b7188d65fa7d798ba9f2d987467873a704773b1fad08746d52"
+    },
+    "@radix-ui-fork/react-alert-dialog@0.0.8": {
+      "integrity": "2074833354fa291612fbd7add9df7d86cdf6d0673c91186d86bf3bed688d1960",
+      "dependencies": [
+        "jsr:@radix-ui-fork/primitive",
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "jsr:@radix-ui-fork/react-context",
+        "jsr:@radix-ui-fork/react-dialog",
+        "jsr:@radix-ui-fork/react-primitive",
+        "jsr:@radix-ui-fork/react-slot",
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-arrow@0.0.8": {
+      "integrity": "812fd21119df67690bb0b50be45f39e2fe3e36cd88c102fe4a99968b9327e370",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-primitive",
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-checkbox@0.0.8": {
+      "integrity": "7d3db6eac1acd9e71d97484ee3126900daafae684b382e4a8cfc37b1e545b68c",
+      "dependencies": [
+        "jsr:@radix-ui-fork/primitive",
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "jsr:@radix-ui-fork/react-context",
+        "jsr:@radix-ui-fork/react-presence",
+        "jsr:@radix-ui-fork/react-primitive",
+        "jsr:@radix-ui-fork/react-use-controllable-state",
+        "jsr:@radix-ui-fork/react-use-previous",
+        "jsr:@radix-ui-fork/react-use-size",
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-collection@0.0.8": {
+      "integrity": "d8686057c236a554af0062b095ea663f1cd3856a14ee91ddfeefa5a16346aa06",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "jsr:@radix-ui-fork/react-context",
+        "jsr:@radix-ui-fork/react-primitive",
+        "jsr:@radix-ui-fork/react-slot",
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-compose-refs@0.0.8": {
+      "integrity": "1383d4f2accaad3cdeaff3ee4f859b462eb26dce451973ee3fd168ad811da2c6",
+      "dependencies": [
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-context@0.0.8": {
+      "integrity": "d8c479e28d55e6aa5a4fdc40d805c4b146fc38e670ddd6aae58da8c7e33d6edc",
+      "dependencies": [
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-dialog@0.0.8": {
+      "integrity": "8d697b04190d26f5f3f97892d776580551badf8bb49c98b495dcfbc27d20a4ae",
+      "dependencies": [
+        "jsr:@bureaudouble-forks/aria-hidden",
+        "jsr:@bureaudouble-forks/react-remove-scroll",
+        "jsr:@radix-ui-fork/primitive",
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "jsr:@radix-ui-fork/react-context",
+        "jsr:@radix-ui-fork/react-dismissable-layer",
+        "jsr:@radix-ui-fork/react-focus-guards",
+        "jsr:@radix-ui-fork/react-focus-scope",
+        "jsr:@radix-ui-fork/react-id",
+        "jsr:@radix-ui-fork/react-portal",
+        "jsr:@radix-ui-fork/react-presence",
+        "jsr:@radix-ui-fork/react-primitive",
+        "jsr:@radix-ui-fork/react-slot",
+        "jsr:@radix-ui-fork/react-use-controllable-state",
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-direction@0.0.8": {
+      "integrity": "40aa646ca70d6331e282e7fa7c22fbd2f2178995b24a1af4c261ca1e9e4257d6",
+      "dependencies": [
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-dismissable-layer@0.0.8": {
+      "integrity": "dfb7798ff99899a29694efd23f4ff5b5577b44c5d808355c9a334743bc16919d",
+      "dependencies": [
+        "jsr:@radix-ui-fork/primitive",
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "jsr:@radix-ui-fork/react-primitive",
+        "jsr:@radix-ui-fork/react-use-callback-ref",
+        "jsr:@radix-ui-fork/react-use-escape-keydown",
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-dropdown-menu@0.0.8": {
+      "integrity": "6238bc779a1462ebba156360a9d310939de7bc188f6fc970698a3339e96fe348",
+      "dependencies": [
+        "jsr:@radix-ui-fork/primitive",
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "jsr:@radix-ui-fork/react-context",
+        "jsr:@radix-ui-fork/react-id",
+        "jsr:@radix-ui-fork/react-menu",
+        "jsr:@radix-ui-fork/react-primitive",
+        "jsr:@radix-ui-fork/react-use-controllable-state",
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-focus-guards@0.0.8": {
+      "integrity": "737d5d3f1b8c0b963bf85d33a62ab09b406a3acfa3f468f729c20378daf89f8b",
+      "dependencies": [
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-focus-scope@0.0.8": {
+      "integrity": "1b97674bab2d21db76181103ada3a0dbe1cab71090f98b03415b9377a9e3347a",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "jsr:@radix-ui-fork/react-primitive",
+        "jsr:@radix-ui-fork/react-use-callback-ref",
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-id@0.0.8": {
+      "integrity": "a1dce22ea575f2fe384115a722c7a12e6ce87c69513bbbcab1f8da6cbfbaf807",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-use-layout-effect",
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-menu@0.0.8": {
+      "integrity": "59fe16c483e3dc15742b2a8d1edeb1bf7206bf9cdc43e47eda8b5f34dc0ac4dd",
+      "dependencies": [
+        "jsr:@bureaudouble-forks/aria-hidden",
+        "jsr:@bureaudouble-forks/react-remove-scroll",
+        "jsr:@radix-ui-fork/primitive",
+        "jsr:@radix-ui-fork/react-collection",
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "jsr:@radix-ui-fork/react-context",
+        "jsr:@radix-ui-fork/react-direction",
+        "jsr:@radix-ui-fork/react-dismissable-layer",
+        "jsr:@radix-ui-fork/react-focus-guards",
+        "jsr:@radix-ui-fork/react-focus-scope",
+        "jsr:@radix-ui-fork/react-id",
+        "jsr:@radix-ui-fork/react-popper",
+        "jsr:@radix-ui-fork/react-portal",
+        "jsr:@radix-ui-fork/react-presence",
+        "jsr:@radix-ui-fork/react-primitive",
+        "jsr:@radix-ui-fork/react-roving-focus",
+        "jsr:@radix-ui-fork/react-slot",
+        "jsr:@radix-ui-fork/react-use-callback-ref",
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-popper@0.0.8": {
+      "integrity": "60988acf8261a5602e62156cc38965277a1f1554eec473586af148ad8e8bad9f",
+      "dependencies": [
+        "jsr:@bureaudouble-forks/floating-ui-react-dom",
+        "jsr:@radix-ui-fork/react-arrow",
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "jsr:@radix-ui-fork/react-context",
+        "jsr:@radix-ui-fork/react-primitive",
+        "jsr:@radix-ui-fork/react-use-callback-ref",
+        "jsr:@radix-ui-fork/react-use-layout-effect",
+        "jsr:@radix-ui-fork/react-use-size",
+        "jsr:@radix-ui-fork/rect",
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-portal@0.0.8": {
+      "integrity": "2dbfdc3e31aedd3a1a6ea080e8c708c06c7c4ce223c8c0def51bd0192041c52d",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-primitive",
+        "npm:@types/react",
+        "npm:@types/react-dom"
+      ]
+    },
+    "@radix-ui-fork/react-presence@0.0.8": {
+      "integrity": "0bf1cd10231626a6e411f46df7c44ad97a0323a8892a478407e15c30df2ace6d",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "jsr:@radix-ui-fork/react-use-layout-effect",
+        "npm:@types/react",
+        "npm:@types/react-dom"
+      ]
+    },
+    "@radix-ui-fork/react-primitive@0.0.8": {
+      "integrity": "5d31c430a946d8a9d12618abb14c99363908a81af336663e4bb487139d3e7ecb",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-slot",
+        "npm:@types/react",
+        "npm:@types/react-dom"
+      ]
+    },
+    "@radix-ui-fork/react-roving-focus@0.0.8": {
+      "integrity": "fba5d7feffcacff180315b07dd9ec4fd5f90b5324e0fb33bbbef1e74099171ca",
+      "dependencies": [
+        "jsr:@radix-ui-fork/primitive",
+        "jsr:@radix-ui-fork/react-collection",
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "jsr:@radix-ui-fork/react-context",
+        "jsr:@radix-ui-fork/react-direction",
+        "jsr:@radix-ui-fork/react-id",
+        "jsr:@radix-ui-fork/react-primitive",
+        "jsr:@radix-ui-fork/react-use-callback-ref",
+        "jsr:@radix-ui-fork/react-use-controllable-state",
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-slot@0.0.8": {
+      "integrity": "ab722b1cb0b4b2ed64402ada44def2352eb2b47ddd8af605f44c7768a4e48a78",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-switch@0.0.8": {
+      "integrity": "e6d60e396d8cb9f09122221c0856c131bbdd6ba8e7736f56526d77912ede285f",
+      "dependencies": [
+        "jsr:@radix-ui-fork/primitive",
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "jsr:@radix-ui-fork/react-context",
+        "jsr:@radix-ui-fork/react-primitive",
+        "jsr:@radix-ui-fork/react-use-controllable-state",
+        "jsr:@radix-ui-fork/react-use-previous",
+        "jsr:@radix-ui-fork/react-use-size",
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-tabs@0.0.8": {
+      "integrity": "0de433d9d8f35462ff7e6a145ba27e3ab6ae24d86de896555b4e46fd6256c1b5",
+      "dependencies": [
+        "jsr:@radix-ui-fork/primitive",
+        "jsr:@radix-ui-fork/react-context",
+        "jsr:@radix-ui-fork/react-direction",
+        "jsr:@radix-ui-fork/react-id",
+        "jsr:@radix-ui-fork/react-presence",
+        "jsr:@radix-ui-fork/react-primitive",
+        "jsr:@radix-ui-fork/react-roving-focus",
+        "jsr:@radix-ui-fork/react-use-controllable-state",
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-use-callback-ref@0.0.8": {
+      "integrity": "b0dd0413657c45e9bdc6eaed9408b95abac6f43870fcf17d57d8ad777606c23f",
+      "dependencies": [
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-use-controllable-state@0.0.8": {
+      "integrity": "40a3f4b72a0bf6e604f90f276c10133bbfe07e2a0e9b89f72c8d3041fb7b5dea",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-use-callback-ref",
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-use-escape-keydown@0.0.8": {
+      "integrity": "c7c9ba96c010063e11c45e27fac8ff07c3a0583184cf06518e0bc04e3daeb58d",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-use-callback-ref",
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-use-layout-effect@0.0.8": {
+      "integrity": "b62c889b0011bcb9719d9728afeef32995c4323916d88c7e7c65e15c24a0bb6c",
+      "dependencies": [
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-use-previous@0.0.8": {
+      "integrity": "1586dff40d2ea8b50a86932fee721e06e2999207041fed6112b46639a1bd4c90",
+      "dependencies": [
+        "npm:@types/react"
+      ]
+    },
+    "@radix-ui-fork/react-use-size@0.0.8": {
+      "integrity": "c2a3e608d9b96e808df683aacaa03947c8f0859f17cd442817446b7e1529ce07",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-use-layout-effect",
+        "npm:@types/react",
+        "npm:@types/resize-observer-browser"
+      ]
+    },
+    "@radix-ui-fork/rect@0.0.8": {
+      "integrity": "148ec7b66d397be333ac2e96a46bcd93ebe636698dae540fd3f1257b0ab89945"
+    }
+  },
+  "npm": {
+    "@codemirror/autocomplete@6.18.7": {
+      "integrity": "sha512-8EzdeIoWPJDsMBwz3zdzwXnUpCzMiCyz5/A3FIPpriaclFCGDkAzK13sMcnsu5rowqiyeQN2Vs2TsOcoDPZirQ==",
+      "dependencies": [
+        "@codemirror/language",
+        "@codemirror/state",
+        "@codemirror/view",
+        "@lezer/common"
+      ]
+    },
+    "@codemirror/lang-sql@6.5.5": {
+      "integrity": "sha512-DvOaP2RXLb2xlxJxxydTFfwyYw5YDqEFea6aAfgh9UH0kUD6J1KFZ0xPgPpw1eo/5s2w3L6uh5PVR7GM23GxkQ==",
+      "dependencies": [
+        "@codemirror/autocomplete",
+        "@codemirror/language",
+        "@codemirror/state",
+        "@lezer/common",
+        "@lezer/highlight",
+        "@lezer/lr"
+      ]
+    },
+    "@codemirror/language@6.11.3": {
+      "integrity": "sha512-9HBM2XnwDj7fnu0551HkGdrUrrqmYq/WC5iv6nbY2WdicXdGbhR/gfbZOH73Aqj4351alY1+aoG9rCNfiwS1RA==",
+      "dependencies": [
+        "@codemirror/state",
+        "@codemirror/view",
+        "@lezer/common",
+        "@lezer/highlight",
+        "@lezer/lr",
+        "style-mod"
+      ]
+    },
+    "@codemirror/state@6.5.2": {
+      "integrity": "sha512-FVqsPqtPWKVVL3dPSxy8wEF/ymIEuVzF1PK3VbUgrxXpJUSHQWWZz4JMToquRxnkw+36LTamCZG2iua2Ptq0fA==",
+      "dependencies": [
+        "@marijn/find-cluster-break"
+      ]
+    },
+    "@codemirror/view@6.38.3": {
+      "integrity": "sha512-x2t87+oqwB1mduiQZ6huIghjMt4uZKFEdj66IcXw7+a5iBEvv9lh7EWDRHI7crnD4BMGpnyq/RzmCGbiEZLcvQ==",
+      "dependencies": [
+        "@codemirror/state",
+        "crelt",
+        "style-mod",
+        "w3c-keyname"
+      ]
+    },
+    "@floating-ui/core@1.7.3": {
+      "integrity": "sha512-sGnvb5dmrJaKEZ+LDIpguvdX3bDlEllmv4/ClQ9awcmCZrlx5jQyyMWFM5kBI+EyNOCDDiKk8il0zeuX3Zlg/w==",
+      "dependencies": [
+        "@floating-ui/utils"
+      ]
+    },
+    "@floating-ui/dom@1.6.3": {
+      "integrity": "sha512-RnDthu3mzPlQ31Ss/BTwQ1zjzIhr3lk1gZB1OC56h/1vEtaXkESrOqL5fQVMfXpwGtRwX+YsZBdyHtJMQnkArw==",
+      "dependencies": [
+        "@floating-ui/core",
+        "@floating-ui/utils"
+      ]
+    },
+    "@floating-ui/utils@0.2.10": {
+      "integrity": "sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ=="
+    },
+    "@lezer/common@1.2.3": {
+      "integrity": "sha512-w7ojc8ejBqr2REPsWxJjrMFsA/ysDCFICn8zEOR9mrqzOu2amhITYuLD8ag6XZf0CFXDrhKqw7+tW8cX66NaDA=="
+    },
+    "@lezer/highlight@1.2.1": {
+      "integrity": "sha512-Z5duk4RN/3zuVO7Jq0pGLJ3qynpxUVsh7IbUbGj88+uV2ApSAn6kWg2au3iJb+0Zi7kKtqffIESgNcRXWZWmSA==",
+      "dependencies": [
+        "@lezer/common"
+      ]
+    },
+    "@lezer/lr@1.4.2": {
+      "integrity": "sha512-pu0K1jCIdnQ12aWNaAVU5bzi7Bd1w54J3ECgANPmYLtQKP0HBj2cE/5coBD66MT10xbtIuUr7tg0Shbsvk0mDA==",
+      "dependencies": [
+        "@lezer/common"
+      ]
+    },
+    "@marijn/find-cluster-break@1.0.2": {
+      "integrity": "sha512-l0h88YhZFyKdXIFNfSWpyjStDjGHwZ/U7iobcK1cQQD8sejsONdQtTVU+1wVN1PBw40PiiHB1vA5S7VTfQiP9g=="
+    },
+    "@types/prop-types@15.7.15": {
+      "integrity": "sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw=="
+    },
+    "@types/react-dom@18.3.7_@types+react@18.3.24": {
+      "integrity": "sha512-MEe3UeoENYVFXzoXEWsvcpg6ZvlrFNlOQ7EOsvhI3CfAXwzPfO8Qwuxd40nepsYKqyyVQnTdEfv68q91yLcKrQ==",
+      "dependencies": [
+        "@types/react"
+      ]
+    },
+    "@types/react@18.3.24": {
+      "integrity": "sha512-0dLEBsA1kI3OezMBF8nSsb7Nk19ZnsyE1LLhB8r27KbgU5H4pvuqZLdtE+aUkJVoXgTVuA+iLIwmZ0TuK4tx6A==",
+      "dependencies": [
+        "@types/prop-types",
+        "csstype"
+      ]
+    },
+    "@types/resize-observer-browser@0.1.11": {
+      "integrity": "sha512-cNw5iH8JkMkb3QkCoe7DaZiawbDQEUX8t7iuQaRTyLOyQCR2h+ibBD4GJt7p5yhUHrlOeL7ZtbxNHeipqNsBzQ=="
+    },
+    "amuchina@1.0.12": {
+      "integrity": "sha512-Itv2NEwpiV53+bkpviJIC12+8SOlCSLR1HgQCv6wD7ldNFNesm4JSk7XjvTFkeVfLYzqKEZcEBZO1X/V2MYg4A=="
+    },
+    "crelt@1.0.6": {
+      "integrity": "sha512-VQ2MBenTq1fWZUH9DJNGti7kKv6EeAuYr3cLwxUWhIu1baTaXh4Ib5W2CqHVqib4/MqbYGJqiL3Zb8GJZr3l4g=="
+    },
+    "csstype@3.1.3": {
+      "integrity": "sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw=="
+    },
+    "js-tokens@4.0.0": {
+      "integrity": "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ=="
+    },
+    "kysely@0.27.2": {
+      "integrity": "sha512-DmRvEfiR/NLpgsTbSxma2ldekhsdcd65+MNiKXyd/qj7w7X5e3cLkXxcj+MypsRDjPhHQ/CD5u3Eq1sBYzX0bw=="
+    },
+    "loose-envify@1.4.0": {
+      "integrity": "sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==",
+      "dependencies": [
+        "js-tokens"
+      ],
+      "bin": true
+    },
+    "react@18.3.1": {
+      "integrity": "sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==",
+      "dependencies": [
+        "loose-envify"
+      ]
+    },
+    "react@19.0.0-beta-26f2496093-20240514": {
+      "integrity": "sha512-ZsU/WjNZ6GfzMWsq2DcGjElpV9it8JmETHm9mAJuOJNhuJcWJxt8ltCJabONFRpDFq1A/DP0d0KFj9CTJVM4VA=="
+    },
+    "style-mod@4.1.2": {
+      "integrity": "sha512-wnD1HyVqpJUI2+eKZ+eo1UwghftP6yuFheBqqe+bWCotBjC2K1YnteJILRMs3SM4V/0dLEW1SC27MWP5y+mwmw=="
+    },
+    "w3c-keyname@2.2.8": {
+      "integrity": "sha512-dpojBhNsCNN7T82Tm7k26A6G9ML3NkhDsnw9n/eoxSRlVBB4CEtIQ/KTCLI2Fwf3ataSXRhYFkQi3SlnFwPvPQ=="
+    }
+  }
+}
 
 ===
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-error: Failed resolving types. Relative import path "@types/react" not prefixed with / or ./ or ../
-    at https://jsr.io/@bureaudouble/islet/0.0.43/src/react/use-client.ts:3:16
-
+== TYPE CHECK PASSED ==
