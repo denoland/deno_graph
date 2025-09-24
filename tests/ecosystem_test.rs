@@ -292,7 +292,6 @@ async fn test_version(
       &loader,
       BuildOptions {
         is_dynamic: false,
-        newest_dependency_date: None,
         skip_dynamic_deps: false,
         unstable_bytes_imports: false,
         unstable_text_imports: false,
@@ -303,6 +302,7 @@ async fn test_version(
         resolver: None,
         npm_resolver: None,
         reporter: None,
+        jsr_version_resolver: Default::default(),
         jsr_url_provider: &PassthroughJsrUrlProvider,
         passthrough_jsr_specifiers: true,
         executor: Default::default(),

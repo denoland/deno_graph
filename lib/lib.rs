@@ -310,7 +310,6 @@ pub async fn js_create_graph(
       &loader,
       BuildOptions {
         is_dynamic: false,
-        newest_dependency_date: None,
         skip_dynamic_deps: false,
         unstable_bytes_imports: true,
         unstable_text_imports: true,
@@ -320,6 +319,7 @@ pub async fn js_create_graph(
         // to have a way for users to provide their own file system
         // via the JS API.
         file_system: &NullFileSystem,
+        jsr_version_resolver: Default::default(),
         jsr_url_provider: Default::default(),
         npm_resolver: None,
         locker: None,

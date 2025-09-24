@@ -16,15 +16,13 @@ use crate::jsr::JsrMetadataStore;
 use crate::jsr::JsrMetadataStoreServices;
 use crate::jsr::PendingJsrPackageVersionInfoLoadItem;
 use crate::jsr::PendingResult;
-use crate::packages::ResolveVersionOptions;
-use crate::packages::ResolveVersionResult;
+use crate::packages::JsrVersionResolver;
 use crate::ReferrerImports;
 
 use crate::module_specifier::is_fs_root_specifier;
 use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
-use crate::packages::resolve_version;
 use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
 use crate::packages::PackageSpecifiers;
@@ -67,6 +65,7 @@ use serde::ser::SerializeTuple;
 use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
+use std::borrow::Cow;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
@@ -294,12 +293,9 @@ pub enum JsrLoadError {
   #[class(inherit)]
   #[error(transparent)]
   PackageFormat(JsrPackageFormatError),
-  #[class("NotFound")]
-  #[error("Could not find version of '{}' that matches specified version constraint '{}'{}", req.name, req.version_req, newest_dependency_date.map(|v| format!("\n\nA newer matching version was found, but it was not used because it was newer than the specified minimum dependency date of {}", v)).unwrap_or_else(String::new))]
-  PackageReqNotFound {
-    req: PackageReq,
-    newest_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
-  },
+  #[class(inherit)]
+  #[error(transparent)]
+  PackageReqNotFound(JsrPackageReqNotFoundError),
   #[class(generic)]
   #[error("Redirects in the JSR registry are not supported (redirected to '{}')", .0)]
   RedirectInPackage(ModuleSpecifier),
@@ -310,6 +306,14 @@ pub enum JsrLoadError {
     export_name: String,
     exports: Vec<String>,
   },
+}
+
+#[derive(Error, Debug, Clone, JsError)]
+#[class("NotFound")]
+#[error("Could not find version of '{}' that matches specified version constraint '{}'{}", req.name, req.version_req, newest_dependency_date.map(|v| format!("\n\nA newer matching version was found, but it was not used because it was newer than the specified minimum dependency date of {}", v)).unwrap_or_else(String::new))]
+pub struct JsrPackageReqNotFoundError {
+  pub req: PackageReq,
+  pub newest_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Error, Debug, Clone, JsError)]
@@ -1572,8 +1576,6 @@ pub struct BuildFastCheckTypeGraphOptions<'a> {
 
 pub struct BuildOptions<'a> {
   pub is_dynamic: bool,
-  /// Minimum age for a dependency to be installed.
-  pub newest_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
   /// Skip loading statically analyzable dynamic dependencies.
   pub skip_dynamic_deps: bool,
   /// Support unstable bytes imports.
@@ -1584,6 +1586,7 @@ pub struct BuildOptions<'a> {
   pub locker: Option<&'a mut dyn Locker>,
   pub file_system: &'a FileSystem,
   pub jsr_url_provider: &'a dyn JsrUrlProvider,
+  pub jsr_version_resolver: Cow<'a, JsrVersionResolver>,
   /// Whether to pass through JSR specifiers to the resolver instead of
   /// resolving them. This is useful in cases where you want to mark JSR
   /// specifiers as external.
@@ -1607,7 +1610,7 @@ impl Default for BuildOptions<'_> {
       locker: None,
       file_system: &NullFileSystem,
       jsr_url_provider: Default::default(),
-      newest_dependency_date: None,
+      jsr_version_resolver: Default::default(),
       passthrough_jsr_specifiers: false,
       module_analyzer: Default::default(),
       module_info_cacher: Default::default(),
@@ -4139,11 +4142,11 @@ struct Builder<'a, 'graph> {
   unstable_text_imports: bool,
   file_system: &'a FileSystem,
   jsr_url_provider: &'a dyn JsrUrlProvider,
+  jsr_version_resolver: Cow<'a, JsrVersionResolver>,
   passthrough_jsr_specifiers: bool,
   loader: &'a dyn Loader,
   locker: Option<&'a mut dyn Locker>,
   resolver: Option<&'a dyn Resolver>,
-  newest_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
   module_analyzer: &'a dyn ModuleAnalyzer,
   module_info_cacher: &'a dyn ModuleInfoCacher,
   npm_resolver: Option<&'a dyn NpmResolver>,
@@ -4173,11 +4176,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       unstable_text_imports: options.unstable_text_imports,
       file_system: options.file_system,
       jsr_url_provider: options.jsr_url_provider,
+      jsr_version_resolver: options.jsr_version_resolver,
       passthrough_jsr_specifiers: options.passthrough_jsr_specifiers,
       loader,
       locker: options.locker,
       resolver: options.resolver,
-      newest_dependency_date: options.newest_dependency_date,
       npm_resolver: options.npm_resolver,
       module_analyzer: options.module_analyzer,
       module_info_cacher: options.module_info_cacher,
@@ -4412,13 +4415,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       match fut.await {
         Ok(info) => {
           let package_req = pending_resolution.package_ref.req();
-          let mut had_higher_minimum_date_version = false;
-          match self.resolve_jsr_nv(
-            &info,
-            package_req,
-            &mut had_higher_minimum_date_version,
-          ) {
-            Some(package_nv) => {
+          match self.resolve_jsr_nv(package_req, &info) {
+            Ok(package_nv) => {
               // now queue a pending load for that version information
               self.queue_load_package_version_info(&package_nv);
               pending_version_resolutions.push(PendingJsrNvResolutionItem {
@@ -4437,7 +4435,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 is_root: pending_resolution.is_root,
               });
             }
-            None => {
+            Err(package_req_not_found_err) => {
               // Generally, prefer a full restart that cache busts if we can
               // because it will cause the meta files for users to be updated
               // more frequently. In cases like non-statically analyzable dynamic
@@ -4470,12 +4468,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     ModuleErrorKind::Load {
                       specifier: pending_resolution.specifier.clone(),
                       maybe_referrer: pending_resolution.maybe_range.clone(),
-                      err: JsrLoadError::PackageReqNotFound {
-                        req: package_req.clone(),
-                        newest_dependency_date: had_higher_minimum_date_version
-                          .then_some(self.newest_dependency_date)
-                          .flatten(),
-                      }
+                      err: JsrLoadError::PackageReqNotFound(
+                        package_req_not_found_err,
+                      )
                       .into(),
                     }
                     .into_box(),
@@ -4810,98 +4805,27 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
   fn resolve_jsr_nv(
     &mut self,
-    package_info: &JsrPackageInfo,
     package_req: &PackageReq,
-    any_had_higher_minimum_date_version: &mut bool,
-  ) -> Option<PackageNv> {
-    let version = (|| {
-      // 1. try to resolve with the list of existing versions
-      if let Some(existing_versions) =
-        self.graph.packages.versions_by_name(&package_req.name)
-      {
-        if let ResolveVersionResult::Some(version) = resolve_version(
-          ResolveVersionOptions {
-            version_req: &package_req.version_req,
-            // don't use this here because it's
-            // resolving an existing version
-            newest_dependency_date: None,
-          },
-          existing_versions.iter().map(|nv| (&nv.version, None)),
-        ) {
-          let is_yanked = package_info
-            .versions
-            .get(version)
-            .map(|i| i.yanked)
-            .unwrap_or(false);
-          let version = version.clone();
-          if is_yanked {
-            self.graph.packages.add_used_yanked_package(PackageNv {
-              name: package_req.name.clone(),
-              version: version.clone(),
-            });
-          }
-          return Some(version);
-        }
-      }
-
-      // 2. attempt to resolve with the unyanked versions
-      let unyanked_versions =
-        package_info.versions.iter().filter_map(|(v, i)| {
-          if !i.yanked {
-            Some((v, Some(i)))
-          } else {
-            None
-          }
-        });
-      match resolve_version(
-        ResolveVersionOptions {
-          version_req: &package_req.version_req,
-          newest_dependency_date: self.newest_dependency_date.as_ref(),
-        },
-        unyanked_versions,
-      ) {
-        ResolveVersionResult::Some(version) => {
-          return Some(version.clone());
-        }
-        ResolveVersionResult::None {
-          had_higher_date_version,
-        } => {
-          *any_had_higher_minimum_date_version |= had_higher_date_version;
-        }
-      }
-
-      // 3. attempt to resolve with the the yanked versions
-      let yanked_versions =
-        package_info.versions.iter().filter_map(|(v, i)| {
-          if i.yanked {
-            Some((v, Some(i)))
-          } else {
-            None
-          }
-        });
-      match resolve_version(
-        ResolveVersionOptions {
-          version_req: &package_req.version_req,
-          newest_dependency_date: self.newest_dependency_date.as_ref(),
-        },
-        yanked_versions,
-      ) {
-        ResolveVersionResult::Some(version) => {
-          self.graph.packages.add_used_yanked_package(PackageNv {
-            name: package_req.name.clone(),
-            version: version.clone(),
-          });
-          return Some(version.clone());
-        }
-        ResolveVersionResult::None {
-          had_higher_date_version,
-        } => {
-          *any_had_higher_minimum_date_version |= had_higher_date_version;
-        }
-      }
-
-      None
-    })()?;
+    package_info: &JsrPackageInfo,
+  ) -> Result<PackageNv, JsrPackageReqNotFoundError> {
+    let resolved_version = self.jsr_version_resolver.resolve_version(
+      package_req,
+      package_info,
+      self
+        .graph
+        .packages
+        .versions_by_name(&package_req.name)
+        .into_iter()
+        .flatten()
+        .map(|nv| &nv.version),
+    )?;
+    let version = resolved_version.version.clone();
+    if resolved_version.is_yanked {
+      self.graph.packages.add_used_yanked_package(PackageNv {
+        name: package_req.name.clone(),
+        version: version.clone(),
+      });
+    }
     let package_nv = PackageNv {
       name: package_req.name.clone(),
       version,
@@ -4913,7 +4837,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       .graph
       .packages
       .add_nv(package_req.clone(), package_nv.clone());
-    Some(package_nv)
+    Ok(package_nv)
   }
 
   /// Checks if the specifier is redirected or not and updates any redirects in

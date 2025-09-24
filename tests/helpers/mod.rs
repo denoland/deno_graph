@@ -1,5 +1,6 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
+use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::sync::Arc;
@@ -10,6 +11,7 @@ use deno_graph::ast::CapturingModuleAnalyzer;
 use deno_graph::fast_check::FastCheckCache;
 use deno_graph::fast_check::FastCheckCacheItem;
 use deno_graph::fast_check::FastCheckCacheKey;
+use deno_graph::packages::JsrVersionResolver;
 use deno_graph::source::CacheInfo;
 use deno_graph::source::CacheSetting;
 use deno_graph::source::HashMapLocker;
@@ -332,7 +334,9 @@ impl TestBuilder {
           skip_dynamic_deps: self.skip_dynamic_deps,
           unstable_bytes_imports: self.unstable_bytes_imports,
           unstable_text_imports: self.unstable_text_imports,
-          newest_dependency_date: self.newest_dependency_date,
+          jsr_version_resolver: Cow::Owned(JsrVersionResolver {
+            newest_dependency_date: self.newest_dependency_date,
+          }),
           ..Default::default()
         },
       )

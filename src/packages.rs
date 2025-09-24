@@ -16,6 +16,7 @@ use serde::Serialize;
 
 use crate::analysis::module_graph_1_to_2;
 use crate::analysis::ModuleInfo;
+use crate::graph::JsrPackageReqNotFoundError;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct JsrPackageInfo {
@@ -244,9 +245,112 @@ impl PackageSpecifiers {
   }
 }
 
+pub struct JsrVersionResolverResolvedVersion<'a> {
+  pub is_yanked: bool,
+  pub version: &'a Version,
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct JsrVersionResolver {
+  /// Minimum age for a dependency to be installed.
+  pub newest_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+impl JsrVersionResolver {
+  pub fn resolve_version<'a>(
+    &self,
+    package_req: &PackageReq,
+    package_info: &'a JsrPackageInfo,
+    existing_versions: impl Iterator<Item = &'a Version>,
+  ) -> Result<JsrVersionResolverResolvedVersion<'a>, JsrPackageReqNotFoundError>
+  {
+    // 1. try to resolve with the list of existing versions
+    if let ResolveVersionResult::Some(version) = resolve_version(
+      ResolveVersionOptions {
+        version_req: &package_req.version_req,
+        // don't use this here because existing versions are ok to resolve to
+        newest_dependency_date: None,
+      },
+      existing_versions.map(|v| (v, None)),
+    ) {
+      let is_yanked = package_info
+        .versions
+        .get(version)
+        .map(|i| i.yanked)
+        .unwrap_or(false);
+      return Ok(JsrVersionResolverResolvedVersion { is_yanked, version });
+    }
+
+    // 2. attempt to resolve with the unyanked versions
+    let mut any_had_higher_minimum_date_version = false;
+    let unyanked_versions =
+      package_info.versions.iter().filter_map(|(v, i)| {
+        if !i.yanked {
+          Some((v, Some(i)))
+        } else {
+          None
+        }
+      });
+    match resolve_version(
+      ResolveVersionOptions {
+        version_req: &package_req.version_req,
+        newest_dependency_date: self.newest_dependency_date,
+      },
+      unyanked_versions,
+    ) {
+      ResolveVersionResult::Some(version) => {
+        return Ok(JsrVersionResolverResolvedVersion {
+          is_yanked: false,
+          version,
+        });
+      }
+      ResolveVersionResult::None {
+        had_higher_date_version,
+      } => {
+        any_had_higher_minimum_date_version |= had_higher_date_version;
+      }
+    }
+
+    // 3. attempt to resolve with the the yanked versions
+    let yanked_versions = package_info.versions.iter().filter_map(|(v, i)| {
+      if i.yanked {
+        Some((v, Some(i)))
+      } else {
+        None
+      }
+    });
+    match resolve_version(
+      ResolveVersionOptions {
+        version_req: &package_req.version_req,
+        newest_dependency_date: self.newest_dependency_date,
+      },
+      yanked_versions,
+    ) {
+      ResolveVersionResult::Some(version) => {
+        return Ok(JsrVersionResolverResolvedVersion {
+          is_yanked: true,
+          version,
+        });
+      }
+      ResolveVersionResult::None {
+        had_higher_date_version,
+      } => {
+        any_had_higher_minimum_date_version |= had_higher_date_version;
+      }
+    }
+
+    Err(JsrPackageReqNotFoundError {
+      req: package_req.clone(),
+      newest_dependency_date: any_had_higher_minimum_date_version
+        .then_some(self.newest_dependency_date)
+        .flatten(),
+    })
+  }
+}
+
 pub struct ResolveVersionOptions<'a> {
   pub version_req: &'a VersionReq,
-  pub newest_dependency_date: Option<&'a chrono::DateTime<chrono::Utc>>,
+  pub newest_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 pub enum ResolveVersionResult<'a> {
@@ -287,16 +391,13 @@ pub fn resolve_version<'a>(
 
 fn matches_min_release_cutoff_date(
   info: Option<&JsrPackageInfoVersion>,
-  minimum_release_cutoff_date: Option<&chrono::DateTime<chrono::Utc>>,
+  minimum_release_cutoff_date: Option<chrono::DateTime<chrono::Utc>>,
 ) -> bool {
   minimum_release_cutoff_date
     .and_then(|cutoff| {
       // assume versions not in the time hashmap are really old
       info.as_ref().and_then(|info| {
-        info
-          .created_at
-          .as_ref()
-          .map(|package_age| package_age < cutoff)
+        info.created_at.map(|package_age| package_age < cutoff)
       })
     })
     .unwrap_or(true)
