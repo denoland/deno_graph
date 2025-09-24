@@ -292,6 +292,7 @@ async fn test_version(
       &loader,
       BuildOptions {
         is_dynamic: false,
+        newest_dependency_date: None,
         skip_dynamic_deps: false,
         unstable_bytes_imports: false,
         unstable_text_imports: false,

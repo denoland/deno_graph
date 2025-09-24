@@ -310,6 +310,7 @@ pub async fn js_create_graph(
       &loader,
       BuildOptions {
         is_dynamic: false,
+        newest_dependency_date: None,
         skip_dynamic_deps: false,
         unstable_bytes_imports: true,
         unstable_text_imports: true,

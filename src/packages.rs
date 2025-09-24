@@ -27,12 +27,16 @@ fn is_false(v: &bool) -> bool {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct JsrPackageInfoVersion {
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub created_at: Option<chrono::DateTime<chrono::Utc>>,
   #[serde(default, skip_serializing_if = "is_false")]
   pub yanked: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct JsrPackageVersionManifestEntry {
   pub checksum: String,
 }
@@ -240,21 +244,60 @@ impl PackageSpecifiers {
   }
 }
 
+pub struct ResolveVersionOptions<'a> {
+  pub version_req: &'a VersionReq,
+  pub newest_dependency_date: Option<&'a chrono::DateTime<chrono::Utc>>,
+}
+
+pub enum ResolveVersionResult<'a> {
+  Some(&'a Version),
+  None { had_higher_date_version: bool },
+}
+
 pub fn resolve_version<'a>(
-  version_req: &VersionReq,
-  versions: impl Iterator<Item = &'a Version>,
-) -> Option<&'a Version> {
+  options: ResolveVersionOptions<'_>,
+  versions: impl Iterator<Item = (&'a Version, Option<&'a JsrPackageInfoVersion>)>,
+) -> ResolveVersionResult<'a> {
   let mut maybe_best_version: Option<&Version> = None;
-  for version in versions {
-    if version_req.matches(version) {
-      let is_best_version = maybe_best_version
-        .as_ref()
-        .map(|best_version| (*best_version).cmp(version).is_lt())
-        .unwrap_or(true);
-      if is_best_version {
-        maybe_best_version = Some(version);
+  let mut had_higher_date_version = false;
+  for (version, version_info) in versions {
+    if options.version_req.matches(version) {
+      had_higher_date_version = true;
+      if matches_min_release_cutoff_date(
+        version_info,
+        options.newest_dependency_date,
+      ) {
+        let is_best_version = maybe_best_version
+          .as_ref()
+          .map(|best_version| (*best_version).cmp(version).is_lt())
+          .unwrap_or(true);
+        if is_best_version {
+          maybe_best_version = Some(version);
+        }
       }
     }
   }
-  maybe_best_version
+  match maybe_best_version {
+    Some(version) => ResolveVersionResult::Some(version),
+    None => ResolveVersionResult::None {
+      had_higher_date_version,
+    },
+  }
+}
+
+fn matches_min_release_cutoff_date(
+  info: Option<&JsrPackageInfoVersion>,
+  minimum_release_cutoff_date: Option<&chrono::DateTime<chrono::Utc>>,
+) -> bool {
+  minimum_release_cutoff_date
+    .and_then(|cutoff| {
+      // assume versions not in the time hashmap are really old
+      info.as_ref().and_then(|info| {
+        info
+          .created_at
+          .as_ref()
+          .map(|package_age| package_age < cutoff)
+      })
+    })
+    .unwrap_or(true)
 }
