@@ -50,6 +50,7 @@ pub use graph::ImportKind;
 pub use graph::JsModule;
 pub use graph::JsonModule;
 pub use graph::JsrLoadError;
+pub use graph::JsrPackageReqNotFoundError;
 pub use graph::Module;
 pub use graph::ModuleEntryRef;
 pub use graph::ModuleError;
