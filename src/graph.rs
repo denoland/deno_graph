@@ -4043,7 +4043,7 @@ struct PendingNpmState {
   pending_resolutions: Vec<PendingNpmResolutionItem>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct PendingJsrReqResolutionItem {
   specifier: ModuleSpecifier,
   package_ref: JsrPackageReqReference,
@@ -4405,94 +4405,101 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     // don't bother pre-allocating because adding to this should be rare
     let mut restarted_pkgs = HashSet::new();
     while let Some(pending_resolution) = pending_resolutions.pop_front() {
-      let package_name = &pending_resolution.package_ref.req().name;
-      let fut = self
-        .state
-        .jsr
-        .metadata
-        .get_package_metadata(package_name)
-        .unwrap();
-      match fut.await {
-        Ok(info) => {
-          let package_req = pending_resolution.package_ref.req();
-          match self.resolve_jsr_nv(package_req, &info) {
-            Ok(package_nv) => {
-              // now queue a pending load for that version information
-              self.queue_load_package_version_info(&package_nv);
-              pending_version_resolutions.push(PendingJsrNvResolutionItem {
-                specifier: pending_resolution.specifier,
-                nv_ref: JsrPackageNvReference::new(PackageNvReference {
-                  nv: package_nv,
-                  sub_path: pending_resolution
-                    .package_ref
-                    .into_inner()
-                    .sub_path,
-                }),
-                maybe_attribute_type: pending_resolution.maybe_attribute_type,
-                maybe_range: pending_resolution.maybe_range,
-                is_asset: pending_resolution.is_asset,
-                is_dynamic: pending_resolution.in_dynamic_branch,
-                is_root: pending_resolution.is_root,
-              });
-            }
-            Err(package_req_not_found_err) => {
-              // Generally, prefer a full restart that cache busts if we can
-              // because it will cause the meta files for users to be updated
-              // more frequently. In cases like non-statically analyzable dynamic
-              // branches, FillPassMode will not allow restarting, so just update
-              // the single package metadata.
-              if self.fill_pass_mode == FillPassMode::AllowRestart {
-                return true; // restart
-              } else if self.fill_pass_mode != FillPassMode::CacheBusting
-                && restarted_pkgs.insert(package_name.clone())
-              {
-                self
-                  .state
-                  .jsr
-                  .metadata
-                  .remove_package_metadata(package_name);
-                self.state.jsr.metadata.queue_load_package_info(
-                  package_name,
-                  CacheSetting::Reload, // force reload this specific package
-                  JsrMetadataStoreServices {
-                    executor: self.executor,
-                    jsr_url_provider: self.jsr_url_provider,
-                    loader: self.loader,
-                  },
-                );
-                pending_resolutions.push_front(pending_resolution);
-              } else {
-                self.graph.module_slots.insert(
-                  pending_resolution.specifier.clone(),
-                  ModuleSlot::Err(
-                    ModuleErrorKind::Load {
-                      specifier: pending_resolution.specifier.clone(),
-                      maybe_referrer: pending_resolution.maybe_range.clone(),
-                      err: JsrLoadError::PackageReqNotFound(
-                        package_req_not_found_err,
-                      )
-                      .into(),
-                    }
-                    .into_box(),
-                  ),
-                );
+      let package_req = pending_resolution.package_ref.req();
+      let package_name = &package_req.name;
+      let maybe_resolved_nv = if let Some(nv) =
+        self.graph.packages.mappings().get(package_req)
+      {
+        Some(nv.clone())
+      } else {
+        let fut = self
+          .state
+          .jsr
+          .metadata
+          .get_package_metadata(package_name)
+          .unwrap();
+        match fut.await {
+          Ok(info) => {
+            let package_req = pending_resolution.package_ref.req();
+            match self.resolve_jsr_nv(package_req, &info) {
+              Ok(package_nv) => Some(package_nv),
+              Err(package_req_not_found_err) => {
+                // Generally, prefer a full restart that cache busts if we can
+                // because it will cause the meta files for users to be updated
+                // more frequently. In cases like non-statically analyzable dynamic
+                // branches, FillPassMode will not allow restarting, so just update
+                // the single package metadata.
+                if self.fill_pass_mode == FillPassMode::AllowRestart {
+                  return true; // restart
+                } else if self.fill_pass_mode != FillPassMode::CacheBusting
+                  && restarted_pkgs.insert(package_name.clone())
+                {
+                  self
+                    .state
+                    .jsr
+                    .metadata
+                    .remove_package_metadata(package_name);
+                  self.state.jsr.metadata.queue_load_package_info(
+                    package_name,
+                    CacheSetting::Reload, // force reload this specific package
+                    JsrMetadataStoreServices {
+                      executor: self.executor,
+                      jsr_url_provider: self.jsr_url_provider,
+                      loader: self.loader,
+                    },
+                  );
+                  pending_resolutions.push_front(pending_resolution.clone());
+                } else {
+                  self.graph.module_slots.insert(
+                    pending_resolution.specifier.clone(),
+                    ModuleSlot::Err(
+                      ModuleErrorKind::Load {
+                        specifier: pending_resolution.specifier.clone(),
+                        maybe_referrer: pending_resolution.maybe_range.clone(),
+                        err: JsrLoadError::PackageReqNotFound(
+                          package_req_not_found_err,
+                        )
+                        .into(),
+                      }
+                      .into_box(),
+                    ),
+                  );
+                }
+                None
               }
             }
           }
+          Err(err) => {
+            self.graph.module_slots.insert(
+              pending_resolution.specifier.clone(),
+              ModuleSlot::Err(
+                ModuleErrorKind::Load {
+                  specifier: pending_resolution.specifier.clone(),
+                  maybe_referrer: pending_resolution.maybe_range.clone(),
+                  err: err.into(),
+                }
+                .into_box(),
+              ),
+            );
+            None
+          }
         }
-        Err(err) => {
-          self.graph.module_slots.insert(
-            pending_resolution.specifier.clone(),
-            ModuleSlot::Err(
-              ModuleErrorKind::Load {
-                specifier: pending_resolution.specifier,
-                maybe_referrer: pending_resolution.maybe_range,
-                err: err.into(),
-              }
-              .into_box(),
-            ),
-          );
-        }
+      };
+      if let Some(package_nv) = maybe_resolved_nv {
+        // now queue a pending load for that version information
+        self.queue_load_package_version_info(&package_nv);
+        pending_version_resolutions.push(PendingJsrNvResolutionItem {
+          specifier: pending_resolution.specifier,
+          nv_ref: JsrPackageNvReference::new(PackageNvReference {
+            nv: package_nv,
+            sub_path: pending_resolution.package_ref.into_inner().sub_path,
+          }),
+          maybe_attribute_type: pending_resolution.maybe_attribute_type,
+          maybe_range: pending_resolution.maybe_range,
+          is_asset: pending_resolution.is_asset,
+          is_dynamic: pending_resolution.in_dynamic_branch,
+          is_root: pending_resolution.is_root,
+        });
       }
     }
 
@@ -5245,7 +5252,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   ) {
     let package_name = &package_ref.req().name;
     let specifier = specifier.clone();
-    self.queue_load_package_info(package_name);
+    // perf: skip loading the package info if the req
+    // is already locked to a specific nv
+    if !self
+      .graph
+      .packages
+      .mappings()
+      .contains_key(package_ref.req())
+    {
+      self.queue_load_package_info(package_name);
+    }
     self
       .state
       .jsr
