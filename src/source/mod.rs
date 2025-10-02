@@ -469,9 +469,6 @@ pub enum ResolveError {
   Specifier(#[from] SpecifierError),
   #[class(inherit)]
   #[error(transparent)]
-  ImportMap(#[from] import_map::ImportMapError),
-  #[class(inherit)]
-  #[error(transparent)]
   Other(#[from] deno_error::JsErrorBox),
 }
 
