@@ -6139,10 +6139,6 @@ impl<'a> NpmSpecifierResolver<'a> {
   }
 
   async fn resolve(&mut self) {
-    if self.pending_npm_specifiers.is_empty() {
-      return;
-    }
-
     let Some(npm_resolver) = self.npm_resolver else {
       for item in self.pending_npm_specifiers.drain(..) {
         self.pending_info.module_slots.insert(
@@ -6165,7 +6161,10 @@ impl<'a> NpmSpecifierResolver<'a> {
       .drain(..)
       .partition::<Vec<_>, _>(|item| !item.in_dynamic_branch);
 
-    if !main_items.is_empty() {
+    // Unconditionally do an npm install if both of these are
+    // empty and leave it up to the implementer to handle it
+    // or not
+    if !main_items.is_empty() || dynamic_items.is_empty() {
       let items_by_req: IndexMap<_, Vec<_>> =
         IndexMap::with_capacity(main_items.len());
       let items_by_req =
