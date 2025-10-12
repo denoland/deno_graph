@@ -20,12 +20,14 @@ use deno_graph::source::LoadFuture;
 use deno_graph::source::LoadOptions;
 use deno_graph::source::LoadResponse;
 use deno_graph::source::MemoryLoader;
+use deno_graph::source::NpmResolver;
 use deno_graph::source::ResolutionKind;
 use deno_graph::source::ResolveError;
 use deno_graph::BuildOptions;
 use deno_graph::FillFromLockfileOptions;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
+use deno_graph::NpmResolvePkgReqsResult;
 use deno_graph::Range;
 use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::package::PackageNv;
@@ -1300,4 +1302,56 @@ async fn test_types_resolution_side_effect_import_not_surfaced() {
     assert!(dep.maybe_code.ok().is_some());
     assert!(dep.maybe_type.err().is_some()); // error surfaced
   }
+}
+
+#[tokio::test]
+async fn test_npm_install_no_npm_deps() {
+  #[derive(Default, Debug)]
+  struct TestNpmResolver {
+    did_npm_install: deno_unsync::Flag,
+  }
+
+  #[async_trait::async_trait(?Send)]
+  impl NpmResolver for TestNpmResolver {
+    fn load_and_cache_npm_package_info(&self, _package_name: &str) {}
+
+    async fn resolve_pkg_reqs(
+      &self,
+      package_req: &[PackageReq],
+    ) -> deno_graph::NpmResolvePkgReqsResult {
+      assert!(package_req.is_empty());
+      self.did_npm_install.raise();
+      NpmResolvePkgReqsResult {
+        results: Vec::new(),
+        dep_graph_result: Ok(()),
+      }
+    }
+  }
+
+  let mut graph = ModuleGraph::new(GraphKind::All);
+  let mut loader = MemoryLoader::default();
+  loader.add_source_with_text("file:///project/mod.ts", r#""#);
+  let npm_resolver = TestNpmResolver::default();
+
+  graph
+    .build(
+      vec![Url::parse("file:///project/mod.ts").unwrap()],
+      Vec::new(),
+      &loader,
+      BuildOptions {
+        npm_resolver: Some(&npm_resolver),
+        ..Default::default()
+      },
+    )
+    .await;
+
+  // This has this behavior in order to let implementers
+  // decide whether to handle or not handle an npm install
+  // after loading the graph. For example, this makes the
+  // logic slightly easier in the CLI where we want to do
+  // an npm install even when there's no npm specifiers in
+  // the graph because the npm snapshot might be out of
+  // date due to config changes and we need to clear it
+  // out with deno_npm
+  assert!(npm_resolver.did_npm_install.is_raised());
 }
