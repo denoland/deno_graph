@@ -2,8 +2,8 @@
 
 pub type ModuleSpecifier = url::Url;
 
-pub use import_map::specifier::resolve_import;
-pub use import_map::specifier::SpecifierError;
+pub use deno_path_util::resolve_import;
+pub use deno_path_util::SpecifierError;
 
 pub fn is_fs_root_specifier(url: &ModuleSpecifier) -> bool {
   if url.scheme() != "file" {
