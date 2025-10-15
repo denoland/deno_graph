@@ -36,6 +36,20 @@ pub struct JsrPackageInfoVersion {
   pub yanked: bool,
 }
 
+impl JsrPackageInfoVersion {
+  pub fn matches_newest_dependency_date(
+    &self,
+    newest_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
+  ) -> bool {
+    newest_dependency_date
+      .and_then(|cutoff| {
+        // assume versions not existing are really old
+        self.created_at.map(|package_age| package_age < cutoff)
+      })
+      .unwrap_or(true)
+  }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct JsrPackageVersionManifestEntry {
@@ -282,7 +296,7 @@ impl JsrVersionResolver {
     }
 
     // 2. attempt to resolve with the unyanked versions
-    let mut any_had_higher_minimum_date_version = false;
+    let mut any_had_higher_newest_dep_version = false;
     let unyanked_versions =
       package_info.versions.iter().filter_map(|(v, i)| {
         if !i.yanked {
@@ -307,7 +321,7 @@ impl JsrVersionResolver {
       ResolveVersionResult::None {
         had_higher_date_version,
       } => {
-        any_had_higher_minimum_date_version |= had_higher_date_version;
+        any_had_higher_newest_dep_version |= had_higher_date_version;
       }
     }
 
@@ -335,16 +349,23 @@ impl JsrVersionResolver {
       ResolveVersionResult::None {
         had_higher_date_version,
       } => {
-        any_had_higher_minimum_date_version |= had_higher_date_version;
+        any_had_higher_newest_dep_version |= had_higher_date_version;
       }
     }
 
     Err(JsrPackageReqNotFoundError {
       req: package_req.clone(),
-      newest_dependency_date: any_had_higher_minimum_date_version
+      newest_dependency_date: any_had_higher_newest_dep_version
         .then_some(self.newest_dependency_date)
         .flatten(),
     })
+  }
+
+  pub fn matches_newest_dependency_date(
+    &self,
+    version_info: &JsrPackageInfoVersion,
+  ) -> bool {
+    version_info.matches_newest_dependency_date(self.newest_dependency_date)
   }
 }
 
@@ -367,7 +388,7 @@ pub fn resolve_version<'a>(
   for (version, version_info) in versions {
     if options.version_req.matches(version) {
       had_higher_date_version = true;
-      if matches_min_release_cutoff_date(
+      if matches_newest_dependency_date(
         version_info,
         options.newest_dependency_date,
       ) {
@@ -389,16 +410,12 @@ pub fn resolve_version<'a>(
   }
 }
 
-fn matches_min_release_cutoff_date(
+fn matches_newest_dependency_date(
   info: Option<&JsrPackageInfoVersion>,
-  minimum_release_cutoff_date: Option<chrono::DateTime<chrono::Utc>>,
+  newest_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
 ) -> bool {
-  minimum_release_cutoff_date
-    .and_then(|cutoff| {
-      // assume versions not in the time hashmap are really old
-      info.as_ref().and_then(|info| {
-        info.created_at.map(|package_age| package_age < cutoff)
-      })
-    })
+  info
+    .as_ref()
+    .map(|info| info.matches_newest_dependency_date(newest_dependency_date))
     .unwrap_or(true)
 }
