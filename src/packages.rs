@@ -296,7 +296,7 @@ impl JsrVersionResolver {
     }
 
     // 2. attempt to resolve with the unyanked versions
-    let mut any_had_higher_newest_dep_version = false;
+    let mut any_had_higher_newest_dep_date_version = false;
     let unyanked_versions =
       package_info.versions.iter().filter_map(|(v, i)| {
         if !i.yanked {
@@ -321,7 +321,7 @@ impl JsrVersionResolver {
       ResolveVersionResult::None {
         had_higher_date_version,
       } => {
-        any_had_higher_newest_dep_version |= had_higher_date_version;
+        any_had_higher_newest_dep_date_version |= had_higher_date_version;
       }
     }
 
@@ -349,13 +349,13 @@ impl JsrVersionResolver {
       ResolveVersionResult::None {
         had_higher_date_version,
       } => {
-        any_had_higher_newest_dep_version |= had_higher_date_version;
+        any_had_higher_newest_dep_date_version |= had_higher_date_version;
       }
     }
 
     Err(JsrPackageReqNotFoundError {
       req: package_req.clone(),
-      newest_dependency_date: any_had_higher_newest_dep_version
+      newest_dependency_date: any_had_higher_newest_dep_date_version
         .then_some(self.newest_dependency_date)
         .flatten(),
     })
