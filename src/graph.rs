@@ -17,6 +17,7 @@ use crate::jsr::JsrMetadataStoreServices;
 use crate::jsr::PendingJsrPackageVersionInfoLoadItem;
 use crate::jsr::PendingResult;
 use crate::packages::JsrVersionResolver;
+use crate::packages::NewestDependencyDate;
 use crate::ReferrerImports;
 
 use crate::module_specifier::is_fs_root_specifier;
@@ -313,7 +314,7 @@ pub enum JsrLoadError {
 #[error("Could not find version of '{}' that matches specified version constraint '{}'{}", req.name, req.version_req, newest_dependency_date.map(|v| format!("\n\nA newer matching version was found, but it was not used because it was newer than the specified minimum dependency date of {}", v)).unwrap_or_else(String::new))]
 pub struct JsrPackageReqNotFoundError {
   pub req: PackageReq,
-  pub newest_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
+  pub newest_dependency_date: Option<NewestDependencyDate>,
 }
 
 #[derive(Error, Debug, Clone, JsError)]
@@ -4808,9 +4809,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     package_req: &PackageReq,
     package_info: &JsrPackageInfo,
   ) -> Result<PackageNv, JsrPackageReqNotFoundError> {
-    let resolved_version = self.jsr_version_resolver.resolve_version(
+    let version_resolver = self
+      .jsr_version_resolver
+      .get_for_package(&package_req.name, package_info);
+    let resolved_version = version_resolver.resolve_version(
       package_req,
-      package_info,
       self
         .graph
         .packages
