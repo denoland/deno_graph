@@ -59,8 +59,6 @@ pub use graph::ModuleGraph;
 pub use graph::ModuleGraphError;
 pub use graph::ModuleLoadError;
 pub use graph::ModuleTextSource;
-pub use graph::NewestDependencyDate;
-pub use graph::NewestDependencyDateOptions;
 pub use graph::NpmLoadError;
 pub use graph::NpmModule;
 pub use graph::Position;
