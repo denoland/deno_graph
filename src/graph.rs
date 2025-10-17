@@ -4855,7 +4855,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     package_req: &PackageReq,
     package_info: &JsrPackageInfo,
   ) -> Result<PackageNv, JsrPackageReqNotFoundError> {
-    let version_resolver = self.jsr_version_resolver.get_for_package(&package_req.name, package_info);
+    let version_resolver = self
+      .jsr_version_resolver
+      .get_for_package(&package_req.name, package_info);
     let resolved_version = version_resolver.resolve_version(
       package_req,
       self

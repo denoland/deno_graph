@@ -95,7 +95,9 @@ fn run_graph_test(test: &CollectedTest) {
     if let Some(entrypoint) = &options.entrypoint {
       builder.entry_point(entrypoint);
     }
-    builder.newest_dependency_date(options.newest_dependency_date.clone().unwrap_or_default());
+    builder.newest_dependency_date(
+      options.newest_dependency_date.clone().unwrap_or_default(),
+    );
     builder.skip_dynamic_deps(options.skip_dynamic_deps);
     builder.unstable_bytes_imports(options.unstable_bytes_imports);
     builder.unstable_text_imports(options.unstable_text_imports);
