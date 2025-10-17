@@ -24,6 +24,7 @@ use deno_graph::source::MemoryLoader;
 use deno_graph::source::NpmResolver;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
+use deno_graph::NewestDependencyDateOptions;
 use deno_graph::NpmLoadError;
 use deno_graph::NpmResolvePkgReqsResult;
 use deno_graph::WorkspaceFastCheckOption;
@@ -157,7 +158,7 @@ pub struct TestBuilder {
   entry_point_types: String,
   fast_check_cache: bool,
   lockfile_jsr_packages: BTreeMap<PackageReq, PackageNv>,
-  newest_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
+  newest_dependency_date: NewestDependencyDateOptions,
   resolver: Option<Box<dyn deno_graph::source::Resolver>>,
   skip_dynamic_deps: bool,
   workspace_members: Vec<WorkspaceMember>,
@@ -176,7 +177,7 @@ impl TestBuilder {
       entry_point_types: "file:///mod.ts".to_string(),
       fast_check_cache: false,
       lockfile_jsr_packages: Default::default(),
-      newest_dependency_date: None,
+      newest_dependency_date: Default::default(),
       skip_dynamic_deps: false,
       resolver: None,
       workspace_members: Default::default(),
@@ -209,7 +210,7 @@ impl TestBuilder {
   #[allow(unused)]
   pub fn newest_dependency_date(
     &mut self,
-    value: Option<chrono::DateTime<chrono::Utc>>,
+    value: NewestDependencyDateOptions,
   ) -> &mut Self {
     self.newest_dependency_date = value;
     self
@@ -335,7 +336,7 @@ impl TestBuilder {
           unstable_bytes_imports: self.unstable_bytes_imports,
           unstable_text_imports: self.unstable_text_imports,
           jsr_version_resolver: Cow::Owned(JsrVersionResolver {
-            newest_dependency_date: self.newest_dependency_date,
+            newest_dependency_date_options: self.newest_dependency_date.clone(),
           }),
           ..Default::default()
         },

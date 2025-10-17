@@ -42,6 +42,7 @@ use deno_semver::jsr::JsrPackageNvReference;
 use deno_semver::jsr::JsrPackageReqReference;
 use deno_semver::npm::NpmPackageNvReference;
 use deno_semver::npm::NpmPackageReqReference;
+use deno_semver::package::PackageName;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageNvReference;
 use deno_semver::package::PackageReq;
@@ -313,7 +314,7 @@ pub enum JsrLoadError {
 #[error("Could not find version of '{}' that matches specified version constraint '{}'{}", req.name, req.version_req, newest_dependency_date.map(|v| format!("\n\nA newer matching version was found, but it was not used because it was newer than the specified minimum dependency date of {}", v)).unwrap_or_else(String::new))]
 pub struct JsrPackageReqNotFoundError {
   pub req: PackageReq,
-  pub newest_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
+  pub newest_dependency_date: Option<NewestDependencyDate>,
 }
 
 #[derive(Error, Debug, Clone, JsError)]
@@ -1648,6 +1649,52 @@ impl CheckJsOption<'_> {
       CheckJsOption::Custom(check_js_resolver) => {
         check_js_resolver.resolve(specifier)
       }
+    }
+  }
+}
+
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+pub struct NewestDependencyDate(pub chrono::DateTime<chrono::Utc>);
+
+impl std::fmt::Display for NewestDependencyDate {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{}", self.0)
+  }
+}
+
+impl NewestDependencyDate {
+  pub fn matches(&self, date: chrono::DateTime<chrono::Utc>) -> bool {
+    date < self.0
+  }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NewestDependencyDateOptions {
+  /// Prevents installing packages newer than the specified date.
+  pub date: Option<NewestDependencyDate>,
+  /// JSR packages to exclude from the newest dependency date checks.
+  #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
+  pub exclude_jsr_pkgs: BTreeSet<PackageName>,
+}
+
+impl NewestDependencyDateOptions {
+  pub fn from_date(date: chrono::DateTime<chrono::Utc>) -> Self {
+    Self {
+      date: Some(NewestDependencyDate(date)),
+      exclude_jsr_pkgs: Default::default(),
+    }
+  }
+
+  pub fn get_for_package(
+    &self,
+    package_name: &PackageName,
+  ) -> Option<NewestDependencyDate> {
+    let date = self.date?;
+    if self.exclude_jsr_pkgs.contains(package_name) {
+      None
+    } else {
+      Some(date)
     }
   }
 }
@@ -4808,9 +4855,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     package_req: &PackageReq,
     package_info: &JsrPackageInfo,
   ) -> Result<PackageNv, JsrPackageReqNotFoundError> {
-    let resolved_version = self.jsr_version_resolver.resolve_version(
+    let version_resolver = self.jsr_version_resolver.get_for_package(&package_req.name, package_info);
+    let resolved_version = version_resolver.resolve_version(
       package_req,
-      package_info,
       self
         .graph
         .packages
