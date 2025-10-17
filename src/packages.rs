@@ -336,6 +336,10 @@ pub struct JsrPackageVersionResolver<'a> {
 }
 
 impl<'a> JsrPackageVersionResolver<'a> {
+  pub fn info(&self) -> &'a JsrPackageInfo {
+    self.package_info
+  }
+
   pub fn resolve_version<'b>(
     &'b self,
     package_req: &PackageReq,
