@@ -1118,6 +1118,7 @@ impl Module {
       Module::Js(module) => &module.specifier,
       Module::Json(module) => &module.specifier,
       Module::Wasm(module) => &module.specifier,
+      #[allow(deprecated)]
       Module::Npm(module) => &module.specifier,
       Module::Node(module) => &module.specifier,
       Module::External(module) => &module.specifier,
@@ -1237,7 +1238,20 @@ static EMPTY_DEPS: std::sync::OnceLock<IndexMap<String, Dependency>> =
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NpmModule {
+  // We need to change the NpmModule to instead only store an NpmReqReference
+  // and then map the req reference through the npm snapshot instead (have a single
+  // source of truth). This is necessary because deno_npm now does deduplication
+  // and so it will update on the fly the req to nv mapping, but then these
+  // properties in deno_graph won't get updated.
+  #[deprecated(
+    since = "0.103.1",
+    note = "Map the npm package req ref through the npm snapshot instead."
+  )]
   pub specifier: ModuleSpecifier,
+  #[deprecated(
+    since = "0.103.1",
+    note = "Map the npm package req ref through the npm snapshot instead."
+  )]
   #[serde(skip_serializing)]
   pub nv_reference: NpmPackageNvReference,
 }
@@ -2367,6 +2381,7 @@ impl ModuleGraph {
           handle_dependencies(&mut seen_pending, &mut wasm_module.dependencies);
         }
         Module::Npm(module) => {
+          #[allow(deprecated)]
           found_nvs.insert(module.nv_reference.nv().clone());
         }
         Module::Node(_) => {
@@ -6283,7 +6298,9 @@ impl<'a> NpmSpecifierResolver<'a> {
     self.pending_info.module_slots.insert(
       resolved_specifier.clone(),
       ModuleSlot::Module(Module::Npm(NpmModule {
+        #[allow(deprecated)]
         specifier: resolved_specifier,
+        #[allow(deprecated)]
         nv_reference: pkg_id_ref,
       })),
     );
