@@ -472,7 +472,7 @@ dependencies = [
 
 [[package]]
 name = "deno_graph"
-version = "0.103.0"
+version = "0.103.1"
 dependencies = [
  "async-trait",
  "bincode",
