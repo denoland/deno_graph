@@ -7,24 +7,24 @@ use std::io::Write as _;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use deno_ast::diagnostics::Diagnostic;
 use deno_ast::MediaType;
-use deno_graph::ast::CapturingModuleAnalyzer;
-use deno_graph::source::LoadResponse;
-use deno_graph::source::NullFileSystem;
+use deno_ast::diagnostics::Diagnostic;
 use deno_graph::BuildFastCheckTypeGraphOptions;
 use deno_graph::BuildOptions;
 use deno_graph::GraphKind;
 use deno_graph::ModuleGraph;
 use deno_graph::WorkspaceFastCheckOption;
 use deno_graph::WorkspaceMember;
-use deno_semver::package::PackageNv;
+use deno_graph::ast::CapturingModuleAnalyzer;
+use deno_graph::source::LoadResponse;
+use deno_graph::source::NullFileSystem;
 use deno_semver::StackString;
-use file_test_runner::collection::strategies::TestPerFileCollectionStrategy;
-use file_test_runner::collection::CollectedCategoryOrTest;
-use file_test_runner::collection::CollectedTest;
+use deno_semver::package::PackageNv;
 use file_test_runner::RunOptions;
 use file_test_runner::TestResult;
+use file_test_runner::collection::CollectedCategoryOrTest;
+use file_test_runner::collection::CollectedTest;
+use file_test_runner::collection::strategies::TestPerFileCollectionStrategy;
 use futures::FutureExt;
 use indexmap::IndexMap;
 use serde::Deserialize;
@@ -46,11 +46,14 @@ fn main() {
   }
 
   if std::fs::metadata("./tests/ecosystem/jsr_mirror").is_err() {
-    println!("skipping, ecosystem mirror not found. run `deno run -A ./tests/ecosystem/jsr_mirror.ts` to populate");
+    println!(
+      "skipping, ecosystem mirror not found. run `deno run -A ./tests/ecosystem/jsr_mirror.ts` to populate"
+    );
     return;
   }
 
-  std::env::set_var("NO_COLOR", "1");
+  // TODO: Audit that the environment access only happens in single-threaded code.
+  unsafe { std::env::set_var("NO_COLOR", "1") };
 
   let versions_str = include_str!("./ecosystem/jsr_versions.json");
   let versions: Vec<Version> = serde_json::from_str(versions_str).unwrap();
@@ -473,7 +476,11 @@ async fn test_version(
   } else {
     let lockfile_expected = lockfile.trim_end();
     let new_lockfile = new_lockfile.trim_end();
-    pretty_assertions::assert_eq!(new_lockfile, lockfile_expected, "lockfile did not match, run `UPDATE=1 cargo test --test ecosystem` to update");
+    pretty_assertions::assert_eq!(
+      new_lockfile,
+      lockfile_expected,
+      "lockfile did not match, run `UPDATE=1 cargo test --test ecosystem` to update"
+    );
 
     let expected = expected.trim_end();
     let output = output.trim_end();

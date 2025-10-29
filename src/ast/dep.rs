@@ -1,5 +1,10 @@
 use std::collections::HashMap;
 
+use deno_ast::MultiThreadedComments;
+use deno_ast::ProgramRef;
+use deno_ast::SourcePos;
+use deno_ast::SourceRange;
+use deno_ast::SourceRangedForSpanned;
 use deno_ast::swc::ast;
 use deno_ast::swc::ast::Callee;
 use deno_ast::swc::ast::Expr;
@@ -7,11 +12,6 @@ use deno_ast::swc::atoms::Atom;
 use deno_ast::swc::common::comments::CommentKind;
 use deno_ast::swc::ecma_visit::Visit;
 use deno_ast::swc::ecma_visit::VisitWith;
-use deno_ast::MultiThreadedComments;
-use deno_ast::ProgramRef;
-use deno_ast::SourcePos;
-use deno_ast::SourceRange;
-use deno_ast::SourceRangedForSpanned;
 
 use crate::analysis::DynamicDependencyKind;
 use crate::analysis::ImportAttribute;
@@ -408,20 +408,20 @@ fn parse_import_attributes(
   };
   let mut import_attributes = HashMap::new();
   for prop in attrs.props.iter() {
-    if let ast::PropOrSpread::Prop(prop) = prop {
-      if let ast::Prop::KeyValue(key_value) = &**prop {
-        let maybe_key = match &key_value.key {
-          ast::PropName::Str(key) => Some(key.value.to_string()),
-          ast::PropName::Ident(ident) => Some(ident.sym.to_string()),
-          _ => None,
-        };
+    if let ast::PropOrSpread::Prop(prop) = prop
+      && let ast::Prop::KeyValue(key_value) = &**prop
+    {
+      let maybe_key = match &key_value.key {
+        ast::PropName::Str(key) => Some(key.value.to_string()),
+        ast::PropName::Ident(ident) => Some(ident.sym.to_string()),
+        _ => None,
+      };
 
-        if let Some(key) = maybe_key {
-          if let ast::Expr::Lit(ast::Lit::Str(str_)) = &*key_value.value {
-            import_attributes
-              .insert(key, ImportAttribute::Known(str_.value.to_string()));
-          }
-        }
+      if let Some(key) = maybe_key
+        && let ast::Expr::Lit(ast::Lit::Str(str_)) = &*key_value.value
+      {
+        import_attributes
+          .insert(key, ImportAttribute::Known(str_.value.to_string()));
       }
     }
   }
@@ -524,11 +524,11 @@ fn parse_import_attributes_from_object_lit(
 #[cfg(test)]
 mod tests {
   use crate::ModuleSpecifier;
-  use deno_ast::swc::atoms::Atom;
-  use deno_ast::swc::common::comments::CommentKind;
   use deno_ast::SourcePos;
   use deno_ast::SourceRange;
   use deno_ast::SourceRangedForSpanned;
+  use deno_ast::swc::atoms::Atom;
+  use deno_ast::swc::common::comments::CommentKind;
 
   use pretty_assertions::assert_eq;
 

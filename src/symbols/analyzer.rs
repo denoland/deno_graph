@@ -6,26 +6,28 @@ use std::cell::Ref;
 use std::cell::RefCell;
 use std::hash::Hash;
 
-use deno_ast::swc::ast::*;
-use deno_ast::swc::atoms::Atom;
-use deno_ast::swc::utils::find_pat_ids;
-use deno_ast::swc::utils::is_valid_ident;
 use deno_ast::MediaType;
 use deno_ast::ModuleSpecifier;
 use deno_ast::ParsedSource;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use deno_ast::SourceTextInfo;
+use deno_ast::swc::ast::*;
+use deno_ast::swc::atoms::Atom;
+use deno_ast::swc::utils::find_pat_ids;
+use deno_ast::swc::utils::is_valid_ident;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
 
-use crate::ast::EsParser;
-use crate::ast::ParseOptions;
-use crate::graph::WasmModule;
 use crate::JsModule;
 use crate::JsonModule;
 use crate::ModuleGraph;
+use crate::ast::EsParser;
+use crate::ast::ParseOptions;
+use crate::graph::WasmModule;
 
+use super::ResolvedSymbolDepEntry;
+use super::SymbolNodeDep;
 use super::collections::AdditiveOnlyIndexMap;
 use super::collections::AdditiveOnlyIndexMapForCopyValues;
 use super::collections::AdditiveOnlyMap;
@@ -37,8 +39,6 @@ use super::cross_module::DefinitionPathNode;
 use super::cross_module::ModuleExports;
 use super::dep_analyzer::ResolveDepsMode;
 use super::swc_helpers::ts_entity_name_to_parts;
-use super::ResolvedSymbolDepEntry;
-use super::SymbolNodeDep;
 
 /// The root symbol from which module symbols can be retrieved.
 ///
@@ -1459,7 +1459,7 @@ impl<'a> ModuleInfoRef<'a> {
 
   pub fn re_export_all_nodes(
     &self,
-  ) -> Option<impl Iterator<Item = &'a ExportAll>> {
+  ) -> Option<impl Iterator<Item = &'a ExportAll> + use<'a>> {
     match self {
       Self::Json(_) => None,
       Self::Esm(m) => Some(m.re_exports.iter().map(|n| n.value())),
@@ -1468,7 +1468,7 @@ impl<'a> ModuleInfoRef<'a> {
 
   pub(crate) fn re_export_all_specifiers(
     &self,
-  ) -> Option<impl Iterator<Item = &'a str>> {
+  ) -> Option<impl Iterator<Item = &'a str> + use<'a>> {
     match self {
       Self::Json(_) => None,
       Self::Esm(m) => {
@@ -1511,11 +1511,7 @@ impl<'a> ModuleInfoRef<'a> {
       last = next;
       next = symbol.parent_id().and_then(|id| self.symbol(id));
     }
-    if text.is_empty() {
-      None
-    } else {
-      Some(text)
-    }
+    if text.is_empty() { None } else { Some(text) }
   }
 }
 
@@ -2380,25 +2376,23 @@ impl SymbolFiller<'_> {
       Stmt::Expr(n) => match &*n.expr {
         Expr::Assign(assign_expr) => {
           if let Some(expando_ref) = ExpandoPropertyRef::maybe_new(assign_expr)
-          {
-            if let Some(symbol_id) = self
+            && let Some(symbol_id) = self
               .builder
               .swc_id_to_symbol_id
               .get(&expando_ref.obj_ident().to_id())
+          {
+            let symbol = self.builder.symbol_mut(symbol_id).unwrap();
+            // expando properties are only valid on a function
+            if symbol
+              .borrow_inner()
+              .decls()
+              .iter()
+              .any(|d| d.is_function())
             {
-              let symbol = self.builder.symbol_mut(symbol_id).unwrap();
-              // expando properties are only valid on a function
-              if symbol
-                .borrow_inner()
-                .decls()
-                .iter()
-                .any(|d| d.is_function())
-              {
-                self.create_symbol_member_or_export(
-                  symbol,
-                  SymbolNodeRef::ExpandoProperty(expando_ref),
-                );
-              }
+              self.create_symbol_member_or_export(
+                symbol,
+                SymbolNodeRef::ExpandoProperty(expando_ref),
+              );
             }
           }
         }
@@ -3004,10 +2998,10 @@ impl SymbolFiller<'_> {
     for child_id in parent_symbol.child_ids() {
       let child_symbol_mut = self.builder.symbol_mut(child_id).unwrap();
       let child_symbol = child_symbol_mut.borrow_inner();
-      if let Some(name) = child_symbol.maybe_name() {
-        if name == searching_name {
-          return Some(child_symbol_mut);
-        }
+      if let Some(name) = child_symbol.maybe_name()
+        && name == searching_name
+      {
+        return Some(child_symbol_mut);
       }
     }
     None
@@ -3022,10 +3016,10 @@ impl SymbolFiller<'_> {
     for member_id in parent_symbol.members() {
       let child_symbol_mut = self.builder.symbol_mut(*member_id).unwrap();
       let child_symbol = child_symbol_mut.borrow_inner();
-      if let Some(name) = child_symbol.maybe_name() {
-        if name == searching_name {
-          return Some(child_symbol_mut);
-        }
+      if let Some(name) = child_symbol.maybe_name()
+        && name == searching_name
+      {
+        return Some(child_symbol_mut);
       }
     }
     None

@@ -9,7 +9,6 @@ use indexmap::IndexMap;
 use crate::ModuleGraph;
 use crate::ModuleSpecifier;
 
-use super::analyzer::SymbolDeclKind;
 use super::FileDep;
 use super::FileDepName;
 use super::ModuleInfoRef;
@@ -18,6 +17,7 @@ use super::SymbolDecl;
 use super::SymbolId;
 use super::SymbolNodeDep;
 use super::UniqueSymbolId;
+use super::analyzer::SymbolDeclKind;
 
 #[derive(Debug, Clone)]
 pub enum DefinitionOrUnresolved<'a> {

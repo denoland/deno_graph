@@ -74,9 +74,9 @@ pub use graph::WasmModule;
 pub use graph::WorkspaceFastCheckOption;
 pub use graph::WorkspaceMember;
 pub use jsr::JsrMetadataStore;
-pub use module_specifier::resolve_import;
 pub use module_specifier::ModuleSpecifier;
 pub use module_specifier::SpecifierError;
+pub use module_specifier::resolve_import;
 pub use rt::Executor;
 pub use source::NpmResolvePkgReqsResult;
 
@@ -188,12 +188,12 @@ mod tests {
   use parking_lot::Mutex;
   use pretty_assertions::assert_eq;
   use serde_json::json;
-  use source::tests::MockResolver;
   use source::CacheInfo;
+  use source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
   use source::MemoryLoader;
   use source::ResolutionMode;
   use source::Source;
-  use source::DEFAULT_JSX_IMPORT_SOURCE_MODULE;
+  use source::tests::MockResolver;
   use std::collections::BTreeMap;
 
   type Sources<'a> = Vec<(&'a str, Source<&'a str>)>;
@@ -329,10 +329,14 @@ mod tests {
     assert!(
       graph.contains(&ModuleSpecifier::parse("file:///a/test02.ts").unwrap())
     );
-    assert!(graph
-      .contains(&ModuleSpecifier::parse("https://example.com/a.ts").unwrap()));
-    assert!(graph
-      .contains(&ModuleSpecifier::parse("https://example.com/c.ts").unwrap()));
+    assert!(
+      graph
+        .contains(&ModuleSpecifier::parse("https://example.com/a.ts").unwrap())
+    );
+    assert!(
+      graph
+        .contains(&ModuleSpecifier::parse("https://example.com/c.ts").unwrap())
+    );
   }
 
   #[tokio::test]
@@ -417,12 +421,18 @@ mod tests {
     assert!(
       graph.contains(&ModuleSpecifier::parse("file:///a/test02.ts").unwrap())
     );
-    assert!(graph
-      .contains(&ModuleSpecifier::parse("https://example.com/a.ts").unwrap()));
-    assert!(graph
-      .contains(&ModuleSpecifier::parse("https://example.com/c.ts").unwrap()));
-    assert!(graph
-      .contains(&ModuleSpecifier::parse("https://example.com/d.ts").unwrap()));
+    assert!(
+      graph
+        .contains(&ModuleSpecifier::parse("https://example.com/a.ts").unwrap())
+    );
+    assert!(
+      graph
+        .contains(&ModuleSpecifier::parse("https://example.com/c.ts").unwrap())
+    );
+    assert!(
+      graph
+        .contains(&ModuleSpecifier::parse("https://example.com/d.ts").unwrap())
+    );
 
     // now try making one of the already existing modules a root
     graph
@@ -1190,8 +1200,7 @@ console.log(a);
         (
           "https://example.com/preact-types/jsx-runtime",
           Source::Module {
-            specifier:
-              "https://example.com/preact-types/jsx-runtime/index.d.ts",
+            specifier: "https://example.com/preact-types/jsx-runtime/index.d.ts",
             maybe_headers: Some(vec![(
               "content-type",
               "application/typescript",
@@ -1712,13 +1721,17 @@ export function a(a) {
     assert!(
       graph.contains(&ModuleSpecifier::parse("https://example.com/a").unwrap())
     );
-    assert!(graph
-      .contains(&ModuleSpecifier::parse("https://example.com/a.ts").unwrap()));
+    assert!(
+      graph
+        .contains(&ModuleSpecifier::parse("https://example.com/a.ts").unwrap())
+    );
     assert!(
       graph.contains(&ModuleSpecifier::parse("https://example.com/b").unwrap())
     );
-    assert!(graph
-      .contains(&ModuleSpecifier::parse("https://example.com/b.ts").unwrap()));
+    assert!(
+      graph
+        .contains(&ModuleSpecifier::parse("https://example.com/b.ts").unwrap())
+    );
     assert_eq!(
       json!(graph.redirects),
       json!({
@@ -1782,13 +1795,17 @@ export function a(a) {
     assert!(
       graph.contains(&ModuleSpecifier::parse("https://example.com/a").unwrap())
     );
-    assert!(graph
-      .contains(&ModuleSpecifier::parse("https://example.com/a.ts").unwrap()));
+    assert!(
+      graph
+        .contains(&ModuleSpecifier::parse("https://example.com/a.ts").unwrap())
+    );
     assert!(
       graph.contains(&ModuleSpecifier::parse("https://example.com/b").unwrap())
     );
-    assert!(graph
-      .contains(&ModuleSpecifier::parse("https://example.com/b.ts").unwrap()));
+    assert!(
+      graph
+        .contains(&ModuleSpecifier::parse("https://example.com/b.ts").unwrap())
+    );
     assert_eq!(
       json!(graph.redirects),
       json!({
@@ -4038,10 +4055,14 @@ export function a(a: A): B {
     // should copy over the imports
     assert_eq!(graph.imports.len(), 1);
 
-    assert!(graph
-      .contains(&ModuleSpecifier::parse("https://example.com/a.ts").unwrap()));
-    assert!(graph
-      .contains(&ModuleSpecifier::parse("https://example.com/c.ts").unwrap()));
+    assert!(
+      graph
+        .contains(&ModuleSpecifier::parse("https://example.com/a.ts").unwrap())
+    );
+    assert!(
+      graph
+        .contains(&ModuleSpecifier::parse("https://example.com/c.ts").unwrap())
+    );
 
     assert_eq!(
       graph.resolve_dependency(

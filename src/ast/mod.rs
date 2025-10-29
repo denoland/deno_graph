@@ -1,14 +1,5 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
-use crate::analysis::find_deno_types;
-use crate::analysis::find_jsx_import_source;
-use crate::analysis::find_jsx_import_source_types;
-use crate::analysis::find_path_reference;
-use crate::analysis::find_resolution_mode;
-use crate::analysis::find_ts_self_types;
-use crate::analysis::find_ts_types;
-use crate::analysis::find_types_reference;
-use crate::analysis::is_comment_triple_slash_reference;
 use crate::analysis::DependencyDescriptor;
 use crate::analysis::DynamicArgument;
 use crate::analysis::DynamicDependencyDescriptor;
@@ -20,6 +11,15 @@ use crate::analysis::SpecifierWithRange;
 use crate::analysis::StaticDependencyDescriptor;
 use crate::analysis::TypeScriptReference;
 use crate::analysis::TypeScriptTypesResolutionMode;
+use crate::analysis::find_deno_types;
+use crate::analysis::find_jsx_import_source;
+use crate::analysis::find_jsx_import_source_types;
+use crate::analysis::find_path_reference;
+use crate::analysis::find_resolution_mode;
+use crate::analysis::find_ts_self_types;
+use crate::analysis::find_ts_types;
+use crate::analysis::find_types_reference;
+use crate::analysis::is_comment_triple_slash_reference;
 use crate::graph::Position;
 use crate::graph::PositionRange;
 use crate::module_specifier::ModuleSpecifier;
@@ -30,18 +30,18 @@ use deno_ast::SourcePos;
 use deno_ast::SourceRanged;
 use deno_ast::SourceRangedForSpanned;
 
-use deno_ast::swc::common::comments::CommentKind;
 use deno_ast::MediaType;
 use deno_ast::ParseDiagnostic;
 use deno_ast::ParsedSource;
 use deno_ast::SourceTextInfo;
+use deno_ast::swc::common::comments::CommentKind;
 use deno_error::JsErrorBox;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use self::dep::analyze_program_dependencies;
 use self::dep::DependencyComment;
+use self::dep::analyze_program_dependencies;
 
 mod dep;
 
@@ -200,17 +200,18 @@ impl EsParser for CapturingEsParser<'_> {
     &self,
     options: ParseOptions,
   ) -> Result<ParsedSource, ParseDiagnostic> {
-    if let Some(parsed_source) = self.get_from_store_if_matches(&options) {
-      Ok(parsed_source)
-    } else {
-      let default_parser = DefaultEsParser;
-      let parser = self.parser.unwrap_or(&default_parser);
-      let specifier = options.specifier.clone();
-      let parsed_source = parser.parse_program(options)?;
-      self
-        .store
-        .set_parsed_source(specifier, parsed_source.clone());
-      Ok(parsed_source)
+    match self.get_from_store_if_matches(&options) {
+      Some(parsed_source) => Ok(parsed_source),
+      _ => {
+        let default_parser = DefaultEsParser;
+        let parser = self.parser.unwrap_or(&default_parser);
+        let specifier = options.specifier.clone();
+        let parsed_source = parser.parse_program(options)?;
+        self
+          .store
+          .set_parsed_source(specifier, parsed_source.clone());
+        Ok(parsed_source)
+      }
     }
   }
 }
@@ -1019,11 +1020,13 @@ mod tests {
       r#"https://deno.land/x/types/react/index.d.ts"#
     );
 
-    assert!(dependencies[6]
-      .as_static()
-      .unwrap()
-      .types_specifier
-      .is_none());
+    assert!(
+      dependencies[6]
+        .as_static()
+        .unwrap()
+        .types_specifier
+        .is_none()
+    );
 
     let dep_deno_types = &dependencies[8]
       .as_dynamic()
@@ -1475,10 +1478,12 @@ export {};
       parse_jsdoc_import_decl("@import { SomeType } from \"./a.ts\"").is_ok()
     );
     // quotes in named imports
-    assert!(parse_jsdoc_import_decl(
-      "@import { SomeType, \"test\" as test, 'b' as test2 } from \"./a.ts\""
-    )
-    .is_ok());
+    assert!(
+      parse_jsdoc_import_decl(
+        "@import { SomeType, \"test\" as test, 'b' as test2 } from \"./a.ts\""
+      )
+      .is_ok()
+    );
     // single quotes and namespace import
     assert!(parse_jsdoc_import_decl("@import * as test from './a.ts'").is_ok());
     // missing space certain tokens
@@ -1489,7 +1494,9 @@ export {};
     assert!(parse_jsdoc_import_decl("@import test from \"./a.ts'").is_err());
     assert!(parse_jsdoc_import_decl("@import test from './a.ts\"").is_err());
     assert_eq!(
-      parse_resolution_mode("@import { SomeType } from \"./a.ts\" with { 'resolution-mode': 'import' }"),
+      parse_resolution_mode(
+        "@import { SomeType } from \"./a.ts\" with { 'resolution-mode': 'import' }"
+      ),
       Some(TypeScriptTypesResolutionMode::Import)
     );
     assert_eq!(
@@ -1499,7 +1506,9 @@ export {};
       Some(TypeScriptTypesResolutionMode::Require)
     );
     assert_eq!(
-      parse_resolution_mode("@import v from 'test' with { type: 'other', 'resolution-mode': \"require\" }"),
+      parse_resolution_mode(
+        "@import v from 'test' with { type: 'other', 'resolution-mode': \"require\" }"
+      ),
       Some(TypeScriptTypesResolutionMode::Require)
     );
   }

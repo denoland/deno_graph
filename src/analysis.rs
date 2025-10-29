@@ -10,10 +10,10 @@ use regex::Regex;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::ModuleSpecifier;
 use crate::graph::Position;
 use crate::graph::PositionRange;
 use crate::source::ResolutionMode;
-use crate::ModuleSpecifier;
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", tag = "type")]
@@ -328,31 +328,29 @@ pub fn module_graph_1_to_2(module_info: &mut serde_json::Value) {
   // To support older module graphs, we need to convert the module graph 1
   // to the new format. To do this, we need to extract the types specifier
   // from the leading comments and add it to the dependency object.
-  if let serde_json::Value::Object(module_info) = module_info {
-    if let Some(dependencies) = module_info
+  if let serde_json::Value::Object(module_info) = module_info
+    && let Some(dependencies) = module_info
       .get_mut("dependencies")
       .and_then(|v| v.as_array_mut())
-    {
-      for dependency in dependencies {
-        if let Some(dependency) = dependency.as_object_mut() {
-          if let Some(leading_comments) = dependency
-            .get("leadingComments")
-            .and_then(|v| v.as_array())
-            .and_then(|v| {
-              v.iter()
-                .map(|v| serde_json::from_value(v.clone()).ok())
-                .collect::<Option<Vec<Comment>>>()
-            })
-          {
-            if let Some(deno_types) = analyze_deno_types(&leading_comments) {
-              dependency.insert(
-                "typesSpecifier".to_string(),
-                serde_json::to_value(deno_types).unwrap(),
-              );
-            }
-            dependency.remove("leadingComments");
-          }
+  {
+    for dependency in dependencies {
+      if let Some(dependency) = dependency.as_object_mut()
+        && let Some(leading_comments) = dependency
+          .get("leadingComments")
+          .and_then(|v| v.as_array())
+          .and_then(|v| {
+            v.iter()
+              .map(|v| serde_json::from_value(v.clone()).ok())
+              .collect::<Option<Vec<Comment>>>()
+          })
+      {
+        if let Some(deno_types) = analyze_deno_types(&leading_comments) {
+          dependency.insert(
+            "typesSpecifier".to_string(),
+            serde_json::to_value(deno_types).unwrap(),
+          );
         }
+        dependency.remove("leadingComments");
       }
     }
   };

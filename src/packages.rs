@@ -5,18 +5,18 @@ use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
+use deno_semver::StackString;
+use deno_semver::Version;
+use deno_semver::VersionReq;
 use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::package::PackageName;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
-use deno_semver::StackString;
-use deno_semver::Version;
-use deno_semver::VersionReq;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::analysis::module_graph_1_to_2;
 use crate::analysis::ModuleInfo;
+use crate::analysis::module_graph_1_to_2;
 use crate::graph::JsrPackageReqNotFoundError;
 
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
@@ -367,13 +367,11 @@ impl<'a> JsrPackageVersionResolver<'a> {
     // 2. attempt to resolve with the unyanked versions
     let mut any_had_higher_newest_dep_date_version = false;
     let unyanked_versions =
-      self.package_info.versions.iter().filter_map(|(v, i)| {
-        if !i.yanked {
-          Some((v, Some(i)))
-        } else {
-          None
-        }
-      });
+      self
+        .package_info
+        .versions
+        .iter()
+        .filter_map(|(v, i)| if !i.yanked { Some((v, Some(i))) } else { None });
     match resolve_version(
       ResolveVersionOptions {
         version_req: &package_req.version_req,
@@ -396,13 +394,11 @@ impl<'a> JsrPackageVersionResolver<'a> {
 
     // 3. attempt to resolve with the the yanked versions
     let yanked_versions =
-      self.package_info.versions.iter().filter_map(|(v, i)| {
-        if i.yanked {
-          Some((v, Some(i)))
-        } else {
-          None
-        }
-      });
+      self
+        .package_info
+        .versions
+        .iter()
+        .filter_map(|(v, i)| if i.yanked { Some((v, Some(i))) } else { None });
     match resolve_version(
       ResolveVersionOptions {
         version_req: &package_req.version_req,
