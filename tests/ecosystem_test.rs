@@ -344,15 +344,14 @@ async fn test_version(
 
   for root in &roots {
     let module = graph.get(root).unwrap();
-    if let Some(module) = module.js() {
-      if let Some(diagnostics) = module.fast_check_diagnostics() {
+    if let Some(module) = module.js()
+      && let Some(diagnostics) = module.fast_check_diagnostics() {
         for diagnostic in diagnostics {
           if fast_check_diagnostic_ranges.insert(diagnostic.range()) {
             fast_check_diagnostics.push(diagnostic.clone());
           }
         }
       }
-    }
   }
 
   let mut output = if fast_check_diagnostics.is_empty() {
@@ -395,13 +394,12 @@ async fn test_version(
       if module.specifier().scheme() != "file" {
         continue;
       }
-      if let Some(module) = module.js() {
-        if let Some(fcm) = module.fast_check_module() {
+      if let Some(module) = module.js()
+        && let Some(fcm) = module.fast_check_module() {
           let path =
             format!("{}{}", tmpdir_path.display(), module.specifier.path());
           std::fs::write(&path, fcm.source.as_bytes()).unwrap();
         }
-      }
     }
 
     let tmpdir_path_str = tmpdir_path.to_string_lossy().to_string();

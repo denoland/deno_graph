@@ -64,11 +64,9 @@ impl Loader for TestLoader {
       if let Some(deno_graph::source::LoadResponse::Module {
         content, ..
       }) = &response
-      {
-        if let Some(checksum) = checksum {
+        && let Some(checksum) = checksum {
           checksum.check_source(content)?;
         }
-      }
       Ok(response)
     }
     .boxed_local()

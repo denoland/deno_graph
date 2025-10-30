@@ -880,11 +880,10 @@ pub mod tests {
       referrer_range: &Range,
       _resolution_kind: ResolutionKind,
     ) -> Result<ModuleSpecifier, ResolveError> {
-      if let Some(map) = self.map.get(&referrer_range.specifier) {
-        if let Some(resolved_specifier) = map.get(specifier) {
+      if let Some(map) = self.map.get(&referrer_range.specifier)
+        && let Some(resolved_specifier) = map.get(specifier) {
           return Ok(resolved_specifier.clone());
         }
-      }
       Ok(resolve_import(specifier, &referrer_range.specifier)?)
     }
 
