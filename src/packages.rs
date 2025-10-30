@@ -366,12 +366,11 @@ impl<'a> JsrPackageVersionResolver<'a> {
 
     // 2. attempt to resolve with the unyanked versions
     let mut any_had_higher_newest_dep_date_version = false;
-    let unyanked_versions =
-      self
-        .package_info
-        .versions
-        .iter()
-        .filter_map(|(v, i)| if !i.yanked { Some((v, Some(i))) } else { None });
+    let unyanked_versions = self
+      .package_info
+      .versions
+      .iter()
+      .filter_map(|(v, i)| if !i.yanked { Some((v, Some(i))) } else { None });
     match resolve_version(
       ResolveVersionOptions {
         version_req: &package_req.version_req,
@@ -393,12 +392,11 @@ impl<'a> JsrPackageVersionResolver<'a> {
     }
 
     // 3. attempt to resolve with the the yanked versions
-    let yanked_versions =
-      self
-        .package_info
-        .versions
-        .iter()
-        .filter_map(|(v, i)| if i.yanked { Some((v, Some(i))) } else { None });
+    let yanked_versions = self
+      .package_info
+      .versions
+      .iter()
+      .filter_map(|(v, i)| if i.yanked { Some((v, Some(i))) } else { None });
     match resolve_version(
       ResolveVersionOptions {
         version_req: &package_req.version_req,
