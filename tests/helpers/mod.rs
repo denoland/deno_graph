@@ -61,12 +61,12 @@ impl Loader for TestLoader {
     };
     async move {
       let response = future.await?;
-      if let Some(deno_graph::source::LoadResponse::Module {
-        content, ..
-      }) = &response
-        && let Some(checksum) = checksum {
-          checksum.check_source(content)?;
-        }
+      if let Some(deno_graph::source::LoadResponse::Module { content, .. }) =
+        &response
+        && let Some(checksum) = checksum
+      {
+        checksum.check_source(content)?;
+      }
       Ok(response)
     }
     .boxed_local()
