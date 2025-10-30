@@ -9,11 +9,13 @@ use deno_unsync::future::LocalFutureExt;
 use deno_unsync::future::SharedLocal;
 use futures::FutureExt;
 
+use crate::Executor;
+use crate::ModuleSpecifier;
 use crate::graph::JsrLoadError;
 use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
-use crate::rt::spawn;
 use crate::rt::JoinHandle;
+use crate::rt::spawn;
 use crate::source::CacheSetting;
 use crate::source::JsrUrlProvider;
 use crate::source::LoadError;
@@ -22,8 +24,6 @@ use crate::source::LoadResponse;
 use crate::source::Loader;
 use crate::source::LoaderChecksum;
 use crate::source::Locker;
-use crate::Executor;
-use crate::ModuleSpecifier;
 
 #[derive(Debug, Clone)]
 pub struct PendingJsrPackageVersionInfoLoadItem {
@@ -158,7 +158,7 @@ impl JsrMetadataStore {
             version_info
               .lockfile_checksum
               .clone()
-              .unwrap_or_else(|| LoaderChecksum::gen(content)),
+              .unwrap_or_else(|| LoaderChecksum::r#gen(content)),
           )
         });
         Ok(PendingJsrPackageVersionInfoLoadItem {

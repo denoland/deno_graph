@@ -4,8 +4,8 @@ use std::ops::ControlFlow;
 
 use deno_ast::swc::ast::*;
 use deno_ast::swc::atoms::Atom;
-use deno_ast::swc::common::SyntaxContext;
 use deno_ast::swc::common::DUMMY_SP;
+use deno_ast::swc::common::SyntaxContext;
 
 pub fn new_ident(name: Atom) -> Ident {
   Ident {

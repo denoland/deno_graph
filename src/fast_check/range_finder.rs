@@ -7,9 +7,9 @@ use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::sync::Arc;
 
-use deno_ast::swc::ast::Expr;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
+use deno_ast::swc::ast::Expr;
 use deno_semver::package::PackageNv;
 use indexmap::IndexMap;
 use url::Url;
@@ -19,6 +19,9 @@ use super::FastCheckCacheItem;
 use super::FastCheckCacheKey;
 use super::FastCheckDiagnosticRange;
 use super::FastCheckModule;
+use crate::ModuleGraph;
+use crate::ModuleSpecifier;
+use crate::WorkspaceMember;
 use crate::source::JsrUrlProvider;
 use crate::symbols::FileDepName;
 use crate::symbols::ModuleInfoRef;
@@ -29,12 +32,9 @@ use crate::symbols::SymbolDeclKind;
 use crate::symbols::SymbolId;
 use crate::symbols::SymbolNodeDep;
 use crate::symbols::SymbolNodeRef;
-use crate::ModuleGraph;
-use crate::ModuleSpecifier;
-use crate::WorkspaceMember;
 
-use super::cache::fast_insecure_hash;
 use super::FastCheckDiagnostic;
+use super::cache::fast_insecure_hash;
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 struct NamedSubset(IndexMap<String, Exports>);
@@ -409,60 +409,61 @@ impl<'a> PublicRangeFinder<'a> {
         })
         .collect::<BTreeSet<_>>();
 
-      if let Some(mut public_ranges) =
-        self.try_get_cache_item(&nv, &entrypoints)
-      {
-        log::debug!("Using FastCheck cache for: {}", nv);
-        public_ranges.entrypoints = entrypoints;
-        self.public_ranges.insert(nv, public_ranges);
-      } else {
-        let mut had_diagnostic = false;
-        for specifier in &entrypoints {
-          // check for untyped or non-existent entrypoints
-          let diagnostic = if let Some(module) = self.graph.get(specifier) {
-            if is_module_typed(module) {
-              None
+      match self.try_get_cache_item(&nv, &entrypoints) {
+        Some(mut public_ranges) => {
+          log::debug!("Using FastCheck cache for: {}", nv);
+          public_ranges.entrypoints = entrypoints;
+          self.public_ranges.insert(nv, public_ranges);
+        }
+        _ => {
+          let mut had_diagnostic = false;
+          for specifier in &entrypoints {
+            // check for untyped or non-existent entrypoints
+            let diagnostic = if let Some(module) = self.graph.get(specifier) {
+              if is_module_typed(module) {
+                None
+              } else {
+                Some(FastCheckDiagnostic::UnsupportedJavaScriptEntrypoint {
+                  specifier: specifier.clone(),
+                })
+              }
             } else {
-              Some(FastCheckDiagnostic::UnsupportedJavaScriptEntrypoint {
+              // should never happen
+              Some(FastCheckDiagnostic::ExportNotFound {
                 specifier: specifier.clone(),
               })
+            };
+            if let Some(diagnostic) = diagnostic {
+              self
+                .public_ranges
+                .entry(nv.clone())
+                .or_default()
+                .module_ranges
+                .entry(specifier.clone())
+                .or_default()
+                .diagnostics
+                .push(diagnostic);
+              had_diagnostic = true;
             }
-          } else {
-            // should never happen
-            Some(FastCheckDiagnostic::ExportNotFound {
-              specifier: specifier.clone(),
-            })
-          };
-          if let Some(diagnostic) = diagnostic {
-            self
-              .public_ranges
-              .entry(nv.clone())
-              .or_default()
-              .module_ranges
-              .entry(specifier.clone())
-              .or_default()
-              .diagnostics
-              .push(diagnostic);
-            had_diagnostic = true;
           }
-        }
 
-        if !had_diagnostic {
-          for specifier in &entrypoints {
-            self.add_pending_trace(
-              &nv,
-              specifier,
-              ImportedExports::star_with_default(),
-            );
+          if !had_diagnostic {
+            for specifier in &entrypoints {
+              self.add_pending_trace(
+                &nv,
+                specifier,
+                ImportedExports::star_with_default(),
+              );
+            }
           }
-        }
 
-        while let Some(trace) = self.pending_traces.pop() {
-          self.analyze_trace(&trace);
-        }
+          while let Some(trace) = self.pending_traces.pop() {
+            self.analyze_trace(&trace);
+          }
 
-        let public_ranges = self.public_ranges.entry(nv).or_default();
-        public_ranges.entrypoints = entrypoints;
+          let public_ranges = self.public_ranges.entry(nv).or_default();
+          public_ranges.entrypoints = entrypoints;
+        }
       }
     }
 
@@ -727,74 +728,71 @@ impl<'a> PublicRangeFinder<'a> {
           }
         }
 
-        if !named_exports.is_empty() {
-          if let Some(re_export_all_nodes) = module_info.re_export_all_nodes() {
-            for re_export_all_node in re_export_all_nodes {
-              if named_exports.is_empty() {
-                break; // all done
-              }
-              let specifier_text = re_export_all_node.src.value.as_str();
-              if let Some(dep_specifier) = self.graph.resolve_dependency(
-                specifier_text,
-                module_info.specifier(),
-                /* prefer types */ true,
-              ) {
-                if let Some(module_info) =
-                  self.root_symbol.module_from_specifier(dep_specifier)
-                {
-                  let module_exports = module_info.exports(self.root_symbol);
+        if !named_exports.is_empty()
+          && let Some(re_export_all_nodes) = module_info.re_export_all_nodes()
+        {
+          for re_export_all_node in re_export_all_nodes {
+            if named_exports.is_empty() {
+              break; // all done
+            }
+            let specifier_text = re_export_all_node.src.value.as_str();
+            if let Some(dep_specifier) = self.graph.resolve_dependency(
+              specifier_text,
+              module_info.specifier(),
+              /* prefer types */ true,
+            ) && let Some(module_info) =
+              self.root_symbol.module_from_specifier(dep_specifier)
+            {
+              let module_exports = module_info.exports(self.root_symbol);
 
-                  for i in (0..named_exports.len()).rev() {
-                    let (export_name, _) = named_exports.get_index(i).unwrap();
-                    if let Some(export_path) =
-                      module_exports.resolved.get(export_name)
-                    {
-                      if found_ranges.insert(re_export_all_node.span.range()) {
-                        log::trace!(
-                          "Found re-export all - {}",
-                          re_export_all_node.src.value
-                        );
-                      }
-                      let export_name = export_name.clone();
-                      let named_exports =
-                        named_exports.swap_remove(&export_name).unwrap();
-                      let module = match export_path {
-                        ResolvedExportOrReExportAllPath::Export(e) => e.module,
-                        ResolvedExportOrReExportAllPath::ReExportAllPath(p) => {
-                          p.referrer_module
-                        }
-                      };
-                      if let Some(nv) = self
-                        .url_converter
-                        .registry_package_url_to_nv(module.specifier())
-                      {
-                        let mut new_named_exports = NamedSubset::default();
-                        new_named_exports.0.insert(export_name, named_exports);
-                        self.add_pending_trace(
-                          &nv,
-                          module.specifier(),
-                          ImportedExports::subset(new_named_exports),
-                        );
-                      }
+              for i in (0..named_exports.len()).rev() {
+                let (export_name, _) = named_exports.get_index(i).unwrap();
+                if let Some(export_path) =
+                  module_exports.resolved.get(export_name)
+                {
+                  if found_ranges.insert(re_export_all_node.span.range()) {
+                    log::trace!(
+                      "Found re-export all - {}",
+                      re_export_all_node.src.value
+                    );
+                  }
+                  let export_name = export_name.clone();
+                  let named_exports =
+                    named_exports.swap_remove(&export_name).unwrap();
+                  let module = match export_path {
+                    ResolvedExportOrReExportAllPath::Export(e) => e.module,
+                    ResolvedExportOrReExportAllPath::ReExportAllPath(p) => {
+                      p.referrer_module
                     }
+                  };
+                  if let Some(nv) = self
+                    .url_converter
+                    .registry_package_url_to_nv(module.specifier())
+                  {
+                    let mut new_named_exports = NamedSubset::default();
+                    new_named_exports.0.insert(export_name, named_exports);
+                    self.add_pending_trace(
+                      &nv,
+                      module.specifier(),
+                      ImportedExports::subset(new_named_exports),
+                    );
                   }
                 }
               }
             }
+          }
 
-            if !named_exports.is_empty() {
-              // in this case, include all re_export all ranges because
-              // we couldn't determine a named export
-              if let Some(re_export_all_nodes) =
-                module_info.re_export_all_nodes()
-              {
-                for re_export_all_node in re_export_all_nodes {
-                  log::trace!(
-                    "Found re-export all - {}",
-                    re_export_all_node.src.value
-                  );
-                  found_ranges.insert(re_export_all_node.span.range());
-                }
+          if !named_exports.is_empty() {
+            // in this case, include all re_export all ranges because
+            // we couldn't determine a named export
+            if let Some(re_export_all_nodes) = module_info.re_export_all_nodes()
+            {
+              for re_export_all_node in re_export_all_nodes {
+                log::trace!(
+                  "Found re-export all - {}",
+                  re_export_all_node.src.value
+                );
+                found_ranges.insert(re_export_all_node.span.range());
               }
             }
           }
@@ -871,34 +869,31 @@ impl<'a> PublicRangeFinder<'a> {
                   &file_dep.specifier,
                   module_info.specifier(),
                   /* prefer types */ true,
-                ) {
-                  if let Some(dep_nv) =
-                    self.url_converter.registry_package_url_to_nv(specifier)
-                  {
-                    if dep_nv == *pkg_nv {
-                      // just add this specifier
-                      self.add_pending_trace(
-                        &dep_nv,
-                        specifier,
-                        ImportedExports::from_file_dep_name(&file_dep.name),
-                      );
-                    } else {
-                      // need to analyze the whole package
-                      self.add_pending_nv(&dep_nv, pkg_nv);
-                    }
+                ) && let Some(dep_nv) =
+                  self.url_converter.registry_package_url_to_nv(specifier)
+                {
+                  if dep_nv == *pkg_nv {
+                    // just add this specifier
+                    self.add_pending_trace(
+                      &dep_nv,
+                      specifier,
+                      ImportedExports::from_file_dep_name(&file_dep.name),
+                    );
+                  } else {
+                    // need to analyze the whole package
+                    self.add_pending_nv(&dep_nv, pkg_nv);
                   }
                 }
               }
               SymbolDeclKind::Definition(node) => {
                 if let Some(node) = node.maybe_ref() {
                   // if the node is a class or interface member, ensure its parent is traced
-                  if node.is_member() {
-                    if let Some(parent_id) = symbol.parent_id() {
-                      // don't add the parent if we analyzed this node from the parent
-                      if trace_referrer_id != parent_id {
-                        pending_traces
-                          .maybe_add_id_trace(parent_id, referrer_id);
-                      }
+                  if node.is_member()
+                    && let Some(parent_id) = symbol.parent_id()
+                  {
+                    // don't add the parent if we analyzed this node from the parent
+                    if trace_referrer_id != parent_id {
+                      pending_traces.maybe_add_id_trace(parent_id, referrer_id);
                     }
                   }
 
@@ -953,28 +948,26 @@ impl<'a> PublicRangeFinder<'a> {
                           &specifier,
                           module_info.specifier(),
                           /* prefer types */ true,
-                        ) {
-                          if let Some(dep_nv) = self
-                            .url_converter
-                            .registry_package_url_to_nv(specifier)
-                          {
-                            if dep_nv == *pkg_nv {
-                              // just add this specifier
-                              self.add_pending_trace(
-                                &dep_nv,
-                                specifier,
-                                if parts.is_empty() {
-                                  ImportedExports::star_with_default()
-                                } else {
-                                  ImportedExports::subset(
-                                    NamedSubset::from_parts(&parts),
-                                  )
-                                },
-                              );
-                            } else {
-                              // need to analyze the whole package
-                              self.add_pending_nv(&dep_nv, pkg_nv);
-                            }
+                        ) && let Some(dep_nv) = self
+                          .url_converter
+                          .registry_package_url_to_nv(specifier)
+                        {
+                          if dep_nv == *pkg_nv {
+                            // just add this specifier
+                            self.add_pending_trace(
+                              &dep_nv,
+                              specifier,
+                              if parts.is_empty() {
+                                ImportedExports::star_with_default()
+                              } else {
+                                ImportedExports::subset(
+                                  NamedSubset::from_parts(&parts),
+                                )
+                              },
+                            );
+                          } else {
+                            // need to analyze the whole package
+                            self.add_pending_nv(&dep_nv, pkg_nv);
                           }
                         }
                       }
@@ -1055,31 +1048,29 @@ impl<'a> PublicRangeFinder<'a> {
                   &file_dep.specifier,
                   module_info.specifier(),
                   /* prefer types */ true,
-                ) {
-                  if let Some(dep_nv) =
-                    self.url_converter.registry_package_url_to_nv(specifier)
-                  {
-                    if dep_nv == *pkg_nv {
-                      let named_exports = match &file_dep.name {
-                        FileDepName::Star => {
-                          // pass along the names as-is
-                          ImportedExports::Subset(parts.clone())
-                        }
-                        FileDepName::Name(first_part) => {
-                          let mut new_subset = NamedSubset::default();
-                          new_subset.add_named(
-                            first_part.clone(),
-                            Exports::Subset(parts.clone()),
-                          );
-                          ImportedExports::Subset(new_subset)
-                        }
-                      };
-                      // just add this specifier
-                      self.add_pending_trace(&dep_nv, specifier, named_exports);
-                    } else {
-                      // need to analyze the whole package
-                      self.add_pending_nv(&dep_nv, pkg_nv);
-                    }
+                ) && let Some(dep_nv) =
+                  self.url_converter.registry_package_url_to_nv(specifier)
+                {
+                  if dep_nv == *pkg_nv {
+                    let named_exports = match &file_dep.name {
+                      FileDepName::Star => {
+                        // pass along the names as-is
+                        ImportedExports::Subset(parts.clone())
+                      }
+                      FileDepName::Name(first_part) => {
+                        let mut new_subset = NamedSubset::default();
+                        new_subset.add_named(
+                          first_part.clone(),
+                          Exports::Subset(parts.clone()),
+                        );
+                        ImportedExports::Subset(new_subset)
+                      }
+                    };
+                    // just add this specifier
+                    self.add_pending_trace(&dep_nv, specifier, named_exports);
+                  } else {
+                    // need to analyze the whole package
+                    self.add_pending_nv(&dep_nv, pkg_nv);
                   }
                 }
               }

@@ -9,31 +9,31 @@ use std::time::SystemTime;
 
 use async_trait::async_trait;
 use deno_error::JsErrorClass;
-use deno_media_type::data_url::RawDataUrl;
 use deno_media_type::MediaType;
+use deno_media_type::data_url::RawDataUrl;
+use deno_semver::StackString;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
-use deno_semver::StackString;
+use futures::FutureExt;
 use futures::future;
 use futures::future::LocalBoxFuture;
-use futures::FutureExt;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde::Serialize;
+use sys_traits::BaseFsReadDir;
 use sys_traits::boxed::BoxedFsDirEntry;
 use sys_traits::boxed::FsReadDirBoxed;
-use sys_traits::BaseFsReadDir;
 use thiserror::Error;
 use url::Url;
 
+use crate::ModuleSpecifier;
+use crate::NpmLoadError;
+use crate::SpecifierError;
 use crate::analysis::ModuleInfo;
 use crate::graph::Range;
 use crate::module_specifier::resolve_import;
 use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
-use crate::ModuleSpecifier;
-use crate::NpmLoadError;
-use crate::SpecifierError;
 
 pub type FileSystem = dyn FsReadDirBoxed;
 
@@ -190,7 +190,7 @@ impl LoaderChecksum {
     &self,
     source: &[u8],
   ) -> Result<(), ChecksumIntegrityError> {
-    let actual_checksum = Self::gen(source);
+    let actual_checksum = Self::r#gen(source);
     if self.0 == actual_checksum {
       Ok(())
     } else {
@@ -201,7 +201,7 @@ impl LoaderChecksum {
     }
   }
 
-  pub fn gen(source: &[u8]) -> String {
+  pub fn r#gen(source: &[u8]) -> String {
     use sha2::Digest;
     use sha2::Sha256;
     let mut hasher = Sha256::new();
@@ -880,10 +880,10 @@ pub mod tests {
       referrer_range: &Range,
       _resolution_kind: ResolutionKind,
     ) -> Result<ModuleSpecifier, ResolveError> {
-      if let Some(map) = self.map.get(&referrer_range.specifier) {
-        if let Some(resolved_specifier) = map.get(specifier) {
-          return Ok(resolved_specifier.clone());
-        }
+      if let Some(map) = self.map.get(&referrer_range.specifier)
+        && let Some(resolved_specifier) = map.get(specifier)
+      {
+        return Ok(resolved_specifier.clone());
       }
       Ok(resolve_import(specifier, &referrer_range.specifier)?)
     }

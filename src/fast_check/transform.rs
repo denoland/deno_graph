@@ -7,15 +7,6 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
-use deno_ast::emit;
-use deno_ast::swc::ast::*;
-use deno_ast::swc::common::comments::CommentKind;
-use deno_ast::swc::common::comments::SingleThreadedComments;
-use deno_ast::swc::common::comments::SingleThreadedCommentsMapInner;
-use deno_ast::swc::common::Spanned;
-use deno_ast::swc::common::SyntaxContext;
-use deno_ast::swc::common::DUMMY_SP;
-use deno_ast::swc::ecma_visit::VisitWith;
 use deno_ast::EmitOptions;
 use deno_ast::ModuleSpecifier;
 use deno_ast::MultiThreadedComments;
@@ -24,29 +15,38 @@ use deno_ast::ProgramRef;
 use deno_ast::SourceMap;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
+use deno_ast::emit;
+use deno_ast::swc::ast::*;
+use deno_ast::swc::common::DUMMY_SP;
+use deno_ast::swc::common::Spanned;
+use deno_ast::swc::common::SyntaxContext;
+use deno_ast::swc::common::comments::CommentKind;
+use deno_ast::swc::common::comments::SingleThreadedComments;
+use deno_ast::swc::common::comments::SingleThreadedCommentsMapInner;
+use deno_ast::swc::ecma_visit::VisitWith;
 use indexmap::IndexMap;
 
+use crate::ModuleGraph;
+use crate::WorkspaceMember;
 use crate::analysis::ModuleInfo;
 use crate::ast::ParserModuleAnalyzer;
 use crate::symbols::EsModuleInfo;
 use crate::symbols::ExpandoPropertyRef;
 use crate::symbols::Symbol;
-use crate::ModuleGraph;
-use crate::WorkspaceMember;
 
+use super::FastCheckDiagnostic;
+use super::FastCheckDiagnosticRange;
 use super::range_finder::ModulePublicRanges;
+use super::swc_helpers::DeclMutabilityKind;
+use super::swc_helpers::ReturnStatementAnalysis;
 use super::swc_helpers::analyze_return_stmts_in_function_body;
 use super::swc_helpers::any_type_ann;
 use super::swc_helpers::is_void_type;
 use super::swc_helpers::maybe_lit_to_ts_type;
 use super::swc_helpers::new_ident;
 use super::swc_helpers::ts_keyword_type;
-use super::swc_helpers::DeclMutabilityKind;
-use super::swc_helpers::ReturnStatementAnalysis;
 use super::transform_dts::FastCheckDtsDiagnostic;
 use super::transform_dts::FastCheckDtsTransformer;
-use super::FastCheckDiagnostic;
-use super::FastCheckDiagnosticRange;
 
 pub struct CommentsMut {
   leading: SingleThreadedCommentsMapInner,
@@ -201,11 +201,7 @@ enum TransformItemResult {
 
 impl TransformItemResult {
   fn from_retain(retain: bool) -> Self {
-    if retain {
-      Self::Retain
-    } else {
-      Self::Remove
-    }
+    if retain { Self::Retain } else { Self::Remove }
   }
 }
 
@@ -432,10 +428,8 @@ impl<'a> FastCheckTransformer<'a> {
           n.specifiers
             .retain(|s| self.public_ranges.contains(&s.range()));
           let retain = !n.specifiers.is_empty();
-          if retain {
-            if let Some(src) = &mut n.src {
-              self.transform_module_specifier(src);
-            }
+          if retain && let Some(src) = &mut n.src {
+            self.transform_module_specifier(src);
           }
           Ok(TransformItemResult::from_retain(retain))
         }
@@ -662,14 +656,12 @@ impl<'a> FastCheckTransformer<'a> {
 
     let mut members = Vec::with_capacity(n.body.len());
     let mut had_private = false;
-    if let Some(super_class) = &n.super_class {
-      if !is_expr_ident_or_member_idents(super_class) {
-        self.mark_diagnostic(
-          FastCheckDiagnostic::UnsupportedSuperClassExpr {
-            range: self.source_range_to_range(n.super_class.range()),
-          },
-        )?;
-      }
+    if let Some(super_class) = &n.super_class
+      && !is_expr_ident_or_member_idents(super_class)
+    {
+      self.mark_diagnostic(FastCheckDiagnostic::UnsupportedSuperClassExpr {
+        range: self.source_range_to_range(n.super_class.range()),
+      })?;
     }
     let mut insert_members = Vec::new();
     let mut had_private_constructor = false;
@@ -699,31 +691,31 @@ impl<'a> FastCheckTransformer<'a> {
               retain = false;
             }
           }
-        } else if let ClassMember::Method(method) = &member {
-          if method.accessibility == Some(Accessibility::Private) {
-            let key = match &method.key {
-              PropName::Ident(i) => Some(i.sym.to_string()),
-              PropName::Str(s) => Some(s.value.to_string()),
-              PropName::Num(n) => Some(
-                n.raw
-                  .as_ref()
-                  .map(|r| r.to_string())
-                  .unwrap_or_else(|| n.value.to_string()),
-              ),
+        } else if let ClassMember::Method(method) = &member
+          && method.accessibility == Some(Accessibility::Private)
+        {
+          let key = match &method.key {
+            PropName::Ident(i) => Some(i.sym.to_string()),
+            PropName::Str(s) => Some(s.value.to_string()),
+            PropName::Num(n) => Some(
+              n.raw
+                .as_ref()
+                .map(|r| r.to_string())
+                .unwrap_or_else(|| n.value.to_string()),
+            ),
 
-              PropName::Computed(_) => None,
-              PropName::BigInt(n) => Some(
-                n.raw
-                  .as_ref()
-                  .map(|r| r.to_string())
-                  .unwrap_or_else(|| n.value.to_string()),
-              ),
-            };
-            retain = match key {
-              Some(key) => seen_ts_private_methods.insert(key),
-              None => false,
-            };
-          }
+            PropName::Computed(_) => None,
+            PropName::BigInt(n) => Some(
+              n.raw
+                .as_ref()
+                .map(|r| r.to_string())
+                .unwrap_or_else(|| n.value.to_string()),
+            ),
+          };
+          retain = match key {
+            Some(key) => seen_ts_private_methods.insert(key),
+            None => false,
+          };
         }
       }
 
@@ -1066,24 +1058,27 @@ impl<'a> FastCheckTransformer<'a> {
         };
         let type_ann = if n.accessibility == Some(Accessibility::Private) {
           any_type_ann()
-        } else if let Some(type_ann) = n.type_ann.clone() {
-          type_ann
         } else {
-          let inferred_type = n.value.as_ref().and_then(|e| {
-            self.maybe_infer_type_from_expr(e, DeclMutabilityKind::Mutable)
-          });
-          match inferred_type {
-            Some(t) => Box::new(TsTypeAnn {
-              span: DUMMY_SP,
-              type_ann: Box::new(t),
-            }),
-            None => {
-              self.mark_diagnostic(
-                FastCheckDiagnostic::MissingExplicitType {
-                  range: self.source_range_to_range(n.key.range()),
-                },
-              )?;
-              any_type_ann()
+          match n.type_ann.clone() {
+            Some(type_ann) => type_ann,
+            _ => {
+              let inferred_type = n.value.as_ref().and_then(|e| {
+                self.maybe_infer_type_from_expr(e, DeclMutabilityKind::Mutable)
+              });
+              match inferred_type {
+                Some(t) => Box::new(TsTypeAnn {
+                  span: DUMMY_SP,
+                  type_ann: Box::new(t),
+                }),
+                None => {
+                  self.mark_diagnostic(
+                    FastCheckDiagnostic::MissingExplicitType {
+                      range: self.source_range_to_range(n.key.range()),
+                    },
+                  )?;
+                  any_type_ann()
+                }
+              }
             }
           }
         };

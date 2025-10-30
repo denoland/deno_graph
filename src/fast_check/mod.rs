@@ -5,6 +5,9 @@ use std::sync::Arc;
 
 use crate::ModuleSpecifier;
 
+use deno_ast::EmitError;
+use deno_ast::SourceRange;
+use deno_ast::SourceTextInfo;
 use deno_ast::diagnostics::DiagnosticLevel;
 use deno_ast::diagnostics::DiagnosticLocation;
 use deno_ast::diagnostics::DiagnosticSnippet;
@@ -12,9 +15,6 @@ use deno_ast::diagnostics::DiagnosticSnippetHighlight;
 use deno_ast::diagnostics::DiagnosticSnippetHighlightStyle;
 use deno_ast::diagnostics::DiagnosticSourcePos;
 use deno_ast::diagnostics::DiagnosticSourceRange;
-use deno_ast::EmitError;
-use deno_ast::SourceRange;
-use deno_ast::SourceTextInfo;
 
 mod cache;
 mod range_finder;
@@ -107,9 +107,13 @@ pub enum FastCheckDiagnostic {
   },
   #[error("found global augmentations, which are not supported")]
   UnsupportedGlobalModule { range: FastCheckDiagnosticRange },
-  #[error("require statements are a CommonJS feature, which are not supported in ES modules")]
+  #[error(
+    "require statements are a CommonJS feature, which are not supported in ES modules"
+  )]
   UnsupportedRequire { range: FastCheckDiagnosticRange },
-  #[error("public API member ({referrer}) is referencing or transitively referencing a class private member ({name})")]
+  #[error(
+    "public API member ({referrer}) is referencing or transitively referencing a class private member ({name})"
+  )]
   UnsupportedPrivateMemberReference {
     range: FastCheckDiagnosticRange,
     name: String,
@@ -121,11 +125,15 @@ pub enum FastCheckDiagnostic {
     "export assignments are a Common JS feature, which are not supported in ES modules"
   )]
   UnsupportedTsExportAssignment { range: FastCheckDiagnosticRange },
-  #[error("found namespace export, which is a global augmentation, which are not unsupported")]
+  #[error(
+    "found namespace export, which is a global augmentation, which are not unsupported"
+  )]
   UnsupportedTsNamespaceExport { range: FastCheckDiagnosticRange },
   #[error("using declarations are not supproted in the public API")]
   UnsupportedUsing { range: FastCheckDiagnosticRange },
-  #[error("referenced a JavaScript module without type declarations from a TypeScript module")]
+  #[error(
+    "referenced a JavaScript module without type declarations from a TypeScript module"
+  )]
   UnsupportedNestedJavaScript { specifier: ModuleSpecifier },
   #[error(
     "used a JavaScript module without type declarations as an entrypoint"
@@ -343,11 +351,19 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
       MissingExplicitType { .. } => {
         Cow::Borrowed("add an explicit type annotation to the symbol")
       }
-      MissingExplicitReturnType { is_definitely_void_or_never, is_async, .. } => {
+      MissingExplicitReturnType {
+        is_definitely_void_or_never,
+        is_async,
+        ..
+      } => {
         if *is_definitely_void_or_never {
-          Cow::Borrowed("add an explicit return type of 'void' or 'never' to the function")
+          Cow::Borrowed(
+            "add an explicit return type of 'void' or 'never' to the function",
+          )
         } else if *is_async {
-          Cow::Borrowed("add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function")
+          Cow::Borrowed(
+            "add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function",
+          )
         } else {
           Cow::Borrowed("add an explicit return type to the function")
         }
@@ -355,25 +371,56 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
       UnsupportedAmbientModule { .. } => {
         Cow::Borrowed("remove the ambient module declaration")
       }
-      UnsupportedComplexReference { .. } => {
-        Cow::Borrowed("extract the shared type to a type alias and reference the type alias instead")
+      UnsupportedComplexReference { .. } => Cow::Borrowed(
+        "extract the shared type to a type alias and reference the type alias instead",
+      ),
+      UnsupportedDefaultExportExpr { .. } => Cow::Borrowed(
+        "add an 'as' clause with an explicit type after the expression, or extract to a variable",
+      ),
+      UnsupportedDestructuring { .. } => Cow::Borrowed(
+        "separate each destructured symbol into its own export statement",
+      ),
+      UnsupportedExpandoProperty { reference_name, .. } => Cow::Owned(format!(
+        "rename '{}' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference",
+        reference_name
+      )),
+      UnsupportedGlobalModule { .. } => {
+        Cow::Borrowed("remove the 'global' augmentation")
       }
-      UnsupportedDefaultExportExpr { .. } => Cow::Borrowed("add an 'as' clause with an explicit type after the expression, or extract to a variable"),
-      UnsupportedDestructuring { .. } => Cow::Borrowed("separate each destructured symbol into its own export statement"),
-      UnsupportedExpandoProperty { reference_name, .. } => Cow::Owned(format!("rename '{}' to something else to avoid conflicts or create a temporary variable with a different name to use in the expando property reference", reference_name)),
-      UnsupportedGlobalModule { .. } => Cow::Borrowed("remove the 'global' augmentation"),
-      UnsupportedRequire { .. } => Cow::Borrowed("use an import statement instead"),
-      UnsupportedPrivateMemberReference { .. } => Cow::Borrowed("extract the type of the private member to a type alias and reference the type alias instead"),
-      UnsupportedSuperClassExpr { .. } => Cow::Borrowed("extract the superclass expression into a variable"),
-      UnsupportedTsExportAssignment { .. } => Cow::Borrowed("use an export statement instead"),
-      UnsupportedTsNamespaceExport { .. } => Cow::Borrowed("remove the namespace export"),
-      UnsupportedUsing { .. } => Cow::Borrowed("use 'const' instead of 'using'"),
-      UnsupportedNestedJavaScript { .. } => Cow::Borrowed("add a type declaration (d.ts) for the JavaScript module, or rewrite it to TypeScript"),
-      UnsupportedJavaScriptEntrypoint { .. } => Cow::Borrowed("add a type declaration (d.ts) for the JavaScript module, or rewrite it to TypeScript"),
-      Emit { .. } => Cow::Borrowed("this error may be the result of a bug in Deno - if you think this is the case, please open an issue"),
+      UnsupportedRequire { .. } => {
+        Cow::Borrowed("use an import statement instead")
+      }
+      UnsupportedPrivateMemberReference { .. } => Cow::Borrowed(
+        "extract the type of the private member to a type alias and reference the type alias instead",
+      ),
+      UnsupportedSuperClassExpr { .. } => {
+        Cow::Borrowed("extract the superclass expression into a variable")
+      }
+      UnsupportedTsExportAssignment { .. } => {
+        Cow::Borrowed("use an export statement instead")
+      }
+      UnsupportedTsNamespaceExport { .. } => {
+        Cow::Borrowed("remove the namespace export")
+      }
+      UnsupportedUsing { .. } => {
+        Cow::Borrowed("use 'const' instead of 'using'")
+      }
+      UnsupportedNestedJavaScript { .. } => Cow::Borrowed(
+        "add a type declaration (d.ts) for the JavaScript module, or rewrite it to TypeScript",
+      ),
+      UnsupportedJavaScriptEntrypoint { .. } => Cow::Borrowed(
+        "add a type declaration (d.ts) for the JavaScript module, or rewrite it to TypeScript",
+      ),
+      Emit { .. } => Cow::Borrowed(
+        "this error may be the result of a bug in Deno - if you think this is the case, please open an issue",
+      ),
       // only a bug if the user sees these
-      ExportNotFound { .. } => Cow::Borrowed("this error is the result of a bug in Deno and you don't be seeing it - please open an issue if one doesn't exist"),
-      Cached { .. } => Cow::Borrowed("this error is the result of a bug in Deno and you don't be seeing it - please open an issue if one doesn't exist"),
+      ExportNotFound { .. } => Cow::Borrowed(
+        "this error is the result of a bug in Deno and you don't be seeing it - please open an issue if one doesn't exist",
+      ),
+      Cached { .. } => Cow::Borrowed(
+        "this error is the result of a bug in Deno and you don't be seeing it - please open an issue if one doesn't exist",
+      ),
     })
   }
 
@@ -386,14 +433,20 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
   fn info(&self) -> std::borrow::Cow<'_, [std::borrow::Cow<'_, str>]> {
     use FastCheckDiagnostic::*;
     match self {
-      NotFoundReference { .. } => Cow::Borrowed(&[
-        Cow::Borrowed("this error may be the result of a bug in Deno - if you think this is the case, please open an issue"),
-      ]),
-      MissingExplicitType { .. } => Cow::Borrowed(&[
-        Cow::Borrowed("all symbols in the public API must have an explicit type")
-      ]),
-      MissingExplicitReturnType { is_definitely_void_or_never, is_async, .. } => {
-        let mut lines = vec![Cow::Borrowed("all functions in the public API must have an explicit return type")];
+      NotFoundReference { .. } => Cow::Borrowed(&[Cow::Borrowed(
+        "this error may be the result of a bug in Deno - if you think this is the case, please open an issue",
+      )]),
+      MissingExplicitType { .. } => Cow::Borrowed(&[Cow::Borrowed(
+        "all symbols in the public API must have an explicit type",
+      )]),
+      MissingExplicitReturnType {
+        is_definitely_void_or_never,
+        is_async,
+        ..
+      } => {
+        let mut lines = vec![Cow::Borrowed(
+          "all functions in the public API must have an explicit return type",
+        )];
         if *is_definitely_void_or_never {
           if *is_async {
             lines.push(Cow::Borrowed("async function expressions without a return statement can have a return type of either 'Promise<void>' or 'Promise<never>'"));
@@ -403,63 +456,77 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
           lines.push(Cow::Borrowed("this function has no return statements, so a return type could not be inferred automatically"));
         }
         Cow::Owned(lines)
-      },
-      UnsupportedAmbientModule { .. } => Cow::Borrowed(&[
-        Cow::Borrowed("ambient modules are not supported because they can modify the types of a module from outside of that module")
+      }
+      UnsupportedAmbientModule { .. } => Cow::Borrowed(&[Cow::Borrowed(
+        "ambient modules are not supported because they can modify the types of a module from outside of that module",
+      )]),
+      UnsupportedComplexReference { .. } => Cow::Borrowed(&[Cow::Borrowed(
+        "the reference was too complex to be resolved by fast check",
+      )]),
+      UnsupportedDefaultExportExpr { .. } => Cow::Borrowed(&[Cow::Borrowed(
+        "fast check was unable to infer the type of the default export expression",
+      )]),
+      UnsupportedDestructuring { .. } => Cow::Borrowed(&[Cow::Borrowed(
+        "destructuring can not be inferred by fast check",
+      )]),
+      UnsupportedExpandoProperty { .. } => Cow::Borrowed(&[Cow::Borrowed(
+        "expando properties get converted to a namespace and the reference conflicts with a namespace export",
+      )]),
+      UnsupportedGlobalModule { .. } => Cow::Borrowed(&[Cow::Borrowed(
+        "global augmentations are not supported because they can modify global types, which can affect other modules type checking",
+      )]),
+      UnsupportedRequire { .. } => Cow::Borrowed(&[Cow::Borrowed(
+        "CommonJS features such as require are not supported in ES modules",
+      )]),
+      UnsupportedPrivateMemberReference { .. } => Cow::Borrowed(&[
+        Cow::Borrowed(
+          "private members can not be referenced from public API members",
+        ),
+        Cow::Borrowed(
+          "this is because fast check removes private members from the types",
+        ),
       ]),
-      UnsupportedComplexReference { .. } => Cow::Borrowed(&[
-        Cow::Borrowed("the reference was too complex to be resolved by fast check")
-      ]),
-      UnsupportedDefaultExportExpr { .. } => Cow::Borrowed(&[
-        Cow::Borrowed("fast check was unable to infer the type of the default export expression")
-      ]),
-      UnsupportedDestructuring { .. } => Cow::Borrowed(&[
-        Cow::Borrowed("destructuring can not be inferred by fast check")
-      ]),
-      UnsupportedExpandoProperty { .. } => Cow::Borrowed(&[
-        Cow::Borrowed("expando properties get converted to a namespace and the reference conflicts with a namespace export")
-      ]),
-      UnsupportedGlobalModule { .. } => Cow::Borrowed(&[
-        Cow::Borrowed("global augmentations are not supported because they can modify global types, which can affect other modules type checking")
-      ]),
-      UnsupportedRequire { .. } => Cow::Borrowed(&[
-        Cow::Borrowed("CommonJS features such as require are not supported in ES modules")
-      ]),
-      UnsupportedPrivateMemberReference {  .. } => Cow::Borrowed(&[
-        Cow::Borrowed("private members can not be referenced from public API members"),
-        Cow::Borrowed("this is because fast check removes private members from the types"),
-      ]),
-      UnsupportedSuperClassExpr { .. } => Cow::Borrowed(&[
-        Cow::Borrowed("fast check was unable to infer the type of the superclass expression")
-      ]),
-      UnsupportedTsExportAssignment { .. } => Cow::Borrowed(&[
-        Cow::Borrowed("CommonJS features such as export assignments are not supported in ES modules")
-      ]),
-      UnsupportedTsNamespaceExport { .. } => Cow::Borrowed(&[
-        Cow::Borrowed("namespace exports are not supported because they can modify the types of a module from outside of that module")
-      ]),
+      UnsupportedSuperClassExpr { .. } => Cow::Borrowed(&[Cow::Borrowed(
+        "fast check was unable to infer the type of the superclass expression",
+      )]),
+      UnsupportedTsExportAssignment { .. } => Cow::Borrowed(&[Cow::Borrowed(
+        "CommonJS features such as export assignments are not supported in ES modules",
+      )]),
+      UnsupportedTsNamespaceExport { .. } => Cow::Borrowed(&[Cow::Borrowed(
+        "namespace exports are not supported because they can modify the types of a module from outside of that module",
+      )]),
       UnsupportedUsing { .. } => Cow::Borrowed(&[
-        Cow::Borrowed("using declarations have unclear semantics in the public API"),
+        Cow::Borrowed(
+          "using declarations have unclear semantics in the public API",
+        ),
         Cow::Borrowed("they are thus not supported in the public API"),
       ]),
       UnsupportedNestedJavaScript { .. } => Cow::Borrowed(&[
-        Cow::Borrowed("JavaScript files with no corresponding declaration require type inference to be type checked"),
-        Cow::Borrowed("fast check avoids type inference, so referencing a JavaScript file with no type declarations is not supported"),
+        Cow::Borrowed(
+          "JavaScript files with no corresponding declaration require type inference to be type checked",
+        ),
+        Cow::Borrowed(
+          "fast check avoids type inference, so referencing a JavaScript file with no type declarations is not supported",
+        ),
       ]),
       UnsupportedJavaScriptEntrypoint { .. } => Cow::Borrowed(&[
-        Cow::Borrowed("JavaScript files with no corresponding declaration require type inference to be type checked"),
-        Cow::Borrowed("fast check avoids type inference, so JavaScript entrypoints should be avoided"),
+        Cow::Borrowed(
+          "JavaScript files with no corresponding declaration require type inference to be type checked",
+        ),
+        Cow::Borrowed(
+          "fast check avoids type inference, so JavaScript entrypoints should be avoided",
+        ),
       ]),
-      Emit {  .. } => Cow::Borrowed(&[
-        Cow::Borrowed("this error may be the result of a bug in Deno - if you think this is the case, please open an issue")
-      ]),
+      Emit { .. } => Cow::Borrowed(&[Cow::Borrowed(
+        "this error may be the result of a bug in Deno - if you think this is the case, please open an issue",
+      )]),
       // only a bug if the user sees these
-      ExportNotFound {  .. } => Cow::Borrowed(&[
-        Cow::Borrowed("this error is the result of a bug in Deno and you don't be seeing it - please open an issue if one doesn't exist")
-      ]),
-      Cached {  .. } => Cow::Borrowed(&[
-        Cow::Borrowed("this error is the result of a bug in Deno and you don't be seeing it - please open an issue if one doesn't exist")
-      ]),
+      ExportNotFound { .. } => Cow::Borrowed(&[Cow::Borrowed(
+        "this error is the result of a bug in Deno and you don't be seeing it - please open an issue if one doesn't exist",
+      )]),
+      Cached { .. } => Cow::Borrowed(&[Cow::Borrowed(
+        "this error is the result of a bug in Deno and you don't be seeing it - please open an issue if one doesn't exist",
+      )]),
     }
   }
 

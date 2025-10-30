@@ -42,10 +42,10 @@ use deno_ast::swc::ast::VarDeclarator;
 use deno_ast::swc::ecma_visit::Visit;
 use deno_ast::swc::ecma_visit::VisitWith;
 
-use super::swc_helpers::ts_entity_name_to_parts;
-use super::swc_helpers::ts_qualified_name_parts;
 use super::ExportDeclRef;
 use super::SymbolNodeRef;
+use super::swc_helpers::ts_entity_name_to_parts;
+use super::swc_helpers::ts_qualified_name_parts;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum SymbolNodeDep {
@@ -367,12 +367,12 @@ impl Visit for DepsFiller {
 
   fn visit_var_declarator(&mut self, n: &VarDeclarator) {
     self.visit_pat(&n.name);
-    if !pat_has_type_ann(&n.name) {
-      if let Some(init) = &n.init {
-        let visited_type_assertion = self.visit_type_if_type_assertion(init);
-        if !visited_type_assertion && self.mode.visit_exprs() {
-          self.visit_expr(init);
-        }
+    if !pat_has_type_ann(&n.name)
+      && let Some(init) = &n.init
+    {
+      let visited_type_assertion = self.visit_type_if_type_assertion(init);
+      if !visited_type_assertion && self.mode.visit_exprs() {
+        self.visit_expr(init);
       }
     }
   }
@@ -494,14 +494,17 @@ impl Visit for DepsFiller {
   }
 
   fn visit_expr(&mut self, n: &Expr) {
-    if let Some((id, parts)) = expr_into_id_and_parts(n) {
-      if parts.is_empty() {
-        self.deps.push(SymbolNodeDep::Id(id))
-      } else {
-        self.deps.push(SymbolNodeDep::QualifiedId(id, parts))
+    match expr_into_id_and_parts(n) {
+      Some((id, parts)) => {
+        if parts.is_empty() {
+          self.deps.push(SymbolNodeDep::Id(id))
+        } else {
+          self.deps.push(SymbolNodeDep::QualifiedId(id, parts))
+        }
       }
-    } else {
-      n.visit_children_with(self);
+      _ => {
+        n.visit_children_with(self);
+      }
     }
   }
 
@@ -516,10 +519,13 @@ impl Visit for DepsFiller {
   }
 
   fn visit_member_expr(&mut self, n: &MemberExpr) {
-    if let Some((id, parts)) = member_expr_into_id_and_parts(n) {
-      self.deps.push(SymbolNodeDep::QualifiedId(id, parts))
-    } else {
-      n.visit_children_with(self);
+    match member_expr_into_id_and_parts(n) {
+      Some((id, parts)) => {
+        self.deps.push(SymbolNodeDep::QualifiedId(id, parts))
+      }
+      _ => {
+        n.visit_children_with(self);
+      }
     }
   }
 
