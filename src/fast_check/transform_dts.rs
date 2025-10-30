@@ -1,19 +1,19 @@
-use deno_ast::swc::ast::*;
-use deno_ast::swc::common::SyntaxContext;
-use deno_ast::swc::common::DUMMY_SP;
 use deno_ast::ModuleSpecifier;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
 use deno_ast::SourceTextInfo;
+use deno_ast::swc::ast::*;
+use deno_ast::swc::common::DUMMY_SP;
+use deno_ast::swc::common::SyntaxContext;
 
+use super::FastCheckDiagnosticRange;
 use super::range_finder::ModulePublicRanges;
+use super::swc_helpers::DeclMutabilityKind;
 use super::swc_helpers::any_type_ann;
 use super::swc_helpers::maybe_lit_to_ts_type;
 use super::swc_helpers::ts_readonly;
 use super::swc_helpers::ts_tuple_element;
 use super::swc_helpers::type_ann;
-use super::swc_helpers::DeclMutabilityKind;
-use super::FastCheckDiagnosticRange;
 
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum FastCheckDtsDiagnostic {
@@ -155,27 +155,28 @@ impl<'a> FastCheckDtsTransformer<'a> {
             new_items.push(ModuleItem::ModuleDecl(module_decl));
           }
           ModuleDecl::ExportDecl(export_decl) => {
-            if let Decl::Fn(_) = &export_decl.decl {
-              if self
+            if let Decl::Fn(_) = &export_decl.decl
+              && self
                 .public_ranges
                 .is_impl_with_overloads(&export_decl.range())
-              {
-                continue; // skip implementation signature
-              }
+            {
+              continue; // skip implementation signature
             }
 
-            if let Some(decl) = self.decl_to_type_decl(export_decl.decl.clone())
-            {
-              new_items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(
-                ExportDecl {
-                  decl,
-                  span: export_decl.span,
+            match self.decl_to_type_decl(export_decl.decl.clone()) {
+              Some(decl) => {
+                new_items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(
+                  ExportDecl {
+                    decl,
+                    span: export_decl.span,
+                  },
+                )));
+              }
+              _ => self.mark_diagnostic(
+                FastCheckDtsDiagnostic::UnableToInferType {
+                  range: self.source_range_to_range(export_decl.range()),
                 },
-              )));
-            } else {
-              self.mark_diagnostic(FastCheckDtsDiagnostic::UnableToInferType {
-                range: self.source_range_to_range(export_decl.range()),
-              })
+              ),
             }
           }
           ModuleDecl::ExportDefaultDecl(export_decl) => {
@@ -275,24 +276,23 @@ impl<'a> FastCheckDtsTransformer<'a> {
     let Stmt::Decl(decl) = stmt else {
       return None;
     };
-    if let Decl::Fn(_) = &decl {
-      if self.public_ranges.is_impl_with_overloads(&decl.range()) {
-        return None; // skip implementation signature
-      }
+    if let Decl::Fn(_) = &decl
+      && self.public_ranges.is_impl_with_overloads(&decl.range())
+    {
+      return None; // skip implementation signature
     }
     match decl {
       Decl::TsEnum(_)
       | Decl::Class(_)
       | Decl::Fn(_)
       | Decl::Var(_)
-      | Decl::TsModule(_) => {
-        if let Some(decl) = self.decl_to_type_decl(decl.clone()) {
-          Some(Stmt::Decl(decl))
-        } else {
+      | Decl::TsModule(_) => match self.decl_to_type_decl(decl.clone()) {
+        Some(decl) => Some(Stmt::Decl(decl)),
+        _ => {
           self.mark_diagnostic_unable_to_infer(decl.range());
           None
         }
-      }
+      },
       Decl::TsInterface(_) | Decl::TsTypeAlias(_) | Decl::Using(_) => {
         Some(Stmt::Decl(decl))
       }
@@ -311,14 +311,17 @@ impl<'a> FastCheckDtsTransformer<'a> {
 
         for elems in arr.elems {
           if let Some(expr_or_spread) = elems {
-            if let Some(ts_expr) = self.expr_to_ts_type(
+            match self.expr_to_ts_type(
               *expr_or_spread.expr.clone(),
               as_const,
               as_readonly,
             ) {
-              elem_types.push(ts_tuple_element(ts_expr));
-            } else {
-              self.mark_diagnostic_unable_to_infer(expr_or_spread.range());
+              Some(ts_expr) => {
+                elem_types.push(ts_tuple_element(ts_expr));
+              }
+              _ => {
+                self.mark_diagnostic_unable_to_infer(expr_or_spread.range());
+              }
             }
           } else {
             // TypeScript converts holey arrays to any
@@ -569,12 +572,13 @@ impl<'a> FastCheckDtsTransformer<'a> {
       Decl::TsModule(mut ts_module) => {
         ts_module.declare = is_declare;
 
-        if let Some(body) = ts_module.body.clone() {
-          ts_module.body = Some(self.transform_ts_ns_body(body));
+        match ts_module.body.clone() {
+          Some(body) => {
+            ts_module.body = Some(self.transform_ts_ns_body(body));
 
-          Some(Decl::TsModule(ts_module))
-        } else {
-          Some(Decl::TsModule(ts_module))
+            Some(Decl::TsModule(ts_module))
+          }
+          _ => Some(Decl::TsModule(ts_module)),
         }
       }
       Decl::TsInterface(_) | Decl::TsTypeAlias(_) => Some(decl),
@@ -750,13 +754,12 @@ impl<'a> FastCheckDtsTransformer<'a> {
     as_const: bool,
     as_readonly: bool,
   ) -> Box<TsTypeAnn> {
-    if let Some(ts_type) =
-      self.expr_to_ts_type(expr.clone(), as_const, as_readonly)
-    {
-      type_ann(ts_type)
-    } else {
-      self.mark_diagnostic_any_fallback(expr.range());
-      any_type_ann()
+    match self.expr_to_ts_type(expr.clone(), as_const, as_readonly) {
+      Some(ts_type) => type_ann(ts_type),
+      _ => {
+        self.mark_diagnostic_any_fallback(expr.range());
+        any_type_ann()
+      }
     }
   }
 
@@ -785,10 +788,13 @@ impl<'a> FastCheckDtsTransformer<'a> {
           Some(ClassMember::Constructor(class_constructor))
         }
         ClassMember::Method(mut method) => {
-          if let Some(new_prop_name) = valid_prop_name(&method.key) {
-            method.key = new_prop_name;
-          } else {
-            return None;
+          match valid_prop_name(&method.key) {
+            Some(new_prop_name) => {
+              method.key = new_prop_name;
+            }
+            _ => {
+              return None;
+            }
           }
 
           method.function.body = None;
@@ -799,18 +805,21 @@ impl<'a> FastCheckDtsTransformer<'a> {
           Some(ClassMember::Method(method))
         }
         ClassMember::ClassProp(mut prop) => {
-          if let Some(new_prop_name) = valid_prop_name(&prop.key) {
-            prop.key = new_prop_name;
-          } else {
-            return None;
-          }
-          if prop.type_ann.is_none() {
-            if let Some(value) = prop.value {
-              prop.type_ann = self
-                .expr_to_ts_type(*value, false, false)
-                .map(type_ann)
-                .or_else(|| Some(any_type_ann()));
+          match valid_prop_name(&prop.key) {
+            Some(new_prop_name) => {
+              prop.key = new_prop_name;
             }
+            _ => {
+              return None;
+            }
+          }
+          if prop.type_ann.is_none()
+            && let Some(value) = prop.value
+          {
+            prop.type_ann = self
+              .expr_to_ts_type(*value, false, false)
+              .map(type_ann)
+              .or_else(|| Some(any_type_ann()));
           }
           prop.value = None;
           prop.definite = false;
@@ -1049,21 +1058,21 @@ fn valid_prop_name(prop_name: &PropName) -> Option<PropName> {
 mod tests {
   use std::collections::VecDeque;
 
+  use crate::BuildOptions;
+  use crate::GraphKind;
+  use crate::ModuleGraph;
+  use crate::WorkspaceMember;
   use crate::ast::CapturingModuleAnalyzer;
   use crate::fast_check::range_finder::find_public_ranges;
   use crate::fast_check::transform_dts::FastCheckDtsTransformer;
   use crate::source::MemoryLoader;
   use crate::source::Source;
   use crate::symbols::RootSymbol;
-  use crate::BuildOptions;
-  use crate::GraphKind;
-  use crate::ModuleGraph;
-  use crate::WorkspaceMember;
-  use deno_ast::emit;
   use deno_ast::EmitOptions;
   use deno_ast::EmittedSourceText;
   use deno_ast::ModuleSpecifier;
   use deno_ast::SourceMap;
+  use deno_ast::emit;
   use deno_semver::package::PackageNv;
   use indexmap::IndexMap;
   use url::Url;

@@ -50,10 +50,11 @@ impl<T> Future for JoinHandle<T> {
 
   fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
     if let Poll::Ready(()) = Pin::new(&mut self.fut).poll(cx) {
-      if let Poll::Ready(Ok(res)) = Pin::new(&mut self.rx).poll(cx) {
-        Poll::Ready(res)
-      } else {
-        panic!("task panic");
+      match Pin::new(&mut self.rx).poll(cx) {
+        Poll::Ready(Ok(res)) => Poll::Ready(res),
+        _ => {
+          panic!("task panic");
+        }
       }
     } else {
       Poll::Pending

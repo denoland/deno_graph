@@ -1,5 +1,6 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
+use crate::ReferrerImports;
 use crate::analysis::DependencyDescriptor;
 use crate::analysis::DynamicArgument;
 use crate::analysis::DynamicDependencyKind;
@@ -18,12 +19,11 @@ use crate::jsr::PendingJsrPackageVersionInfoLoadItem;
 use crate::jsr::PendingResult;
 use crate::packages::JsrVersionResolver;
 use crate::packages::NewestDependencyDate;
-use crate::ReferrerImports;
 
-use crate::module_specifier::is_fs_root_specifier;
-use crate::module_specifier::resolve_import;
 use crate::module_specifier::ModuleSpecifier;
 use crate::module_specifier::SpecifierError;
+use crate::module_specifier::is_fs_root_specifier;
+use crate::module_specifier::resolve_import;
 use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
 use crate::packages::PackageSpecifiers;
@@ -36,8 +36,13 @@ use boxed_error::Boxed;
 use deno_error::JsError;
 use deno_error::JsErrorBox;
 use deno_error::JsErrorClass;
-use deno_media_type::encoding::DecodedArcSourceDetailKind;
 use deno_media_type::encoding::BOM_CHAR;
+use deno_media_type::encoding::DecodedArcSourceDetailKind;
+use deno_semver::RangeSetOrTag;
+use deno_semver::SmallStackString;
+use deno_semver::StackString;
+use deno_semver::Version;
+use deno_semver::VersionReq;
 use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::jsr::JsrPackageNvReference;
 use deno_semver::jsr::JsrPackageReqReference;
@@ -48,24 +53,19 @@ use deno_semver::package::PackageNvReference;
 use deno_semver::package::PackageReq;
 use deno_semver::package::PackageReqReferenceParseError;
 use deno_semver::package::PackageSubPath;
-use deno_semver::RangeSetOrTag;
-use deno_semver::SmallStackString;
-use deno_semver::StackString;
-use deno_semver::Version;
-use deno_semver::VersionReq;
+use futures::FutureExt;
 use futures::future::LocalBoxFuture;
 use futures::stream::FuturesOrdered;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
-use futures::FutureExt;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
-use serde::ser::SerializeSeq;
-use serde::ser::SerializeStruct;
-use serde::ser::SerializeTuple;
 use serde::Deserialize;
 use serde::Serialize;
 use serde::Serializer;
+use serde::ser::SerializeSeq;
+use serde::ser::SerializeStruct;
+use serde::ser::SerializeTuple;
 use std::borrow::Cow;
 use std::cell::RefCell;
 use std::cmp::Ordering;
@@ -268,7 +268,9 @@ pub enum JsrLoadError {
   #[error(transparent)]
   ContentChecksumIntegrity(ChecksumIntegrityError),
   #[class(generic)]
-  #[error("Loader should never return an external specifier for a jsr: specifier content load.")]
+  #[error(
+    "Loader should never return an external specifier for a jsr: specifier content load."
+  )]
   ContentLoadExternalSpecifier,
   #[class(inherit)]
   #[error(transparent)]
@@ -551,19 +553,68 @@ impl fmt::Display for ModuleErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Self::Load { err, .. } => err.fmt(f),
-      Self::Parse { diagnostic, .. } => write!(f, "The module's source code could not be parsed: {diagnostic}"),
-      Self::WasmParse { specifier, err, .. } => write!(f, "The Wasm module could not be parsed: {err}\n  Specifier: {specifier}"),
-      Self::UnsupportedMediaType { specifier, media_type: MediaType::Json, .. } => write!(f, "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import attribute with the type of \"json\".\n  Specifier: {specifier}"),
-      Self::UnsupportedMediaType { specifier, media_type: MediaType::Cjs | MediaType::Cts, .. } if specifier.scheme() != "file" => write!(f, "Remote CJS modules are not supported.\n  Specifier: {specifier}"),
-      Self::UnsupportedMediaType { specifier, media_type, .. } => write!(f, "Expected a JavaScript or TypeScript module, but identified a {media_type} module. Importing these types of modules is currently not supported.\n  Specifier: {specifier}"),
-      Self::Missing{ specifier, .. } => write!(f, "Module not found \"{specifier}\"."),
-      Self::MissingDynamic{ specifier, .. } => write!(f, "Dynamic import not found \"{specifier}\"."),
-      Self::InvalidTypeAssertion { specifier, actual_media_type: MediaType::Json, expected_media_type, .. } =>
-        write!(f, "Expected a {expected_media_type} module, but identified a Json module. Consider importing Json modules with an import attribute with the type of \"json\".\n  Specifier: {specifier}"),
-      Self::InvalidTypeAssertion { specifier, actual_media_type, expected_media_type, .. } =>
-        write!(f, "Expected a {expected_media_type} module, but identified a {actual_media_type} module.\n  Specifier: {specifier}"),
-      Self::UnsupportedImportAttributeType { specifier, kind, .. } =>
-        write!(f, "The import attribute type of \"{kind}\" is unsupported.\n  Specifier: {specifier}"),
+      Self::Parse { diagnostic, .. } => write!(
+        f,
+        "The module's source code could not be parsed: {diagnostic}"
+      ),
+      Self::WasmParse { specifier, err, .. } => write!(
+        f,
+        "The Wasm module could not be parsed: {err}\n  Specifier: {specifier}"
+      ),
+      Self::UnsupportedMediaType {
+        specifier,
+        media_type: MediaType::Json,
+        ..
+      } => write!(
+        f,
+        "Expected a JavaScript or TypeScript module, but identified a Json module. Consider importing Json modules with an import attribute with the type of \"json\".\n  Specifier: {specifier}"
+      ),
+      Self::UnsupportedMediaType {
+        specifier,
+        media_type: MediaType::Cjs | MediaType::Cts,
+        ..
+      } if specifier.scheme() != "file" => write!(
+        f,
+        "Remote CJS modules are not supported.\n  Specifier: {specifier}"
+      ),
+      Self::UnsupportedMediaType {
+        specifier,
+        media_type,
+        ..
+      } => write!(
+        f,
+        "Expected a JavaScript or TypeScript module, but identified a {media_type} module. Importing these types of modules is currently not supported.\n  Specifier: {specifier}"
+      ),
+      Self::Missing { specifier, .. } => {
+        write!(f, "Module not found \"{specifier}\".")
+      }
+      Self::MissingDynamic { specifier, .. } => {
+        write!(f, "Dynamic import not found \"{specifier}\".")
+      }
+      Self::InvalidTypeAssertion {
+        specifier,
+        actual_media_type: MediaType::Json,
+        expected_media_type,
+        ..
+      } => write!(
+        f,
+        "Expected a {expected_media_type} module, but identified a Json module. Consider importing Json modules with an import attribute with the type of \"json\".\n  Specifier: {specifier}"
+      ),
+      Self::InvalidTypeAssertion {
+        specifier,
+        actual_media_type,
+        expected_media_type,
+        ..
+      } => write!(
+        f,
+        "Expected a {expected_media_type} module, but identified a {actual_media_type} module.\n  Specifier: {specifier}"
+      ),
+      Self::UnsupportedImportAttributeType {
+        specifier, kind, ..
+      } => write!(
+        f,
+        "The import attribute type of \"{kind}\" is unsupported.\n  Specifier: {specifier}"
+      ),
     }
   }
 }
@@ -620,10 +671,8 @@ impl ModuleGraphError {
 impl std::error::Error for ModuleGraphError {
   fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
     match self {
-      Self::ModuleError(ref err) => Some(err),
-      Self::ResolutionError(ref err) | Self::TypesResolutionError(ref err) => {
-        Some(err)
-      }
+      Self::ModuleError(err) => Some(err),
+      Self::ResolutionError(err) | Self::TypesResolutionError(err) => Some(err),
     }
   }
 }
@@ -691,7 +740,7 @@ impl std::error::Error for ResolutionError {
       Self::InvalidDowngrade { .. }
       | Self::InvalidJsrHttpsTypesImport { .. }
       | Self::InvalidLocalImport { .. } => None,
-      Self::InvalidSpecifier { ref error, .. } => Some(error),
+      Self::InvalidSpecifier { error, .. } => Some(error),
       Self::ResolverError { error, .. } => Some(error.as_ref()),
     }
   }
@@ -770,9 +819,18 @@ impl Eq for ResolutionError {}
 impl fmt::Display for ResolutionError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Self::InvalidDowngrade { specifier, .. } => write!(f, "Modules imported via https are not allowed to import http modules.\n  Importing: {specifier}"),
-      Self::InvalidJsrHttpsTypesImport { specifier, .. } => write!(f, "Importing JSR packages via HTTPS specifiers for type checking is not supported for performance reasons. If you would like types, import via a `jsr:` specifier instead or else use a non-statically analyzable dynamic import.\n  Importing: {specifier}"),
-      Self::InvalidLocalImport { specifier, .. } => write!(f, "Remote modules are not allowed to import local modules. Consider using a dynamic import instead.\n  Importing: {specifier}"),
+      Self::InvalidDowngrade { specifier, .. } => write!(
+        f,
+        "Modules imported via https are not allowed to import http modules.\n  Importing: {specifier}"
+      ),
+      Self::InvalidJsrHttpsTypesImport { specifier, .. } => write!(
+        f,
+        "Importing JSR packages via HTTPS specifiers for type checking is not supported for performance reasons. If you would like types, import via a `jsr:` specifier instead or else use a non-statically analyzable dynamic import.\n  Importing: {specifier}"
+      ),
+      Self::InvalidLocalImport { specifier, .. } => write!(
+        f,
+        "Remote modules are not allowed to import local modules. Consider using a dynamic import instead.\n  Importing: {specifier}"
+      ),
       Self::ResolverError { error, .. } => error.fmt(f),
       Self::InvalidSpecifier { error, .. } => error.fmt(f),
     }
@@ -1118,6 +1176,7 @@ impl Module {
       Module::Js(module) => &module.specifier,
       Module::Json(module) => &module.specifier,
       Module::Wasm(module) => &module.specifier,
+      #[allow(deprecated)]
       Module::Npm(module) => &module.specifier,
       Module::Node(module) => &module.specifier,
       Module::External(module) => &module.specifier,
@@ -1237,7 +1296,20 @@ static EMPTY_DEPS: std::sync::OnceLock<IndexMap<String, Dependency>> =
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NpmModule {
+  // We need to change the NpmModule to instead only store an NpmReqReference
+  // and then map the req reference through the npm snapshot instead (have a single
+  // source of truth). This is necessary because deno_npm now does deduplication
+  // and so it will update on the fly the req to nv mapping, but then these
+  // properties in deno_graph won't get updated.
+  #[deprecated(
+    since = "0.103.1",
+    note = "Map the npm package req ref through the npm snapshot instead."
+  )]
   pub specifier: ModuleSpecifier,
+  #[deprecated(
+    since = "0.103.1",
+    note = "Map the npm package req ref through the npm snapshot instead."
+  )]
   #[serde(skip_serializing)]
   pub nv_reference: NpmPackageNvReference,
 }
@@ -1751,10 +1823,9 @@ impl<'a, 'options> ModuleEntryIterator<'a, 'options> {
   /// options.
   #[allow(clippy::result_large_err)]
   pub fn validate(self) -> Result<(), ModuleGraphError> {
-    if let Some(err) = self.errors().next() {
-      Err(err)
-    } else {
-      Ok(())
+    match self.errors().next() {
+      Some(err) => Err(err),
+      _ => Ok(()),
     }
   }
 
@@ -1843,31 +1914,31 @@ impl<'a> Iterator for ModuleEntryIterator<'a, '_> {
               // ignore
             }
             ModuleSlot::Module(module) => {
-              if let Module::Js(module) = &module {
-                if self.kind.include_types() {
-                  if let Some(Resolution::Ok(resolved)) = module
-                    .maybe_types_dependency
-                    .as_ref()
-                    .map(|d| &d.dependency)
-                  {
-                    let specifier = &resolved.specifier;
-                    if self.seen.insert(specifier) {
-                      self.visiting.push_front(specifier);
-                    }
-                    if self.kind == GraphKind::TypesOnly {
-                      continue; // skip visiting the code module
-                    }
-                  } else if self.kind == GraphKind::TypesOnly
-                    && !self.is_checkable(&module.specifier, module.media_type)
-                  {
-                    continue; // skip visiting
+              if let Module::Js(module) = &module
+                && self.kind.include_types()
+              {
+                if let Some(Resolution::Ok(resolved)) = module
+                  .maybe_types_dependency
+                  .as_ref()
+                  .map(|d| &d.dependency)
+                {
+                  let specifier = &resolved.specifier;
+                  if self.seen.insert(specifier) {
+                    self.visiting.push_front(specifier);
                   }
+                  if self.kind == GraphKind::TypesOnly {
+                    continue; // skip visiting the code module
+                  }
+                } else if self.kind == GraphKind::TypesOnly
+                  && !self.is_checkable(&module.specifier, module.media_type)
+                {
+                  continue; // skip visiting
                 }
               }
               break (specifier, ModuleEntryRef::Module(module));
             }
             ModuleSlot::Err(err) => {
-              break (specifier, ModuleEntryRef::Err(err))
+              break (specifier, ModuleEntryRef::Err(err));
             }
           }
         }
@@ -1986,18 +2057,17 @@ impl Iterator for ModuleGraphErrorIterator<'_, '_> {
       if let Some((_, module_entry)) = self.iterator.next() {
         match module_entry {
           ModuleEntryRef::Module(module) => {
-            if kind.include_types() {
-              if let Some(dep) = module.maybe_types_dependency().as_ref() {
-                if let Some(err) = self.check_resolution(
-                  module,
-                  ResolutionKind::Types,
-                  &dep.specifier,
-                  &dep.dependency,
-                  false,
-                ) {
-                  self.next_errors.push(err);
-                }
-              }
+            if kind.include_types()
+              && let Some(dep) = module.maybe_types_dependency().as_ref()
+              && let Some(err) = self.check_resolution(
+                module,
+                ResolutionKind::Types,
+                &dep.specifier,
+                &dep.dependency,
+                false,
+              )
+            {
+              self.next_errors.push(err);
             }
 
             let check_types = kind.include_types()
@@ -2020,16 +2090,16 @@ impl Iterator for ModuleGraphErrorIterator<'_, '_> {
                 ) {
                   self.next_errors.push(err);
                 }
-                if check_types {
-                  if let Some(err) = self.check_resolution(
+                if check_types
+                  && let Some(err) = self.check_resolution(
                     module,
                     ResolutionKind::Types,
                     specifier_text,
                     &dep.maybe_type,
                     dep.is_dynamic,
-                  ) {
-                    self.next_errors.push(err);
-                  }
+                  )
+                {
+                  self.next_errors.push(err);
                 }
               }
             }
@@ -2118,12 +2188,11 @@ impl ModuleGraph {
     options: FillFromLockfileOptions<'a, TRedirectIter, TPackageSpecifiersIter>,
   ) {
     for (from, to) in options.redirects {
-      if let Ok(from) = ModuleSpecifier::parse(from) {
-        if let Ok(to) = ModuleSpecifier::parse(to) {
-          if !matches!(from.scheme(), "file" | "npm" | "jsr") {
-            self.redirects.insert(from, to);
-          }
-        }
+      if let Ok(from) = ModuleSpecifier::parse(from)
+        && let Ok(to) = ModuleSpecifier::parse(to)
+        && !matches!(from.scheme(), "file" | "npm" | "jsr")
+      {
+        self.redirects.insert(from, to);
       }
     }
     for (req_dep, value) in options.package_specifiers {
@@ -2367,6 +2436,7 @@ impl ModuleGraph {
           handle_dependencies(&mut seen_pending, &mut wasm_module.dependencies);
         }
         Module::Npm(module) => {
+          #[allow(deprecated)]
           found_nvs.insert(module.nv_reference.nv().clone());
         }
         Module::Node(_) => {
@@ -2440,11 +2510,9 @@ impl ModuleGraph {
         ModuleSlot::Module(module) => {
           for dep in module.dependencies().values() {
             let is_asset = dep.imports.iter().all(|i| i.attributes.has_asset());
-            if is_asset {
-              if let Some(url) = dep.get_code() {
-                let url = self.resolve(url);
-                result.insert(url);
-              }
+            if is_asset && let Some(url) = dep.get_code() {
+              let url = self.resolve(url);
+              result.insert(url);
             }
           }
         }
@@ -2482,12 +2550,16 @@ impl ModuleGraph {
       redirected_specifier = specifier;
       while let Some(specifier) = self.redirects.get(redirected_specifier) {
         if !seen.insert(specifier) {
-          log::warn!("An infinite loop of redirections detected.\n  Original specifier: {specifier}");
+          log::warn!(
+            "An infinite loop of redirections detected.\n  Original specifier: {specifier}"
+          );
           break;
         }
         redirected_specifier = specifier;
         if seen.len() >= MAX_REDIRECTS {
-          log::warn!("An excessive number of redirections detected.\n  Original specifier: {specifier}");
+          log::warn!(
+            "An excessive number of redirections detected.\n  Original specifier: {specifier}"
+          );
           break;
         }
       }
@@ -2685,22 +2757,18 @@ fn resolve(
     resolve_import(specifier_text, &referrer_range.specifier)
       .map_err(|err| err.into())
   };
-  if resolution_kind.is_types() {
-    if let Ok(resolved_url) = &response {
-      if let Some(package_nv) = jsr_url_provider.package_url_to_nv(resolved_url)
-      {
-        if Some(package_nv)
-          != jsr_url_provider.package_url_to_nv(&referrer_range.specifier)
-        {
-          return Resolution::Err(Box::new(
-            ResolutionError::InvalidJsrHttpsTypesImport {
-              specifier: resolved_url.clone(),
-              range: referrer_range.clone(),
-            },
-          ));
-        }
-      }
-    }
+  if resolution_kind.is_types()
+    && let Ok(resolved_url) = &response
+    && let Some(package_nv) = jsr_url_provider.package_url_to_nv(resolved_url)
+    && Some(package_nv)
+      != jsr_url_provider.package_url_to_nv(&referrer_range.specifier)
+  {
+    return Resolution::Err(Box::new(
+      ResolutionError::InvalidJsrHttpsTypesImport {
+        specifier: resolved_url.clone(),
+        range: referrer_range.clone(),
+      },
+    ));
   }
   Resolution::from_resolve_result(response, specifier_text, referrer_range)
 }
@@ -3333,26 +3401,26 @@ pub(crate) fn parse_js_module_from_module_info(
   }
 
   // Analyze the X-TypeScript-Types header
-  if graph_kind.include_types() && module.maybe_types_dependency.is_none() {
-    if let Some(headers) = maybe_headers {
-      if let Some(types_header) = headers.get("x-typescript-types") {
-        let range = Range {
-          specifier: module.specifier.clone(),
-          range: PositionRange::zeroed(),
-          resolution_mode: None,
-        };
-        module.maybe_types_dependency = Some(TypesDependency {
-          specifier: types_header.to_string(),
-          dependency: resolve(
-            types_header,
-            range,
-            ResolutionKind::Types,
-            jsr_url_provider,
-            maybe_resolver,
-          ),
-        });
-      }
-    }
+  if graph_kind.include_types()
+    && module.maybe_types_dependency.is_none()
+    && let Some(headers) = maybe_headers
+    && let Some(types_header) = headers.get("x-typescript-types")
+  {
+    let range = Range {
+      specifier: module.specifier.clone(),
+      range: PositionRange::zeroed(),
+      resolution_mode: None,
+    };
+    module.maybe_types_dependency = Some(TypesDependency {
+      specifier: types_header.to_string(),
+      dependency: resolve(
+        types_header,
+        range,
+        ResolutionKind::Types,
+        jsr_url_provider,
+        maybe_resolver,
+      ),
+    });
   }
 
   // Use resolve_types from maybe_resolver
@@ -3604,21 +3672,22 @@ fn fill_module_dependencies(
           import.attributes.get("type").map(|s| s.to_string());
       }
 
-      if let Some(types_specifier) = &types_specifier {
-        if graph_kind.include_types() && dep.maybe_type.is_none() {
-          dep.maybe_deno_types_specifier = Some(types_specifier.text.clone());
-          dep.maybe_type = resolve(
-            &types_specifier.text,
-            Range {
-              specifier: module_specifier.clone(),
-              range: types_specifier.range,
-              resolution_mode: import.specifier_range.resolution_mode,
-            },
-            ResolutionKind::Types,
-            jsr_url_provider,
-            maybe_resolver,
-          );
-        }
+      if let Some(types_specifier) = &types_specifier
+        && graph_kind.include_types()
+        && dep.maybe_type.is_none()
+      {
+        dep.maybe_deno_types_specifier = Some(types_specifier.text.clone());
+        dep.maybe_type = resolve(
+          &types_specifier.text,
+          Range {
+            specifier: module_specifier.clone(),
+            range: types_specifier.range,
+            resolution_mode: import.specifier_range.resolution_mode,
+          },
+          ResolutionKind::Types,
+          jsr_url_provider,
+          maybe_resolver,
+        );
       }
       if matches!(
         import.kind,
@@ -4288,10 +4357,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           loaded_package_via_https_url,
         }) => {
           if let Some(pkg) = loaded_package_via_https_url {
-            if let Some(locker) = &mut self.locker {
-              if let Some(checksum) = pkg.manifest_checksum_for_locker {
-                locker.set_pkg_manifest_checksum(&pkg.nv, checksum);
-              }
+            if let Some(locker) = &mut self.locker
+              && let Some(checksum) = pkg.manifest_checksum_for_locker
+            {
+              locker.set_pkg_manifest_checksum(&pkg.nv, checksum);
             }
             self.graph.packages.ensure_package(pkg.nv);
           }
@@ -4511,10 +4580,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Ok(version_info_load_item) => {
           let version_info = version_info_load_item.info;
           self.graph.packages.ensure_package(nv.clone());
-          if let Some(locker) = &mut self.locker {
-            if let Some(checksum) = version_info_load_item.checksum_for_locker {
-              locker.set_pkg_manifest_checksum(nv, checksum);
-            }
+          if let Some(locker) = &mut self.locker
+            && let Some(checksum) = version_info_load_item.checksum_for_locker
+          {
+            locker.set_pkg_manifest_checksum(nv, checksum);
           }
           let base_url = self.jsr_url_provider.package_url(nv);
           let export_name = resolution_item.nv_ref.export_name();
@@ -4766,7 +4835,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       return;
     }
     for slot in self.graph.module_slots.values_mut() {
-      if let ModuleSlot::Module(ref mut module) = slot {
+      if let ModuleSlot::Module(module) = slot {
         match module {
           Module::Json(module) => {
             module.maybe_cache_info =
@@ -4863,10 +4932,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   ) {
     debug_assert_ne!(requested_specifier, specifier);
     // remove a potentially pending redirect that will never resolve
-    if let Some(slot) = self.graph.module_slots.get(&requested_specifier) {
-      if matches!(slot, ModuleSlot::Pending { .. }) {
-        self.graph.module_slots.remove(&requested_specifier);
-      }
+    if let Some(slot) = self.graph.module_slots.get(&requested_specifier)
+      && matches!(slot, ModuleSlot::Pending { .. })
+    {
+      self.graph.module_slots.remove(&requested_specifier);
     }
 
     self
@@ -4941,12 +5010,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
 
         // ensure any jsr/npm dependencies that we've already seen are marked
         // as a dependency of the referrer
-        if matches!(original_specifier.scheme(), "jsr" | "npm") {
-          if let Ok(load_specifier) =
+        if matches!(original_specifier.scheme(), "jsr" | "npm")
+          && let Ok(load_specifier) =
             self.parse_load_specifier_kind(original_specifier, maybe_range)
-          {
-            self.maybe_mark_dep(&load_specifier, maybe_range);
-          }
+        {
+          self.maybe_mark_dep(&load_specifier, maybe_range);
         }
 
         return;
@@ -5348,15 +5416,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     package_ref: &JsrPackageReqReference,
     maybe_range: Option<&Range>,
   ) {
-    if let Some(range) = &maybe_range {
-      if let Some(nv) =
+    if let Some(range) = &maybe_range
+      && let Some(nv) =
         self.jsr_url_provider.package_url_to_nv(&range.specifier)
-      {
-        self.graph.packages.add_dependency(
-          &nv,
-          JsrDepPackageReq::jsr(package_ref.req().clone()),
-        );
-      }
+    {
+      self
+        .graph
+        .packages
+        .add_dependency(&nv, JsrDepPackageReq::jsr(package_ref.req().clone()));
     }
   }
 
@@ -5365,15 +5432,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     package_ref: &NpmPackageReqReference,
     maybe_range: Option<&Range>,
   ) {
-    if let Some(range) = &maybe_range {
-      if let Some(nv) =
+    if let Some(range) = &maybe_range
+      && let Some(nv) =
         self.jsr_url_provider.package_url_to_nv(&range.specifier)
-      {
-        self.graph.packages.add_dependency(
-          &nv,
-          JsrDepPackageReq::npm(package_ref.req().clone()),
-        );
-      }
+    {
+      self
+        .graph
+        .packages
+        .add_dependency(&nv, JsrDepPackageReq::npm(package_ref.req().clone()));
     }
   }
 
@@ -5872,17 +5938,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           // do not insert checksums for declaration files
           && !module_source_and_info.media_type().is_declaration()
           && matches!(specifier.scheme(), "https" | "http")
+          && let Some(locker) = &mut self.locker
+            && !locker.has_remote_checksum(&specifier)
         {
-          if let Some(locker) = &mut self.locker {
-            if !locker.has_remote_checksum(&specifier) {
-              locker.set_remote_checksum(
-                &specifier,
-                LoaderChecksum::new(LoaderChecksum::gen(
-                  module_source_and_info.source_bytes(),
-                )),
-              );
-            }
-          }
+          locker.set_remote_checksum(
+            &specifier,
+            LoaderChecksum::new(LoaderChecksum::r#gen(
+              module_source_and_info.source_bytes(),
+            )),
+          );
         }
 
         let module_slot =
@@ -6283,7 +6347,9 @@ impl<'a> NpmSpecifierResolver<'a> {
     self.pending_info.module_slots.insert(
       resolved_specifier.clone(),
       ModuleSlot::Module(Module::Npm(NpmModule {
+        #[allow(deprecated)]
         specifier: resolved_specifier,
+        #[allow(deprecated)]
         nv_reference: pkg_id_ref,
       })),
     );
@@ -6415,9 +6481,9 @@ where
 mod tests {
   use crate::analysis::ImportAttribute;
   use crate::packages::JsrPackageInfoVersion;
-  use deno_ast::emit;
   use deno_ast::EmitOptions;
   use deno_ast::SourceMap;
+  use deno_ast::emit;
   use pretty_assertions::assert_eq;
   use serde_json::json;
 
@@ -6470,10 +6536,10 @@ mod tests {
       validate_jsr_specifier(&Url::parse("jsr:@scope/mod@").unwrap()).is_err()
     );
 
-    assert!(validate_jsr_specifier(
-      &Url::parse("jsr:@scope/mod@1.2.3").unwrap()
-    )
-    .is_ok());
+    assert!(
+      validate_jsr_specifier(&Url::parse("jsr:@scope/mod@1.2.3").unwrap())
+        .is_ok()
+    );
 
     assert!(
       validate_jsr_specifier(&Url::parse("jsr:@scope/mod").unwrap()).is_ok()
@@ -6813,9 +6879,11 @@ mod tests {
     graph
       .build(roots.clone(), Vec::new(), &loader, Default::default())
       .await;
-    assert!(graph
-      .try_get(&Url::parse("file:///foo.js").unwrap())
-      .is_ok());
+    assert!(
+      graph
+        .try_get(&Url::parse("file:///foo.js").unwrap())
+        .is_ok()
+    );
     assert!(matches!(
       graph
         .try_get(&Url::parse("file:///bar.js").unwrap())
@@ -6825,10 +6893,12 @@ mod tests {
     ));
     let specifiers = graph.specifiers().collect::<HashMap<_, _>>();
     assert_eq!(specifiers.len(), 2);
-    assert!(specifiers
-      .get(&Url::parse("file:///foo.js").unwrap())
-      .unwrap()
-      .is_ok());
+    assert!(
+      specifiers
+        .get(&Url::parse("file:///foo.js").unwrap())
+        .unwrap()
+        .is_ok()
+    );
     assert!(matches!(
       specifiers
         .get(&Url::parse("file:///bar.js").unwrap())
@@ -7014,14 +7084,18 @@ mod tests {
       .await;
     let specifiers = graph.specifiers().collect::<HashMap<_, _>>();
     assert_eq!(specifiers.len(), 4);
-    assert!(specifiers
-      .get(&Url::parse("file:///foo.js").unwrap())
-      .unwrap()
-      .is_ok());
-    assert!(specifiers
-      .get(&Url::parse("file:///foo_actual.js").unwrap())
-      .unwrap()
-      .is_ok());
+    assert!(
+      specifiers
+        .get(&Url::parse("file:///foo.js").unwrap())
+        .unwrap()
+        .is_ok()
+    );
+    assert!(
+      specifiers
+        .get(&Url::parse("file:///foo_actual.js").unwrap())
+        .unwrap()
+        .is_ok()
+    );
     assert!(matches!(
       specifiers
         .get(&Url::parse("file:///bar.js").unwrap())
@@ -7902,7 +7976,10 @@ mod tests {
     {
       let err =
         JsrPackageFormatError::VersionTagNotSupported { tag: "v1.2".into() };
-      assert_eq!(err.to_string(), "Version tag not supported in jsr specifiers ('v1.2'). Remove leading 'v' before version.");
+      assert_eq!(
+        err.to_string(),
+        "Version tag not supported in jsr specifiers ('v1.2'). Remove leading 'v' before version."
+      );
     }
     {
       let err = JsrPackageFormatError::VersionTagNotSupported {

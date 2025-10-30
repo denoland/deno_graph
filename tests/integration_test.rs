@@ -10,6 +10,12 @@ use std::cell::RefCell;
 
 use deno_ast::ModuleSpecifier;
 use deno_error::JsErrorBox;
+use deno_graph::BuildOptions;
+use deno_graph::FillFromLockfileOptions;
+use deno_graph::GraphKind;
+use deno_graph::ModuleGraph;
+use deno_graph::NpmResolvePkgReqsResult;
+use deno_graph::Range;
 use deno_graph::packages::JsrPackageInfo;
 use deno_graph::packages::JsrPackageInfoVersion;
 use deno_graph::packages::JsrPackageVersionInfo;
@@ -23,21 +29,15 @@ use deno_graph::source::MemoryLoader;
 use deno_graph::source::NpmResolver;
 use deno_graph::source::ResolutionKind;
 use deno_graph::source::ResolveError;
-use deno_graph::BuildOptions;
-use deno_graph::FillFromLockfileOptions;
-use deno_graph::GraphKind;
-use deno_graph::ModuleGraph;
-use deno_graph::NpmResolvePkgReqsResult;
-use deno_graph::Range;
 use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use indexmap::IndexSet;
 use pretty_assertions::assert_eq;
 use serde_json::json;
-use sys_traits::impls::InMemorySys;
 use sys_traits::FsCreateDirAll;
 use sys_traits::FsWrite;
+use sys_traits::impls::InMemorySys;
 use url::Url;
 
 use crate::helpers::TestBuilder;
@@ -104,8 +104,7 @@ export class MyClass {
     definition.text().to_string()
   };
 
-  let class_text =
-    "export class MyClass {\n  instanceProp: string = \"\";\n  static staticProp: string = \"\";\n}";
+  let class_text = "export class MyClass {\n  instanceProp: string = \"\";\n  static staticProp: string = \"\";\n}";
   assert_eq!(resolve_single_definition_text("MyType"), class_text);
   assert_eq!(
     resolve_single_definition_text("MyTypeProp"),
@@ -1001,9 +1000,11 @@ export declare const __heap_base: number;
   }
 
   // now ensure the imports are in the graph
-  assert!(graph
-    .get(&Url::parse("file:///project/math.ts").unwrap())
-    .is_some());
+  assert!(
+    graph
+      .get(&Url::parse("file:///project/math.ts").unwrap())
+      .is_some()
+  );
 }
 
 #[tokio::test]

@@ -8,33 +8,33 @@ use std::panic::AssertUnwindSafe;
 use std::collections::HashMap;
 use std::fmt::Write;
 
-use deno_ast::diagnostics::Diagnostic;
-use deno_ast::emit;
 use deno_ast::EmitOptions;
 use deno_ast::EmittedSourceText;
 use deno_ast::SourceMap;
+use deno_ast::diagnostics::Diagnostic;
+use deno_ast::emit;
+use deno_graph::WorkspaceMember;
 use deno_graph::fast_check::FastCheckCacheModuleItem;
 use deno_graph::packages::NewestDependencyDateOptions;
-use deno_graph::source::recommended_registry_package_url;
-use deno_graph::source::recommended_registry_package_url_to_nv;
+use deno_graph::source::DEFAULT_JSR_URL;
 use deno_graph::source::LoaderChecksum;
 use deno_graph::source::Source;
-use deno_graph::source::DEFAULT_JSR_URL;
-use deno_graph::WorkspaceMember;
+use deno_graph::source::recommended_registry_package_url;
+use deno_graph::source::recommended_registry_package_url_to_nv;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
-use file_test_runner::collect_and_run_tests;
-use file_test_runner::collection::strategies::TestPerFileCollectionStrategy;
-use file_test_runner::collection::CollectOptions;
-use file_test_runner::collection::CollectedTest;
 use file_test_runner::RunOptions;
 use file_test_runner::TestResult;
+use file_test_runner::collect_and_run_tests;
+use file_test_runner::collection::CollectOptions;
+use file_test_runner::collection::CollectedTest;
+use file_test_runner::collection::strategies::TestPerFileCollectionStrategy;
 use helpers::TestLoader;
 use indexmap::IndexMap;
 use pretty_assertions::assert_eq;
-use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 use url::Url;
 
 use crate::helpers::TestBuilder;
@@ -48,7 +48,8 @@ fn main() {
     .filter(Some("swc_ecma_codegen"), log::LevelFilter::Off)
     .init();
   // Disable colors so that deno_ast diagnostics do not contain escape sequences.
-  std::env::set_var("NO_COLOR", "true");
+  // TODO: Audit that the environment access only happens in single-threaded code.
+  unsafe { std::env::set_var("NO_COLOR", "true") };
 
   collect_and_run_tests(
     CollectOptions {
@@ -464,7 +465,7 @@ impl Spec {
           relative_url,
           serde_json::json!({
             "size": file.text.len(),
-            "checksum": format!("sha256-{}", LoaderChecksum::gen(file.text.as_bytes())),
+            "checksum": format!("sha256-{}", LoaderChecksum::r#gen(file.text.as_bytes())),
           }),
         );
       }

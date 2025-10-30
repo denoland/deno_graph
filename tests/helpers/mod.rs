@@ -7,6 +7,12 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use deno_ast::ModuleSpecifier;
+use deno_graph::GraphKind;
+use deno_graph::ModuleGraph;
+use deno_graph::NpmLoadError;
+use deno_graph::NpmResolvePkgReqsResult;
+use deno_graph::WorkspaceFastCheckOption;
+use deno_graph::WorkspaceMember;
 use deno_graph::ast::CapturingModuleAnalyzer;
 use deno_graph::fast_check::FastCheckCache;
 use deno_graph::fast_check::FastCheckCacheItem;
@@ -23,16 +29,10 @@ use deno_graph::source::LoaderChecksum;
 use deno_graph::source::Locker;
 use deno_graph::source::MemoryLoader;
 use deno_graph::source::NpmResolver;
-use deno_graph::GraphKind;
-use deno_graph::ModuleGraph;
-use deno_graph::NpmLoadError;
-use deno_graph::NpmResolvePkgReqsResult;
-use deno_graph::WorkspaceFastCheckOption;
-use deno_graph::WorkspaceMember;
+use deno_semver::Version;
 use deno_semver::jsr::JsrPackageReqReference;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
-use deno_semver::Version;
 use futures::FutureExt;
 
 #[derive(Default)]
@@ -61,13 +61,11 @@ impl Loader for TestLoader {
     };
     async move {
       let response = future.await?;
-      if let Some(deno_graph::source::LoadResponse::Module {
-        content, ..
-      }) = &response
+      if let Some(deno_graph::source::LoadResponse::Module { content, .. }) =
+        &response
+        && let Some(checksum) = checksum
       {
-        if let Some(checksum) = checksum {
-          checksum.check_source(content)?;
-        }
+        checksum.check_source(content)?;
       }
       Ok(response)
     }
