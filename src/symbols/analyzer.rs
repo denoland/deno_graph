@@ -19,8 +19,8 @@ use deno_ast::swc::utils::is_valid_ident;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
 
+use crate::IndependentModule;
 use crate::JsModule;
-use crate::JsonModule;
 use crate::ModuleGraph;
 use crate::ast::EsParser;
 use crate::ast::ParseOptions;
@@ -95,7 +95,7 @@ impl<'a> RootSymbol<'a> {
           })
         })
         .or_else(|| self.analyze_js_module(js_module)),
-      crate::Module::Json(json_module) => {
+      crate::Module::Independent(json_module) => {
         Some(self.analyze_json_module(json_module))
       }
       crate::Module::Wasm(wasm_module) => self.analyze_wasm_module(wasm_module),
@@ -174,7 +174,10 @@ impl<'a> RootSymbol<'a> {
     Some(self.build_raw_es_module_info(&script_module.specifier, &source))
   }
 
-  fn analyze_json_module(&self, json_module: &JsonModule) -> ModuleInfoRef<'_> {
+  fn analyze_json_module(
+    &self,
+    json_module: &IndependentModule,
+  ) -> ModuleInfoRef<'_> {
     let specifier = &json_module.specifier;
     // it's not ideal having to use SourceTextInfo here, but it makes
     // it easier to interop with ParsedSource

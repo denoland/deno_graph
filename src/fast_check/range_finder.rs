@@ -1262,7 +1262,7 @@ fn is_module_typed(module: &crate::Module) -> bool {
     crate::Module::Js(m) => {
       m.media_type.is_typed() || m.maybe_types_dependency.is_some()
     }
-    crate::Module::Json(_) | crate::Module::Wasm(_) => true,
+    crate::Module::Independent(_) | crate::Module::Wasm(_) => true,
     crate::Module::Npm(_)
     | crate::Module::Node(_)
     | crate::Module::External(_) => false,
@@ -1271,9 +1271,9 @@ fn is_module_typed(module: &crate::Module) -> bool {
 
 fn is_module_external(module: &crate::Module) -> bool {
   match module {
-    crate::Module::Js(_) | crate::Module::Json(_) | crate::Module::Wasm(_) => {
-      false
-    }
+    crate::Module::Js(_)
+    | crate::Module::Independent(_)
+    | crate::Module::Wasm(_) => false,
     crate::Module::External(_)
     | crate::Module::Node(_)
     | crate::Module::Npm(_) => true,

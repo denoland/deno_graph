@@ -1163,7 +1163,7 @@ pub enum Module {
   Js(JsModule),
   // todo(#239): remove this when updating the --json output for 3.0
   #[serde(rename = "asserted")]
-  Json(JsonModule),
+  Independent(IndependentModule),
   Wasm(WasmModule),
   Npm(NpmModule),
   Node(BuiltInNodeModule),
@@ -1174,7 +1174,7 @@ impl Module {
   pub fn specifier(&self) -> &ModuleSpecifier {
     match self {
       Module::Js(module) => &module.specifier,
-      Module::Json(module) => &module.specifier,
+      Module::Independent(module) => &module.specifier,
       Module::Wasm(module) => &module.specifier,
       #[allow(deprecated)]
       Module::Npm(module) => &module.specifier,
@@ -1186,7 +1186,7 @@ impl Module {
   pub fn media_type(&self) -> MediaType {
     match self {
       Module::Js(module) => module.media_type,
-      Module::Json(module) => module.media_type,
+      Module::Independent(module) => module.media_type,
       Module::Wasm(_) => MediaType::Wasm,
       Module::Node(_) => MediaType::JavaScript,
       Module::Npm(_) | Module::External(_) => MediaType::Unknown,
@@ -1196,14 +1196,14 @@ impl Module {
   pub fn mtime(&self) -> Option<SystemTime> {
     match self {
       Module::Js(m) => m.mtime,
-      Module::Json(m) => m.mtime,
+      Module::Independent(m) => m.mtime,
       Module::Wasm(m) => m.mtime,
       Module::Npm(_) | Module::Node(_) | Module::External(_) => None,
     }
   }
 
-  pub fn json(&self) -> Option<&JsonModule> {
-    if let Module::Json(module) = &self {
+  pub fn independent(&self) -> Option<&IndependentModule> {
+    if let Module::Independent(module) = &self {
       Some(module)
     } else {
       None
@@ -1245,7 +1245,7 @@ impl Module {
   pub fn source(&self) -> Option<&Arc<str>> {
     match self {
       crate::Module::Js(m) => Some(&m.source.text),
-      crate::Module::Json(m) => Some(&m.source.text),
+      crate::Module::Independent(m) => Some(&m.source.text),
       crate::Module::Wasm(_)
       | crate::Module::Npm(_)
       | crate::Module::Node(_)
@@ -1257,7 +1257,7 @@ impl Module {
     match self {
       Module::Js(js_module) => js_module.maybe_types_dependency.as_ref(),
       Module::Wasm(_)
-      | Module::Json(_)
+      | Module::Independent(_)
       | Module::Npm(_)
       | Module::Node(_)
       | Module::External(_) => None,
@@ -1271,7 +1271,7 @@ impl Module {
       Module::Npm(_)
       | Module::Node(_)
       | Module::External(_)
-      | Module::Json(_) => EMPTY_DEPS.get_or_init(Default::default),
+      | Module::Independent(_) => EMPTY_DEPS.get_or_init(Default::default),
     }
   }
 
@@ -1284,7 +1284,7 @@ impl Module {
       Module::Npm(_)
       | Module::Node(_)
       | Module::External(_)
-      | Module::Json(_) => EMPTY_DEPS.get_or_init(Default::default),
+      | Module::Independent(_) => EMPTY_DEPS.get_or_init(Default::default),
     }
   }
 }
@@ -1338,9 +1338,10 @@ pub struct BuiltInNodeModule {
   pub module_name: String,
 }
 
+/// This can be `MediaType::{Json,Jsonc,Json5}` as of writing.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct JsonModule {
+pub struct IndependentModule {
   pub specifier: ModuleSpecifier,
   #[serde(flatten, skip_serializing_if = "Option::is_none")]
   pub maybe_cache_info: Option<CacheInfo>,
@@ -1348,12 +1349,10 @@ pub struct JsonModule {
   pub source: ModuleTextSource,
   #[serde(skip_serializing)]
   pub mtime: Option<SystemTime>,
-  // todo(#240): This will always be MediaType::Json, but it's currently
-  // used in the --json output. It's redundant though.
   pub media_type: MediaType,
 }
 
-impl JsonModule {
+impl IndependentModule {
   /// Return the size in bytes of the content of the JSON module.
   pub fn size(&self) -> usize {
     self.source.text.len()
@@ -1844,6 +1843,8 @@ impl<'a, 'options> ModuleEntryIterator<'a, 'options> {
       | MediaType::Dcts
       | MediaType::Tsx
       | MediaType::Json
+      | MediaType::Jsonc
+      | MediaType::Json5
       | MediaType::Wasm => true,
       MediaType::Css
       | MediaType::SourceMap
@@ -2442,7 +2443,7 @@ impl ModuleGraph {
         Module::Node(_) => {
           has_node_specifier = true;
         }
-        Module::Json(_) | Module::External(_) => {
+        Module::Independent(_) | Module::External(_) => {
           // ignore
         }
       }
@@ -2614,7 +2615,7 @@ impl ModuleGraph {
         let dependency = referring_module.dependencies.get(specifier)?;
         self.resolve_dependency_from_dep(dependency, prefer_types)
       }
-      Module::Json(_)
+      Module::Independent(_)
       | Module::Npm(_)
       | Module::Node(_)
       | Module::External(_) => None,
@@ -2824,8 +2825,10 @@ where
 
 #[derive(Clone)]
 pub(crate) enum ModuleSourceAndInfo {
-  Json {
+  /// This can be `MediaType::{Json,Jsonc,Json5}` as of writing.
+  Independent {
     specifier: ModuleSpecifier,
+    media_type: MediaType,
     mtime: Option<SystemTime>,
     source: ModuleTextSource,
   },
@@ -2849,7 +2852,7 @@ pub(crate) enum ModuleSourceAndInfo {
 impl ModuleSourceAndInfo {
   pub fn specifier(&self) -> &ModuleSpecifier {
     match self {
-      Self::Json { specifier, .. } => specifier,
+      Self::Independent { specifier, .. } => specifier,
       Self::Js { specifier, .. } => specifier,
       Self::Wasm { specifier, .. } => specifier,
     }
@@ -2857,7 +2860,7 @@ impl ModuleSourceAndInfo {
 
   pub fn media_type(&self) -> MediaType {
     match self {
-      Self::Json { .. } => MediaType::Json,
+      Self::Independent { .. } => MediaType::Json,
       Self::Js { media_type, .. } => *media_type,
       Self::Wasm { .. } => MediaType::Wasm,
     }
@@ -2865,7 +2868,7 @@ impl ModuleSourceAndInfo {
 
   pub fn source_bytes(&self) -> &[u8] {
     match self {
-      Self::Json { source, .. } => source.text.as_bytes(),
+      Self::Independent { source, .. } => source.text.as_bytes(),
       Self::Js { source, .. } => source.text.as_bytes(),
       Self::Wasm { source, .. } => source,
     }
@@ -2906,10 +2909,9 @@ pub(crate) async fn parse_module_source_and_info(
   if media_type == MediaType::Json
     && (opts.is_root
       || opts.is_dynamic_branch
-      || matches!(
-        opts.maybe_attribute_type.map(|t| t.kind.as_str()),
-        Some("json")
-      ))
+      || opts
+        .maybe_attribute_type
+        .is_some_and(|t| t.kind.as_str() == "json"))
   {
     return new_source_with_text(
       &opts.specifier,
@@ -2917,8 +2919,45 @@ pub(crate) async fn parse_module_source_and_info(
       maybe_charset,
       opts.mtime,
     )
-    .map(|source| ModuleSourceAndInfo::Json {
+    .map(|source| ModuleSourceAndInfo::Independent {
       specifier: opts.specifier,
+      media_type: MediaType::Json,
+      mtime: opts.mtime,
+      source,
+    });
+  }
+
+  if opts
+    .maybe_attribute_type
+    .is_some_and(|t| t.kind.as_str() == "jsonc")
+  {
+    return new_source_with_text(
+      &opts.specifier,
+      opts.content,
+      maybe_charset,
+      opts.mtime,
+    )
+    .map(|source| ModuleSourceAndInfo::Independent {
+      specifier: opts.specifier,
+      media_type: MediaType::Jsonc,
+      mtime: opts.mtime,
+      source,
+    });
+  }
+
+  if opts
+    .maybe_attribute_type
+    .is_some_and(|t| t.kind.as_str() == "json5")
+  {
+    return new_source_with_text(
+      &opts.specifier,
+      opts.content,
+      maybe_charset,
+      opts.mtime,
+    )
+    .map(|source| ModuleSourceAndInfo::Independent {
+      specifier: opts.specifier,
+      media_type: MediaType::Json5,
       mtime: opts.mtime,
       source,
     });
@@ -3045,6 +3084,8 @@ pub(crate) async fn parse_module_source_and_info(
     }
     MediaType::Css
     | MediaType::Json
+    | MediaType::Jsonc
+    | MediaType::Json5
     | MediaType::SourceMap
     | MediaType::Html
     | MediaType::Sql
@@ -3073,15 +3114,16 @@ pub(crate) fn parse_module(
   options: ParseModuleOptions,
 ) -> Module {
   match options.module_source_and_info {
-    ModuleSourceAndInfo::Json {
+    ModuleSourceAndInfo::Independent {
       specifier,
       mtime,
       source,
-    } => Module::Json(JsonModule {
+      media_type,
+    } => Module::Independent(IndependentModule {
       maybe_cache_info: None,
       source,
       mtime,
-      media_type: MediaType::Json,
+      media_type,
       specifier,
     }),
     ModuleSourceAndInfo::Js {
@@ -4740,7 +4782,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                         Err(err) => *slot = ModuleSlot::Err(err),
                       }
                     }
-                    Module::Json(module) => {
+                    Module::Independent(module) => {
                       match new_source_with_text(
                         &module.specifier,
                         content,
@@ -4837,7 +4879,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     for slot in self.graph.module_slots.values_mut() {
       if let ModuleSlot::Module(module) = slot {
         match module {
-          Module::Json(module) => {
+          Module::Independent(module) => {
             module.maybe_cache_info =
               self.loader.get_cache_info(&module.specifier);
           }
