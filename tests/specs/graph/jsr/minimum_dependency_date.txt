@@ -1,4 +1,4 @@
-~~ {"newestDependencyDate":"2022-11-07T00:00:00Z"} ~~
+~~ {"newestDependencyDate":{"date":"2022-11-07T00:00:00Z","excludeJsrPkgs":["@scope/b"]}} ~~
 # https://jsr.io/@scope/a/meta.json
 {
   "versions": {
@@ -25,6 +25,33 @@ console.log("HI");
 # mod.ts
 import 'jsr:@scope/a';
 
+# https://jsr.io/@scope/b/meta.json
+{
+  "versions": {
+    "1.0.0": {
+      "createdAt": "2020-11-07T00:00:00.000Z"
+    },
+    "1.0.1": {
+      "createdAt": "2023-11-07T00:00:00.000Z"
+    }
+  }
+}
+
+# https://jsr.io/@scope/b/1.0.1_meta.json
+{
+  "manifest": {},
+  "exports": {
+    ".": "./main.ts"
+  }
+}
+
+# https://jsr.io/@scope/b/1.0.1/main.ts
+console.log("B");
+
+# mod.ts
+import 'jsr:@scope/a';
+import 'jsr:@scope/b';
+
 # output
 {
   "roots": [
@@ -50,9 +77,26 @@ import 'jsr:@scope/a';
               }
             }
           }
+        },
+        {
+          "specifier": "jsr:@scope/b",
+          "code": {
+            "specifier": "jsr:@scope/b",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 1,
+                "character": 7
+              },
+              "end": {
+                "line": 1,
+                "character": 21
+              }
+            }
+          }
         }
       ],
-      "size": 23,
+      "size": 46,
       "mediaType": "TypeScript",
       "specifier": "file:///mod.ts"
     },
@@ -61,16 +105,27 @@ import 'jsr:@scope/a';
       "size": 19,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/main.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 18,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/b/1.0.1/main.ts"
     }
   ],
   "redirects": {
-    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/main.ts"
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/main.ts",
+    "jsr:@scope/b": "https://jsr.io/@scope/b/1.0.1/main.ts"
   },
   "packages": {
-    "@scope/a@*": "@scope/a@1.0.0"
+    "@scope/a@*": "@scope/a@1.0.0",
+    "@scope/b@*": "@scope/b@1.0.1"
   }
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/main.ts:
+  {}
+  <empty>
+Fast check https://jsr.io/@scope/b/1.0.1/main.ts:
   {}
   <empty>

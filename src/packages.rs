@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 
 use deno_semver::jsr::JsrDepPackageReq;
+use deno_semver::package::PackageName;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
 use deno_semver::StackString;
@@ -17,6 +18,52 @@ use serde::Serialize;
 use crate::analysis::module_graph_1_to_2;
 use crate::analysis::ModuleInfo;
 use crate::graph::JsrPackageReqNotFoundError;
+
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+pub struct NewestDependencyDate(pub chrono::DateTime<chrono::Utc>);
+
+impl std::fmt::Display for NewestDependencyDate {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{}", self.0)
+  }
+}
+
+impl NewestDependencyDate {
+  pub fn matches(&self, date: chrono::DateTime<chrono::Utc>) -> bool {
+    date < self.0
+  }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NewestDependencyDateOptions {
+  /// Prevents installing packages newer than the specified date.
+  pub date: Option<NewestDependencyDate>,
+  /// JSR packages to exclude from the newest dependency date checks.
+  #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
+  pub exclude_jsr_pkgs: BTreeSet<PackageName>,
+}
+
+impl NewestDependencyDateOptions {
+  pub fn from_date(date: chrono::DateTime<chrono::Utc>) -> Self {
+    Self {
+      date: Some(NewestDependencyDate(date)),
+      exclude_jsr_pkgs: Default::default(),
+    }
+  }
+
+  pub fn get_for_package(
+    &self,
+    package_name: &PackageName,
+  ) -> Option<NewestDependencyDate> {
+    let date = self.date?;
+    if self.exclude_jsr_pkgs.contains(package_name) {
+      None
+    } else {
+      Some(date)
+    }
+  }
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct JsrPackageInfo {
@@ -34,6 +81,19 @@ pub struct JsrPackageInfoVersion {
   pub created_at: Option<chrono::DateTime<chrono::Utc>>,
   #[serde(default, skip_serializing_if = "is_false")]
   pub yanked: bool,
+}
+
+impl JsrPackageInfoVersion {
+  pub fn matches_newest_dependency_date(
+    &self,
+    cutoff: NewestDependencyDate,
+  ) -> bool {
+    // assume versions not existing are really old
+    self
+      .created_at
+      .map(|created_at| cutoff.matches(created_at))
+      .unwrap_or(true)
+  }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -252,17 +312,39 @@ pub struct JsrVersionResolverResolvedVersion<'a> {
 
 #[derive(Debug, Default, Clone)]
 pub struct JsrVersionResolver {
-  /// Minimum age for a dependency to be installed.
-  pub newest_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
+  pub newest_dependency_date_options: NewestDependencyDateOptions,
 }
 
 impl JsrVersionResolver {
-  pub fn resolve_version<'a>(
-    &self,
-    package_req: &PackageReq,
+  pub fn get_for_package<'a>(
+    &'a self,
+    package_name: &PackageName,
     package_info: &'a JsrPackageInfo,
-    existing_versions: impl Iterator<Item = &'a Version>,
-  ) -> Result<JsrVersionResolverResolvedVersion<'a>, JsrPackageReqNotFoundError>
+  ) -> JsrPackageVersionResolver<'a> {
+    JsrPackageVersionResolver {
+      package_info,
+      newest_dependency_date: self
+        .newest_dependency_date_options
+        .get_for_package(package_name),
+    }
+  }
+}
+
+pub struct JsrPackageVersionResolver<'a> {
+  package_info: &'a JsrPackageInfo,
+  newest_dependency_date: Option<NewestDependencyDate>,
+}
+
+impl<'a> JsrPackageVersionResolver<'a> {
+  pub fn info(&self) -> &'a JsrPackageInfo {
+    self.package_info
+  }
+
+  pub fn resolve_version<'b>(
+    &'b self,
+    package_req: &PackageReq,
+    existing_versions: impl Iterator<Item = &'b Version>,
+  ) -> Result<JsrVersionResolverResolvedVersion<'b>, JsrPackageReqNotFoundError>
   {
     // 1. try to resolve with the list of existing versions
     if let ResolveVersionResult::Some(version) = resolve_version(
@@ -273,7 +355,8 @@ impl JsrVersionResolver {
       },
       existing_versions.map(|v| (v, None)),
     ) {
-      let is_yanked = package_info
+      let is_yanked = self
+        .package_info
         .versions
         .get(version)
         .map(|i| i.yanked)
@@ -282,9 +365,9 @@ impl JsrVersionResolver {
     }
 
     // 2. attempt to resolve with the unyanked versions
-    let mut any_had_higher_minimum_date_version = false;
+    let mut any_had_higher_newest_dep_date_version = false;
     let unyanked_versions =
-      package_info.versions.iter().filter_map(|(v, i)| {
+      self.package_info.versions.iter().filter_map(|(v, i)| {
         if !i.yanked {
           Some((v, Some(i)))
         } else {
@@ -307,18 +390,19 @@ impl JsrVersionResolver {
       ResolveVersionResult::None {
         had_higher_date_version,
       } => {
-        any_had_higher_minimum_date_version |= had_higher_date_version;
+        any_had_higher_newest_dep_date_version |= had_higher_date_version;
       }
     }
 
     // 3. attempt to resolve with the the yanked versions
-    let yanked_versions = package_info.versions.iter().filter_map(|(v, i)| {
-      if i.yanked {
-        Some((v, Some(i)))
-      } else {
-        None
-      }
-    });
+    let yanked_versions =
+      self.package_info.versions.iter().filter_map(|(v, i)| {
+        if i.yanked {
+          Some((v, Some(i)))
+        } else {
+          None
+        }
+      });
     match resolve_version(
       ResolveVersionOptions {
         version_req: &package_req.version_req,
@@ -335,22 +419,34 @@ impl JsrVersionResolver {
       ResolveVersionResult::None {
         had_higher_date_version,
       } => {
-        any_had_higher_minimum_date_version |= had_higher_date_version;
+        any_had_higher_newest_dep_date_version |= had_higher_date_version;
       }
     }
 
     Err(JsrPackageReqNotFoundError {
       req: package_req.clone(),
-      newest_dependency_date: any_had_higher_minimum_date_version
+      newest_dependency_date: any_had_higher_newest_dep_date_version
         .then_some(self.newest_dependency_date)
         .flatten(),
     })
+  }
+
+  pub fn matches_newest_dependency_date(
+    &self,
+    version_info: &JsrPackageInfoVersion,
+  ) -> bool {
+    match self.newest_dependency_date {
+      Some(newest_dependency_date) => {
+        version_info.matches_newest_dependency_date(newest_dependency_date)
+      }
+      None => true,
+    }
   }
 }
 
 pub struct ResolveVersionOptions<'a> {
   pub version_req: &'a VersionReq,
-  pub newest_dependency_date: Option<chrono::DateTime<chrono::Utc>>,
+  pub newest_dependency_date: Option<NewestDependencyDate>,
 }
 
 pub enum ResolveVersionResult<'a> {
@@ -367,7 +463,7 @@ pub fn resolve_version<'a>(
   for (version, version_info) in versions {
     if options.version_req.matches(version) {
       had_higher_date_version = true;
-      if matches_min_release_cutoff_date(
+      if matches_newest_dependency_date(
         version_info,
         options.newest_dependency_date,
       ) {
@@ -389,16 +485,14 @@ pub fn resolve_version<'a>(
   }
 }
 
-fn matches_min_release_cutoff_date(
+fn matches_newest_dependency_date(
   info: Option<&JsrPackageInfoVersion>,
-  minimum_release_cutoff_date: Option<chrono::DateTime<chrono::Utc>>,
+  newest_dependency_date: Option<NewestDependencyDate>,
 ) -> bool {
-  minimum_release_cutoff_date
-    .and_then(|cutoff| {
-      // assume versions not in the time hashmap are really old
-      info.as_ref().and_then(|info| {
-        info.created_at.map(|package_age| package_age < cutoff)
-      })
+  info
+    .as_ref()
+    .and_then(|info| {
+      newest_dependency_date.map(|d| info.matches_newest_dependency_date(d))
     })
     .unwrap_or(true)
 }
