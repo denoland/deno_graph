@@ -7382,6 +7382,8 @@ mod tests {
                 import 'file:///baz.json' assert { type: 'json' };
                 import type {} from 'file:///bar.ts';
                 /** @typedef { import('file:///bar.ts') } bar */
+                import 'file:///baz.jsonc' assert { type: 'jsonc' };
+                import 'file:///baz.json5' assert { type: 'json5' };
               "
               .to_vec()
               .into(),
@@ -7406,6 +7408,28 @@ mod tests {
                 maybe_headers: None,
                 mtime: None,
                 content: b"{}".to_vec().into(),
+              }))
+            })
+          }
+          "file:///baz.jsonc" => {
+            assert!(!options.in_dynamic_branch);
+            Box::pin(async move {
+              Ok(Some(LoadResponse::Module {
+                specifier: specifier.clone(),
+                maybe_headers: None,
+                mtime: None,
+                content: b"//comment\n{}".to_vec().into(),
+              }))
+            })
+          }
+          "file:///baz.json5" => {
+            assert!(!options.in_dynamic_branch);
+            Box::pin(async move {
+              Ok(Some(LoadResponse::Module {
+                specifier: specifier.clone(),
+                maybe_headers: None,
+                mtime: None,
+                content: b"//comment\n{ value: NaN }".to_vec().into(),
               }))
             })
           }
