@@ -19,8 +19,8 @@ use deno_ast::swc::utils::is_valid_ident;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
 
+use crate::IndependentModule;
 use crate::JsModule;
-use crate::JsonModule;
 use crate::ModuleGraph;
 use crate::ast::EsParser;
 use crate::ast::ParseOptions;
@@ -95,8 +95,8 @@ impl<'a> RootSymbol<'a> {
           })
         })
         .or_else(|| self.analyze_js_module(js_module)),
-      crate::Module::Json(json_module) => {
-        Some(self.analyze_json_module(json_module))
+      crate::Module::Independent(json_module) => {
+        self.analyze_json_module(json_module)
       }
       crate::Module::Wasm(wasm_module) => self.analyze_wasm_module(wasm_module),
       crate::Module::Npm(_)
@@ -174,7 +174,14 @@ impl<'a> RootSymbol<'a> {
     Some(self.build_raw_es_module_info(&script_module.specifier, &source))
   }
 
-  fn analyze_json_module(&self, json_module: &JsonModule) -> ModuleInfoRef<'_> {
+  fn analyze_json_module(
+    &self,
+    json_module: &IndependentModule,
+  ) -> Option<ModuleInfoRef<'_>> {
+    match json_module.media_type {
+      MediaType::Json | MediaType::Jsonc | MediaType::Json5 => {}
+      _ => return None,
+    }
     let specifier = &json_module.specifier;
     // it's not ideal having to use SourceTextInfo here, but it makes
     // it easier to interop with ParsedSource
@@ -219,7 +226,7 @@ impl<'a> RootSymbol<'a> {
       },
       source_text_info,
     };
-    self.finalize_insert(ModuleInfo::Json(Box::new(module_symbol)))
+    Some(self.finalize_insert(ModuleInfo::Json(Box::new(module_symbol))))
   }
 
   fn analyze_wasm_module(
