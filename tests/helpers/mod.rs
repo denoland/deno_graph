@@ -163,6 +163,7 @@ pub struct TestBuilder {
   workspace_fast_check: bool,
   unstable_bytes_imports: bool,
   unstable_text_imports: bool,
+  unstable_extended_json_imports: bool,
 }
 
 impl TestBuilder {
@@ -182,6 +183,7 @@ impl TestBuilder {
       workspace_fast_check: false,
       unstable_bytes_imports: false,
       unstable_text_imports: false,
+      unstable_extended_json_imports: false,
     }
   }
 
@@ -272,6 +274,12 @@ impl TestBuilder {
   }
 
   #[allow(unused)]
+  pub fn unstable_extended_json_imports(&mut self, value: bool) -> &mut Self {
+    self.unstable_extended_json_imports = value;
+    self
+  }
+
+  #[allow(unused)]
   pub fn ensure_locker(&mut self) -> &mut Self {
     self.locker.get_or_insert_with(Default::default);
     self
@@ -333,6 +341,7 @@ impl TestBuilder {
           skip_dynamic_deps: self.skip_dynamic_deps,
           unstable_bytes_imports: self.unstable_bytes_imports,
           unstable_text_imports: self.unstable_text_imports,
+          unstable_extended_json_imports: self.unstable_extended_json_imports,
           jsr_version_resolver: Cow::Owned(JsrVersionResolver {
             newest_dependency_date_options: self.newest_dependency_date.clone(),
           }),
