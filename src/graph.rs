@@ -1654,6 +1654,8 @@ pub struct BuildOptions<'a> {
   pub unstable_bytes_imports: bool,
   /// Support unstable text imports.
   pub unstable_text_imports: bool,
+  /// Support unstable jsonc and json5 imports.
+  pub unstable_extended_json_imports: bool,
   pub executor: &'a dyn Executor,
   pub locker: Option<&'a mut dyn Locker>,
   pub file_system: &'a FileSystem,
@@ -1678,6 +1680,7 @@ impl Default for BuildOptions<'_> {
       skip_dynamic_deps: false,
       unstable_bytes_imports: false,
       unstable_text_imports: false,
+      unstable_extended_json_imports: false,
       executor: Default::default(),
       locker: None,
       file_system: &NullFileSystem,
@@ -4252,6 +4255,7 @@ struct Builder<'a, 'graph> {
   was_dynamic_root: bool,
   unstable_bytes_imports: bool,
   unstable_text_imports: bool,
+  unstable_extended_json_imports: bool,
   file_system: &'a FileSystem,
   jsr_url_provider: &'a dyn JsrUrlProvider,
   jsr_version_resolver: Cow<'a, JsrVersionResolver>,
@@ -4286,6 +4290,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       was_dynamic_root: options.is_dynamic,
       unstable_bytes_imports: options.unstable_bytes_imports,
       unstable_text_imports: options.unstable_text_imports,
+      unstable_extended_json_imports: options.unstable_extended_json_imports,
       file_system: options.file_system,
       jsr_url_provider: options.jsr_url_provider,
       jsr_version_resolver: options.jsr_version_resolver,
@@ -5008,6 +5013,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         let is_allowed = match attribute.kind.as_str() {
           "bytes" => self.unstable_bytes_imports,
           "text" => self.unstable_text_imports,
+          "jsonc" => self.unstable_extended_json_imports,
+          "json5" => self.unstable_extended_json_imports,
           _ => false,
         };
         if !is_allowed {
