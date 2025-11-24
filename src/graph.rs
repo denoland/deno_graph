@@ -1439,6 +1439,8 @@ pub struct JsModule {
   #[serde(skip_serializing_if = "is_media_type_unknown")]
   pub media_type: MediaType,
   pub specifier: ModuleSpecifier,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub maybe_source_map_dependency: Option<TypesDependency>,
   #[cfg(feature = "fast_check")]
   #[serde(skip_serializing)]
   pub fast_check: Option<FastCheckTypeModuleSlot>,
@@ -3145,9 +3147,29 @@ pub(crate) fn parse_js_module_from_module_info(
     maybe_types_dependency: None,
     media_type,
     specifier,
+    maybe_source_map_dependency: None,
     #[cfg(feature = "fast_check")]
     fast_check: None,
   };
+
+  // Resolve source map dependency if source_map_url is present
+  if let Some(source_map_specifier) = module_info.source_map_url.as_ref() {
+    let range = Range {
+      specifier: module.specifier.clone(),
+      range: source_map_specifier.range,
+      resolution_mode: None,
+    };
+    module.maybe_source_map_dependency = Some(TypesDependency {
+      specifier: source_map_specifier.text.clone(),
+      dependency: resolve(
+        &source_map_specifier.text,
+        range.clone(),
+        ResolutionKind::Execution,
+        jsr_url_provider,
+        maybe_resolver,
+      ),
+    });
+  }
 
   // Analyze the TypeScript triple-slash references and self types specifier
   if graph_kind.include_types() {
@@ -6000,6 +6022,23 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         if matches!(self.graph.graph_kind, GraphKind::All | GraphKind::CodeOnly)
           || module.maybe_types_dependency.is_none()
         {
+          // Load source map as an external module if it exists
+          if let Some(Resolution::Ok(resolved)) = module
+            .maybe_source_map_dependency
+            .as_ref()
+            .map(|d| &d.dependency)
+          {
+            self.load(LoadOptionsRef {
+              specifier: &resolved.specifier,
+              maybe_range: Some(&resolved.range),
+              is_asset: true,
+              in_dynamic_branch: self.in_dynamic_branch,
+              is_root: self.resolved_roots.contains(&resolved.specifier),
+              maybe_attribute_type: None,
+              maybe_version_info,
+            });
+          }
+
           self.visit_module_dependencies(
             &mut module.dependencies,
             maybe_version_info,

@@ -16,6 +16,7 @@ use crate::analysis::find_jsx_import_source;
 use crate::analysis::find_jsx_import_source_types;
 use crate::analysis::find_path_reference;
 use crate::analysis::find_resolution_mode;
+use crate::analysis::find_source_mapping_url;
 use crate::analysis::find_ts_self_types;
 use crate::analysis::find_ts_types;
 use crate::analysis::find_types_reference;
@@ -268,6 +269,9 @@ impl<'a> ParserModuleAnalyzer<'a> {
         None => comments.get_leading(program.start()),
       },
     };
+    // Get trailing comments from the program end to extract sourceMappingURL
+    // which is typically at the very end of the file
+    let trailing_comments = comments.get_trailing(program.end());
     ModuleInfo {
       is_script: program.compute_is_script(),
       dependencies: analyze_dependencies(program, text_info, comments),
@@ -288,6 +292,7 @@ impl<'a> ParserModuleAnalyzer<'a> {
         leading_comments,
       ),
       jsdoc_imports: analyze_jsdoc_imports(media_type, text_info, comments),
+      source_map_url: analyze_source_map_url(text_info, trailing_comments),
     }
   }
 
@@ -602,6 +607,27 @@ fn analyze_ts_self_types(
           m.range(),
           text_info,
           false,
+        ),
+      })
+    })
+  })
+}
+
+// Search source map URL from trailing comments
+fn analyze_source_map_url(
+  text_info: &SourceTextInfo,
+  trailing_comments: Option<&Vec<deno_ast::swc::common::comments::Comment>>,
+) -> Option<SpecifierWithRange> {
+  trailing_comments.and_then(|c| {
+    c.iter().rev().find_map(|comment| {
+      let source_mapping_url = find_source_mapping_url(&comment.text)?;
+      Some(SpecifierWithRange {
+        text: source_mapping_url.as_str().to_string(),
+        range: comment_source_to_position_range(
+          comment.start(),
+          source_mapping_url.range(),
+          text_info,
+          true,
         ),
       })
     })
@@ -1459,6 +1485,7 @@ export {};
         }),
         jsx_import_source_types: None,
         jsdoc_imports: vec![],
+        source_map_url: None,
       },
     );
   }
@@ -1538,5 +1565,106 @@ export {};
       ),
       Some(TypeScriptTypesResolutionMode::Import)
     );
+  }
+
+  #[tokio::test]
+  async fn test_source_mapping_url_extraction() {
+    let specifier =
+      ModuleSpecifier::parse("file:///test.js").expect("bad specifier");
+    let source = r#"
+export function test() {
+  return "hello";
+}
+//# sourceMappingURL=test.js.map
+
+// comment after
+
+"#;
+    let module_info = DefaultModuleAnalyzer
+      .analyze(&specifier, source.into(), MediaType::JavaScript)
+      .await
+      .unwrap();
+    assert!(module_info.source_map_url.is_some());
+    let source_map = module_info.source_map_url.unwrap();
+    assert_eq!(source_map.text, "test.js.map");
+    // Verify the range points to the correct location
+    assert_eq!(source_map.range.start.line, 4);
+    assert_eq!(source_map.range.start.character, 21);
+    assert_eq!(source_map.range.end.line, 4);
+    assert_eq!(source_map.range.end.character, 32);
+  }
+
+  #[tokio::test]
+  async fn test_source_mapping_url_with_at_prefix() {
+    let specifier =
+      ModuleSpecifier::parse("file:///test.js").expect("bad specifier");
+    let source = r#"
+const x = 1;
+//@ sourceMappingURL=bundle.js.map
+"#;
+    let module_info = DefaultModuleAnalyzer
+      .analyze(&specifier, source.into(), MediaType::JavaScript)
+      .await
+      .unwrap();
+    assert!(module_info.source_map_url.is_some());
+    assert_eq!(module_info.source_map_url.unwrap().text, "bundle.js.map");
+  }
+
+  #[tokio::test]
+  async fn test_source_mapping_url_data_uri() {
+    let specifier =
+      ModuleSpecifier::parse("file:///test.js").expect("bad specifier");
+    let source = r#"
+console.log("minified");
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozfQ==
+"#;
+    let module_info = DefaultModuleAnalyzer
+      .analyze(&specifier, source.into(), MediaType::JavaScript)
+      .await
+      .unwrap();
+    assert!(module_info.source_map_url.is_some());
+    assert_eq!(
+      module_info.source_map_url.unwrap().text,
+      "data:application/json;base64,eyJ2ZXJzaW9uIjozfQ=="
+    );
+  }
+
+  #[tokio::test]
+  async fn test_no_source_mapping_url() {
+    let specifier =
+      ModuleSpecifier::parse("file:///test.js").expect("bad specifier");
+    let source = r#"
+export function test() {
+  return "hello";
+}
+"#;
+    let module_info = DefaultModuleAnalyzer
+      .analyze(&specifier, source.into(), MediaType::JavaScript)
+      .await
+      .unwrap();
+    assert!(module_info.source_map_url.is_none());
+  }
+
+  #[tokio::test]
+  async fn test_source_mapping_url_only_at_end() {
+    let specifier =
+      ModuleSpecifier::parse("file:///test.js").expect("bad specifier");
+    // sourceMappingURL in the middle of file should NOT be extracted
+    // since we only look for trailing comments at program.end()
+    let source = r#"
+export function test() {
+  // This is not a sourceMappingURL comment
+  return "hello";
+}
+//# sourceMappingURL=test.js.map
+console.log("more code");
+"#;
+    let module_info = DefaultModuleAnalyzer
+      .analyze(&specifier, source.into(), MediaType::JavaScript)
+      .await
+      .unwrap();
+    // Should NOT extract the sourceMappingURL if there's code after it
+    // because it's not at the end of the program
+    assert!(module_info.source_map_url.is_none());
   }
 }
