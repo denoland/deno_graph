@@ -1851,6 +1851,8 @@ impl<'a, 'options> ModuleEntryIterator<'a, 'options> {
       | MediaType::SourceMap
       | MediaType::Html
       | MediaType::Sql
+      | MediaType::Jsonc
+      | MediaType::Json5
       | MediaType::Unknown => false,
       MediaType::JavaScript
       | MediaType::Jsx
@@ -3050,6 +3052,8 @@ pub(crate) async fn parse_module_source_and_info(
     | MediaType::SourceMap
     | MediaType::Html
     | MediaType::Sql
+    | MediaType::Jsonc
+    | MediaType::Json5
     | MediaType::Unknown => Err(
       ModuleErrorKind::UnsupportedMediaType {
         specifier: opts.specifier,

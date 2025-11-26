@@ -48,8 +48,8 @@ capacity_builder = "0.5.0"
 chrono = { version = "0.4.42", default-features = false, features = ["serde"] }
 data-url = "0.3.0"
 # this is optional in order to support using parsers other than swc
-deno_ast = { version = "0.50.0", features = ["emit"], optional = true }
-deno_media_type = { version = "0.2.9", features = [
+deno_ast = { version = "0.51.0", features = ["emit"], optional = true }
+deno_media_type = { version = "0.3.0", features = [
   "decoding",
   "data_url",
   "module_specifier",
@@ -98,3 +98,5 @@ codegen-units = 1
 incremental = true
 lto = true
 opt-level = "z"
+[patch.crates-io.deno_ast]
+path = "../deno_ast"

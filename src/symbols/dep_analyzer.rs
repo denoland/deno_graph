@@ -542,9 +542,10 @@ impl Visit for DepsFiller {
       }
       None => Vec::new(),
     };
-    self
-      .deps
-      .push(SymbolNodeDep::ImportType(n.arg.value.to_string(), parts));
+    self.deps.push(SymbolNodeDep::ImportType(
+      n.arg.value.to_string_lossy().to_string(),
+      parts,
+    ));
     n.type_args.visit_with(self);
   }
 
@@ -594,7 +595,7 @@ fn member_expr_into_id_and_parts(
       MemberProp::Ident(ident) => Some(ident.sym.to_string()),
       MemberProp::PrivateName(n) => Some(format!("#{}", n.name)),
       MemberProp::Computed(n) => match &*n.expr {
-        Expr::Lit(Lit::Str(str)) => Some(str.value.to_string()),
+        Expr::Lit(Lit::Str(str)) => str.value.as_str().map(ToOwned::to_owned),
         _ => None,
       },
     }
