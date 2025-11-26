@@ -1129,6 +1129,36 @@ mod test {
     run_v1_deserialization_test(json, &expected);
   }
 
+  #[test]
+  fn module_info_serialization_source_map_url() {
+    let module_info = ModuleInfo {
+      is_script: false,
+      dependencies: Vec::new(),
+      ts_references: Vec::new(),
+      self_types_specifier: None,
+      jsx_import_source: None,
+      jsx_import_source_types: None,
+      jsdoc_imports: Vec::new(),
+      source_map_url: Some(SpecifierWithRange {
+        text: "file.js.map".to_string(),
+        range: PositionRange {
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+      }),
+    };
+
+    run_serialization_test(
+      &module_info,
+      json!({
+        "sourceMapUrl": {
+          "text": "file.js.map",
+          "range": [[0, 0], [0, 0]],
+        }
+      }),
+    );
+  }
+
   #[track_caller]
   fn run_serialization_test<
     T: DeserializeOwned + Serialize + std::fmt::Debug + PartialEq + Eq,
