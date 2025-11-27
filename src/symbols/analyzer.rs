@@ -1638,7 +1638,7 @@ impl std::fmt::Debug for EsModuleInfo {
         &self
           .re_exports
           .iter()
-          .map(|e| e.value().src.value.as_str())
+          .map(|e| e.value().src.value.to_string_lossy())
           .collect::<Vec<_>>(),
       )
       .field("swc_id_to_symbol_id", &self.swc_id_to_symbol_id)
