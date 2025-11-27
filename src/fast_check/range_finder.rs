@@ -672,12 +672,12 @@ impl<'a> PublicRangeFinder<'a> {
           for re_export_all_node in re_export_all_nodes {
             log::trace!(
               "Found re-export all - {}",
-              re_export_all_node.src.value
+              re_export_all_node.src.value.to_string_lossy()
             );
             found_ranges.insert(re_export_all_node.span.range());
-            let specifier_text = re_export_all_node.src.value.as_str();
+            let specifier_text = re_export_all_node.src.value.to_string_lossy();
             if let Some(dep_specifier) = self.graph.resolve_dependency(
-              specifier_text,
+              &specifier_text,
               module_info.specifier(),
               /* prefer types */ true,
             ) {
@@ -735,9 +735,9 @@ impl<'a> PublicRangeFinder<'a> {
             if named_exports.is_empty() {
               break; // all done
             }
-            let specifier_text = re_export_all_node.src.value.as_str();
+            let specifier_text = re_export_all_node.src.value.to_string_lossy();
             if let Some(dep_specifier) = self.graph.resolve_dependency(
-              specifier_text,
+              &specifier_text,
               module_info.specifier(),
               /* prefer types */ true,
             ) && let Some(module_info) =
@@ -753,7 +753,7 @@ impl<'a> PublicRangeFinder<'a> {
                   if found_ranges.insert(re_export_all_node.span.range()) {
                     log::trace!(
                       "Found re-export all - {}",
-                      re_export_all_node.src.value
+                      re_export_all_node.src.value.to_string_lossy()
                     );
                   }
                   let export_name = export_name.clone();
@@ -790,7 +790,7 @@ impl<'a> PublicRangeFinder<'a> {
               for re_export_all_node in re_export_all_nodes {
                 log::trace!(
                   "Found re-export all - {}",
-                  re_export_all_node.src.value
+                  re_export_all_node.src.value.to_string_lossy()
                 );
                 found_ranges.insert(re_export_all_node.span.range());
               }

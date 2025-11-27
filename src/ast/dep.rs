@@ -144,7 +144,6 @@ impl DependencyCollector<'_> {
 
 impl Visit for DependencyCollector<'_> {
   fn visit_import_decl(&mut self, node: &ast::ImportDecl) {
-    let specifier = node.src.value.clone();
     let leading_comments = self.get_leading_comments(node.start());
     let kind = if node.type_only {
       StaticDependencyKind::ImportType
@@ -156,7 +155,7 @@ impl Visit for DependencyCollector<'_> {
         kind,
         leading_comments,
         range: node.range(),
-        specifier,
+        specifier: node.src.value.to_atom_lossy().into_owned(),
         specifier_range: node.src.range(),
         import_attributes: parse_import_attributes(node.with.as_deref()),
         is_side_effect: node.specifiers.is_empty(),
@@ -166,31 +165,9 @@ impl Visit for DependencyCollector<'_> {
   }
 
   fn visit_named_export(&mut self, node: &ast::NamedExport) {
-    if let Some(src) = &node.src {
-      let specifier = src.value.clone();
-      let leading_comments = self.get_leading_comments(node.start());
-      let kind = if node.type_only {
-        StaticDependencyKind::ExportType
-      } else {
-        StaticDependencyKind::Export
-      };
-      self.items.push(
-        StaticDependencyDescriptor {
-          kind,
-          leading_comments,
-          range: node.range(),
-          specifier,
-          specifier_range: src.range(),
-          import_attributes: parse_import_attributes(node.with.as_deref()),
-          is_side_effect: false,
-        }
-        .into(),
-      );
-    }
-  }
-
-  fn visit_export_all(&mut self, node: &ast::ExportAll) {
-    let specifier = node.src.value.clone();
+    let Some(src) = &node.src else {
+      return;
+    };
     let leading_comments = self.get_leading_comments(node.start());
     let kind = if node.type_only {
       StaticDependencyKind::ExportType
@@ -202,7 +179,28 @@ impl Visit for DependencyCollector<'_> {
         kind,
         leading_comments,
         range: node.range(),
-        specifier,
+        specifier: src.value.to_atom_lossy().into_owned(),
+        specifier_range: src.range(),
+        import_attributes: parse_import_attributes(node.with.as_deref()),
+        is_side_effect: false,
+      }
+      .into(),
+    );
+  }
+
+  fn visit_export_all(&mut self, node: &ast::ExportAll) {
+    let leading_comments = self.get_leading_comments(node.start());
+    let kind = if node.type_only {
+      StaticDependencyKind::ExportType
+    } else {
+      StaticDependencyKind::Export
+    };
+    self.items.push(
+      StaticDependencyDescriptor {
+        kind,
+        leading_comments,
+        range: node.range(),
+        specifier: node.src.value.to_atom_lossy().into_owned(),
         specifier_range: node.src.range(),
         import_attributes: parse_import_attributes(node.with.as_deref()),
         is_side_effect: false,
@@ -212,14 +210,13 @@ impl Visit for DependencyCollector<'_> {
   }
 
   fn visit_ts_import_type(&mut self, node: &ast::TsImportType) {
-    let specifier = node.arg.value.clone();
     let leading_comments = self.get_leading_comments(node.start());
     self.items.push(
       StaticDependencyDescriptor {
         kind: StaticDependencyKind::ImportType,
         leading_comments,
         range: node.range(),
-        specifier,
+        specifier: node.arg.value.to_atom_lossy().into_owned(),
         specifier_range: node.arg.range(),
         import_attributes: node
           .attributes
@@ -254,12 +251,17 @@ impl Visit for DependencyCollector<'_> {
 
     let argument = match &*arg.expr {
       Expr::Lit(ast::Lit::Str(specifier)) => {
-        DynamicArgument::String(specifier.value.clone())
+        DynamicArgument::String(specifier.value.to_atom_lossy().into_owned())
       }
       Expr::Tpl(tpl) => {
         if tpl.quasis.len() == 1 && tpl.exprs.is_empty() {
           DynamicArgument::String(
-            tpl.quasis[0].cooked.as_ref().unwrap().clone(),
+            tpl.quasis[0]
+              .cooked
+              .as_ref()
+              .unwrap()
+              .to_atom_lossy()
+              .into_owned(),
           )
         } else {
           let mut parts =
@@ -267,7 +269,9 @@ impl Visit for DependencyCollector<'_> {
           for i in 0..tpl.quasis.len() {
             let cooked = tpl.quasis[i].cooked.as_ref().unwrap();
             if !cooked.is_empty() {
-              parts.push(DynamicTemplatePart::String(cooked.clone()));
+              parts.push(DynamicTemplatePart::String(
+                cooked.to_atom_lossy().into_owned(),
+              ));
             }
             if tpl.exprs.get(i).is_some() {
               parts.push(DynamicTemplatePart::Expr);
@@ -292,7 +296,9 @@ impl Visit for DependencyCollector<'_> {
               visit_bin(parts, left)?;
             }
             Expr::Lit(ast::Lit::Str(str)) => {
-              parts.push(DynamicTemplatePart::String(str.value.clone()));
+              parts.push(DynamicTemplatePart::String(
+                str.value.to_atom_lossy().into_owned(),
+              ));
             }
             _ => {
               if parts.is_empty() {
@@ -303,7 +309,9 @@ impl Visit for DependencyCollector<'_> {
           };
 
           if let Expr::Lit(ast::Lit::Str(str)) = &*bin.right {
-            parts.push(DynamicTemplatePart::String(str.value.clone()));
+            parts.push(DynamicTemplatePart::String(
+              str.value.to_atom_lossy().into_owned(),
+            ));
           } else {
             parts.push(DynamicTemplatePart::Expr);
           }
@@ -345,7 +353,6 @@ impl Visit for DependencyCollector<'_> {
     if let TsModuleRef::TsExternalModuleRef(module) = &node.module_ref {
       let leading_comments = self.get_leading_comments(node.start());
       let expr = &module.expr;
-      let specifier = expr.value.clone();
 
       let kind = if node.is_type_only {
         StaticDependencyKind::ImportType
@@ -360,7 +367,7 @@ impl Visit for DependencyCollector<'_> {
           kind,
           leading_comments,
           range: node.range(),
-          specifier,
+          specifier: expr.value.to_atom_lossy().into_owned(),
           specifier_range: expr.range(),
           import_attributes: Default::default(),
           is_side_effect: false,
@@ -372,7 +379,7 @@ impl Visit for DependencyCollector<'_> {
 
   fn visit_ts_module_decl(&mut self, node: &ast::TsModuleDecl) {
     if let Some(id_str) = node.id.as_str() {
-      let value_str = id_str.value.as_str();
+      let value_str = id_str.value.to_string_lossy();
       if !value_str.contains('*')
         || value_str.starts_with("./")
         || value_str.starts_with("../")
@@ -384,7 +391,7 @@ impl Visit for DependencyCollector<'_> {
             kind: StaticDependencyKind::MaybeTsModuleAugmentation,
             leading_comments,
             range: id_str.range(),
-            specifier: id_str.value.clone(),
+            specifier: id_str.value.to_atom_lossy().into_owned(),
             specifier_range: id_str.range(),
             import_attributes: Default::default(),
             is_side_effect: false,
@@ -412,16 +419,19 @@ fn parse_import_attributes(
       && let ast::Prop::KeyValue(key_value) = &**prop
     {
       let maybe_key = match &key_value.key {
-        ast::PropName::Str(key) => Some(key.value.to_string()),
-        ast::PropName::Ident(ident) => Some(ident.sym.to_string()),
+        ast::PropName::Str(key) => key.value.as_atom(),
+        ast::PropName::Ident(ident) => Some(&ident.sym),
         _ => None,
       };
 
       if let Some(key) = maybe_key
         && let ast::Expr::Lit(ast::Lit::Str(str_)) = &*key_value.value
+        && let Some(value_str) = str_.value.as_str()
       {
-        import_attributes
-          .insert(key, ImportAttribute::Known(str_.value.to_string()));
+        import_attributes.insert(
+          key.to_string(),
+          ImportAttribute::Known(value_str.to_string()),
+        );
       }
     }
   }
@@ -459,8 +469,11 @@ fn parse_dynamic_import_attributes(
       _ => return ImportAttributes::Unknown,
     };
     let key = match &key_value.key {
-      ast::PropName::Str(key) => key.value.to_string(),
-      ast::PropName::Ident(ident) => ident.sym.to_string(),
+      ast::PropName::Str(key) => match key.value.as_atom() {
+        Some(key) => key,
+        None => return ImportAttributes::Unknown,
+      },
+      ast::PropName::Ident(ident) => &ident.sym,
       _ => return ImportAttributes::Unknown,
     };
     if key == "with" || key == "assert" && !had_with_key {
@@ -501,21 +514,26 @@ fn parse_import_attributes_from_object_lit(
       _ => return ImportAttributes::Unknown,
     };
     let key = match &key_value.key {
-      ast::PropName::Str(key) => key.value.to_string(),
-      ast::PropName::Ident(ident) => ident.sym.to_string(),
+      ast::PropName::Str(key) => match key.value.as_atom() {
+        Some(key) => key,
+        None => return ImportAttributes::Unknown,
+      },
+      ast::PropName::Ident(ident) => &ident.sym,
       _ => return ImportAttributes::Unknown,
     };
     if let ast::Expr::Lit(value_lit) = &*key_value.value {
       attributes_map.insert(
-        key,
-        if let ast::Lit::Str(str_) = value_lit {
-          ImportAttribute::Known(str_.value.to_string())
+        key.to_string(),
+        if let ast::Lit::Str(str_) = value_lit
+          && let Some(value) = str_.value.as_str()
+        {
+          ImportAttribute::Known(value.to_string())
         } else {
           ImportAttribute::Unknown
         },
       );
     } else {
-      attributes_map.insert(key, ImportAttribute::Unknown);
+      attributes_map.insert(key.to_string(), ImportAttribute::Unknown);
     }
   }
   ImportAttributes::Known(attributes_map)

@@ -668,10 +668,10 @@ pub enum SymbolNodeRef<'a> {
 impl<'a> SymbolNodeRef<'a> {
   /// The local name of the node, if it has a name.
   pub fn maybe_name(&self) -> Option<Cow<'a, str>> {
-    fn ts_module_name_to_string(module_name: &TsModuleName) -> &str {
+    fn ts_module_name_to_string(module_name: &TsModuleName) -> Option<&str> {
       match module_name {
-        TsModuleName::Ident(ident) => &ident.sym,
-        TsModuleName::Str(str) => &str.value,
+        TsModuleName::Ident(ident) => Some(&ident.sym),
+        TsModuleName::Str(str) => str.value.as_str(),
       }
     }
 
@@ -685,7 +685,7 @@ impl<'a> SymbolNodeRef<'a> {
     fn maybe_prop_name(prop_name: &PropName) -> Option<Cow<'_, str>> {
       match prop_name {
         PropName::Ident(n) => Some(Cow::Borrowed(&n.sym)),
-        PropName::Str(n) => Some(Cow::Borrowed(&n.value)),
+        PropName::Str(n) => n.value.as_str().map(Cow::Borrowed),
         PropName::Num(n) => Some(Cow::Owned(n.value.to_string())),
         PropName::Computed(prop_name) => maybe_expr(&prop_name.expr),
         PropName::BigInt(_) => None,
@@ -711,7 +711,7 @@ impl<'a> SymbolNodeRef<'a> {
       match expr {
         Expr::Ident(n) => Some(Cow::Borrowed(&n.sym)),
         Expr::Lit(n) => match n {
-          Lit::Str(n) => Some(Cow::Borrowed(&n.value)),
+          Lit::Str(n) => n.value.as_str().map(Cow::Borrowed),
           Lit::Num(n) => Some(Cow::Owned(n.value.to_string())),
           Lit::BigInt(n) => Some(Cow::Owned(n.value.to_string())),
           _ => None,
@@ -730,7 +730,7 @@ impl<'a> SymbolNodeRef<'a> {
         ExportDeclRef::TsEnum(n) => Some(Cow::Borrowed(&n.id.sym)),
         ExportDeclRef::TsInterface(n) => Some(Cow::Borrowed(&n.id.sym)),
         ExportDeclRef::TsModule(n) => {
-          Some(Cow::Borrowed(ts_module_name_to_string(&n.id)))
+          ts_module_name_to_string(&n.id).map(Cow::Borrowed)
         }
         ExportDeclRef::TsTypeAlias(n) => Some(Cow::Borrowed(&n.id.sym)),
       },
@@ -744,7 +744,7 @@ impl<'a> SymbolNodeRef<'a> {
       Self::TsEnum(n) => Some(Cow::Borrowed(&n.id.sym)),
       Self::TsInterface(n) => Some(Cow::Borrowed(&n.id.sym)),
       Self::TsNamespace(n) => {
-        Some(Cow::Borrowed(ts_module_name_to_string(&n.id)))
+        ts_module_name_to_string(&n.id).map(Cow::Borrowed)
       }
       Self::TsTypeAlias(n) => Some(Cow::Borrowed(&n.id.sym)),
       Self::Var(_, _, ident) => Some(Cow::Borrowed(&ident.sym)),
@@ -1068,7 +1068,7 @@ impl<'a> ExpandoPropertyRef<'a> {
     match &Self::maybe_member_expr(expr)?.prop {
       MemberProp::Ident(ident) => Some(&ident.sym),
       MemberProp::Computed(prop_name) => match &*prop_name.expr {
-        Expr::Lit(Lit::Str(str)) => Some(&str.value),
+        Expr::Lit(Lit::Str(str)) => str.value.as_atom(),
         _ => None,
       },
       _ => None,
@@ -1471,9 +1471,11 @@ impl<'a> ModuleInfoRef<'a> {
   ) -> Option<impl Iterator<Item = &'a str> + use<'a>> {
     match self {
       Self::Json(_) => None,
-      Self::Esm(m) => {
-        Some(m.re_exports.iter().map(|e| e.value().src.value.as_str()))
-      }
+      Self::Esm(m) => Some(
+        m.re_exports
+          .iter()
+          .flat_map(|e| e.value().src.value.as_str()),
+      ),
     }
   }
 
@@ -1636,7 +1638,7 @@ impl std::fmt::Debug for EsModuleInfo {
         &self
           .re_exports
           .iter()
-          .map(|e| e.value().src.value.as_str())
+          .map(|e| e.value().src.value.to_string_lossy())
           .collect::<Vec<_>>(),
       )
       .field("swc_id_to_symbol_id", &self.swc_id_to_symbol_id)
@@ -1940,7 +1942,9 @@ impl SymbolFiller<'_> {
                   .as_ref()
                   .map(|n| match n {
                     ModuleExportName::Ident(ident) => ident.sym.to_string(),
-                    ModuleExportName::Str(str) => str.value.to_string(),
+                    ModuleExportName::Str(str) => {
+                      str.value.to_string_lossy().into_owned()
+                    }
                   })
                   .unwrap_or_else(|| n.local.sym.to_string());
                 self.builder.ensure_symbol_for_swc_id(
@@ -1948,7 +1952,11 @@ impl SymbolFiller<'_> {
                   SymbolDecl::new(
                     SymbolDeclKind::FileRef(FileDep {
                       name: FileDepName::Name(imported_name),
-                      specifier: import_decl.src.value.to_string(),
+                      specifier: import_decl
+                        .src
+                        .value
+                        .to_string_lossy()
+                        .into_owned(),
                     }),
                     n.range(),
                   ),
@@ -1961,7 +1969,11 @@ impl SymbolFiller<'_> {
                   SymbolDecl::new(
                     SymbolDeclKind::FileRef(FileDep {
                       name: FileDepName::Name("default".to_string()),
-                      specifier: import_decl.src.value.to_string(),
+                      specifier: import_decl
+                        .src
+                        .value
+                        .to_string_lossy()
+                        .into_owned(),
                     }),
                     n.range(),
                   ),
@@ -1974,7 +1986,11 @@ impl SymbolFiller<'_> {
                   SymbolDecl::new(
                     SymbolDeclKind::FileRef(FileDep {
                       name: FileDepName::Star,
-                      specifier: import_decl.src.value.to_string(),
+                      specifier: import_decl
+                        .src
+                        .value
+                        .to_string_lossy()
+                        .into_owned(),
                     }),
                     n.range(),
                   ),
@@ -2158,14 +2174,18 @@ impl SymbolFiller<'_> {
                     // with ModuleExportName::Str
                     let imported_name = match &named.orig {
                       ModuleExportName::Ident(ident) => ident.sym.to_string(),
-                      ModuleExportName::Str(str) => str.value.to_string(),
+                      ModuleExportName::Str(str) => {
+                        str.value.to_string_lossy().into_owned()
+                      }
                     };
                     let export_name = named
                       .exported
                       .as_ref()
                       .map(|exported| match exported {
                         ModuleExportName::Ident(ident) => ident.sym.to_string(),
-                        ModuleExportName::Str(str) => str.value.to_string(),
+                        ModuleExportName::Str(str) => {
+                          str.value.to_string_lossy().into_owned()
+                        }
                       })
                       .unwrap_or_else(|| imported_name.clone());
                     let symbol =
@@ -2173,7 +2193,7 @@ impl SymbolFiller<'_> {
                     symbol.add_decl(SymbolDecl::new(
                       SymbolDeclKind::FileRef(FileDep {
                         name: FileDepName::Name(imported_name),
-                        specifier: src.value.to_string(),
+                        specifier: src.value.to_string_lossy().into_owned(),
                       }),
                       named.range(),
                     ));
@@ -2191,7 +2211,9 @@ impl SymbolFiller<'_> {
                     if let Some(exported_name) = &named.exported {
                       let exported_name = match exported_name {
                         ModuleExportName::Ident(ident) => ident.sym.to_string(),
-                        ModuleExportName::Str(str) => str.value.to_string(),
+                        ModuleExportName::Str(str) => {
+                          str.value.to_string_lossy().into_owned()
+                        }
                       };
                       let orig_symbol = self
                         .builder
@@ -2210,7 +2232,7 @@ impl SymbolFiller<'_> {
                         match &n.src {
                           Some(src) => SymbolDeclKind::FileRef(FileDep {
                             name: FileDepName::Name(orig_ident.sym.to_string()),
-                            specifier: src.value.to_string(),
+                            specifier: src.value.to_string_lossy().into_owned(),
                           }),
                           None => SymbolDeclKind::Target(orig_ident.to_id()),
                         },
@@ -2228,14 +2250,16 @@ impl SymbolFiller<'_> {
                 if let Some(src) = &n.src {
                   let name = match &specifier.name {
                     ModuleExportName::Ident(ident) => ident.sym.to_string(),
-                    ModuleExportName::Str(str) => str.value.to_string(),
+                    ModuleExportName::Str(str) => {
+                      str.value.to_string_lossy().into_owned()
+                    }
                   };
                   let symbol =
                     self.builder.create_new_symbol(module_symbol.symbol_id());
                   symbol.add_decl(SymbolDecl::new(
                     SymbolDeclKind::FileRef(FileDep {
                       name: FileDepName::Star,
-                      specifier: src.value.to_string(),
+                      specifier: src.value.to_string_lossy().into_owned(),
                     }),
                     specifier.range(),
                   ));
@@ -2651,7 +2675,7 @@ impl SymbolFiller<'_> {
           SymbolDecl::new(
             SymbolDeclKind::FileRef(FileDep {
               name: FileDepName::Name("default".to_string()),
-              specifier: module_ref.expr.value.to_string(),
+              specifier: module_ref.expr.value.to_string_lossy().to_string(),
             }),
             import_equals.range(),
           ),
