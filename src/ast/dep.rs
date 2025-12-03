@@ -8,6 +8,7 @@ use deno_ast::SourceRangedForSpanned;
 use deno_ast::swc::ast;
 use deno_ast::swc::ast::Callee;
 use deno_ast::swc::ast::Expr;
+use deno_ast::swc::ast::ImportPhase;
 use deno_ast::swc::atoms::Atom;
 use deno_ast::swc::common::comments::CommentKind;
 use deno_ast::swc::ecma_visit::Visit;
@@ -145,10 +146,11 @@ impl DependencyCollector<'_> {
 impl Visit for DependencyCollector<'_> {
   fn visit_import_decl(&mut self, node: &ast::ImportDecl) {
     let leading_comments = self.get_leading_comments(node.start());
-    let kind = if node.type_only {
-      StaticDependencyKind::ImportType
-    } else {
-      StaticDependencyKind::Import
+    let kind = match (node.type_only, node.phase) {
+      (true, _) => StaticDependencyKind::ImportType,
+      (false, ImportPhase::Evaluation) => StaticDependencyKind::Import,
+      (false, ImportPhase::Source) => StaticDependencyKind::ImportSource,
+      (false, ImportPhase::Defer) => return,
     };
     self.items.push(
       StaticDependencyDescriptor {
@@ -241,10 +243,15 @@ impl Visit for DependencyCollector<'_> {
   fn visit_call_expr(&mut self, node: &ast::CallExpr) {
     node.visit_children_with(self);
 
-    let is_esm = matches!(&node.callee, Callee::Import(_));
-    if !is_esm && !self.is_require(&node.callee) {
-      return;
-    }
+    let kind = match &node.callee {
+      Callee::Import(import) => match import.phase {
+        ImportPhase::Evaluation => DynamicDependencyKind::Import,
+        ImportPhase::Source => DynamicDependencyKind::ImportSource,
+        ImportPhase::Defer => return,
+      },
+      _ if self.is_require(&node.callee) => DynamicDependencyKind::Require,
+      _ => return,
+    };
     let Some(arg) = node.args.first() else {
       return;
     };
@@ -332,11 +339,7 @@ impl Visit for DependencyCollector<'_> {
     let leading_comments = self.get_leading_comments(node.start());
     self.items.push(
       DynamicDependencyDescriptor {
-        kind: if is_esm {
-          DynamicDependencyKind::Import
-        } else {
-          DynamicDependencyKind::Require
-        },
+        kind,
         leading_comments,
         range: node.range(),
         argument,

@@ -946,6 +946,8 @@ fn is_false(v: &bool) -> bool {
 pub enum ImportKind {
   /// `import`/`export`
   Es,
+  /// `import source`
+  EsSource,
   /// `require`
   Require,
   /// `import type`/`export type`
@@ -965,10 +967,25 @@ pub enum ImportKind {
 impl ImportKind {
   pub fn is_runtime(&self) -> bool {
     match self {
-      ImportKind::Es | ImportKind::Require | ImportKind::JsxImportSource => {
-        true
-      }
+      ImportKind::Es
+      | ImportKind::EsSource
+      | ImportKind::Require
+      | ImportKind::JsxImportSource => true,
       ImportKind::TsType
+      | ImportKind::TsModuleAugmentation
+      | ImportKind::TsReferencePath
+      | ImportKind::TsReferenceTypes
+      | ImportKind::JsDoc => false,
+    }
+  }
+
+  pub fn is_source_phase(&self) -> bool {
+    match self {
+      ImportKind::EsSource => true,
+      ImportKind::Es
+      | ImportKind::Require
+      | ImportKind::JsxImportSource
+      | ImportKind::TsType
       | ImportKind::TsModuleAugmentation
       | ImportKind::TsReferencePath
       | ImportKind::TsReferenceTypes
@@ -3577,19 +3594,25 @@ fn fill_module_dependencies(
         )
       }
       DependencyDescriptor::Static(desc) => {
-        let is_import_or_export_type = matches!(
-          desc.kind,
-          StaticDependencyKind::ImportType | StaticDependencyKind::ExportType
-        );
-        if is_import_or_export_type && !graph_kind.include_types() {
-          continue; // skip
-        }
-        let is_types = is_import_or_export_type || media_type.is_declaration();
+        let kind = match desc.kind {
+          StaticDependencyKind::ImportType
+          | StaticDependencyKind::ExportType => {
+            if !graph_kind.include_types() {
+              continue;
+            }
+            ImportKind::TsType
+          }
+          StaticDependencyKind::ImportSource => ImportKind::EsSource,
+          _ => ImportKind::Es,
+        };
+        let is_types =
+          kind == ImportKind::TsType || media_type.is_declaration();
         let specifier_range = Range {
           specifier: module_specifier.clone(),
           range: desc.specifier_range,
           resolution_mode: match desc.kind {
             StaticDependencyKind::Import
+            | StaticDependencyKind::ImportSource
             | StaticDependencyKind::Export
             | StaticDependencyKind::ImportType
             | StaticDependencyKind::ExportType => is_types
@@ -3618,10 +3641,7 @@ fn fill_module_dependencies(
         (
           vec![Import {
             specifier: desc.specifier,
-            kind: match is_import_or_export_type {
-              true => ImportKind::TsType,
-              false => ImportKind::Es,
-            },
+            kind,
             specifier_range,
             is_dynamic: false,
             attributes: desc.import_attributes,
@@ -3657,7 +3677,8 @@ fn fill_module_dependencies(
           specifier: module_specifier.clone(),
           range: desc.argument_range,
           resolution_mode: match desc.kind {
-            DynamicDependencyKind::Import => {
+            DynamicDependencyKind::Import
+            | DynamicDependencyKind::ImportSource => {
               if media_type.is_declaration() {
                 None
               } else {
@@ -3674,6 +3695,7 @@ fn fill_module_dependencies(
               specifier,
               kind: match desc.kind {
                 DynamicDependencyKind::Import => ImportKind::Es,
+                DynamicDependencyKind::ImportSource => ImportKind::EsSource,
                 DynamicDependencyKind::Require => ImportKind::Require,
               },
               specifier_range: specifier_range.clone(),
@@ -4987,7 +5009,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let original_specifier = specifier;
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
     if options.is_asset {
-      // this will always be set when an asset
       if let Some(attribute) = &options.maybe_attribute_type {
         let is_allowed = match attribute.kind.as_str() {
           "bytes" => self.unstable_bytes_imports,
@@ -6092,7 +6113,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       if dep.is_dynamic && self.skip_dynamic_deps {
         continue;
       }
-      let is_asset = dep.imports.iter().all(|i| i.attributes.has_asset());
+      let is_asset = dep
+        .imports
+        .iter()
+        .all(|i| i.attributes.has_asset() || i.kind.is_source_phase());
 
       if self.graph.graph_kind.include_code() || dep.maybe_type.is_none() {
         if let Resolution::Ok(resolved) = &dep.maybe_code {
@@ -7383,6 +7407,8 @@ mod tests {
                 import 'file:///baz.json' assert { type: 'json' };
                 import type {} from 'file:///bar.ts';
                 /** @typedef { import('file:///bar.ts') } bar */
+                import source mathModule from 'file:///math_with_import.wasm';
+                await import.source('file:///math_with_import.wasm');
               "
               .to_vec()
               .into(),
@@ -7410,7 +7436,22 @@ mod tests {
               }))
             })
           }
-          _ => unreachable!(),
+          "file:///math_with_import.wasm" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              mtime: None,
+              content: include_bytes!(
+                "../tests/testdata/math_with_import.wasm"
+              )
+              .to_vec()
+              .into(),
+            }))
+          }),
+          "file:///math.ts" => unreachable!(
+            "Shouldn't load dependencies of wasm modules imported by source"
+          ),
+          s => unreachable!("Tried to load: {s}"),
         }
       }
     }
@@ -7428,6 +7469,10 @@ mod tests {
     let module = module.js().unwrap();
     let dependency_a = module.dependencies.get("file:///bar.ts").unwrap();
     let dependency_b = module.dependencies.get("file:///baz.json").unwrap();
+    let dependency_c = module
+      .dependencies
+      .get("file:///math_with_import.wasm")
+      .unwrap();
     assert_eq!(
       dependency_a.imports,
       vec![
@@ -7585,6 +7630,53 @@ mod tests {
         )])),
         is_side_effect: true,
       }]
+    );
+    assert_eq!(
+      dependency_c.imports,
+      vec![
+        Import {
+          specifier: "file:///math_with_import.wasm".to_string(),
+          kind: ImportKind::EsSource,
+          specifier_range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            range: PositionRange {
+              start: Position {
+                line: 10,
+                character: 46,
+              },
+              end: Position {
+                line: 10,
+                character: 77,
+              },
+            },
+            resolution_mode: Some(ResolutionMode::Import),
+          },
+          is_dynamic: false,
+          attributes: ImportAttributes::None,
+          is_side_effect: false,
+        },
+        Import {
+          specifier: "file:///math_with_import.wasm".to_string(),
+          kind: ImportKind::EsSource,
+          specifier_range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            range: PositionRange {
+              start: Position {
+                line: 11,
+                character: 36,
+              },
+              end: Position {
+                line: 11,
+                character: 67,
+              },
+            },
+            resolution_mode: Some(ResolutionMode::Import),
+          },
+          is_dynamic: true,
+          attributes: ImportAttributes::None,
+          is_side_effect: false,
+        },
+      ],
     );
   }
 
