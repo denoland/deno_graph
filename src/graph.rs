@@ -5008,27 +5008,27 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let maybe_range = options.maybe_range;
     let original_specifier = specifier;
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
-    if options.is_asset {
-      if let Some(attribute) = &options.maybe_attribute_type {
-        let is_allowed = match attribute.kind.as_str() {
-          "bytes" => self.unstable_bytes_imports,
-          "text" => self.unstable_text_imports,
-          _ => false,
-        };
-        if !is_allowed {
-          self.graph.module_slots.insert(
-            specifier.clone(),
-            ModuleSlot::Err(
-              ModuleErrorKind::UnsupportedImportAttributeType {
-                specifier: specifier.clone(),
-                referrer: attribute.range.clone(),
-                kind: attribute.kind.clone(),
-              }
-              .into_box(),
-            ),
-          );
-          return;
-        }
+    if options.is_asset
+      && let Some(attribute) = &options.maybe_attribute_type
+    {
+      let is_allowed = match attribute.kind.as_str() {
+        "bytes" => self.unstable_bytes_imports,
+        "text" => self.unstable_text_imports,
+        _ => false,
+      };
+      if !is_allowed {
+        self.graph.module_slots.insert(
+          specifier.clone(),
+          ModuleSlot::Err(
+            ModuleErrorKind::UnsupportedImportAttributeType {
+              specifier: specifier.clone(),
+              referrer: attribute.range.clone(),
+              kind: attribute.kind.clone(),
+            }
+            .into_box(),
+          ),
+        );
+        return;
       }
     }
     if let Some(module_slot) = self.graph.module_slots.get(specifier) {
