@@ -929,6 +929,32 @@ mod test {
   }
 
   #[test]
+  fn static_dependency_descriptor_import_source_serialization() {
+    let descriptor = DependencyDescriptor::Static(StaticDependencyDescriptor {
+      kind: StaticDependencyKind::ImportSource,
+      types_specifier: None,
+      specifier: "./test".to_string(),
+      specifier_range: PositionRange {
+        start: Position::zeroed(),
+        end: Position::zeroed(),
+      },
+      import_attributes: ImportAttributes::None,
+      is_side_effect: false,
+    });
+    run_serialization_test(
+      &descriptor,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
+      json!({
+        "type": "static",
+        "kind": "importSource",
+        "specifier": "./test",
+        "specifierRange": [[0, 0], [0, 0]],
+      }),
+    );
+  }
+
+  #[test]
   fn dynamic_dependency_descriptor_serialization() {
     run_serialization_test(
       &DependencyDescriptor::Dynamic(DynamicDependencyDescriptor {
@@ -978,6 +1004,32 @@ mod test {
         "argument": "test",
         "argumentRange": [[0, 0], [0, 0]],
         "importAttributes": "unknown",
+      }),
+    );
+  }
+
+  #[test]
+  fn dynamic_dependency_descriptor_import_source_serialization() {
+    let descriptor =
+      DependencyDescriptor::Dynamic(DynamicDependencyDescriptor {
+        kind: DynamicDependencyKind::ImportSource,
+        types_specifier: None,
+        argument: DynamicArgument::String("test".to_string()),
+        argument_range: PositionRange {
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+        import_attributes: ImportAttributes::None,
+      });
+    run_serialization_test(
+      &descriptor,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
+      json!({
+        "type": "dynamic",
+        "kind": "importSource",
+        "argument": "test",
+        "argumentRange": [[0, 0], [0, 0]],
       }),
     );
   }
@@ -1127,6 +1179,87 @@ mod test {
         "specifier": "./a.js",
         "specifierRange": [[1, 2], [3, 4]],
       }]
+    });
+    run_v1_deserialization_test(json, &expected);
+  }
+
+  #[test]
+  fn test_v1_to_v2_deserialization_import_source_static() {
+    let expected = ModuleInfo {
+      is_script: false,
+      dependencies: vec![DependencyDescriptor::Static(
+        StaticDependencyDescriptor {
+          kind: StaticDependencyKind::ImportSource,
+          specifier: "./a.js".to_string(),
+          specifier_range: PositionRange {
+            start: Position {
+              line: 1,
+              character: 2,
+            },
+            end: Position {
+              line: 3,
+              character: 4,
+            },
+          },
+          types_specifier: None,
+          import_attributes: ImportAttributes::None,
+          is_side_effect: false,
+        },
+      )],
+      ts_references: Vec::new(),
+      self_types_specifier: None,
+      jsx_import_source: None,
+      jsx_import_source_types: None,
+      jsdoc_imports: Vec::new(),
+      source_map_url: None,
+    };
+    let json = json!({
+      "dependencies": [{
+        "type": "static",
+        "kind": "importSource",
+        "specifier": "./a.js",
+        "specifierRange": [[1, 2], [3, 4]],
+      }],
+    });
+    run_v1_deserialization_test(json, &expected);
+  }
+
+  #[test]
+  fn test_v1_to_v2_deserialization_import_source_dynamic() {
+    let expected = ModuleInfo {
+      is_script: false,
+      dependencies: vec![DependencyDescriptor::Dynamic(
+        DynamicDependencyDescriptor {
+          kind: DynamicDependencyKind::ImportSource,
+          types_specifier: None,
+          argument: DynamicArgument::String("./a.js".to_string()),
+          argument_range: PositionRange {
+            start: Position {
+              line: 1,
+              character: 2,
+            },
+            end: Position {
+              line: 3,
+              character: 4,
+            },
+          },
+          import_attributes: ImportAttributes::None,
+        },
+      )],
+      ts_references: Vec::new(),
+      self_types_specifier: None,
+      jsx_import_source: None,
+      jsx_import_source_types: None,
+      jsdoc_imports: Vec::new(),
+      source_map_url: None,
+    };
+    let json = json!({
+      "dependencies": [{
+        "type": "dynamic",
+        "kind": "importSource",
+        "argument": "./a.js",
+        "argumentRange": [[1, 2], [3, 4]],
+      }],
     });
     run_v1_deserialization_test(json, &expected);
   }
