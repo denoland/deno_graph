@@ -3603,7 +3603,11 @@ fn fill_module_dependencies(
             ImportKind::TsType
           }
           StaticDependencyKind::ImportSource => ImportKind::EsSource,
-          _ => ImportKind::Es,
+          StaticDependencyKind::Import
+          | StaticDependencyKind::ImportEquals
+          | StaticDependencyKind::Export
+          | StaticDependencyKind::ExportEquals => ImportKind::Es,
+          StaticDependencyKind::MaybeTsModuleAugmentation => unreachable!(),
         };
         let is_types =
           kind == ImportKind::TsType || media_type.is_declaration();
