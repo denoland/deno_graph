@@ -1,0 +1,42 @@
+# mod.ts
+import source module1 from "./nonexistent.wasm";
+const module2 = await import.source("./nonexistent.wasm");
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./nonexistent.wasm",
+          "code": {
+            "specifier": "file:///nonexistent.wasm",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 27
+              },
+              "end": {
+                "line": 0,
+                "character": 47
+              }
+            }
+          }
+        }
+      ],
+      "size": 108,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "specifier": "file:///nonexistent.wasm",
+      "error": "Module not found \"file:///nonexistent.wasm\"."
+    }
+  ],
+  "redirects": {}
+}
