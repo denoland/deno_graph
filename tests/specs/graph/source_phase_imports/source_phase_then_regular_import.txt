@@ -1,0 +1,45 @@
+# mod.ts
+import source module from "./math.wasm";
+import "./math.wasm" // this should cause it to not be external
+
+# math.wasm <= ../../../testdata/math.wasm
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "wasm",
+      "specifier": "file:///math.wasm",
+      "size": 318
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./math.wasm",
+          "code": {
+            "specifier": "file:///math.wasm",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 26
+              },
+              "end": {
+                "line": 0,
+                "character": 39
+              }
+            }
+          }
+        }
+      ],
+      "size": 105,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}
