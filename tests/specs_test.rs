@@ -449,6 +449,7 @@ impl Spec {
             serde_json::to_string_pretty(&meta_value).unwrap(),
           ),
         )
+        .as_str()
         .to_string(),
       );
     }
@@ -564,10 +565,6 @@ impl SpecFileContent {
       Self::Inline(s) => s.as_str(),
       Self::Source(s) => s.text(),
     }
-  }
-
-  fn to_string(&self) -> String {
-    self.as_str().to_string()
   }
 
   fn len(&self) -> usize {
