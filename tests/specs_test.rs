@@ -2,11 +2,16 @@
 
 #![allow(clippy::disallowed_methods)]
 
+use std::borrow::Cow;
+use std::cell::OnceCell;
 use std::collections::BTreeMap;
 use std::panic::AssertUnwindSafe;
 
 use std::collections::HashMap;
 use std::fmt::Write;
+use std::path::Path;
+use std::path::PathBuf;
+use std::rc::Rc;
 
 use deno_ast::EmitOptions;
 use deno_ast::EmittedSourceText;
@@ -82,7 +87,7 @@ fn main() {
 
 fn run_graph_test(test: &CollectedTest) {
   let file_text = test.read_to_string().unwrap();
-  let mut spec = parse_spec(file_text);
+  let mut spec = parse_spec(&test.path, file_text);
   spec.fill_jsr_meta_files_with_checksums();
 
   let mut builder = TestBuilder::new();
@@ -266,15 +271,15 @@ fn run_graph_test(test: &CollectedTest) {
   let update = std::env::var("UPDATE").as_deref() == Ok("1");
   let spec = if update {
     let mut spec = spec;
-    spec.output_file.text.clone_from(&output_text);
+    spec.output_file.content = SpecFileContent::Inline(output_text.clone());
     std::fs::write(&test.path, spec.emit()).unwrap();
     spec
   } else {
     spec
   };
   assert_eq!(
-    output_text,
-    spec.output_file.text,
+    &output_text,
+    spec.output_file.content.as_str(),
     "Should be same for {}",
     test.path.display()
   );
@@ -282,7 +287,7 @@ fn run_graph_test(test: &CollectedTest) {
 
 fn run_symbol_test(test: &CollectedTest) {
   let file_text = test.read_to_string().unwrap();
-  let mut spec = parse_spec(file_text);
+  let mut spec = parse_spec(&test.path, file_text);
   spec.fill_jsr_meta_files_with_checksums();
   let mut builder = TestBuilder::new();
 
@@ -310,15 +315,15 @@ fn run_symbol_test(test: &CollectedTest) {
   let result = rt.block_on(async { builder.symbols().await });
   let spec = if std::env::var("UPDATE").as_deref() == Ok("1") {
     let mut spec = spec;
-    spec.output_file.text.clone_from(&result.output);
+    spec.output_file.content = SpecFileContent::Inline(result.output.clone());
     std::fs::write(&test.path, spec.emit()).unwrap();
     spec
   } else {
     spec
   };
   assert_eq!(
-    result.output,
-    spec.output_file.text,
+    &result.output,
+    spec.output_file.content.as_str(),
     "Should be same for {}",
     test.path.display()
   );
@@ -423,7 +428,7 @@ impl Spec {
         .unwrap_or_else(|| panic!("Could not find in specs: {}", meta_file));
       let mut meta_value = serde_json::from_str::<
         BTreeMap<String, serde_json::Value>,
-      >(&meta_file.text)
+      >(meta_file.content.as_str())
       .unwrap();
       let manifest = meta_value
         .entry("manifest".to_string())
@@ -437,8 +442,15 @@ impl Spec {
       }
       // use the original text as the emit text so we don't
       // end up with these hashes in the output
-      meta_file.emit_text = Some(std::mem::take(&mut meta_file.text));
-      meta_file.text = serde_json::to_string_pretty(&meta_value).unwrap();
+      meta_file.emit_text = Some(
+        std::mem::replace(
+          &mut meta_file.content,
+          SpecFileContent::Inline(
+            serde_json::to_string_pretty(&meta_value).unwrap(),
+          ),
+        )
+        .to_string(),
+      );
     }
   }
 
@@ -464,8 +476,8 @@ impl Spec {
         checksums_by_package.entry(nv.clone()).or_default().insert(
           relative_url,
           serde_json::json!({
-            "size": file.text.len(),
-            "checksum": format!("sha256-{}", LoaderChecksum::r#gen(file.text.as_bytes())),
+            "size": file.content.len(),
+            "checksum": format!("sha256-{}", LoaderChecksum::r#gen(file.content.as_ref())),
           }),
         );
       }
@@ -491,7 +503,7 @@ fn add_spec_files_to_loader(
       None => Source::Module {
         specifier: file.url().to_string(),
         maybe_headers: Some(file.headers.clone().into_iter().collect()),
-        content: file.text.clone(),
+        content: file.content.clone(),
       },
     };
     if file.is_cache() {
@@ -503,9 +515,88 @@ fn add_spec_files_to_loader(
 }
 
 #[derive(Debug)]
+pub struct SpecFileSource {
+  specified_path: String,
+  referrer_path: PathBuf,
+  text: OnceCell<String>,
+  bytes: OnceCell<Vec<u8>>,
+}
+
+impl SpecFileSource {
+  fn new(specified_path: String, referrer_path: PathBuf) -> Self {
+    Self {
+      specified_path,
+      referrer_path,
+      text: Default::default(),
+      bytes: Default::default(),
+    }
+  }
+
+  fn text(&self) -> &String {
+    self
+      .text
+      .get_or_init(|| String::from_utf8_lossy(self.bytes()).to_string())
+  }
+
+  fn bytes(&self) -> &Vec<u8> {
+    self.bytes.get_or_init(|| {
+      std::fs::read(deno_path_util::normalize_path(Cow::Owned(
+        self.referrer_path.join("..").join(&self.specified_path),
+      )))
+      .unwrap()
+    })
+  }
+
+  fn len(&self) -> usize {
+    self.bytes().len()
+  }
+}
+
+#[derive(Debug, Clone)]
+pub enum SpecFileContent {
+  Inline(String),
+  Source(Rc<SpecFileSource>),
+}
+
+impl SpecFileContent {
+  fn as_str(&self) -> &str {
+    match self {
+      Self::Inline(s) => s.as_str(),
+      Self::Source(s) => s.text(),
+    }
+  }
+
+  fn to_string(&self) -> String {
+    self.as_str().to_string()
+  }
+
+  fn len(&self) -> usize {
+    match self {
+      Self::Inline(s) => s.len(),
+      Self::Source(s) => s.len(),
+    }
+  }
+}
+
+impl AsRef<str> for SpecFileContent {
+  fn as_ref(&self) -> &str {
+    self.as_str()
+  }
+}
+
+impl AsRef<[u8]> for SpecFileContent {
+  fn as_ref(&self) -> &[u8] {
+    match self {
+      Self::Inline(s) => s.as_bytes(),
+      Self::Source(s) => s.bytes(),
+    }
+  }
+}
+
+#[derive(Debug)]
 pub struct SpecFile {
   pub specifier: String,
-  pub text: String,
+  pub content: SpecFileContent,
   /// Text to use when emitting the spec file.
   pub emit_text: Option<String>,
   pub headers: IndexMap<String, String>,
@@ -513,15 +604,22 @@ pub struct SpecFile {
 
 impl SpecFile {
   pub fn emit(&self) -> String {
-    let mut text = format!("# {}\n", self.specifier);
-    if !self.headers.is_empty() {
-      text.push_str(&format!(
-        "HEADERS: {}\n",
-        serde_json::to_string(&self.headers).unwrap()
-      ));
+    match &self.content {
+      SpecFileContent::Inline(content) => {
+        let mut text = format!("# {}\n", self.specifier);
+        if !self.headers.is_empty() {
+          text.push_str(&format!(
+            "HEADERS: {}\n",
+            serde_json::to_string(&self.headers).unwrap()
+          ));
+        }
+        text.push_str(self.emit_text.as_deref().unwrap_or(content.as_str()));
+        text
+      }
+      SpecFileContent::Source(source) => {
+        format!("# {} <= {}\n", &self.specifier, &source.specified_path)
+      }
     }
-    text.push_str(self.emit_text.as_ref().unwrap_or(&self.text));
-    text
   }
 
   pub fn url(&self) -> Url {
@@ -544,7 +642,7 @@ impl SpecFile {
   }
 }
 
-pub fn parse_spec(text: String) -> Spec {
+pub fn parse_spec(path: &Path, text: String) -> Spec {
   let mut files = Vec::new();
   let mut current_file = None;
   let mut options: Option<SpecOptions> = None;
@@ -555,25 +653,52 @@ pub fn parse_spec(text: String) -> Spec {
     text = &text[end + 4..];
   }
   for line in text.split('\n') {
-    if let Some(specifier) = line.strip_prefix("# ") {
+    if let Some(specifier_line) = line.strip_prefix("# ") {
       if let Some(file) = current_file.take() {
         files.push(file);
       }
-      current_file = Some(SpecFile {
-        specifier: specifier.to_string(),
-        text: String::new(),
-        emit_text: None,
-        headers: Default::default(),
-      });
+      if let Some((specifier, resource_path)) = specifier_line.split_once("<=")
+      {
+        let specifier = specifier.trim();
+        let resource_path = resource_path.trim();
+        current_file = Some(SpecFile {
+          specifier: specifier.to_string(),
+          content: SpecFileContent::Source(Rc::new(SpecFileSource::new(
+            resource_path.to_string(),
+            path.to_path_buf(),
+          ))),
+          emit_text: None,
+          headers: Default::default(),
+        });
+      } else {
+        current_file = Some(SpecFile {
+          specifier: specifier_line.to_string(),
+          content: SpecFileContent::Inline(String::new()),
+          emit_text: None,
+          headers: Default::default(),
+        });
+      }
     } else if let Some(headers) = line.strip_prefix("HEADERS: ") {
       current_file.as_mut().unwrap().headers =
         serde_json::from_str(headers).unwrap();
     } else {
       let current_file = current_file.as_mut().unwrap();
-      if !current_file.text.is_empty() {
-        current_file.text.push('\n');
+      match &mut current_file.content {
+        SpecFileContent::Inline(content) => {
+          if !content.is_empty() {
+            content.push('\n');
+          }
+          content.push_str(line);
+        }
+        SpecFileContent::Source(_) => {
+          if !line.is_empty() {
+            panic!(
+              "Error parsing spec: Unexpected inline input for specifier \"{}\", which was set to be read from an external file.",
+              &current_file.specifier
+            );
+          }
+        }
       }
-      current_file.text.push_str(line);
     }
   }
   files.push(current_file.unwrap());
@@ -596,7 +721,7 @@ fn take_file<T: Default + DeserializeOwned>(
 ) -> T {
   if let Some(index) = files.iter().position(|f| f.specifier == name) {
     let file = files.remove(index);
-    serde_json::from_str(&file.text).unwrap()
+    serde_json::from_slice(file.content.as_ref()).unwrap()
   } else {
     Default::default()
   }

@@ -196,7 +196,7 @@ mod tests {
   use source::tests::MockResolver;
   use std::collections::BTreeMap;
 
-  type Sources<'a> = Vec<(&'a str, Source<&'a str>)>;
+  type Sources<'a> = Vec<(&'a str, Source<&'a str, &'a str>)>;
 
   fn setup(
     sources: Sources,

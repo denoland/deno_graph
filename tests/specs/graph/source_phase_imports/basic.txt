@@ -1,0 +1,44 @@
+# mod.ts
+import source module1 from "./math.wasm";
+const module2 = await import.source("./math.wasm");
+
+# math.wasm <= ../../../testdata/math.wasm
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "external",
+      "specifier": "file:///math.wasm"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./math.wasm",
+          "code": {
+            "specifier": "file:///math.wasm",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 27
+              },
+              "end": {
+                "line": 0,
+                "character": 40
+              }
+            }
+          }
+        }
+      ],
+      "size": 94,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}
