@@ -31,7 +31,8 @@ import source module from "./foo.json";
                 "character": 38
               }
             }
-          }
+          },
+          "phase": "source"
         }
       ],
       "size": 40,

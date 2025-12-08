@@ -35,7 +35,8 @@ import source module from "./math_with_import.wasm";
                 "character": 51
               }
             }
-          }
+          },
+          "phase": "source"
         }
       ],
       "size": 121,

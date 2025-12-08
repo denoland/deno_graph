@@ -32,7 +32,8 @@ const module2 = await import.source("./math.wasm");
                 "character": 40
               }
             }
-          }
+          },
+          "phase": "source"
         }
       ],
       "size": 94,

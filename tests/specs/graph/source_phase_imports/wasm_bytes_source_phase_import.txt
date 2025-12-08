@@ -33,7 +33,8 @@ import source module from "./math.wasm" with { type: "bytes" };
               }
             }
           },
-          "assertionType": "bytes"
+          "assertionType": "bytes",
+          "phase": "source"
         }
       ],
       "size": 64,

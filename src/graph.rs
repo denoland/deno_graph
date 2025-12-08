@@ -6641,16 +6641,39 @@ where
   S: Serializer,
 {
   #[derive(Serialize)]
-  struct DependencyWithSpecifier<'a> {
+  #[serde(rename_all = "camelCase")]
+  enum ImportPhase {
+    Evaluation,
+    Source,
+  }
+  impl ImportPhase {
+    fn is_evaluation(&self) -> bool {
+      match self {
+        Self::Evaluation => true,
+        Self::Source => false,
+      }
+    }
+  }
+  #[derive(Serialize)]
+  struct DependencyWithSpecifierAndPhase<'a> {
     specifier: &'a str,
     #[serde(flatten)]
     dependency: &'a Dependency,
+    /// Most advanced phase used by an import for this dependency.
+    #[serde(skip_serializing_if = "ImportPhase::is_evaluation")]
+    phase: ImportPhase,
   }
   let mut seq = serializer.serialize_seq(Some(dependencies.len()))?;
   for (specifier, dependency) in dependencies {
-    seq.serialize_element(&DependencyWithSpecifier {
+    let phase = if dependency.imports.iter().all(|i| i.kind.is_source_phase()) {
+      ImportPhase::Source
+    } else {
+      ImportPhase::Evaluation
+    };
+    seq.serialize_element(&DependencyWithSpecifierAndPhase {
       specifier,
       dependency,
+      phase,
     })?
   }
   seq.end()

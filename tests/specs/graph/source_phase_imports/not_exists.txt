@@ -26,7 +26,8 @@ const module2 = await import.source("./nonexistent.wasm");
                 "character": 47
               }
             }
-          }
+          },
+          "phase": "source"
         }
       ],
       "size": 108,
