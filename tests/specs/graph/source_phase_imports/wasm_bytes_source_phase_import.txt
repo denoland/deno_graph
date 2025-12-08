@@ -1,0 +1,46 @@
+~~ {"unstableBytesImports":true,"unstableTextImports":true} ~~
+# mod.ts
+import source module from "./math.wasm" with { type: "bytes" };
+
+# math.wasm <= ../../../testdata/math.wasm
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "specifier": "file:///math.wasm",
+      "error": "Importing Wasm modules with { type: \"bytes\" } at source phase is unsupported.\n  Specifier: file:///math.wasm"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./math.wasm",
+          "code": {
+            "specifier": "file:///math.wasm",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 26
+              },
+              "end": {
+                "line": 0,
+                "character": 39
+              }
+            }
+          },
+          "assertionType": "bytes",
+          "phase": "source"
+        }
+      ],
+      "size": 64,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}

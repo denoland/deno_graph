@@ -473,6 +473,13 @@ pub enum ModuleErrorKind {
     referrer: Range,
     kind: String,
   },
+  #[class(type)]
+  UnsupportedModuleTypeForSourcePhaseImport {
+    specifier: ModuleSpecifier,
+    referrer: Range,
+    actual_media_type: MediaType,
+    actual_attribute_type: Option<String>,
+  },
 }
 
 impl ModuleErrorKind {
@@ -486,6 +493,9 @@ impl ModuleErrorKind {
       | Self::MissingDynamic { specifier, .. }
       | Self::InvalidTypeAssertion { specifier, .. }
       | Self::UnsupportedImportAttributeType { specifier, .. } => specifier,
+      Self::UnsupportedModuleTypeForSourcePhaseImport { specifier, .. } => {
+        specifier
+      }
     }
   }
 
@@ -500,7 +510,10 @@ impl ModuleErrorKind {
       Self::WasmParse { .. } => None,
       Self::MissingDynamic { referrer, .. }
       | Self::InvalidTypeAssertion { referrer, .. }
-      | Self::UnsupportedImportAttributeType { referrer, .. } => Some(referrer),
+      | Self::UnsupportedImportAttributeType { referrer, .. }
+      | Self::UnsupportedModuleTypeForSourcePhaseImport { referrer, .. } => {
+        Some(referrer)
+      }
     }
   }
 
@@ -520,7 +533,8 @@ impl ModuleErrorKind {
       | Self::MissingDynamic { .. }
       | Self::UnsupportedMediaType { .. }
       | Self::InvalidTypeAssertion { .. }
-      | Self::UnsupportedImportAttributeType { .. } => None,
+      | Self::UnsupportedImportAttributeType { .. }
+      | Self::UnsupportedModuleTypeForSourcePhaseImport { .. } => None,
     }
   }
 
@@ -544,7 +558,8 @@ impl std::error::Error for ModuleErrorKind {
       | Self::WasmParse { .. }
       | Self::UnsupportedMediaType { .. }
       | Self::InvalidTypeAssertion { .. }
-      | Self::UnsupportedImportAttributeType { .. } => None,
+      | Self::UnsupportedImportAttributeType { .. }
+      | Self::UnsupportedModuleTypeForSourcePhaseImport { .. } => None,
     }
   }
 }
@@ -614,6 +629,24 @@ impl fmt::Display for ModuleErrorKind {
       } => write!(
         f,
         "The import attribute type of \"{kind}\" is unsupported.\n  Specifier: {specifier}"
+      ),
+      Self::UnsupportedModuleTypeForSourcePhaseImport {
+        specifier,
+        actual_media_type,
+        actual_attribute_type: None,
+        ..
+      } => write!(
+        f,
+        "Importing {actual_media_type} modules at source phase is unsupported.\n  Specifier: {specifier}"
+      ),
+      Self::UnsupportedModuleTypeForSourcePhaseImport {
+        specifier,
+        actual_media_type,
+        actual_attribute_type: Some(actual_attribute_type),
+        ..
+      } => write!(
+        f,
+        "Importing {actual_media_type} modules with {{ type: \"{actual_attribute_type}\" }} at source phase is unsupported.\n  Specifier: {specifier}"
       ),
     }
   }
@@ -946,6 +979,8 @@ fn is_false(v: &bool) -> bool {
 pub enum ImportKind {
   /// `import`/`export`
   Es,
+  /// `import source`
+  EsSource,
   /// `require`
   Require,
   /// `import type`/`export type`
@@ -965,10 +1000,25 @@ pub enum ImportKind {
 impl ImportKind {
   pub fn is_runtime(&self) -> bool {
     match self {
-      ImportKind::Es | ImportKind::Require | ImportKind::JsxImportSource => {
-        true
-      }
+      ImportKind::Es
+      | ImportKind::EsSource
+      | ImportKind::Require
+      | ImportKind::JsxImportSource => true,
       ImportKind::TsType
+      | ImportKind::TsModuleAugmentation
+      | ImportKind::TsReferencePath
+      | ImportKind::TsReferenceTypes
+      | ImportKind::JsDoc => false,
+    }
+  }
+
+  pub fn is_source_phase(&self) -> bool {
+    match self {
+      ImportKind::EsSource => true,
+      ImportKind::Es
+      | ImportKind::Require
+      | ImportKind::JsxImportSource
+      | ImportKind::TsType
       | ImportKind::TsModuleAugmentation
       | ImportKind::TsReferencePath
       | ImportKind::TsReferenceTypes
@@ -2883,6 +2933,7 @@ pub(crate) struct ParseModuleAndSourceInfoOptions<'a> {
   pub content: Arc<[u8]>,
   pub maybe_attribute_type: Option<&'a AttributeTypeWithRange>,
   pub maybe_referrer: Option<&'a Range>,
+  pub maybe_source_phase_referrer: Option<&'a Range>,
   pub is_root: bool,
   pub is_dynamic_branch: bool,
 }
@@ -2903,6 +2954,22 @@ pub(crate) async fn parse_module_source_and_info(
   if opts.is_root && media_type == MediaType::Unknown {
     // assume javascript
     media_type = MediaType::JavaScript;
+  }
+
+  if let Some(source_phase_referrer) = opts.maybe_source_phase_referrer
+    && !(media_type == MediaType::Wasm && opts.maybe_attribute_type.is_none())
+  {
+    return Err(
+      ModuleErrorKind::UnsupportedModuleTypeForSourcePhaseImport {
+        specifier: opts.specifier,
+        referrer: source_phase_referrer.clone(),
+        actual_media_type: media_type,
+        actual_attribute_type: opts
+          .maybe_attribute_type
+          .map(|t| t.kind.clone()),
+      }
+      .into_box(),
+    );
   }
 
   // here we check any media types that should have assertions made against them
@@ -3577,19 +3644,29 @@ fn fill_module_dependencies(
         )
       }
       DependencyDescriptor::Static(desc) => {
-        let is_import_or_export_type = matches!(
-          desc.kind,
-          StaticDependencyKind::ImportType | StaticDependencyKind::ExportType
-        );
-        if is_import_or_export_type && !graph_kind.include_types() {
-          continue; // skip
-        }
-        let is_types = is_import_or_export_type || media_type.is_declaration();
+        let kind = match desc.kind {
+          StaticDependencyKind::ImportType
+          | StaticDependencyKind::ExportType => {
+            if !graph_kind.include_types() {
+              continue;
+            }
+            ImportKind::TsType
+          }
+          StaticDependencyKind::ImportSource => ImportKind::EsSource,
+          StaticDependencyKind::Import
+          | StaticDependencyKind::ImportEquals
+          | StaticDependencyKind::Export
+          | StaticDependencyKind::ExportEquals => ImportKind::Es,
+          StaticDependencyKind::MaybeTsModuleAugmentation => unreachable!(),
+        };
+        let is_types =
+          kind == ImportKind::TsType || media_type.is_declaration();
         let specifier_range = Range {
           specifier: module_specifier.clone(),
           range: desc.specifier_range,
           resolution_mode: match desc.kind {
             StaticDependencyKind::Import
+            | StaticDependencyKind::ImportSource
             | StaticDependencyKind::Export
             | StaticDependencyKind::ImportType
             | StaticDependencyKind::ExportType => is_types
@@ -3618,10 +3695,7 @@ fn fill_module_dependencies(
         (
           vec![Import {
             specifier: desc.specifier,
-            kind: match is_import_or_export_type {
-              true => ImportKind::TsType,
-              false => ImportKind::Es,
-            },
+            kind,
             specifier_range,
             is_dynamic: false,
             attributes: desc.import_attributes,
@@ -3657,7 +3731,8 @@ fn fill_module_dependencies(
           specifier: module_specifier.clone(),
           range: desc.argument_range,
           resolution_mode: match desc.kind {
-            DynamicDependencyKind::Import => {
+            DynamicDependencyKind::Import
+            | DynamicDependencyKind::ImportSource => {
               if media_type.is_declaration() {
                 None
               } else {
@@ -3674,6 +3749,7 @@ fn fill_module_dependencies(
               specifier,
               kind: match desc.kind {
                 DynamicDependencyKind::Import => ImportKind::Es,
+                DynamicDependencyKind::ImportSource => ImportKind::EsSource,
                 DynamicDependencyKind::Require => ImportKind::Require,
               },
               specifier_range: specifier_range.clone(),
@@ -4101,6 +4177,7 @@ enum LoadSpecifierKind {
 struct PendingInfo {
   requested_specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
+  maybe_source_phase_referrer: Option<Range>,
   result: Result<PendingInfoResponse, ModuleError>,
   maybe_version_info: Option<JsrPackageVersionInfoExt>,
   loaded_package_via_https_url: Option<LoadedJsrPackageViaHttpsUrl>,
@@ -4111,6 +4188,7 @@ struct PendingModuleLoadItem {
   requested_specifier: Url,
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_range: Option<Range>,
+  maybe_source_phase_referrer: Option<Range>,
   load_specifier: Url,
   in_dynamic_branch: bool,
   is_asset: bool,
@@ -4180,6 +4258,7 @@ struct PendingJsrState {
 #[derive(Debug)]
 struct PendingDynamicBranch {
   range: Range,
+  maybe_source_phase_referrer: Option<Range>,
   is_asset: bool,
   maybe_attribute_type: Option<AttributeTypeWithRange>,
   maybe_version_info: Option<JsrPackageVersionInfoExt>,
@@ -4188,6 +4267,7 @@ struct PendingDynamicBranch {
 #[derive(Debug)]
 struct DeferredLoad {
   maybe_range: Option<Range>,
+  maybe_source_phase_referrer: Option<Range>,
   in_dynamic_branch: bool,
   is_root: bool,
   maybe_attribute_type: Option<AttributeTypeWithRange>,
@@ -4197,6 +4277,7 @@ struct DeferredLoad {
 struct LoadOptionsRef<'a> {
   specifier: &'a ModuleSpecifier,
   maybe_range: Option<&'a Range>,
+  maybe_source_phase_referrer: Option<&'a Range>,
   is_asset: bool,
   in_dynamic_branch: bool,
   is_root: bool,
@@ -4321,6 +4402,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       self.load(LoadOptionsRef {
         specifier: &root,
         maybe_range: None,
+        maybe_source_phase_referrer: None,
         is_asset: false,
         in_dynamic_branch: self.in_dynamic_branch,
         is_root: true,
@@ -4358,6 +4440,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       self.load(LoadOptionsRef {
         specifier,
         maybe_range: None,
+        maybe_source_phase_referrer: None,
         is_asset: false,
         in_dynamic_branch: self.in_dynamic_branch,
         is_root: true,
@@ -4378,6 +4461,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Some(PendingInfo {
           requested_specifier,
           maybe_range,
+          maybe_source_phase_referrer,
           result,
           maybe_version_info,
           loaded_package_via_https_url,
@@ -4398,6 +4482,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               self.visit(
                 response,
                 maybe_range.clone(),
+                maybe_source_phase_referrer.clone(),
                 maybe_version_info.as_ref(),
               );
 
@@ -4429,6 +4514,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             self.load(LoadOptionsRef {
               specifier: &specifier,
               maybe_range: item.maybe_range.as_ref(),
+              maybe_source_phase_referrer: item
+                .maybe_source_phase_referrer
+                .as_ref(),
               is_asset: false, // deferred items are asset -> module
               in_dynamic_branch: item.in_dynamic_branch,
               is_root: item.is_root,
@@ -4477,6 +4565,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           self.load(LoadOptionsRef {
             specifier: &resolved.specifier,
             maybe_range: Some(&resolved.range),
+            maybe_source_phase_referrer: None,
             is_asset: false,
             in_dynamic_branch: self.in_dynamic_branch,
             is_root: self.resolved_roots.contains(&resolved.specifier),
@@ -4641,6 +4730,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               self.load(LoadOptionsRef {
                 specifier: &specifier,
                 maybe_range: resolution_item.maybe_range.as_ref(),
+                maybe_source_phase_referrer: None,
                 is_asset: resolution_item.is_asset,
                 in_dynamic_branch: resolution_item.is_dynamic,
                 is_root: resolution_item.is_root,
@@ -4706,6 +4796,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         self.load(LoadOptionsRef {
           specifier: &specifier,
           maybe_range: Some(&dynamic_branch.range),
+          maybe_source_phase_referrer: dynamic_branch
+            .maybe_source_phase_referrer
+            .as_ref(),
           is_asset: dynamic_branch.is_asset,
           in_dynamic_branch: true,
           is_root: self.resolved_roots.contains(&specifier),
@@ -4984,10 +5077,35 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   ) {
     let specifier = options.specifier;
     let maybe_range = options.maybe_range;
+    let maybe_source_phase_referrer = options.maybe_source_phase_referrer;
     let original_specifier = specifier;
     let specifier = self.graph.redirects.get(specifier).unwrap_or(specifier);
     if options.is_asset {
-      // this will always be set when an asset
+      // TODO(nayeemrmn): We need to load the module to validate the actual
+      // media type for source-phase-import eligibility. Don't treat
+      // source-phase-imported modules as assets. Get the actual media type.
+      let inferred_media_type = MediaType::from_specifier(specifier);
+      if let Some(source_phase_referrer) = maybe_source_phase_referrer
+        && !(inferred_media_type == MediaType::Wasm
+          && options.maybe_attribute_type.as_ref().is_none())
+      {
+        self.graph.module_slots.insert(
+          specifier.clone(),
+          ModuleSlot::Err(
+            ModuleErrorKind::UnsupportedModuleTypeForSourcePhaseImport {
+              specifier: specifier.clone(),
+              referrer: source_phase_referrer.clone(),
+              actual_media_type: inferred_media_type,
+              actual_attribute_type: options
+                .maybe_attribute_type
+                .as_ref()
+                .map(|t| t.kind.clone()),
+            }
+            .into_box(),
+          ),
+        );
+        return;
+      }
       if let Some(attribute) = &options.maybe_attribute_type {
         let is_allowed = match attribute.kind.as_str() {
           "bytes" => self.unstable_bytes_imports,
@@ -5027,6 +5145,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             .entry(specifier.clone())
             .or_insert_with(|| DeferredLoad {
               maybe_range: maybe_range.cloned(),
+              maybe_source_phase_referrer: maybe_source_phase_referrer.cloned(),
               in_dynamic_branch: options.in_dynamic_branch,
               is_root: options.is_root,
               maybe_attribute_type: options.maybe_attribute_type,
@@ -5125,6 +5244,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           requested_specifier: specifier.clone(),
           maybe_attribute_type: options.maybe_attribute_type,
           maybe_range: maybe_range.cloned(),
+          maybe_source_phase_referrer: maybe_source_phase_referrer.cloned(),
           load_specifier: specifier.clone(),
           is_asset: options.is_asset,
           in_dynamic_branch: options.in_dynamic_branch,
@@ -5204,6 +5324,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       self.state.pending.push_back({
         let requested_specifier = specifier.clone();
         let maybe_range = options.maybe_range.cloned();
+        let maybe_source_phase_referrer =
+          options.maybe_source_phase_referrer.cloned();
         let version_info = version_info.clone();
         async move {
           let response = fut.await;
@@ -5232,6 +5354,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   },
                   maybe_attribute_type: options.maybe_attribute_type.as_ref(),
                   maybe_referrer: maybe_range.as_ref(),
+                  maybe_source_phase_referrer: maybe_source_phase_referrer
+                    .as_ref(),
                   is_root: options.is_root,
                   is_dynamic_branch,
                 },
@@ -5276,6 +5400,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   content,
                   maybe_attribute_type: options.maybe_attribute_type.as_ref(),
                   maybe_referrer: maybe_range.as_ref(),
+                  maybe_source_phase_referrer: maybe_source_phase_referrer
+                    .as_ref(),
                   is_root: options.is_root,
                   is_dynamic_branch,
                 },
@@ -5302,6 +5428,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           PendingInfo {
             requested_specifier,
             maybe_range,
+            maybe_source_phase_referrer,
             result,
             maybe_version_info: Some(version_info),
             loaded_package_via_https_url: None,
@@ -5319,6 +5446,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         requested_specifier: specifier.clone(),
         maybe_attribute_type: options.maybe_attribute_type,
         maybe_range: options.maybe_range.cloned(),
+        maybe_source_phase_referrer: options
+          .maybe_source_phase_referrer
+          .cloned(),
         load_specifier: specifier.clone(),
         is_asset: options.is_asset,
         in_dynamic_branch: options.in_dynamic_branch,
@@ -5475,6 +5605,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       requested_specifier,
       maybe_attribute_type,
       maybe_range,
+      maybe_source_phase_referrer,
       load_specifier,
       in_dynamic_branch,
       is_asset,
@@ -5522,6 +5653,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         load_specifier: ModuleSpecifier,
         mut maybe_checksum: Option<LoaderChecksum>,
         maybe_range: Option<&Range>,
+        maybe_source_phase_referrer: Option<&Range>,
         maybe_version_info: &mut Option<JsrPackageVersionInfoExt>,
         maybe_attribute_type: Option<AttributeTypeWithRange>,
         loaded_package_via_https_url: &mut Option<LoadedJsrPackageViaHttpsUrl>,
@@ -5745,6 +5877,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   content,
                   maybe_attribute_type: maybe_attribute_type.as_ref(),
                   maybe_referrer: maybe_range,
+                  maybe_source_phase_referrer,
                   is_root,
                   is_dynamic_branch: in_dynamic_branch,
                 },
@@ -5790,6 +5923,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     content,
                     maybe_attribute_type: maybe_attribute_type.as_ref(),
                     maybe_referrer: maybe_range,
+                    maybe_source_phase_referrer,
                     is_root,
                     is_dynamic_branch: in_dynamic_branch,
                   },
@@ -5831,6 +5965,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         load_specifier,
         maybe_checksum,
         maybe_range.as_ref(),
+        maybe_source_phase_referrer.as_ref(),
         &mut maybe_version_info,
         maybe_attribute_type,
         &mut loaded_package_via_https_url,
@@ -5848,6 +5983,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         result,
         requested_specifier,
         maybe_range,
+        maybe_source_phase_referrer,
         maybe_version_info,
         loaded_package_via_https_url,
       }
@@ -5885,6 +6021,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     &mut self,
     response: PendingInfoResponse,
     maybe_referrer: Option<Range>,
+    maybe_source_phase_referrer: Option<Range>,
     maybe_version_info: Option<&JsrPackageVersionInfoExt>,
   ) {
     match response {
@@ -5992,6 +6129,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           LoadOptionsRef {
             specifier: &specifier,
             maybe_range: maybe_referrer.as_ref(),
+            maybe_source_phase_referrer: maybe_source_phase_referrer.as_ref(),
             is_asset,
             in_dynamic_branch: is_dynamic,
             is_root,
@@ -6035,6 +6173,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             self.load(LoadOptionsRef {
               specifier: &resolved.specifier,
               maybe_range: Some(&resolved.range),
+              maybe_source_phase_referrer: None,
               is_asset: true,
               in_dynamic_branch: self.in_dynamic_branch,
               is_root: self.resolved_roots.contains(&resolved.specifier),
@@ -6060,6 +6199,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             self.load(LoadOptionsRef {
               specifier: &resolved.specifier,
               maybe_range: Some(&resolved.range),
+              maybe_source_phase_referrer: None,
               is_asset: false, // types dependency can't be an asset
               in_dynamic_branch: false,
               is_root: self.resolved_roots.contains(&resolved.specifier),
@@ -6092,7 +6232,13 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       if dep.is_dynamic && self.skip_dynamic_deps {
         continue;
       }
-      let is_asset = dep.imports.iter().all(|i| i.attributes.has_asset());
+      let maybe_source_phase_referrer = dep.imports.iter().find_map(|i| {
+        i.kind.is_source_phase().then(|| i.specifier_range.clone())
+      });
+      let is_asset = dep
+        .imports
+        .iter()
+        .all(|i| i.attributes.has_asset() || i.kind.is_source_phase());
 
       if self.graph.graph_kind.include_code() || dep.maybe_type.is_none() {
         if let Resolution::Ok(resolved) = &dep.maybe_code {
@@ -6112,6 +6258,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               .entry(specifier.clone())
               .or_insert_with(|| PendingDynamicBranch {
                 range: range.clone(),
+                maybe_source_phase_referrer: maybe_source_phase_referrer
+                  .clone(),
                 is_asset,
                 maybe_attribute_type,
                 maybe_version_info: maybe_version_info.map(ToOwned::to_owned),
@@ -6124,6 +6272,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             self.load(LoadOptionsRef {
               specifier,
               maybe_range: Some(range),
+              maybe_source_phase_referrer: maybe_source_phase_referrer.as_ref(),
               is_asset,
               in_dynamic_branch: self.in_dynamic_branch,
               is_root: self.resolved_roots.contains(specifier),
@@ -6153,6 +6302,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               PendingDynamicBranch {
                 is_asset,
                 range: range.clone(),
+                maybe_source_phase_referrer: maybe_source_phase_referrer
+                  .clone(),
                 maybe_attribute_type,
                 maybe_version_info: maybe_version_info.map(ToOwned::to_owned),
               },
@@ -6161,6 +6312,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             self.load(LoadOptionsRef {
               specifier,
               maybe_range: Some(range),
+              maybe_source_phase_referrer: maybe_source_phase_referrer.as_ref(),
               is_asset,
               in_dynamic_branch: self.in_dynamic_branch,
               is_root: self.resolved_roots.contains(specifier),
@@ -6485,16 +6637,41 @@ where
   S: Serializer,
 {
   #[derive(Serialize)]
-  struct DependencyWithSpecifier<'a> {
+  #[serde(rename_all = "camelCase")]
+  enum ImportPhase {
+    Evaluation,
+    Source,
+  }
+  impl ImportPhase {
+    fn is_evaluation(&self) -> bool {
+      match self {
+        Self::Evaluation => true,
+        Self::Source => false,
+      }
+    }
+  }
+  #[derive(Serialize)]
+  struct DependencyWithSpecifierAndPhase<'a> {
     specifier: &'a str,
     #[serde(flatten)]
     dependency: &'a Dependency,
+    /// Most advanced phase used by an import for this dependency.
+    #[serde(skip_serializing_if = "ImportPhase::is_evaluation")]
+    phase: ImportPhase,
   }
   let mut seq = serializer.serialize_seq(Some(dependencies.len()))?;
   for (specifier, dependency) in dependencies {
-    seq.serialize_element(&DependencyWithSpecifier {
+    let phase = if !dependency.imports.is_empty()
+      && dependency.imports.iter().all(|i| i.kind.is_source_phase())
+    {
+      ImportPhase::Source
+    } else {
+      ImportPhase::Evaluation
+    };
+    seq.serialize_element(&DependencyWithSpecifierAndPhase {
       specifier,
       dependency,
+      phase,
     })?
   }
   seq.end()
@@ -7383,6 +7560,8 @@ mod tests {
                 import 'file:///baz.json' assert { type: 'json' };
                 import type {} from 'file:///bar.ts';
                 /** @typedef { import('file:///bar.ts') } bar */
+                import source mathModule from 'file:///math_with_import.wasm';
+                await import.source('file:///math_with_import.wasm');
               "
               .to_vec()
               .into(),
@@ -7410,7 +7589,22 @@ mod tests {
               }))
             })
           }
-          _ => unreachable!(),
+          "file:///math_with_import.wasm" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier: specifier.clone(),
+              maybe_headers: None,
+              mtime: None,
+              content: include_bytes!(
+                "../tests/testdata/math_with_import.wasm"
+              )
+              .to_vec()
+              .into(),
+            }))
+          }),
+          "file:///math.ts" => unreachable!(
+            "Shouldn't load dependencies of wasm modules imported by source"
+          ),
+          s => unreachable!("Tried to load: {s}"),
         }
       }
     }
@@ -7428,6 +7622,10 @@ mod tests {
     let module = module.js().unwrap();
     let dependency_a = module.dependencies.get("file:///bar.ts").unwrap();
     let dependency_b = module.dependencies.get("file:///baz.json").unwrap();
+    let dependency_c = module
+      .dependencies
+      .get("file:///math_with_import.wasm")
+      .unwrap();
     assert_eq!(
       dependency_a.imports,
       vec![
@@ -7585,6 +7783,53 @@ mod tests {
         )])),
         is_side_effect: true,
       }]
+    );
+    assert_eq!(
+      dependency_c.imports,
+      vec![
+        Import {
+          specifier: "file:///math_with_import.wasm".to_string(),
+          kind: ImportKind::EsSource,
+          specifier_range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            range: PositionRange {
+              start: Position {
+                line: 10,
+                character: 46,
+              },
+              end: Position {
+                line: 10,
+                character: 77,
+              },
+            },
+            resolution_mode: Some(ResolutionMode::Import),
+          },
+          is_dynamic: false,
+          attributes: ImportAttributes::None,
+          is_side_effect: false,
+        },
+        Import {
+          specifier: "file:///math_with_import.wasm".to_string(),
+          kind: ImportKind::EsSource,
+          specifier_range: Range {
+            specifier: Url::parse("file:///foo.ts").unwrap(),
+            range: PositionRange {
+              start: Position {
+                line: 11,
+                character: 36,
+              },
+              end: Position {
+                line: 11,
+                character: 67,
+              },
+            },
+            resolution_mode: Some(ResolutionMode::Import),
+          },
+          is_dynamic: true,
+          attributes: ImportAttributes::None,
+          is_side_effect: false,
+        },
+      ],
     );
   }
 

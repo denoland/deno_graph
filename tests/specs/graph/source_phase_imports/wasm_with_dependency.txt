@@ -1,0 +1,48 @@
+# mod.ts
+// This file depends on `./math.ts`, but that should not be loaded.
+import source module from "./math_with_import.wasm";
+
+# math_with_import.wasm <= ../../../testdata/math_with_import.wasm
+
+# math.ts
+// This file should not be loaded or included in the graph.
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "external",
+      "specifier": "file:///math_with_import.wasm"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./math_with_import.wasm",
+          "code": {
+            "specifier": "file:///math_with_import.wasm",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 1,
+                "character": 26
+              },
+              "end": {
+                "line": 1,
+                "character": 51
+              }
+            }
+          },
+          "phase": "source"
+        }
+      ],
+      "size": 121,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}
