@@ -2957,8 +2957,7 @@ pub(crate) async fn parse_module_source_and_info(
   }
 
   if let Some(source_phase_referrer) = opts.maybe_source_phase_referrer
-    && !(media_type == MediaType::Wasm
-      && opts.maybe_attribute_type.is_none_or(|t| t.kind == "wasm"))
+    && !(media_type == MediaType::Wasm && opts.maybe_attribute_type.is_none())
   {
     return Err(
       ModuleErrorKind::UnsupportedModuleTypeForSourcePhaseImport {
@@ -5088,10 +5087,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       let inferred_media_type = MediaType::from_specifier(specifier);
       if let Some(source_phase_referrer) = maybe_source_phase_referrer
         && !(inferred_media_type == MediaType::Wasm
-          && options
-            .maybe_attribute_type
-            .as_ref()
-            .is_none_or(|t| t.kind == "wasm"))
+          && options.maybe_attribute_type.as_ref().is_none())
       {
         self.graph.module_slots.insert(
           specifier.clone(),
