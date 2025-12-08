@@ -121,6 +121,7 @@ pub async fn parse_module(
       content: options.content,
       maybe_attribute_type: None,
       maybe_referrer: None,
+      maybe_source_phase_referrer: None,
       is_root: true,
       is_dynamic_branch: false,
     },

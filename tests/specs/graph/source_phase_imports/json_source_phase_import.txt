@@ -1,0 +1,43 @@
+# mod.ts
+import source module from "./foo.json";
+
+# foo.json
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "specifier": "file:///foo.json",
+      "error": "Importing Json modules at source phase is unsupported.\n  Specifier: file:///foo.json"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./foo.json",
+          "code": {
+            "specifier": "file:///foo.json",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 26
+              },
+              "end": {
+                "line": 0,
+                "character": 38
+              }
+            }
+          }
+        }
+      ],
+      "size": 40,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}
