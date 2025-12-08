@@ -6665,7 +6665,9 @@ where
   }
   let mut seq = serializer.serialize_seq(Some(dependencies.len()))?;
   for (specifier, dependency) in dependencies {
-    let phase = if dependency.imports.iter().all(|i| i.kind.is_source_phase()) {
+    let phase = if !dependency.imports.is_empty()
+      && dependency.imports.iter().all(|i| i.kind.is_source_phase())
+    {
       ImportPhase::Source
     } else {
       ImportPhase::Evaluation
