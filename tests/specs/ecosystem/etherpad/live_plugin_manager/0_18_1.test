@@ -48,22 +48,7 @@ export { GithubAuth } from "./src/GithubRegistryClient.ts";
          ~~~~~~~~~~
     at file://<tmpdir>/index.ts:5:10
 
-TS2304 [ERROR]: Cannot find name 'global'.
-type NodeJSGlobal = typeof global;
-                           ~~~~~~
-    at file://<tmpdir>/src/PluginManager.ts:7:28
-
-TS2304 [ERROR]: Cannot find name 'NodeRequire'.
-  hostRequire?: NodeRequire;
-                ~~~~~~~~~~~
-    at file://<tmpdir>/src/PluginManager.ts:16:17
-
-TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
-  env?: NodeJS.ProcessEnv;
-        ~~~~~~
-    at file://<tmpdir>/src/PluginManager.ts:27:9
-
-Found 10 errors.
+Found 7 errors.
 
 error: Type checking failed.
 

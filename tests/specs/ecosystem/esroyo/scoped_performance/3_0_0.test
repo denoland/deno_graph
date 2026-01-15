@@ -9,4 +9,15 @@ esroyo/scoped-performance/3.0.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2420 [ERROR]: Class 'ScopedPerformance' incorrectly implements interface 'Performance'.
+  Type 'ScopedPerformance' is missing the following properties from type 'Performance': clearResourceTimings, setResourceTimingBufferSize
+export class ScopedPerformance implements Performance {
+             ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/scoped-performance.ts:1:14
+
+error: Type checking failed.
+

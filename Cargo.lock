@@ -484,7 +484,6 @@ dependencies = [
  "env_logger",
  "file_test_runner",
  "futures",
- "import_map",
  "indexmap",
  "log",
  "monch",
@@ -538,9 +537,9 @@ dependencies = [
 
 [[package]]
 name = "deno_path_util"
-version = "0.6.1"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bfe02936964b2910719bd488841f6e884349360113c7abf6f4c6b28ca9cd7a19"
+checksum = "78c7e98943f0d068928906db0c7bde89de684fa32c6a8018caacc4cee2cdd72b"
 dependencies = [
  "deno_error",
  "percent-encoding",
@@ -1163,23 +1162,6 @@ name = "if_chain"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb56e1aa765b4b4f3aadfab769793b7087bb03a4ea4920644a6d238e2df5b9ed"
-
-[[package]]
-name = "import_map"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f83a4958a41489355816028239fee373797435384d162f4908e7980c83c3bb1b"
-dependencies = [
- "boxed_error",
- "deno_error",
- "indexmap",
- "log",
- "percent-encoding",
- "serde",
- "serde_json",
- "thiserror",
- "url",
-]
 
 [[package]]
 name = "indexmap"
