@@ -56,12 +56,7 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
   ~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/collections/CiMap.ts:30:3
 
-TS2503 [ERROR]: Cannot find namespace 'NodeJS'.
- */ export default function read<T>(target: NodeJS.EventEmitter, eventMap?: {
-                                            ~~~~~~
-    at file://<tmpdir>/read.ts:78:45
-
-Found 8 errors.
+Found 7 errors.
 
 error: Type checking failed.
 
