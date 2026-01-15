@@ -838,17 +838,21 @@ async fn test_json_root() {
   );
   loader.add_source(
     "https://deno.land/x/redirect",
-    deno_graph::source::Source::Redirect(
+    deno_graph::source::Source::<_, [u8; 0]>::Redirect(
       "https://jsr.io/@scope/example/1.0.0/data.json",
     ),
   );
   loader.add_source(
     "https://deno.land/x/redirect2",
-    deno_graph::source::Source::Redirect("https://deno.land/x/redirect"),
+    deno_graph::source::Source::<_, [u8; 0]>::Redirect(
+      "https://deno.land/x/redirect",
+    ),
   );
   loader.add_source(
     "https://deno.land/x/redirect3",
-    deno_graph::source::Source::Redirect("https://deno.land/x/redirect2"),
+    deno_graph::source::Source::<_, [u8; 0]>::Redirect(
+      "https://deno.land/x/redirect2",
+    ),
   );
   loader.add_jsr_package_info(
     "@scope/example",

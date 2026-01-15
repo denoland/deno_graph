@@ -387,13 +387,14 @@ impl<'a> FastCheckTransformer<'a> {
 
   fn transform_module_specifier(&mut self, src: &mut Str) {
     // only do this for relative specifiers (specifiers to specifiers within the package)
-    if !src.value.starts_with('.') {
+    let specifier = src.value.to_string_lossy();
+    if !specifier.starts_with('.') {
       return;
     }
     let Some(resolved_specifier) =
       self
         .graph
-        .resolve_dependency(&src.value, self.specifier, true)
+        .resolve_dependency(&specifier, self.specifier, true)
     else {
       return;
     };
@@ -696,7 +697,7 @@ impl<'a> FastCheckTransformer<'a> {
         {
           let key = match &method.key {
             PropName::Ident(i) => Some(i.sym.to_string()),
-            PropName::Str(s) => Some(s.value.to_string()),
+            PropName::Str(s) => Some(s.value.to_string_lossy().to_string()),
             PropName::Num(n) => Some(
               n.raw
                 .as_ref()

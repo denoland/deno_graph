@@ -606,18 +606,18 @@ pub struct MemoryLoader {
   cache_info: HashMap<ModuleSpecifier, CacheInfo>,
 }
 
-pub enum Source<S> {
+pub enum Source<S, C> {
   Module {
     specifier: S,
     maybe_headers: Option<Vec<(S, S)>>,
-    content: S,
+    content: C,
   },
   Redirect(S),
   External(S),
   Err(Arc<dyn JsErrorClass>),
 }
 
-impl<S: AsRef<str>> Source<S> {
+impl<S: AsRef<str>, C: AsRef<[u8]>> Source<S, C> {
   fn into_result(self) -> Result<LoadResponse, Arc<dyn JsErrorClass>> {
     match self {
       Source::Module {
@@ -629,10 +629,15 @@ impl<S: AsRef<str>> Source<S> {
         mtime: None,
         maybe_headers: maybe_headers.map(|h| {
           h.into_iter()
-            .map(|(k, v)| (k.as_ref().to_string(), v.as_ref().to_string()))
+            .map(|(k, v)| {
+              (
+                (k.as_ref() as &str).to_string(),
+                (v.as_ref() as &str).to_string(),
+              )
+            })
             .collect()
         }),
-        content: Arc::from(content.as_ref().to_string().into_bytes()),
+        content: Arc::from(content.as_ref().to_vec()),
       }),
       Source::Redirect(specifier) => Ok(LoadResponse::Redirect {
         specifier: ModuleSpecifier::parse(specifier.as_ref()).unwrap(),
@@ -645,11 +650,11 @@ impl<S: AsRef<str>> Source<S> {
   }
 }
 
-pub type MemoryLoaderSources<S> = Vec<(S, Source<S>)>;
+pub type MemoryLoaderSources<S, C> = Vec<(S, Source<S, C>)>;
 
 impl MemoryLoader {
-  pub fn new<S: AsRef<str>>(
-    sources: MemoryLoaderSources<S>,
+  pub fn new<S: AsRef<str>, C: AsRef<[u8]>>(
+    sources: MemoryLoaderSources<S, C>,
     cache_info: Vec<(S, CacheInfo)>,
   ) -> Self {
     Self {
@@ -686,10 +691,10 @@ impl MemoryLoader {
     );
   }
 
-  pub fn add_source<S: AsRef<str>>(
+  pub fn add_source<S: AsRef<str>, C: AsRef<[u8]>>(
     &mut self,
     specifier: impl AsRef<str>,
-    source: Source<S>,
+    source: Source<S, C>,
   ) {
     let specifier = ModuleSpecifier::parse(specifier.as_ref()).unwrap();
     self.sources.insert(specifier, source.into_result());
@@ -698,7 +703,7 @@ impl MemoryLoader {
   pub fn add_external_source(&mut self, specifier: impl AsRef<str>) {
     self.add_source(
       specifier.as_ref(),
-      Source::External(specifier.as_ref().to_string()),
+      Source::<_, [u8; 0]>::External(specifier.as_ref().to_string()),
     );
   }
 

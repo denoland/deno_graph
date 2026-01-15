@@ -121,6 +121,7 @@ pub async fn parse_module(
       content: options.content,
       maybe_attribute_type: None,
       maybe_referrer: None,
+      maybe_source_phase_referrer: None,
       is_root: true,
       is_dynamic_branch: false,
     },
@@ -196,7 +197,7 @@ mod tests {
   use source::tests::MockResolver;
   use std::collections::BTreeMap;
 
-  type Sources<'a> = Vec<(&'a str, Source<&'a str>)>;
+  type Sources<'a> = Vec<(&'a str, Source<&'a str, &'a str>)>;
 
   fn setup(
     sources: Sources,

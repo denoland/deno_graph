@@ -98,6 +98,7 @@ impl ImportAttributes {
 pub enum DynamicDependencyKind {
   #[default]
   Import,
+  ImportSource,
   Require,
 }
 
@@ -105,6 +106,7 @@ pub enum DynamicDependencyKind {
 #[serde(rename_all = "camelCase")]
 pub enum StaticDependencyKind {
   Import,
+  ImportSource,
   ImportType,
   ImportEquals,
   Export,
@@ -276,6 +278,9 @@ pub struct ModuleInfo {
   /// or `@import { SomeType } from "npm:some-module"`.
   #[serde(skip_serializing_if = "Vec::is_empty", default)]
   pub jsdoc_imports: Vec<JsDocImportInfo>,
+  /// Source map URL extracted from sourceMappingURL comment
+  #[serde(skip_serializing_if = "Option::is_none", default)]
+  pub source_map_url: Option<SpecifierWithRange>,
 }
 
 fn is_false(v: &bool) -> bool {
@@ -442,6 +447,14 @@ pub fn find_jsx_import_source_types(text: &str) -> Option<regex::Match<'_>> {
     .and_then(|c| c.get(1))
 }
 
+/// Matches the `sourceMappingURL` comment.
+pub fn find_source_mapping_url(text: &str) -> Option<regex::Match<'_>> {
+  static SOURCE_MAPPING_URL_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"(?i)^[#@]\s*sourceMappingURL\s*=\s*(\S+)").unwrap()
+  });
+  SOURCE_MAPPING_URL_RE.captures(text).and_then(|c| c.get(1))
+}
+
 /// Matches the `@ts-self-types` pragma.
 pub fn find_ts_self_types(text: &str) -> Option<regex::Match<'_>> {
   static TS_SELF_TYPES_RE: Lazy<Regex> = Lazy::new(|| {
@@ -505,6 +518,7 @@ mod test {
       jsx_import_source: None,
       jsx_import_source_types: None,
       jsdoc_imports: Vec::new(),
+      source_map_url: None,
     };
     run_serialization_test(&module_info, json!({}));
   }
@@ -574,6 +588,7 @@ mod test {
       jsx_import_source: None,
       jsx_import_source_types: None,
       jsdoc_imports: Vec::new(),
+      source_map_url: None,
     };
     run_serialization_test(
       &module_info,
@@ -659,6 +674,7 @@ mod test {
       jsx_import_source: None,
       jsx_import_source_types: None,
       jsdoc_imports: Vec::new(),
+      source_map_url: None,
     };
     run_serialization_test(
       &module_info,
@@ -704,6 +720,7 @@ mod test {
       jsx_import_source: None,
       jsx_import_source_types: None,
       jsdoc_imports: Vec::new(),
+      source_map_url: None,
     };
     run_serialization_test(
       &module_info,
@@ -734,6 +751,7 @@ mod test {
       }),
       jsx_import_source_types: None,
       jsdoc_imports: Vec::new(),
+      source_map_url: None,
     };
     run_serialization_test(
       &module_info,
@@ -764,6 +782,7 @@ mod test {
         },
       }),
       jsdoc_imports: Vec::new(),
+      source_map_url: None,
     };
     run_serialization_test(
       &module_info,
@@ -819,6 +838,7 @@ mod test {
           resolution_mode: Some(TypeScriptTypesResolutionMode::Require),
         },
       ]),
+      source_map_url: None,
     };
     run_serialization_test(
       &module_info,
@@ -909,6 +929,32 @@ mod test {
   }
 
   #[test]
+  fn static_dependency_descriptor_import_source_serialization() {
+    let descriptor = DependencyDescriptor::Static(StaticDependencyDescriptor {
+      kind: StaticDependencyKind::ImportSource,
+      types_specifier: None,
+      specifier: "./test".to_string(),
+      specifier_range: PositionRange {
+        start: Position::zeroed(),
+        end: Position::zeroed(),
+      },
+      import_attributes: ImportAttributes::None,
+      is_side_effect: false,
+    });
+    run_serialization_test(
+      &descriptor,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
+      json!({
+        "type": "static",
+        "kind": "importSource",
+        "specifier": "./test",
+        "specifierRange": [[0, 0], [0, 0]],
+      }),
+    );
+  }
+
+  #[test]
   fn dynamic_dependency_descriptor_serialization() {
     run_serialization_test(
       &DependencyDescriptor::Dynamic(DynamicDependencyDescriptor {
@@ -958,6 +1004,32 @@ mod test {
         "argument": "test",
         "argumentRange": [[0, 0], [0, 0]],
         "importAttributes": "unknown",
+      }),
+    );
+  }
+
+  #[test]
+  fn dynamic_dependency_descriptor_import_source_serialization() {
+    let descriptor =
+      DependencyDescriptor::Dynamic(DynamicDependencyDescriptor {
+        kind: DynamicDependencyKind::ImportSource,
+        types_specifier: None,
+        argument: DynamicArgument::String("test".to_string()),
+        argument_range: PositionRange {
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+        import_attributes: ImportAttributes::None,
+      });
+    run_serialization_test(
+      &descriptor,
+      // WARNING: Deserialization MUST be backwards compatible in order
+      // to load data from JSR.
+      json!({
+        "type": "dynamic",
+        "kind": "importSource",
+        "argument": "test",
+        "argumentRange": [[0, 0], [0, 0]],
       }),
     );
   }
@@ -1053,6 +1125,7 @@ mod test {
       jsx_import_source: None,
       jsx_import_source_types: None,
       jsdoc_imports: Vec::new(),
+      source_map_url: None,
     };
     let json = json!({
       "dependencies": [{
@@ -1097,6 +1170,7 @@ mod test {
       jsx_import_source: None,
       jsx_import_source_types: None,
       jsdoc_imports: Vec::new(),
+      source_map_url: None,
     };
     let json = json!({
       "dependencies": [{
@@ -1107,6 +1181,117 @@ mod test {
       }]
     });
     run_v1_deserialization_test(json, &expected);
+  }
+
+  #[test]
+  fn test_v1_to_v2_deserialization_import_source_static() {
+    let expected = ModuleInfo {
+      is_script: false,
+      dependencies: vec![DependencyDescriptor::Static(
+        StaticDependencyDescriptor {
+          kind: StaticDependencyKind::ImportSource,
+          specifier: "./a.js".to_string(),
+          specifier_range: PositionRange {
+            start: Position {
+              line: 1,
+              character: 2,
+            },
+            end: Position {
+              line: 3,
+              character: 4,
+            },
+          },
+          types_specifier: None,
+          import_attributes: ImportAttributes::None,
+          is_side_effect: false,
+        },
+      )],
+      ts_references: Vec::new(),
+      self_types_specifier: None,
+      jsx_import_source: None,
+      jsx_import_source_types: None,
+      jsdoc_imports: Vec::new(),
+      source_map_url: None,
+    };
+    let json = json!({
+      "dependencies": [{
+        "type": "static",
+        "kind": "importSource",
+        "specifier": "./a.js",
+        "specifierRange": [[1, 2], [3, 4]],
+      }],
+    });
+    run_v1_deserialization_test(json, &expected);
+  }
+
+  #[test]
+  fn test_v1_to_v2_deserialization_import_source_dynamic() {
+    let expected = ModuleInfo {
+      is_script: false,
+      dependencies: vec![DependencyDescriptor::Dynamic(
+        DynamicDependencyDescriptor {
+          kind: DynamicDependencyKind::ImportSource,
+          types_specifier: None,
+          argument: DynamicArgument::String("./a.js".to_string()),
+          argument_range: PositionRange {
+            start: Position {
+              line: 1,
+              character: 2,
+            },
+            end: Position {
+              line: 3,
+              character: 4,
+            },
+          },
+          import_attributes: ImportAttributes::None,
+        },
+      )],
+      ts_references: Vec::new(),
+      self_types_specifier: None,
+      jsx_import_source: None,
+      jsx_import_source_types: None,
+      jsdoc_imports: Vec::new(),
+      source_map_url: None,
+    };
+    let json = json!({
+      "dependencies": [{
+        "type": "dynamic",
+        "kind": "importSource",
+        "argument": "./a.js",
+        "argumentRange": [[1, 2], [3, 4]],
+      }],
+    });
+    run_v1_deserialization_test(json, &expected);
+  }
+
+  #[test]
+  fn module_info_serialization_source_map_url() {
+    let module_info = ModuleInfo {
+      is_script: false,
+      dependencies: Vec::new(),
+      ts_references: Vec::new(),
+      self_types_specifier: None,
+      jsx_import_source: None,
+      jsx_import_source_types: None,
+      jsdoc_imports: Vec::new(),
+      source_map_url: Some(SpecifierWithRange {
+        text: "file.js.map".to_string(),
+        range: PositionRange {
+          start: Position::zeroed(),
+          end: Position::zeroed(),
+        },
+      }),
+    };
+
+    run_serialization_test(
+      &module_info,
+      json!({
+        "sourceMapUrl": {
+          "text": "file.js.map",
+          "range": [[0, 0], [0, 0]],
+        }
+      }),
+    );
   }
 
   #[track_caller]
@@ -1132,5 +1317,60 @@ mod test {
     module_graph_1_to_2(&mut json);
     let deserialized_value = serde_json::from_value::<T>(json).unwrap();
     assert_eq!(deserialized_value, *value);
+  }
+
+  #[test]
+  fn test_find_source_mapping_url() {
+    // Test with # prefix
+    let m = find_source_mapping_url("# sourceMappingURL=file.js.map");
+    assert!(m.is_some());
+    assert_eq!(m.unwrap().as_str(), "file.js.map");
+
+    // Test with @ prefix
+    let m = find_source_mapping_url("@ sourceMappingURL=file.js.map");
+    assert!(m.is_some());
+    assert_eq!(m.unwrap().as_str(), "file.js.map");
+
+    // Test case insensitivity
+    let m = find_source_mapping_url("# SOURCEMAPPINGURL=file.js.map");
+    assert!(m.is_some());
+    assert_eq!(m.unwrap().as_str(), "file.js.map");
+
+    // Test with no spaces
+    let m = find_source_mapping_url("#sourceMappingURL=file.js.map");
+    assert!(m.is_some());
+    assert_eq!(m.unwrap().as_str(), "file.js.map");
+
+    // Test with multiple spaces
+    let m = find_source_mapping_url("#  sourceMappingURL  =  file.js.map");
+    assert!(m.is_some());
+    assert_eq!(m.unwrap().as_str(), "file.js.map");
+
+    // Test with URL containing query params
+    let m = find_source_mapping_url("# sourceMappingURL=file.js.map?v=123");
+    assert!(m.is_some());
+    assert_eq!(m.unwrap().as_str(), "file.js.map?v=123");
+
+    // Test with data URL
+    let m = find_source_mapping_url(
+      "# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozfQ==",
+    );
+    assert!(m.is_some());
+    assert_eq!(
+      m.unwrap().as_str(),
+      "data:application/json;base64,eyJ2ZXJzaW9uIjozfQ=="
+    );
+
+    // Test with relative path
+    let m = find_source_mapping_url("# sourceMappingURL=../maps/file.js.map");
+    assert!(m.is_some());
+    assert_eq!(m.unwrap().as_str(), "../maps/file.js.map");
+
+    // Test invalid formats
+    assert!(find_source_mapping_url("sourceMappingURL=file.js.map").is_none());
+    assert!(
+      find_source_mapping_url("// sourceMappingURL=file.js.map").is_none()
+    );
+    assert!(find_source_mapping_url("# sourceMappingURL").is_none());
   }
 }
