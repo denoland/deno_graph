@@ -1340,7 +1340,7 @@ static EMPTY_DEPS: std::sync::OnceLock<IndexMap<String, Dependency>> =
   std::sync::OnceLock::new();
 
 /// An npm package entrypoint.
-/// 
+///
 /// Note that deno_graph does NOT store the resolved version of npm specifiers.
 /// That needs to be retreived from the npm snapshot, which is the single
 /// source of truth on that matter.
@@ -6473,10 +6473,7 @@ impl<'a> NpmSpecifierResolver<'a> {
               ),
             );
           } else {
-            self.add_req_ref_for_item(
-              item.specifier,
-              item.package_ref,
-            );
+            self.add_req_ref_for_item(item.specifier, item.package_ref);
           }
         }
         Err(err) => {
