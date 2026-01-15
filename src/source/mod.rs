@@ -564,7 +564,7 @@ pub struct NpmResolvePkgReqsResult {
   /// This MUST correspond to the indexes of the provided package requirements.
   pub results: Vec<Result<(), NpmLoadError>>,
   /// Result of resolving the entire dependency graph after the initial reqs
-  /// were resolved to NVs.
+  /// were resolved.
   ///
   /// Don't run dependency graph resolution if there are any individual failures.
   pub dep_graph_result: Result<(), Arc<dyn JsErrorClass>>,
