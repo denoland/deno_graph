@@ -1130,12 +1130,10 @@ await import("https://example.com/main.ts");
         },
         {
           "kind": "npm",
-          "specifier": "npm:/chalk@1.0.0"
+          "specifier": "npm:chalk@1.0.0"
         }
       ],
-      "redirects": {
-        "npm:chalk@1.0.0": "npm:/chalk@1.0.0"
-      }
+      "redirects": {}
     })
   );
 }
@@ -1237,9 +1235,9 @@ async fn test_reload() {
           "mediaType": "TypeScript",
           "specifier": "file:///project/mod.ts"
         },
-        { "kind": "npm", "specifier": "npm:/chalk@1.0.0" }
+        { "kind": "npm", "specifier": "npm:chalk@1.0.0" }
       ],
-      "redirects": { "npm:chalk@1.0.0": "npm:/chalk@1.0.0" }
+      "redirects": {}
     })
   );
 }
