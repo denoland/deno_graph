@@ -46,13 +46,11 @@ use deno_semver::VersionReq;
 use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::jsr::JsrPackageNvReference;
 use deno_semver::jsr::JsrPackageReqReference;
-use deno_semver::npm::NpmPackageNvReference;
 use deno_semver::npm::NpmPackageReqReference;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageNvReference;
 use deno_semver::package::PackageReq;
 use deno_semver::package::PackageReqReferenceParseError;
-use deno_semver::package::PackageSubPath;
 use futures::FutureExt;
 use futures::future::LocalBoxFuture;
 use futures::stream::FuturesOrdered;
@@ -1226,7 +1224,6 @@ impl Module {
       Module::Js(module) => &module.specifier,
       Module::Json(module) => &module.specifier,
       Module::Wasm(module) => &module.specifier,
-      #[allow(deprecated)]
       Module::Npm(module) => &module.specifier,
       Module::Node(module) => &module.specifier,
       Module::External(module) => &module.specifier,
@@ -1343,25 +1340,16 @@ static EMPTY_DEPS: std::sync::OnceLock<IndexMap<String, Dependency>> =
   std::sync::OnceLock::new();
 
 /// An npm package entrypoint.
+/// 
+/// Note that deno_graph does NOT store the resolved version of npm specifiers.
+/// That needs to be retreived from the npm snapshot, which is the single
+/// source of truth on that matter.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NpmModule {
-  // We need to change the NpmModule to instead only store an NpmReqReference
-  // and then map the req reference through the npm snapshot instead (have a single
-  // source of truth). This is necessary because deno_npm now does deduplication
-  // and so it will update on the fly the req to nv mapping, but then these
-  // properties in deno_graph won't get updated.
-  #[deprecated(
-    since = "0.103.1",
-    note = "Map the npm package req ref through the npm snapshot instead."
-  )]
   pub specifier: ModuleSpecifier,
-  #[deprecated(
-    since = "0.103.1",
-    note = "Map the npm package req ref through the npm snapshot instead."
-  )]
   #[serde(skip_serializing)]
-  pub nv_reference: NpmPackageNvReference,
+  pub pkg_req_ref: NpmPackageReqReference,
 }
 
 /// Represents a module which is not statically analyzed and is only available
@@ -2200,8 +2188,6 @@ pub struct ModuleGraph {
   pub imports: IndexMap<ModuleSpecifier, GraphImport>,
   pub redirects: BTreeMap<ModuleSpecifier, ModuleSpecifier>,
   #[serde(skip_serializing)]
-  pub npm_packages: IndexSet<PackageNv>,
-  #[serde(skip_serializing)]
   pub has_node_specifier: bool,
   #[serde(rename = "packages")]
   #[serde(skip_serializing_if = "PackageSpecifiers::is_empty")]
@@ -2220,7 +2206,6 @@ impl ModuleGraph {
       module_slots: Default::default(),
       imports: Default::default(),
       redirects: Default::default(),
-      npm_packages: Default::default(),
       has_node_specifier: false,
       packages: Default::default(),
       npm_dep_graph_result: Ok(()),
@@ -2417,7 +2402,6 @@ impl ModuleGraph {
     }
     new_graph.imports.clone_from(&self.imports);
     new_graph.roots = roots.iter().map(|r| (*r).to_owned()).collect();
-    new_graph.npm_packages.clone_from(&self.npm_packages);
     // todo(dsherret): it should be a bit smarter about this, but this is not terrible
     new_graph.packages.clone_from(&self.packages);
     new_graph.has_node_specifier = self.has_node_specifier;
@@ -2437,7 +2421,6 @@ impl ModuleGraph {
     let mut seen_pending =
       SeenPendingCollection::with_capacity(specifiers_count);
     seen_pending.extend(self.roots.iter().cloned());
-    let mut found_nvs = HashSet::with_capacity(self.npm_packages.len());
     let mut has_node_specifier = false;
 
     let handle_dependencies =
@@ -2489,10 +2472,7 @@ impl ModuleGraph {
           wasm_module.source_dts = Default::default();
           handle_dependencies(&mut seen_pending, &mut wasm_module.dependencies);
         }
-        Module::Npm(module) => {
-          #[allow(deprecated)]
-          found_nvs.insert(module.nv_reference.nv().clone());
-        }
+        Module::Npm(_) => {}
         Module::Node(_) => {
           has_node_specifier = true;
         }
@@ -2507,7 +2487,6 @@ impl ModuleGraph {
     self
       .module_slots
       .retain(|specifier, _| seen_pending.has_seen(specifier));
-    self.npm_packages.retain(|nv| found_nvs.contains(nv));
     self
       .redirects
       .retain(|redirect, _| seen_pending.has_seen(redirect));
@@ -6344,7 +6323,6 @@ fn validate_jsr_specifier(
 /// Pending information to insert into the module graph once
 /// npm specifier resolution has been finalized.
 struct NpmSpecifierBuildPendingInfo {
-  found_pkg_nvs: IndexSet<PackageNv>,
   module_slots: HashMap<ModuleSpecifier, ModuleSlot>,
   dependencies_resolution: Option<Result<(), Arc<dyn JsErrorClass>>>,
   redirects: HashMap<ModuleSpecifier, ModuleSpecifier>,
@@ -6353,7 +6331,6 @@ struct NpmSpecifierBuildPendingInfo {
 impl NpmSpecifierBuildPendingInfo {
   pub fn with_capacity(capacity: usize) -> Self {
     Self {
-      found_pkg_nvs: IndexSet::with_capacity(capacity),
       module_slots: HashMap::with_capacity(capacity),
       dependencies_resolution: None,
       redirects: HashMap::with_capacity(capacity),
@@ -6451,11 +6428,10 @@ impl<'a> NpmSpecifierResolver<'a> {
         let items = items_by_req.get(&req).unwrap();
         for item in items {
           match &resolution {
-            Ok(pkg_nv) => {
-              self.add_nv_for_item(
+            Ok(_) => {
+              self.add_req_ref_for_item(
                 item.specifier.clone(),
-                pkg_nv.clone(),
-                item.package_ref.sub_path().map(PackageSubPath::from_str),
+                item.package_ref.clone(),
               );
             }
             Err(err) => {
@@ -6483,7 +6459,7 @@ impl<'a> NpmSpecifierResolver<'a> {
         .await;
       assert_eq!(result.results.len(), 1);
       match result.results.remove(0) {
-        Ok(pkg_nv) => {
+        Ok(_) => {
           if let Err(err) = result.dep_graph_result {
             self.pending_info.module_slots.insert(
               item.specifier.clone(),
@@ -6497,10 +6473,9 @@ impl<'a> NpmSpecifierResolver<'a> {
               ),
             );
           } else {
-            self.add_nv_for_item(
+            self.add_req_ref_for_item(
               item.specifier,
-              pkg_nv,
-              item.package_ref.into_inner().sub_path,
+              item.package_ref,
             );
           }
         }
@@ -6521,31 +6496,16 @@ impl<'a> NpmSpecifierResolver<'a> {
     }
   }
 
-  fn add_nv_for_item(
+  fn add_req_ref_for_item(
     &mut self,
     specifier: ModuleSpecifier,
-    pkg_nv: PackageNv,
-    sub_path: Option<SmallStackString>,
+    pkg_req_ref: NpmPackageReqReference,
   ) {
-    let pkg_id_ref = NpmPackageNvReference::new(PackageNvReference {
-      nv: pkg_nv.clone(),
-      sub_path,
-    });
-    let resolved_specifier = pkg_id_ref.as_specifier();
-    if resolved_specifier != specifier {
-      self
-        .pending_info
-        .redirects
-        .insert(specifier.clone(), resolved_specifier.clone());
-    }
-    self.pending_info.found_pkg_nvs.insert(pkg_nv);
     self.pending_info.module_slots.insert(
-      resolved_specifier.clone(),
+      specifier.clone(),
       ModuleSlot::Module(Module::Npm(NpmModule {
-        #[allow(deprecated)]
-        specifier: resolved_specifier,
-        #[allow(deprecated)]
-        nv_reference: pkg_id_ref,
+        specifier,
+        pkg_req_ref,
       })),
     );
   }
@@ -6563,7 +6523,6 @@ impl<'a> NpmSpecifierResolver<'a> {
       graph.redirects.entry(key).or_insert(value);
     }
 
-    graph.npm_packages.extend(pending_info.found_pkg_nvs);
     if let Some(result) = pending_info.dependencies_resolution {
       graph.npm_dep_graph_result = result;
     }

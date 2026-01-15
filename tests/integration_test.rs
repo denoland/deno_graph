@@ -32,7 +32,6 @@ use deno_graph::source::ResolveError;
 use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::package::PackageNv;
 use deno_semver::package::PackageReq;
-use indexmap::IndexSet;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use sys_traits::FsCreateDirAll;
@@ -1051,10 +1050,6 @@ await import("https://example.com/main.ts");
   graph.prune_types();
   assert_eq!(graph.graph_kind(), GraphKind::CodeOnly);
   assert_eq!(
-    graph.npm_packages,
-    IndexSet::from([PackageNv::from_str("chalk@1.0.0").unwrap()])
-  );
-  assert_eq!(
     json!(graph),
     json!({
       "roots": ["file:///project/mod.ts"],
@@ -1179,10 +1174,6 @@ async fn test_reload() {
     .await;
 
   graph.valid().unwrap();
-  assert_eq!(
-    graph.npm_packages,
-    IndexSet::from([PackageNv::from_str("chalk@1.0.0").unwrap()])
-  );
   assert_eq!(
     json!(graph),
     json!({

@@ -562,7 +562,7 @@ pub struct NpmResolvePkgReqsResult {
   /// The individual results of resolving the package requirements.
   ///
   /// This MUST correspond to the indexes of the provided package requirements.
-  pub results: Vec<Result<PackageNv, NpmLoadError>>,
+  pub results: Vec<Result<(), NpmLoadError>>,
   /// Result of resolving the entire dependency graph after the initial reqs
   /// were resolved to NVs.
   ///

@@ -115,10 +115,7 @@ impl NpmResolver for TestNpmResolver {
         .iter()
         .map(|pkg_req| {
           match Version::parse_from_npm(&pkg_req.version_req.to_string()) {
-            Ok(version) => Ok(PackageNv {
-              name: pkg_req.name.clone(),
-              version,
-            }),
+            Ok(_) => Ok(()),
             Err(err) => Err(NpmLoadError::PackageReqResolution(Arc::new(err))),
           }
         })
