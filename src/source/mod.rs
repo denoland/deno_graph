@@ -8,6 +8,7 @@ use std::sync::Arc;
 use std::time::SystemTime;
 
 use async_trait::async_trait;
+use deno_error::JsErrorBox;
 use deno_error::JsErrorClass;
 use deno_media_type::MediaType;
 use deno_media_type::data_url::RawDataUrl;
@@ -470,6 +471,12 @@ pub enum ResolveError {
   #[class(inherit)]
   #[error(transparent)]
   Other(#[from] deno_error::JsErrorBox),
+}
+
+impl ResolveError {
+  pub fn from_err<T: JsErrorClass>(err: T) -> Self {
+    Self::Other(JsErrorBox::from_err(err))
+  }
 }
 
 /// The kind of resolution currently being done by deno_graph.
