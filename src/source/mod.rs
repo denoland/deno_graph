@@ -8,6 +8,7 @@ use std::sync::Arc;
 use std::time::SystemTime;
 
 use async_trait::async_trait;
+use deno_error::JsErrorBox;
 use deno_error::JsErrorClass;
 use deno_media_type::MediaType;
 use deno_media_type::data_url::RawDataUrl;
@@ -472,6 +473,12 @@ pub enum ResolveError {
   Other(#[from] deno_error::JsErrorBox),
 }
 
+impl ResolveError {
+  pub fn from_err<T: JsErrorClass>(err: T) -> Self {
+    Self::Other(JsErrorBox::from_err(err))
+  }
+}
+
 /// The kind of resolution currently being done by deno_graph.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ResolutionKind {
@@ -559,9 +566,9 @@ pub struct NpmResolvePkgReqsResult {
   /// The individual results of resolving the package requirements.
   ///
   /// This MUST correspond to the indexes of the provided package requirements.
-  pub results: Vec<Result<PackageNv, NpmLoadError>>,
+  pub results: Vec<Result<(), NpmLoadError>>,
   /// Result of resolving the entire dependency graph after the initial reqs
-  /// were resolved to NVs.
+  /// were resolved.
   ///
   /// Don't run dependency graph resolution if there are any individual failures.
   pub dep_graph_result: Result<(), Arc<dyn JsErrorClass>>,
