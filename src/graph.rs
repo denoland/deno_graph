@@ -1212,6 +1212,7 @@ pub enum Module {
   // todo(#239): remove this when updating the --json output for 3.0
   #[serde(rename = "asserted")]
   Json(JsonModule),
+  Markdown(MarkdownModule),
   Wasm(WasmModule),
   Npm(NpmModule),
   Node(BuiltInNodeModule),
@@ -1223,6 +1224,7 @@ impl Module {
     match self {
       Module::Js(module) => &module.specifier,
       Module::Json(module) => &module.specifier,
+      Module::Markdown(module) => &module.specifier,
       Module::Wasm(module) => &module.specifier,
       Module::Npm(module) => &module.specifier,
       Module::Node(module) => &module.specifier,
@@ -1234,6 +1236,7 @@ impl Module {
     match self {
       Module::Js(module) => module.media_type,
       Module::Json(module) => module.media_type,
+      Module::Markdown(_) => MediaType::Markdown,
       Module::Wasm(_) => MediaType::Wasm,
       Module::Node(_) => MediaType::JavaScript,
       Module::Npm(_) | Module::External(_) => MediaType::Unknown,
@@ -1244,6 +1247,7 @@ impl Module {
     match self {
       Module::Js(m) => m.mtime,
       Module::Json(m) => m.mtime,
+      Module::Markdown(m) => m.mtime,
       Module::Wasm(m) => m.mtime,
       Module::Npm(_) | Module::Node(_) | Module::External(_) => None,
     }
@@ -1293,6 +1297,7 @@ impl Module {
     match self {
       crate::Module::Js(m) => Some(&m.source.text),
       crate::Module::Json(m) => Some(&m.source.text),
+      crate::Module::Markdown(m) => Some(&m.source.text),
       crate::Module::Wasm(_)
       | crate::Module::Npm(_)
       | crate::Module::Node(_)
@@ -1305,6 +1310,7 @@ impl Module {
       Module::Js(js_module) => js_module.maybe_types_dependency.as_ref(),
       Module::Wasm(_)
       | Module::Json(_)
+      | Module::Markdown(_)
       | Module::Npm(_)
       | Module::Node(_)
       | Module::External(_) => None,
@@ -1315,7 +1321,8 @@ impl Module {
     match self {
       Module::Js(js_module) => &js_module.dependencies,
       Module::Wasm(wasm_module) => &wasm_module.dependencies,
-      Module::Npm(_)
+      Module::Markdown(_)
+      | Module::Npm(_)
       | Module::Node(_)
       | Module::External(_)
       | Module::Json(_) => EMPTY_DEPS.get_or_init(Default::default),
@@ -1328,7 +1335,8 @@ impl Module {
     match self {
       Module::Js(js_module) => js_module.dependencies_prefer_fast_check(),
       Module::Wasm(wasm_module) => &wasm_module.dependencies,
-      Module::Npm(_)
+      Module::Markdown(_)
+      | Module::Npm(_)
       | Module::Node(_)
       | Module::External(_)
       | Module::Json(_) => EMPTY_DEPS.get_or_init(Default::default),
@@ -1392,7 +1400,26 @@ pub struct JsonModule {
 }
 
 impl JsonModule {
-  /// Return the size in bytes of the content of the JSON module.
+  /// Return the size in bytes of the content of the module.
+  pub fn size(&self) -> usize {
+    self.source.text.len()
+  }
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MarkdownModule {
+  pub specifier: ModuleSpecifier,
+  #[serde(flatten, skip_serializing_if = "Option::is_none")]
+  pub maybe_cache_info: Option<CacheInfo>,
+  #[serde(rename = "size", serialize_with = "serialize_source")]
+  pub source: ModuleTextSource,
+  #[serde(skip_serializing)]
+  pub mtime: Option<SystemTime>,
+}
+
+impl MarkdownModule {
+  /// Return the size in bytes of the content of the module.
   pub fn size(&self) -> usize {
     self.source.text.len()
   }
@@ -1888,6 +1915,7 @@ impl<'a, 'options> ModuleEntryIterator<'a, 'options> {
       MediaType::Css
       | MediaType::SourceMap
       | MediaType::Html
+      | MediaType::Markdown
       | MediaType::Sql
       | MediaType::Jsonc
       | MediaType::Json5
@@ -2472,11 +2500,11 @@ impl ModuleGraph {
           wasm_module.source_dts = Default::default();
           handle_dependencies(&mut seen_pending, &mut wasm_module.dependencies);
         }
-        Module::Npm(_) => {}
         Module::Node(_) => {
           has_node_specifier = true;
         }
-        Module::Json(_) | Module::External(_) => {
+        
+        Module::Json(_) | Module::Markdown(_) | Module::Npm(_) | Module::External(_) => {
           // ignore
         }
       }
@@ -2648,6 +2676,7 @@ impl ModuleGraph {
         self.resolve_dependency_from_dep(dependency, prefer_types)
       }
       Module::Json(_)
+      | Module::Markdown(_)
       | Module::Npm(_)
       | Module::Node(_)
       | Module::External(_) => None,
@@ -2870,6 +2899,11 @@ pub(crate) enum ModuleSourceAndInfo {
     mtime: Option<SystemTime>,
     source: ModuleTextSource,
   },
+  Markdown {
+    specifier: ModuleSpecifier,
+    mtime: Option<SystemTime>,
+    source: ModuleTextSource,
+  },
   Wasm {
     specifier: ModuleSpecifier,
     module_info: Box<ModuleInfo>,
@@ -2884,6 +2918,7 @@ impl ModuleSourceAndInfo {
     match self {
       Self::Json { specifier, .. } => specifier,
       Self::Js { specifier, .. } => specifier,
+      Self::Markdown { specifier, .. } => specifier,
       Self::Wasm { specifier, .. } => specifier,
     }
   }
@@ -2892,6 +2927,7 @@ impl ModuleSourceAndInfo {
     match self {
       Self::Json { .. } => MediaType::Json,
       Self::Js { media_type, .. } => *media_type,
+      Self::Markdown { .. } => MediaType::Markdown,
       Self::Wasm { .. } => MediaType::Wasm,
     }
   }
@@ -2900,6 +2936,7 @@ impl ModuleSourceAndInfo {
     match self {
       Self::Json { source, .. } => source.text.as_bytes(),
       Self::Js { source, .. } => source.text.as_bytes(),
+      Self::Markdown { source, .. } => source.text.as_bytes(),
       Self::Wasm { source, .. } => source,
     }
   }
@@ -2951,6 +2988,19 @@ pub(crate) async fn parse_module_source_and_info(
     );
   }
 
+  if let Some(attribute_type) = opts.maybe_attribute_type {
+    if !matches!(attribute_type.kind.as_str(), "json" | "text" | "bytes") {
+      return Err(
+        ModuleErrorKind::UnsupportedImportAttributeType {
+          specifier: opts.specifier,
+          referrer: attribute_type.range.clone(),
+          kind: attribute_type.kind.clone(),
+        }
+        .into_box(),
+      );
+    }
+  }
+
   // here we check any media types that should have assertions made against them
   // if they aren't the root and add them to the graph, otherwise we continue
   if media_type == MediaType::Json
@@ -2985,15 +3035,6 @@ pub(crate) async fn parse_module_source_and_info(
         }
         .into_box(),
       );
-    } else if !matches!(attribute_type.kind.as_str(), "text" | "bytes") {
-      return Err(
-        ModuleErrorKind::UnsupportedImportAttributeType {
-          specifier: opts.specifier,
-          referrer: attribute_type.range.clone(),
-          kind: attribute_type.kind.clone(),
-        }
-        .into_box(),
-      );
     }
   }
 
@@ -3008,6 +3049,20 @@ pub(crate) async fn parse_module_source_and_info(
       }
       .into_box(),
     );
+  }
+
+  if media_type == MediaType::Markdown && opts.is_root {
+    return new_source_with_text(
+      &opts.specifier,
+      opts.content,
+      maybe_charset,
+      opts.mtime,
+    )
+    .map(|source| ModuleSourceAndInfo::Markdown {
+      specifier: opts.specifier,
+      mtime: opts.mtime,
+      source,
+    });
   }
 
   // Here we check for known ES Modules that we will analyze the dependencies of
@@ -3100,6 +3155,7 @@ pub(crate) async fn parse_module_source_and_info(
     | MediaType::Sql
     | MediaType::Jsonc
     | MediaType::Json5
+    | MediaType::Markdown
     | MediaType::Unknown => Err(
       ModuleErrorKind::UnsupportedMediaType {
         specifier: opts.specifier,
@@ -3155,6 +3211,16 @@ pub(crate) fn parse_module(
       jsr_url_provider,
       maybe_resolver,
     )),
+    ModuleSourceAndInfo::Markdown {
+      specifier,
+      mtime,
+      source,
+    } => Module::Markdown(MarkdownModule {
+      maybe_cache_info: None,
+      source,
+      mtime,
+      specifier,
+    }),
     ModuleSourceAndInfo::Wasm {
       specifier,
       mtime,
@@ -4851,6 +4917,19 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                         Err(err) => *slot = ModuleSlot::Err(err),
                       }
                     }
+                    Module::Markdown(module) => {
+                      match new_source_with_text(
+                        &module.specifier,
+                        content,
+                        None, // no charset for JSR
+                        None, // no mtime for JSR
+                      ) {
+                        Ok(source) => {
+                          module.source = source;
+                        }
+                        Err(err) => *slot = ModuleSlot::Err(err),
+                      }
+                    }
                     Module::Wasm(module) => {
                       match wasm_module_to_dts(&content) {
                         Ok(source_dts) => {
@@ -4940,6 +5019,10 @@ impl<'a, 'graph> Builder<'a, 'graph> {
               self.loader.get_cache_info(&module.specifier);
           }
           Module::Js(module) => {
+            module.maybe_cache_info =
+              self.loader.get_cache_info(&module.specifier);
+          }
+          Module::Markdown(module) => {
             module.maybe_cache_info =
               self.loader.get_cache_info(&module.specifier);
           }
