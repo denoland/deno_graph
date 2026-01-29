@@ -99,8 +99,7 @@ impl<'a> RootSymbol<'a> {
         Some(self.analyze_json_module(json_module))
       }
       crate::Module::Wasm(wasm_module) => self.analyze_wasm_module(wasm_module),
-      crate::Module::Markdown(_)
-      | crate::Module::Npm(_)
+      crate::Module::Npm(_)
       | crate::Module::Node(_)
       | crate::Module::External(_) => None,
     }
