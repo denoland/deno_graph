@@ -1392,7 +1392,7 @@ pub struct JsonModule {
 }
 
 impl JsonModule {
-  /// Return the size in bytes of the content of the JSON module.
+  /// Return the size in bytes of the content of the module.
   pub fn size(&self) -> usize {
     self.source.text.len()
   }
@@ -1888,6 +1888,7 @@ impl<'a, 'options> ModuleEntryIterator<'a, 'options> {
       MediaType::Css
       | MediaType::SourceMap
       | MediaType::Html
+      | MediaType::Markdown
       | MediaType::Sql
       | MediaType::Jsonc
       | MediaType::Json5
@@ -2951,6 +2952,19 @@ pub(crate) async fn parse_module_source_and_info(
     );
   }
 
+  if let Some(attribute_type) = opts.maybe_attribute_type
+    && !matches!(attribute_type.kind.as_str(), "json" | "text" | "bytes")
+  {
+    return Err(
+      ModuleErrorKind::UnsupportedImportAttributeType {
+        specifier: opts.specifier,
+        referrer: attribute_type.range.clone(),
+        kind: attribute_type.kind.clone(),
+      }
+      .into_box(),
+    );
+  }
+
   // here we check any media types that should have assertions made against them
   // if they aren't the root and add them to the graph, otherwise we continue
   if media_type == MediaType::Json
@@ -2974,27 +2988,18 @@ pub(crate) async fn parse_module_source_and_info(
     });
   }
 
-  if let Some(attribute_type) = opts.maybe_attribute_type {
-    if attribute_type.kind == "json" {
-      return Err(
-        ModuleErrorKind::InvalidTypeAssertion {
-          specifier: opts.specifier.clone(),
-          referrer: attribute_type.range.clone(),
-          actual_media_type: media_type,
-          expected_media_type: MediaType::Json,
-        }
-        .into_box(),
-      );
-    } else if !matches!(attribute_type.kind.as_str(), "text" | "bytes") {
-      return Err(
-        ModuleErrorKind::UnsupportedImportAttributeType {
-          specifier: opts.specifier,
-          referrer: attribute_type.range.clone(),
-          kind: attribute_type.kind.clone(),
-        }
-        .into_box(),
-      );
-    }
+  if let Some(attribute_type) = opts.maybe_attribute_type
+    && attribute_type.kind == "json"
+  {
+    return Err(
+      ModuleErrorKind::InvalidTypeAssertion {
+        specifier: opts.specifier.clone(),
+        referrer: attribute_type.range.clone(),
+        actual_media_type: media_type,
+        expected_media_type: MediaType::Json,
+      }
+      .into_box(),
+    );
   }
 
   if matches!(media_type, MediaType::Cjs | MediaType::Cts)
@@ -3100,6 +3105,7 @@ pub(crate) async fn parse_module_source_and_info(
     | MediaType::Sql
     | MediaType::Jsonc
     | MediaType::Json5
+    | MediaType::Markdown
     | MediaType::Unknown => Err(
       ModuleErrorKind::UnsupportedMediaType {
         specifier: opts.specifier,
