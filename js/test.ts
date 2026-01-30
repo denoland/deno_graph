@@ -719,7 +719,7 @@ Deno.test({
     await assertRejects(
       async () => {
         await parseModule(
-          "file:///a/test.unknown",
+          "file:///a/test.js",
           new TextEncoder().encode(`# Some Markdown\n\n**bold**`),
         );
       },
