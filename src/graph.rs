@@ -2952,17 +2952,17 @@ pub(crate) async fn parse_module_source_and_info(
     );
   }
 
-  if let Some(attribute_type) = opts.maybe_attribute_type {
-    if !matches!(attribute_type.kind.as_str(), "json" | "text" | "bytes") {
-      return Err(
-        ModuleErrorKind::UnsupportedImportAttributeType {
-          specifier: opts.specifier,
-          referrer: attribute_type.range.clone(),
-          kind: attribute_type.kind.clone(),
-        }
-        .into_box(),
-      );
-    }
+  if let Some(attribute_type) = opts.maybe_attribute_type
+    && !matches!(attribute_type.kind.as_str(), "json" | "text" | "bytes")
+  {
+    return Err(
+      ModuleErrorKind::UnsupportedImportAttributeType {
+        specifier: opts.specifier,
+        referrer: attribute_type.range.clone(),
+        kind: attribute_type.kind.clone(),
+      }
+      .into_box(),
+    );
   }
 
   // here we check any media types that should have assertions made against them
@@ -2988,18 +2988,18 @@ pub(crate) async fn parse_module_source_and_info(
     });
   }
 
-  if let Some(attribute_type) = opts.maybe_attribute_type {
-    if attribute_type.kind == "json" {
-      return Err(
-        ModuleErrorKind::InvalidTypeAssertion {
-          specifier: opts.specifier.clone(),
-          referrer: attribute_type.range.clone(),
-          actual_media_type: media_type,
-          expected_media_type: MediaType::Json,
-        }
-        .into_box(),
-      );
-    }
+  if let Some(attribute_type) = opts.maybe_attribute_type
+    && attribute_type.kind == "json"
+  {
+    return Err(
+      ModuleErrorKind::InvalidTypeAssertion {
+        specifier: opts.specifier.clone(),
+        referrer: attribute_type.range.clone(),
+        actual_media_type: media_type,
+        expected_media_type: MediaType::Json,
+      }
+      .into_box(),
+    );
   }
 
   if matches!(media_type, MediaType::Cjs | MediaType::Cts)
