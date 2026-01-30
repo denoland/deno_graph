@@ -10,6 +10,10 @@ stump/adapter-filesystem/0.0.1
 -- stdout --
 
 -- stderr --
-error: npm package '@jsr/stump__core' does not exist.
-    at file://<tmpdir>/src/base.ts:1:62
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'FileSystemAdapter<Meta>'.
+  public ingestLogs(logs: Array<Log<Meta>>): Promise<void> {
+         ~~~~~~~~~~
+    at file://<tmpdir>/src/drivers/bun/index.ts:7:10
+
+error: Type checking failed.
 

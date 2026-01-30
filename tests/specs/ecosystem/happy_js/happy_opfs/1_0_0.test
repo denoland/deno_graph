@@ -10,6 +10,17 @@ happy-js/happy-opfs/1.0.0
 -- stdout --
 
 -- stderr --
-error: npm package '@jsr/happy-js__happy-rusty' does not exist.
-    at file://<tmpdir>/src/fs/opfs_ext.ts:1:29
+TS2304 [ERROR]: Cannot find name 'FileSystemHandle'.
+ */ export function readDir(dirPath: string): Promise<Result<AsyncIterableIterator<[string, FileSystemHandle]>, Error>> {
+                                                                                            ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/fs/opfs_core.ts:13:93
+
+TS2304 [ERROR]: Cannot find name 'FileSystemHandle'.
+ */ export function stat(path: string): Promise<Result<FileSystemHandle, Error>> {
+                                                       ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/fs/opfs_core.ts:35:56
+
+Found 2 errors.
+
+error: Type checking failed.
 
