@@ -48,9 +48,9 @@ capacity_builder = "0.5.0"
 chrono = { version = "0.4.42", default-features = false, features = ["serde"] }
 data-url = "0.3.0"
 # this is optional in order to support using parsers other than swc
-deno_ast = { version = "0.52.0", features = ["emit"], optional = true }
+deno_ast = { version = "0.53.0", features = ["emit"], optional = true }
 deno_error.workspace = true
-deno_media_type = { version = "0.3.0", features = ["decoding", "data_url", "module_specifier"] }
+deno_media_type = { version = "0.4.0", features = ["decoding", "data_url", "module_specifier"] }
 deno_path_util = "0.6.4"
 deno_semver = "0.9.0"
 deno_unsync.workspace = true
@@ -89,7 +89,3 @@ codegen-units = 1
 incremental = true
 lto = true
 opt-level = "z"
-
-[patch.crates-io]
-deno_ast = { path = "../deno_ast" }
-deno_media_type = { path = "../deno_media_type" }
