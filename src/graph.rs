@@ -2494,6 +2494,22 @@ impl ModuleGraph {
     self.has_node_specifier = has_node_specifier;
   }
 
+  /// Removes the npm specifiers from the graph including roots and redirects.
+  pub fn remove_npm_specifiers(&mut self) {
+    self
+      .module_slots
+      .retain(|_, slot| !matches!(slot, ModuleSlot::Module(Module::Npm(_))));
+    self.redirects.retain(|_, to| to.scheme() != "npm");
+    self.roots.retain(|root| root.scheme() != "npm");
+    let is_npm =
+      |s: &Resolution| s.maybe_specifier().is_some_and(|s| s.scheme() == "npm");
+    for graph_import in self.imports.values_mut() {
+      graph_import
+        .dependencies
+        .retain(|_, dep| !is_npm(&dep.maybe_code) && !is_npm(&dep.maybe_type));
+    }
+  }
+
   /// Iterates over all the module entries in the module graph searching from the provided roots.
   pub fn walk<'a, 'options>(
     &'a self,
@@ -5202,15 +5218,19 @@ impl<'a, 'graph> Builder<'a, 'graph> {
             options.in_dynamic_branch,
           );
         } else {
-          // mark external
-          self.graph.module_slots.insert(
-            specifier.clone(),
-            ModuleSlot::Module(Module::External(ExternalModule {
-              maybe_cache_info: None,
-              specifier: specifier.clone(),
-              was_asset_load: false,
-            })),
-          );
+          self.load_pending_module(PendingModuleLoadItem {
+            redirect_count,
+            requested_specifier: specifier.clone(),
+            maybe_attribute_type: options.maybe_attribute_type,
+            maybe_range: maybe_range.cloned(),
+            maybe_source_phase_referrer: maybe_source_phase_referrer.cloned(),
+            load_specifier: specifier.clone(),
+            is_asset: options.is_asset,
+            in_dynamic_branch: options.in_dynamic_branch,
+            is_root: options.is_root,
+            maybe_checksum: None,
+            maybe_version_info: None,
+          });
         }
       }
       Ok(LoadSpecifierKind::Node(module_name)) => {
@@ -8336,6 +8356,115 @@ mod tests {
 
     // should only be 1 for true.js and not false.js
     assert_eq!(errors.len(), 1);
+  }
+
+  #[test]
+  fn remove_npm_specifiers() {
+    let mut graph = ModuleGraph::new(GraphKind::All);
+
+    let file_specifier = ModuleSpecifier::parse("file:///foo.js").unwrap();
+    let npm_specifier = ModuleSpecifier::parse("npm:chalk@1.0.0").unwrap();
+    let npm_redirect_from =
+      ModuleSpecifier::parse("file:///node_modules/chalk/index.js").unwrap();
+
+    // add a js module
+    graph.module_slots.insert(
+      file_specifier.clone(),
+      ModuleSlot::Module(Module::Js(JsModule {
+        specifier: file_specifier.clone(),
+        dependencies: Default::default(),
+        maybe_types_dependency: None,
+        maybe_cache_info: None,
+        maybe_source_map_dependency: None,
+        source: ModuleTextSource::new_unknown(Default::default()),
+        media_type: MediaType::JavaScript,
+        is_script: false,
+        mtime: None,
+        #[cfg(feature = "fast_check")]
+        fast_check: Default::default(),
+      })),
+    );
+
+    // add an npm module
+    graph.module_slots.insert(
+      npm_specifier.clone(),
+      ModuleSlot::Module(Module::Npm(NpmModule {
+        specifier: npm_specifier.clone(),
+        pkg_req_ref: deno_semver::npm::NpmPackageReqReference::from_str(
+          "npm:chalk@1.0.0",
+        )
+        .unwrap(),
+      })),
+    );
+
+    // add a redirect pointing to the npm specifier
+    graph
+      .redirects
+      .insert(npm_redirect_from.clone(), npm_specifier.clone());
+
+    // add npm as a root
+    graph.roots.insert(file_specifier.clone());
+    graph.roots.insert(npm_specifier.clone());
+
+    // add an import with an npm dependency
+    let import_referrer = ModuleSpecifier::parse("file:///deno.json").unwrap();
+    let mut deps = IndexMap::new();
+    deps.insert(
+      "chalk".to_string(),
+      Dependency {
+        maybe_code: Resolution::Ok(Box::new(ResolutionResolved {
+          specifier: npm_specifier.clone(),
+          range: Range {
+            specifier: import_referrer.clone(),
+            range: PositionRange::zeroed(),
+            resolution_mode: None,
+          },
+        })),
+        ..Default::default()
+      },
+    );
+    deps.insert(
+      "./local.js".to_string(),
+      Dependency {
+        maybe_code: Resolution::Ok(Box::new(ResolutionResolved {
+          specifier: file_specifier.clone(),
+          range: Range {
+            specifier: import_referrer.clone(),
+            range: PositionRange::zeroed(),
+            resolution_mode: None,
+          },
+        })),
+        ..Default::default()
+      },
+    );
+    graph
+      .imports
+      .insert(import_referrer, GraphImport { dependencies: deps });
+
+    // verify initial state
+    assert_eq!(graph.module_slots.len(), 2);
+    assert_eq!(graph.redirects.len(), 1);
+    assert_eq!(graph.roots.len(), 2);
+    assert_eq!(graph.imports[0].dependencies.len(), 2);
+
+    graph.remove_npm_specifiers();
+
+    // npm module slot removed, js module slot kept
+    assert_eq!(graph.module_slots.len(), 1);
+    assert!(graph.get(&file_specifier).is_some());
+    assert!(graph.get(&npm_specifier).is_none());
+
+    // npm redirect removed
+    assert_eq!(graph.redirects.len(), 0);
+
+    // npm root removed
+    assert_eq!(graph.roots.len(), 1);
+    assert!(graph.roots.contains(&file_specifier));
+
+    // npm import dependency removed, local kept
+    assert_eq!(graph.imports[0].dependencies.len(), 1);
+    assert!(graph.imports[0].dependencies.contains_key("./local.js"));
+    assert!(!graph.imports[0].dependencies.contains_key("chalk"));
   }
 
   #[test]
