@@ -2494,7 +2494,7 @@ impl ModuleGraph {
     self.has_node_specifier = has_node_specifier;
   }
 
-  /// Removes the npm specifiers from the graph including roots and redirects.
+  /// Removes the npm specifiers from the graph including roots, redirects, and imports.
   pub fn remove_npm_specifiers(&mut self) {
     self
       .module_slots
@@ -5182,6 +5182,22 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     }
 
     let specifier = specifier.clone();
+    let build_load_url_item = |specifier: Url,
+                               maybe_attribute_type: Option<
+      AttributeTypeWithRange,
+    >| PendingModuleLoadItem {
+      redirect_count,
+      requested_specifier: specifier.clone(),
+      maybe_attribute_type,
+      maybe_range: maybe_range.cloned(),
+      maybe_source_phase_referrer: maybe_source_phase_referrer.cloned(),
+      load_specifier: specifier,
+      is_asset: options.is_asset,
+      in_dynamic_branch: options.in_dynamic_branch,
+      is_root: options.is_root,
+      maybe_checksum: None,
+      maybe_version_info: None,
+    };
     match self.parse_load_specifier_kind(&specifier, maybe_range) {
       Ok(LoadSpecifierKind::Jsr(package_req_ref)) => {
         self.mark_jsr_dep(&package_req_ref, maybe_range);
@@ -5190,7 +5206,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           self.graph.module_slots.insert(
             specifier.clone(),
             ModuleSlot::Module(Module::External(ExternalModule {
-              specifier: specifier.clone(),
+              specifier,
               maybe_cache_info: None,
               was_asset_load: false,
             })),
@@ -5212,25 +5228,16 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         if let Some(npm_resolver) = self.npm_resolver {
           self.load_npm_specifier(
             npm_resolver,
-            specifier.clone(),
+            specifier,
             package_req_ref,
             maybe_range,
             options.in_dynamic_branch,
           );
         } else {
-          self.load_pending_module(PendingModuleLoadItem {
-            redirect_count,
-            requested_specifier: specifier.clone(),
-            maybe_attribute_type: options.maybe_attribute_type,
-            maybe_range: maybe_range.cloned(),
-            maybe_source_phase_referrer: maybe_source_phase_referrer.cloned(),
-            load_specifier: specifier.clone(),
-            is_asset: options.is_asset,
-            in_dynamic_branch: options.in_dynamic_branch,
-            is_root: options.is_root,
-            maybe_checksum: None,
-            maybe_version_info: None,
-          });
+          self.load_pending_module(build_load_url_item(
+            specifier,
+            options.maybe_attribute_type,
+          ))
         }
       }
       Ok(LoadSpecifierKind::Node(module_name)) => {
@@ -5238,31 +5245,19 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         self.graph.module_slots.insert(
           specifier.clone(),
           ModuleSlot::Module(Module::Node(BuiltInNodeModule {
-            specifier: specifier.clone(),
+            specifier,
             module_name,
           })),
         );
       }
-      Ok(LoadSpecifierKind::Url) => {
-        self.load_pending_module(PendingModuleLoadItem {
-          redirect_count,
-          requested_specifier: specifier.clone(),
-          maybe_attribute_type: options.maybe_attribute_type,
-          maybe_range: maybe_range.cloned(),
-          maybe_source_phase_referrer: maybe_source_phase_referrer.cloned(),
-          load_specifier: specifier.clone(),
-          is_asset: options.is_asset,
-          in_dynamic_branch: options.in_dynamic_branch,
-          is_root: options.is_root,
-          maybe_checksum: None,
-          maybe_version_info: None,
-        });
-      }
+      Ok(LoadSpecifierKind::Url) => self.load_pending_module(
+        build_load_url_item(specifier, options.maybe_attribute_type),
+      ),
       Err(err) => {
         self
           .graph
           .module_slots
-          .insert(specifier.clone(), ModuleSlot::Err(err));
+          .insert(specifier, ModuleSlot::Err(err));
       }
     }
   }
