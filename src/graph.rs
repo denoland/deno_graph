@@ -2494,20 +2494,124 @@ impl ModuleGraph {
     self.has_node_specifier = has_node_specifier;
   }
 
-  /// Removes the npm specifiers from the graph including roots, redirects, and imports.
-  pub fn remove_npm_specifiers(&mut self) {
+  /// Re-resolves npm specifier dependencies in the graph to non-npm
+  /// specifiers using the provided resolver, removes npm module stubs,
+  /// and builds the newly resolved modules into the graph.
+  ///
+  /// `npm_root_dir` is used as the referrer when re-resolving npm root
+  /// specifiers. `options.resolver` should map npm specifiers to file
+  /// specifiers (e.g. in node_modules).
+  pub async fn resolve_npm_specifiers<'a>(
+    &mut self,
+    npm_root_dir: &ModuleSpecifier,
+    loader: &'a dyn Loader,
+    options: BuildOptions<'a>,
+  ) {
+    let resolver = options.resolver;
+    let jsr_url_provider = options.jsr_url_provider;
+
+    let mut new_specifiers = Vec::new();
+
+    // re-resolve npm dependency resolutions in all modules
+    for slot in self.module_slots.values_mut() {
+      let ModuleSlot::Module(module) = slot else {
+        continue;
+      };
+      match module {
+        Module::Js(m) => {
+          // handle maybe_types_dependency
+          if let Some(types_dep) = &mut m.maybe_types_dependency
+            && let Resolution::Ok(resolved) = &types_dep.dependency
+            && resolved.specifier.scheme() == "npm"
+          {
+            types_dep.dependency = resolve(
+              &types_dep.specifier,
+              resolved.range.clone(),
+              ResolutionKind::Types,
+              jsr_url_provider,
+              resolver,
+            );
+            if let Some(s) = types_dep.dependency.maybe_specifier() {
+              new_specifiers.push(s.clone());
+            }
+          }
+          resolve_npm_deps(
+            &mut m.dependencies,
+            jsr_url_provider,
+            resolver,
+            &mut new_specifiers,
+          );
+        }
+        Module::Wasm(m) => {
+          resolve_npm_deps(
+            &mut m.dependencies,
+            jsr_url_provider,
+            resolver,
+            &mut new_specifiers,
+          );
+        }
+        _ => {}
+      }
+    }
+
+    // re-resolve GraphImport dependencies
+    for graph_import in self.imports.values_mut() {
+      resolve_npm_deps(
+        &mut graph_import.dependencies,
+        jsr_url_provider,
+        resolver,
+        &mut new_specifiers,
+      );
+    }
+
+    // re-resolve npm roots
+    let base_range = Range {
+      specifier: npm_root_dir.clone(),
+      range: PositionRange::zeroed(),
+      resolution_mode: None,
+    };
+    let npm_roots: Vec<_> = self
+      .roots
+      .iter()
+      .filter(|r| r.scheme() == "npm")
+      .cloned()
+      .collect();
+    for old_root in npm_roots {
+      let new_resolution = resolve(
+        old_root.as_str(),
+        base_range.clone(),
+        ResolutionKind::Execution,
+        jsr_url_provider,
+        resolver,
+      );
+      if let Some(new_spec) = new_resolution.maybe_specifier() {
+        self.roots.swap_remove(&old_root);
+        self.roots.insert(new_spec.clone());
+        new_specifiers.push(new_spec.clone());
+      }
+    }
+
+    // remove npm module stubs and redirects
     self
       .module_slots
       .retain(|_, slot| !matches!(slot, ModuleSlot::Module(Module::Npm(_))));
     self.redirects.retain(|_, to| to.scheme() != "npm");
-    self.roots.retain(|root| root.scheme() != "npm");
-    let is_npm =
-      |s: &Resolution| s.maybe_specifier().is_some_and(|s| s.scheme() == "npm");
-    for graph_import in self.imports.values_mut() {
-      graph_import
-        .dependencies
-        .retain(|_, dep| !is_npm(&dep.maybe_code) && !is_npm(&dep.maybe_type));
+
+    // load newly resolved specifiers and their transitive dependencies
+    let mut builder = Builder::new(self, loader, options);
+    for specifier in &new_specifiers {
+      builder.load(LoadOptionsRef {
+        specifier,
+        maybe_range: None,
+        maybe_source_phase_referrer: None,
+        is_asset: false,
+        in_dynamic_branch: false,
+        is_root: false,
+        maybe_attribute_type: None,
+        maybe_version_info: None,
+      });
     }
+    builder.resolve_pending().await;
   }
 
   /// Iterates over all the module entries in the module graph searching from the provided roots.
@@ -2821,6 +2925,51 @@ fn resolve(
     ));
   }
   Resolution::from_resolve_result(response, specifier_text, referrer_range)
+}
+
+/// Re-resolves any npm dependency resolutions in the given dependency map
+/// to non-npm specifiers using the provided resolver, collecting the newly
+/// resolved specifiers.
+fn resolve_npm_deps(
+  deps: &mut IndexMap<String, Dependency>,
+  jsr_url_provider: &dyn JsrUrlProvider,
+  resolver: Option<&dyn Resolver>,
+  new_specifiers: &mut Vec<ModuleSpecifier>,
+) {
+  for (specifier_text, dep) in deps.iter_mut() {
+    if let Resolution::Ok(resolved) = &dep.maybe_code
+      && resolved.specifier.scheme() == "npm"
+    {
+      dep.maybe_code = resolve(
+        specifier_text,
+        resolved.range.clone(),
+        ResolutionKind::Execution,
+        jsr_url_provider,
+        resolver,
+      );
+      if let Some(s) = dep.maybe_code.maybe_specifier() {
+        new_specifiers.push(s.clone());
+      }
+    }
+    if let Resolution::Ok(resolved) = &dep.maybe_type
+      && resolved.specifier.scheme() == "npm"
+    {
+      let text = dep
+        .maybe_deno_types_specifier
+        .as_deref()
+        .unwrap_or(specifier_text);
+      dep.maybe_type = resolve(
+        text,
+        resolved.range.clone(),
+        ResolutionKind::Types,
+        jsr_url_provider,
+        resolver,
+      );
+      if let Some(s) = dep.maybe_type.maybe_specifier() {
+        new_specifiers.push(s.clone());
+      }
+    }
+  }
 }
 
 fn serialize_module_slots<S>(
@@ -8353,21 +8502,82 @@ mod tests {
     assert_eq!(errors.len(), 1);
   }
 
-  #[test]
-  fn remove_npm_specifiers() {
+  #[tokio::test]
+  async fn resolve_npm_specifiers() {
+    #[derive(Debug)]
+    struct TestResolver;
+    impl Resolver for TestResolver {
+      fn resolve(
+        &self,
+        specifier_text: &str,
+        _referrer_range: &Range,
+        _kind: ResolutionKind,
+      ) -> Result<ModuleSpecifier, ResolveError> {
+        match specifier_text {
+          "npm:chalk@1.0.0" => {
+            Ok(ModuleSpecifier::parse("file:///node_modules/chalk/index.js").unwrap())
+          }
+          _ => Ok(resolve_import(specifier_text, &_referrer_range.specifier)?),
+        }
+      }
+    }
+
+    struct TestLoader;
+    impl Loader for TestLoader {
+      fn load(
+        &self,
+        specifier: &ModuleSpecifier,
+        _options: LoadOptions,
+      ) -> LoadFuture {
+        let specifier = specifier.clone();
+        match specifier.as_str() {
+          "file:///node_modules/chalk/index.js" => {
+            Box::pin(async move {
+              Ok(Some(LoadResponse::Module {
+                specifier,
+                maybe_headers: None,
+                mtime: None,
+                content: b"export default function chalk() {}".to_vec().into(),
+              }))
+            })
+          }
+          _ => Box::pin(async { Ok(None) }),
+        }
+      }
+    }
+
     let mut graph = ModuleGraph::new(GraphKind::All);
 
-    let file_specifier = ModuleSpecifier::parse("file:///foo.js").unwrap();
-    let npm_specifier = ModuleSpecifier::parse("npm:chalk@1.0.0").unwrap();
-    let npm_redirect_from =
+    let file_specifier =
+      ModuleSpecifier::parse("file:///foo.js").unwrap();
+    let npm_specifier =
+      ModuleSpecifier::parse("npm:chalk@1.0.0").unwrap();
+    let npm_root_dir =
+      ModuleSpecifier::parse("file:///project/").unwrap();
+    let chalk_file =
       ModuleSpecifier::parse("file:///node_modules/chalk/index.js").unwrap();
 
-    // add a js module
+    // add a js module with an npm dependency
+    let mut js_deps = IndexMap::new();
+    js_deps.insert(
+      "npm:chalk@1.0.0".to_string(),
+      Dependency {
+        maybe_code: Resolution::Ok(Box::new(ResolutionResolved {
+          specifier: npm_specifier.clone(),
+          range: Range {
+            specifier: file_specifier.clone(),
+            range: PositionRange::zeroed(),
+            resolution_mode: None,
+          },
+        })),
+        ..Default::default()
+      },
+    );
     graph.module_slots.insert(
       file_specifier.clone(),
       ModuleSlot::Module(Module::Js(JsModule {
         specifier: file_specifier.clone(),
-        dependencies: Default::default(),
+        dependencies: js_deps,
         maybe_types_dependency: None,
         maybe_cache_info: None,
         maybe_source_map_dependency: None,
@@ -8380,7 +8590,7 @@ mod tests {
       })),
     );
 
-    // add an npm module
+    // add an npm module stub
     graph.module_slots.insert(
       npm_specifier.clone(),
       ModuleSlot::Module(Module::Npm(NpmModule {
@@ -8392,20 +8602,16 @@ mod tests {
       })),
     );
 
-    // add a redirect pointing to the npm specifier
-    graph
-      .redirects
-      .insert(npm_redirect_from.clone(), npm_specifier.clone());
-
     // add npm as a root
     graph.roots.insert(file_specifier.clone());
     graph.roots.insert(npm_specifier.clone());
 
-    // add an import with an npm dependency
-    let import_referrer = ModuleSpecifier::parse("file:///deno.json").unwrap();
-    let mut deps = IndexMap::new();
-    deps.insert(
-      "chalk".to_string(),
+    // add an import map entry with an npm dependency
+    let import_referrer =
+      ModuleSpecifier::parse("file:///deno.json").unwrap();
+    let mut import_deps = IndexMap::new();
+    import_deps.insert(
+      "npm:chalk@1.0.0".to_string(),
       Dependency {
         maybe_code: Resolution::Ok(Box::new(ResolutionResolved {
           specifier: npm_specifier.clone(),
@@ -8418,48 +8624,53 @@ mod tests {
         ..Default::default()
       },
     );
-    deps.insert(
-      "./local.js".to_string(),
-      Dependency {
-        maybe_code: Resolution::Ok(Box::new(ResolutionResolved {
-          specifier: file_specifier.clone(),
-          range: Range {
-            specifier: import_referrer.clone(),
-            range: PositionRange::zeroed(),
-            resolution_mode: None,
-          },
-        })),
-        ..Default::default()
-      },
+    graph.imports.insert(
+      import_referrer,
+      GraphImport { dependencies: import_deps },
     );
-    graph
-      .imports
-      .insert(import_referrer, GraphImport { dependencies: deps });
 
     // verify initial state
     assert_eq!(graph.module_slots.len(), 2);
-    assert_eq!(graph.redirects.len(), 1);
     assert_eq!(graph.roots.len(), 2);
-    assert_eq!(graph.imports[0].dependencies.len(), 2);
+    assert!(graph.get(&npm_specifier).unwrap().npm().is_some());
 
-    graph.remove_npm_specifiers();
+    graph
+      .resolve_npm_specifiers(
+        &npm_root_dir,
+        &TestLoader,
+        BuildOptions {
+          resolver: Some(&TestResolver),
+          ..Default::default()
+        },
+      )
+      .await;
 
-    // npm module slot removed, js module slot kept
-    assert_eq!(graph.module_slots.len(), 1);
-    assert!(graph.get(&file_specifier).is_some());
+    // npm module stub removed
     assert!(graph.get(&npm_specifier).is_none());
 
-    // npm redirect removed
-    assert_eq!(graph.redirects.len(), 0);
+    // file:// module loaded in its place
+    assert!(graph.get(&chalk_file).is_some());
+    assert!(graph.get(&chalk_file).unwrap().js().is_some());
 
-    // npm root removed
-    assert_eq!(graph.roots.len(), 1);
-    assert!(graph.roots.contains(&file_specifier));
+    // js module dependency re-resolved to file://
+    let foo = graph.get(&file_specifier).unwrap().js().unwrap();
+    let chalk_dep = foo.dependencies.get("npm:chalk@1.0.0").unwrap();
+    assert_eq!(
+      chalk_dep.maybe_code.maybe_specifier().unwrap().as_str(),
+      "file:///node_modules/chalk/index.js"
+    );
 
-    // npm import dependency removed, local kept
-    assert_eq!(graph.imports[0].dependencies.len(), 1);
-    assert!(graph.imports[0].dependencies.contains_key("./local.js"));
-    assert!(!graph.imports[0].dependencies.contains_key("chalk"));
+    // npm root re-resolved to file://
+    assert!(!graph.roots.contains(&npm_specifier));
+    assert!(graph.roots.contains(&chalk_file));
+
+    // import map dependency re-resolved to file://
+    let import_dep =
+      graph.imports[0].dependencies.get("npm:chalk@1.0.0").unwrap();
+    assert_eq!(
+      import_dep.maybe_code.maybe_specifier().unwrap().as_str(),
+      "file:///node_modules/chalk/index.js"
+    );
   }
 
   #[test]
