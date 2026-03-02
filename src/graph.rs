@@ -2511,7 +2511,7 @@ impl ModuleGraph {
     let resolver = options.resolver;
     let jsr_url_provider = options.jsr_url_provider;
 
-    let mut new_specifiers = Vec::new();
+    let mut new_specifiers: Vec<NewSpecifier> = Vec::new();
 
     // re-resolve npm dependency resolutions in all modules
     for slot in self.module_slots.values_mut() {
@@ -2526,15 +2526,24 @@ impl ModuleGraph {
             && let Resolution::Ok(resolved) = &types_dep.dependency
             && resolved.specifier.scheme() == "npm"
           {
+            let range = resolved.range.clone();
             types_dep.dependency = resolve(
               &types_dep.specifier,
-              resolved.range.clone(),
+              range.clone(),
               ResolutionKind::Types,
               jsr_url_provider,
               resolver,
             );
             if let Some(s) = types_dep.dependency.maybe_specifier() {
-              new_specifiers.push(s.clone());
+              new_specifiers.push(NewSpecifier {
+                specifier: s.clone(),
+                maybe_range: Some(range),
+                is_root: false,
+                is_asset: false,
+                in_dynamic_branch: false,
+                maybe_attribute_type: None,
+                maybe_source_phase_referrer: None,
+              });
             }
           }
           resolve_npm_deps(
@@ -2592,7 +2601,15 @@ impl ModuleGraph {
       if let Some(new_spec) = new_resolution.maybe_specifier() {
         self.roots.swap_remove(&old_root);
         self.roots.insert(new_spec.clone());
-        new_specifiers.push(new_spec.clone());
+        new_specifiers.push(NewSpecifier {
+          specifier: new_spec.clone(),
+          maybe_range: None,
+          is_root: true,
+          is_asset: false,
+          in_dynamic_branch: false,
+          maybe_attribute_type: None,
+          maybe_source_phase_referrer: None,
+        });
       }
     }
 
@@ -2604,15 +2621,15 @@ impl ModuleGraph {
 
     // load newly resolved specifiers and their transitive dependencies
     let mut builder = Builder::new(self, loader, options);
-    for specifier in &new_specifiers {
+    for new in &new_specifiers {
       builder.load(LoadOptionsRef {
-        specifier,
-        maybe_range: None,
-        maybe_source_phase_referrer: None,
-        is_asset: false,
-        in_dynamic_branch: false,
-        is_root: false,
-        maybe_attribute_type: None,
+        specifier: &new.specifier,
+        maybe_range: new.maybe_range.as_ref(),
+        maybe_source_phase_referrer: new.maybe_source_phase_referrer.as_ref(),
+        is_asset: new.is_asset,
+        in_dynamic_branch: new.in_dynamic_branch,
+        is_root: new.is_root,
+        maybe_attribute_type: new.maybe_attribute_type.clone(),
         maybe_version_info: None,
       });
     }
@@ -2932,6 +2949,16 @@ fn resolve(
   Resolution::from_resolve_result(response, specifier_text, referrer_range)
 }
 
+struct NewSpecifier {
+  specifier: ModuleSpecifier,
+  maybe_range: Option<Range>,
+  is_root: bool,
+  is_asset: bool,
+  in_dynamic_branch: bool,
+  maybe_attribute_type: Option<AttributeTypeWithRange>,
+  maybe_source_phase_referrer: Option<Range>,
+}
+
 /// Re-resolves any npm dependency resolutions in the given dependency map
 /// to non-npm specifiers using the provided resolver, collecting the newly
 /// resolved specifiers.
@@ -2940,26 +2967,46 @@ fn resolve_npm_deps(
   resolution_kind: ResolutionKind,
   jsr_url_provider: &dyn JsrUrlProvider,
   resolver: Option<&dyn Resolver>,
-  new_specifiers: &mut Vec<ModuleSpecifier>,
+  new_specifiers: &mut Vec<NewSpecifier>,
 ) {
   for (specifier_text, dep) in deps.iter_mut() {
     if !resolution_kind.is_types()
       && let Resolution::Ok(resolved) = &dep.maybe_code
       && resolved.specifier.scheme() == "npm"
     {
+      let range = resolved.range.clone();
       dep.maybe_code = resolve(
         specifier_text,
-        resolved.range.clone(),
+        range.clone(),
         ResolutionKind::Execution,
         jsr_url_provider,
         resolver,
       );
       if let Some(s) = dep.maybe_code.maybe_specifier() {
-        new_specifiers.push(s.clone());
+        let is_asset = dep.imports.iter().all(|i| i.attributes.has_asset());
+        let maybe_attribute_type =
+          dep.maybe_attribute_type.as_ref().map(|kind| {
+            AttributeTypeWithRange {
+              range: range.clone(),
+              kind: kind.clone(),
+            }
+          });
+        let maybe_source_phase_referrer = dep.imports.iter().find_map(|i| {
+          i.kind.is_source_phase().then(|| i.specifier_range.clone())
+        });
+        new_specifiers.push(NewSpecifier {
+          specifier: s.clone(),
+          maybe_range: Some(range),
+          is_root: false,
+          is_asset,
+          in_dynamic_branch: dep.is_dynamic,
+          maybe_attribute_type,
+          maybe_source_phase_referrer,
+        });
       }
     }
     if resolution_kind.is_types() {
-      let maybe_resolved = if let Resolution::Ok(resolved) = &dep.maybe_type
+      let maybe_range = if let Resolution::Ok(resolved) = &dep.maybe_type
         && resolved.specifier.scheme() == "npm"
       {
         Some(resolved.range.clone())
@@ -2970,20 +3017,39 @@ fn resolve_npm_deps(
       } else {
         None
       };
-      if let Some(range) = maybe_resolved {
+      if let Some(range) = maybe_range {
         let text = dep
           .maybe_deno_types_specifier
           .as_deref()
           .unwrap_or(specifier_text);
         dep.maybe_type = resolve(
           text,
-          range,
+          range.clone(),
           ResolutionKind::Types,
           jsr_url_provider,
           resolver,
         );
         if let Some(s) = dep.maybe_type.maybe_specifier() {
-          new_specifiers.push(s.clone());
+          let is_asset = dep.imports.iter().all(|i| i.attributes.has_asset());
+          let maybe_attribute_type =
+            dep.maybe_attribute_type.as_ref().map(|kind| {
+              AttributeTypeWithRange {
+                range: range.clone(),
+                kind: kind.clone(),
+              }
+            });
+          let maybe_source_phase_referrer = dep.imports.iter().find_map(|i| {
+            i.kind.is_source_phase().then(|| i.specifier_range.clone())
+          });
+          new_specifiers.push(NewSpecifier {
+            specifier: s.clone(),
+            maybe_range: Some(range),
+            is_root: false,
+            is_asset,
+            in_dynamic_branch: dep.is_dynamic,
+            maybe_attribute_type,
+            maybe_source_phase_referrer,
+          });
         }
       }
     }
