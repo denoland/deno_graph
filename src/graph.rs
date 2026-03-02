@@ -2506,7 +2506,7 @@ impl ModuleGraph {
     npm_root_dir: &ModuleSpecifier,
     resolution_kind: ResolutionKind,
     loader: &'a dyn Loader,
-    options: BuildOptions<'a>,
+    mut options: BuildOptions<'a>,
   ) {
     let resolver = options.resolver;
     let jsr_url_provider = options.jsr_url_provider;
@@ -2618,6 +2618,10 @@ impl ModuleGraph {
       .module_slots
       .retain(|_, slot| !matches!(slot, ModuleSlot::Module(Module::Npm(_))));
     self.redirects.retain(|_, to| to.scheme() != "npm");
+
+    // remove the npm resolver if it was specified because we
+    // don't want to resolve npm specifiers anymore
+    options.npm_resolver.take();
 
     // load newly resolved specifiers and their transitive dependencies
     let mut builder = Builder::new(self, loader, options);
