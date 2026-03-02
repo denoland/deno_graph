@@ -2494,14 +2494,14 @@ impl ModuleGraph {
     self.has_node_specifier = has_node_specifier;
   }
 
-  /// Re-resolves npm specifier dependencies in the graph to non-npm
-  /// specifiers using the provided resolver, removes npm module stubs,
-  /// and builds the newly resolved modules into the graph.
+  /// Re-resolves npm specifier dependencies in the graph to the file
+  /// system removing npm module stubs and builds the newly resolved
+  /// modules into the graph.
   ///
   /// `npm_root_dir` is used as the referrer when re-resolving npm root
   /// specifiers. `options.resolver` should map npm specifiers to file
   /// specifiers (e.g. in node_modules).
-  pub async fn resolve_npm_specifiers<'a>(
+  pub async fn build_npm_packages<'a>(
     &mut self,
     npm_root_dir: &ModuleSpecifier,
     resolution_kind: ResolutionKind,
@@ -8592,7 +8592,7 @@ mod tests {
   }
 
   #[tokio::test]
-  async fn resolve_npm_specifiers() {
+  async fn build_npm_packages() {
     #[derive(Debug)]
     struct TestResolver;
     impl Resolver for TestResolver {
@@ -8721,7 +8721,7 @@ mod tests {
     assert!(graph.get(&npm_specifier).unwrap().npm().is_some());
 
     graph
-      .resolve_npm_specifiers(
+      .build_npm_packages(
         &npm_root_dir,
         ResolutionKind::Execution,
         &TestLoader,
