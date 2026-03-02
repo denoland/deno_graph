@@ -2958,39 +2958,33 @@ fn resolve_npm_deps(
         new_specifiers.push(s.clone());
       }
     }
-    if resolution_kind.is_types()
-      && let Resolution::Ok(resolved) = &dep.maybe_code
-      && resolved.specifier.scheme() == "npm"
-      && dep.maybe_type.maybe_specifier().is_none()
-    {
-      dep.maybe_type = resolve(
-        specifier_text,
-        resolved.range.clone(),
-        ResolutionKind::Types,
-        jsr_url_provider,
-        resolver,
-      );
-      if let Some(s) = dep.maybe_type.maybe_specifier() {
-        new_specifiers.push(s.clone());
-      }
-    }
-    if resolution_kind.is_types()
-      && let Resolution::Ok(resolved) = &dep.maybe_type
-      && resolved.specifier.scheme() == "npm"
-    {
-      let text = dep
-        .maybe_deno_types_specifier
-        .as_deref()
-        .unwrap_or(specifier_text);
-      dep.maybe_type = resolve(
-        text,
-        resolved.range.clone(),
-        ResolutionKind::Types,
-        jsr_url_provider,
-        resolver,
-      );
-      if let Some(s) = dep.maybe_type.maybe_specifier() {
-        new_specifiers.push(s.clone());
+    if resolution_kind.is_types() {
+      let maybe_resolved = if let Resolution::Ok(resolved) = &dep.maybe_type
+        && resolved.specifier.scheme() == "npm"
+      {
+        Some(resolved.range.clone())
+      } else if let Resolution::Ok(resolved) = &dep.maybe_code
+        && resolved.specifier.scheme() == "npm"
+      {
+        Some(resolved.range.clone())
+      } else {
+        None
+      };
+      if let Some(range) = maybe_resolved {
+        let text = dep
+          .maybe_deno_types_specifier
+          .as_deref()
+          .unwrap_or(specifier_text);
+        dep.maybe_type = resolve(
+          text,
+          range,
+          ResolutionKind::Types,
+          jsr_url_provider,
+          resolver,
+        );
+        if let Some(s) = dep.maybe_type.maybe_specifier() {
+          new_specifiers.push(s.clone());
+        }
       }
     }
   }
