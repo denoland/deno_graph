@@ -2504,6 +2504,7 @@ impl ModuleGraph {
   pub async fn resolve_npm_specifiers<'a>(
     &mut self,
     npm_root_dir: &ModuleSpecifier,
+    resolution_kind: ResolutionKind,
     loader: &'a dyn Loader,
     options: BuildOptions<'a>,
   ) {
@@ -2520,7 +2521,8 @@ impl ModuleGraph {
       match module {
         Module::Js(m) => {
           // handle maybe_types_dependency
-          if let Some(types_dep) = &mut m.maybe_types_dependency
+          if resolution_kind.is_types()
+            && let Some(types_dep) = &mut m.maybe_types_dependency
             && let Resolution::Ok(resolved) = &types_dep.dependency
             && resolved.specifier.scheme() == "npm"
           {
@@ -2537,6 +2539,7 @@ impl ModuleGraph {
           }
           resolve_npm_deps(
             &mut m.dependencies,
+            resolution_kind,
             jsr_url_provider,
             resolver,
             &mut new_specifiers,
@@ -2545,6 +2548,7 @@ impl ModuleGraph {
         Module::Wasm(m) => {
           resolve_npm_deps(
             &mut m.dependencies,
+            resolution_kind,
             jsr_url_provider,
             resolver,
             &mut new_specifiers,
@@ -2558,6 +2562,7 @@ impl ModuleGraph {
     for graph_import in self.imports.values_mut() {
       resolve_npm_deps(
         &mut graph_import.dependencies,
+        resolution_kind,
         jsr_url_provider,
         resolver,
         &mut new_specifiers,
@@ -2580,7 +2585,7 @@ impl ModuleGraph {
       let new_resolution = resolve(
         old_root.as_str(),
         base_range.clone(),
-        ResolutionKind::Execution,
+        resolution_kind,
         jsr_url_provider,
         resolver,
       );
@@ -2932,12 +2937,14 @@ fn resolve(
 /// resolved specifiers.
 fn resolve_npm_deps(
   deps: &mut IndexMap<String, Dependency>,
+  resolution_kind: ResolutionKind,
   jsr_url_provider: &dyn JsrUrlProvider,
   resolver: Option<&dyn Resolver>,
   new_specifiers: &mut Vec<ModuleSpecifier>,
 ) {
   for (specifier_text, dep) in deps.iter_mut() {
-    if let Resolution::Ok(resolved) = &dep.maybe_code
+    if !resolution_kind.is_types()
+      && let Resolution::Ok(resolved) = &dep.maybe_code
       && resolved.specifier.scheme() == "npm"
     {
       dep.maybe_code = resolve(
@@ -2951,7 +2958,24 @@ fn resolve_npm_deps(
         new_specifiers.push(s.clone());
       }
     }
-    if let Resolution::Ok(resolved) = &dep.maybe_type
+    if resolution_kind.is_types()
+      && let Resolution::Ok(resolved) = &dep.maybe_code
+      && resolved.specifier.scheme() == "npm"
+      && dep.maybe_type.maybe_specifier().is_none()
+    {
+      dep.maybe_type = resolve(
+        specifier_text,
+        resolved.range.clone(),
+        ResolutionKind::Types,
+        jsr_url_provider,
+        resolver,
+      );
+      if let Some(s) = dep.maybe_type.maybe_specifier() {
+        new_specifiers.push(s.clone());
+      }
+    }
+    if resolution_kind.is_types()
+      && let Resolution::Ok(resolved) = &dep.maybe_type
       && resolved.specifier.scheme() == "npm"
     {
       let text = dep
@@ -5458,6 +5482,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     {
       // Check if this specifier is in the cache. If it is, then
       // don't use the module information as it may be out of date
+
       // with what's in the cache
       let fut = self.loader.load(
         specifier,
@@ -8514,9 +8539,10 @@ mod tests {
         _kind: ResolutionKind,
       ) -> Result<ModuleSpecifier, ResolveError> {
         match specifier_text {
-          "npm:chalk@1.0.0" => {
-            Ok(ModuleSpecifier::parse("file:///node_modules/chalk/index.js").unwrap())
-          }
+          "npm:chalk@1.0.0" => Ok(
+            ModuleSpecifier::parse("file:///node_modules/chalk/index.js")
+              .unwrap(),
+          ),
           _ => Ok(resolve_import(specifier_text, &_referrer_range.specifier)?),
         }
       }
@@ -8531,16 +8557,14 @@ mod tests {
       ) -> LoadFuture {
         let specifier = specifier.clone();
         match specifier.as_str() {
-          "file:///node_modules/chalk/index.js" => {
-            Box::pin(async move {
-              Ok(Some(LoadResponse::Module {
-                specifier,
-                maybe_headers: None,
-                mtime: None,
-                content: b"export default function chalk() {}".to_vec().into(),
-              }))
-            })
-          }
+          "file:///node_modules/chalk/index.js" => Box::pin(async move {
+            Ok(Some(LoadResponse::Module {
+              specifier,
+              maybe_headers: None,
+              mtime: None,
+              content: b"export default function chalk() {}".to_vec().into(),
+            }))
+          }),
           _ => Box::pin(async { Ok(None) }),
         }
       }
@@ -8548,12 +8572,9 @@ mod tests {
 
     let mut graph = ModuleGraph::new(GraphKind::All);
 
-    let file_specifier =
-      ModuleSpecifier::parse("file:///foo.js").unwrap();
-    let npm_specifier =
-      ModuleSpecifier::parse("npm:chalk@1.0.0").unwrap();
-    let npm_root_dir =
-      ModuleSpecifier::parse("file:///project/").unwrap();
+    let file_specifier = ModuleSpecifier::parse("file:///foo.js").unwrap();
+    let npm_specifier = ModuleSpecifier::parse("npm:chalk@1.0.0").unwrap();
+    let npm_root_dir = ModuleSpecifier::parse("file:///project/").unwrap();
     let chalk_file =
       ModuleSpecifier::parse("file:///node_modules/chalk/index.js").unwrap();
 
@@ -8607,8 +8628,7 @@ mod tests {
     graph.roots.insert(npm_specifier.clone());
 
     // add an import map entry with an npm dependency
-    let import_referrer =
-      ModuleSpecifier::parse("file:///deno.json").unwrap();
+    let import_referrer = ModuleSpecifier::parse("file:///deno.json").unwrap();
     let mut import_deps = IndexMap::new();
     import_deps.insert(
       "npm:chalk@1.0.0".to_string(),
@@ -8626,7 +8646,9 @@ mod tests {
     );
     graph.imports.insert(
       import_referrer,
-      GraphImport { dependencies: import_deps },
+      GraphImport {
+        dependencies: import_deps,
+      },
     );
 
     // verify initial state
@@ -8637,6 +8659,7 @@ mod tests {
     graph
       .resolve_npm_specifiers(
         &npm_root_dir,
+        ResolutionKind::Execution,
         &TestLoader,
         BuildOptions {
           resolver: Some(&TestResolver),
@@ -8665,8 +8688,10 @@ mod tests {
     assert!(graph.roots.contains(&chalk_file));
 
     // import map dependency re-resolved to file://
-    let import_dep =
-      graph.imports[0].dependencies.get("npm:chalk@1.0.0").unwrap();
+    let import_dep = graph.imports[0]
+      .dependencies
+      .get("npm:chalk@1.0.0")
+      .unwrap();
     assert_eq!(
       import_dep.maybe_code.maybe_specifier().unwrap().as_str(),
       "file:///node_modules/chalk/index.js"
