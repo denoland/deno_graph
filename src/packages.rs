@@ -68,6 +68,7 @@ impl NewestDependencyDateOptions {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct JsrPackageInfo {
   pub versions: HashMap<Version, JsrPackageInfoVersion>,
+  pub latest: Option<Version>,
 }
 
 fn is_false(v: &bool) -> bool {
