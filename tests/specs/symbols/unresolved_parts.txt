@@ -22,30 +22,30 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "other",
-            #2,
+            0,
         ): 1,
         (
             "Test",
-            #2,
+            0,
         ): 2,
         (
             "test",
-            #3,
+            0,
         ): 3,
         (
             "Resolved",
-            #2,
+            0,
         ): 4,
         (
             "Unresolved",
-            #2,
+            0,
         ): 5,
         (
             "NonExistent2",
-            #2,
+            0,
         ): 7,
     },
     symbols: {
@@ -59,22 +59,21 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "import * as other from \"./other.ts\";\n\nnamespace Test {\n  export function test() {}\n}\n\nexport import Resolved = Test.test;\nexport import Unresolved = Test.NotFound;\n\nexport { NonExistent } from \"./other.ts\";\n\nexport import NonExistent2 = other.NotFound;",
+                            <node @ 0..253>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            252,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 253,
                     },
                     flags: 0,
                 },
             ],
             child_ids: {
                 2,
+                4,
+                5,
+                7,
             },
             exports: {
                 "Resolved": 4,
@@ -100,13 +99,9 @@ file:///mod.ts: EsModuleInfo {
                             specifier: "./other.ts",
                         },
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            7,
-                        ),
-                        end: SourcePos(
-                            17,
-                        ),
+                    range: Span {
+                        start: 7,
+                        end: 17,
                     },
                     flags: 0,
                 },
@@ -127,16 +122,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "namespace Test {\n  export function test() {}\n}",
+                            <node @ 38..84>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            38,
-                        ),
-                        end: SourcePos(
-                            84,
-                        ),
+                    range: Span {
+                        start: 38,
+                        end: 84,
                     },
                     flags: 0,
                 },
@@ -161,16 +152,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export function test() {}",
+                            <node @ 57..82>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            57,
-                        ),
-                        end: SourcePos(
-                            82,
-                        ),
+                    range: Span {
+                        start: 57,
+                        end: 82,
                     },
                     flags: 0,
                 },
@@ -189,22 +176,14 @@ file:///mod.ts: EsModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    kind: QualifiedTarget(
-                        (
-                            "Test",
-                            #2,
+                    kind: Definition(
+                        SymbolNode(
+                            <node @ 86..121>,
                         ),
-                        [
-                            "test",
-                        ],
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            86,
-                        ),
-                        end: SourcePos(
-                            121,
-                        ),
+                    range: Span {
+                        start: 86,
+                        end: 121,
                     },
                     flags: 0,
                 },
@@ -223,22 +202,14 @@ file:///mod.ts: EsModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    kind: QualifiedTarget(
-                        (
-                            "Test",
-                            #2,
+                    kind: Definition(
+                        SymbolNode(
+                            <node @ 122..163>,
                         ),
-                        [
-                            "NotFound",
-                        ],
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            122,
-                        ),
-                        end: SourcePos(
-                            163,
-                        ),
+                    range: Span {
+                        start: 122,
+                        end: 163,
                     },
                     flags: 0,
                 },
@@ -265,13 +236,9 @@ file:///mod.ts: EsModuleInfo {
                             specifier: "./other.ts",
                         },
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            174,
-                        ),
-                        end: SourcePos(
-                            185,
-                        ),
+                    range: Span {
+                        start: 174,
+                        end: 185,
                     },
                     flags: 0,
                 },
@@ -290,22 +257,14 @@ file:///mod.ts: EsModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    kind: QualifiedTarget(
-                        (
-                            "other",
-                            #2,
+                    kind: Definition(
+                        SymbolNode(
+                            <node @ 208..252>,
                         ),
-                        [
-                            "NotFound",
-                        ],
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            208,
-                        ),
-                        end: SourcePos(
-                            252,
-                        ),
+                    range: Span {
+                        start: 208,
+                        end: 252,
                     },
                     flags: 0,
                 },
@@ -322,10 +281,10 @@ file:///other.ts: EsModuleInfo {
     ),
     specifier: "file:///other.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "Other",
-            #2,
+            0,
         ): 1,
     },
     symbols: {
@@ -339,16 +298,12 @@ file:///other.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class Other {}",
+                            <node @ 0..22>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            21,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 22,
                     },
                     flags: 0,
                 },
@@ -373,16 +328,12 @@ file:///other.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class Other {}",
+                            <node @ 0..21>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            21,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 21,
                     },
                     flags: 0,
                 },
@@ -394,11 +345,11 @@ file:///other.ts: EsModuleInfo {
     },
 }
 == export definitions ==
-[Resolved]: file:///mod.ts:57..82
-  export function test() {}
-[Unresolved]: file:///mod.ts
-  Unresolved Part("NotFound") (["NotFound"])
+[Resolved]: file:///mod.ts:86..121
+  export import Resolved = Test.test;
+[Unresolved]: file:///mod.ts:122..163
+  export import Unresolved = Test.NotFound;
 [NonExistent]: file:///other.ts
   Unresolved Part("NonExistent") ([])
-[NonExistent2]: file:///other.ts
-  Unresolved Part("NotFound") (["NotFound"])
+[NonExistent2]: file:///mod.ts:208..252
+  export import NonExistent2 = other.NotFound;

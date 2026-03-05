@@ -88,13 +88,14 @@ pub struct BuildResult {
   pub analyzer: CapturingModuleAnalyzer,
   #[allow(unused)]
   pub fast_check_cache: Option<TestFastCheckCache>,
+  pub allocator: deno_ast::oxc::allocator::Allocator,
 }
 
 #[cfg(feature = "symbols")]
 impl BuildResult {
   pub fn root_symbol(&self) -> deno_graph::symbols::RootSymbol<'_> {
     self.graph.valid().unwrap(); // assert valid
-    deno_graph::symbols::RootSymbol::new(&self.graph, &self.analyzer)
+    deno_graph::symbols::RootSymbol::new(&self.graph, &self.analyzer, &self.allocator)
   }
 }
 
@@ -363,6 +364,7 @@ impl TestBuilder {
       graph,
       analyzer: capturing_analyzer,
       fast_check_cache,
+      allocator: deno_ast::oxc::allocator::Allocator::default(),
     }
   }
 
@@ -515,13 +517,13 @@ impl TestBuilder {
             let mut symbol_deps_text = String::new();
             for symbol in module.symbols() {
               for decl in symbol.decls() {
-                if let Some((node, source)) = decl.maybe_node_and_source() {
+                if let Some(node) = decl.maybe_node() {
                   let deps = node.deps(resolve_mode);
                   if !deps.is_empty() {
                     symbol_deps_text.push_str(&format!(
                       "{:?}:{:?} {:?}\n",
                       symbol.symbol_id(),
-                      decl.range.as_byte_range(source.range().start),
+                      decl.range.start..decl.range.end,
                       deps
                     ));
                   }

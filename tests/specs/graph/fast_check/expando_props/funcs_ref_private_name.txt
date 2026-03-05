@@ -64,15 +64,13 @@ import 'jsr:@scope/a'
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export function test(): void {}
-  class NonExported {
-  }
+  class NonExported {}
   export namespace test {
-    export var skip = (nonExported: NonExported): void =>{};
+    export var skip = (nonExported: NonExported): void => {};
   }
   --- DTS ---
   export declare function test(): void;
-  declare class NonExported {
-  }
+  declare class NonExported {}
   export declare namespace test {
     export var skip: (nonExported: NonExported) => void;
   }

@@ -84,10 +84,12 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export function it(): void {}
   export namespace it {
-    export var skip = (really: boolean): void =>{}, ignore = function(really: boolean): void {}, restArrFn = (...really: any[]): void =>{}, arrayArrFn = ([]: [1, 2]): void =>{}, asyncArrFn = (): Promise<void> =>({} as never), objArrFn = ({}: {
+    export var skip = (really: boolean): void => {}, ignore = function(really: boolean): void {}, restArrFn = (...really: any[]): void => {}, arrayArrFn = ([]: [1, 2]): void => {}, asyncArrFn = (): Promise<void> => {
+      return {} as never;
+    }, objArrFn = ({}: {
       a: number;
       b: number;
-    }): void =>{}, restFn = function(...really: any[]): void {}, arrayFn = function([]: [1, 2]): void {}, asyncFn = function(): Promise<void> {
+    }): void => {}, restFn = function(...really: any[]): void {}, arrayFn = function([]: [1, 2]): void {}, asyncFn = function(): Promise<void> {
       return {} as never;
     }, objFn = function({}: {
       a: number;

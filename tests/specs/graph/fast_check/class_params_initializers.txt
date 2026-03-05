@@ -82,29 +82,13 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  {}
-  export class Object {
-    constructor(values: {
-    }, {}: {
-      a?: A;
-      b?: B;
-    } = {} as never){}
-    method(values: {
-    }, {}: {
-      a?: A;
-      b?: B;
-    } = {} as never, value?: number): void {}
-  }
-  --- DTS ---
-  export declare class Object {
-    constructor(values: {
-    }, {}?: {
-      a?: A;
-      b?: B;
-    });
-    method(values: {
-    }, {}?: {
-      a?: A;
-      b?: B;
-    }, value?: number): void;
-  }
+  error[missing-explicit-type]: missing explicit type in the public API
+    --> https://jsr.io/@scope/a/1.0.0/mod.ts:23:5
+     |
+  23 |     value = 1,
+     |     ^^^^^ this symbol is missing an explicit type
+     |
+     = hint: add an explicit type annotation to the symbol
+
+    info: all symbols in the public API must have an explicit type
+    docs: https://jsr.io/go/slow-type-missing-explicit-type

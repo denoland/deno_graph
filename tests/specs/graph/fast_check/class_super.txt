@@ -76,19 +76,19 @@ import 'jsr:@scope/a'
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   class Base {
-    constructor(a: number, b: number){}
+    constructor(a: number, b: number) {}
   }
   export class Child extends Base {
-    constructor(){
+    constructor() {
       super({} as never, {} as never);
     }
   }
   class SpreadBase {
-    constructor(...params: string[]){}
+    constructor(...params: string[]) {}
   }
   export class SpreadChild extends SpreadBase {
-    constructor(){
-      super(...([] as never[]));
+    constructor() {
+      super(...[] as never[]);
     }
   }
   --- DTS ---

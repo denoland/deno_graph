@@ -93,7 +93,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export class argsToArray {
     constructor(..._args: string[]);
     constructor(..._args: number[]);
-    constructor(...param0: any){}
+    constructor(...param0: any) {}
     argsToArray(..._args: string[]): void;
     argsToArray(..._args: number[]): void;
     argsToArray(...param0: any): any {

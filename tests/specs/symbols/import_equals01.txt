@@ -13,18 +13,18 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "MyExport",
-            #2,
+            0,
         ): 1,
         (
             "Test",
-            #2,
+            0,
         ): 2,
         (
             "Inner",
-            #3,
+            0,
         ): 3,
     },
     symbols: {
@@ -38,21 +38,18 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export import MyExport = Test.Inner;\n\nnamespace Test {\n  export class Inner {\n  }\n}",
+                            <node @ 0..84>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            83,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 84,
                     },
                     flags: 0,
                 },
             ],
             child_ids: {
+                1,
                 2,
             },
             exports: {
@@ -70,22 +67,14 @@ file:///mod.ts: EsModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    kind: QualifiedTarget(
-                        (
-                            "Test",
-                            #2,
+                    kind: Definition(
+                        SymbolNode(
+                            <node @ 0..36>,
                         ),
-                        [
-                            "Inner",
-                        ],
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            36,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 36,
                     },
                     flags: 0,
                 },
@@ -106,16 +95,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "namespace Test {\n  export class Inner {\n  }\n}",
+                            <node @ 38..83>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            38,
-                        ),
-                        end: SourcePos(
-                            83,
-                        ),
+                    range: Span {
+                        start: 38,
+                        end: 83,
                     },
                     flags: 0,
                 },
@@ -140,16 +125,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class Inner {\n  }",
+                            <node @ 57..81>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            57,
-                        ),
-                        end: SourcePos(
-                            81,
-                        ),
+                    range: Span {
+                        start: 57,
+                        end: 81,
                     },
                     flags: 0,
                 },
@@ -161,6 +142,5 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == export definitions ==
-[MyExport]: file:///mod.ts:57..81
-  export class Inner {
-    }
+[MyExport]: file:///mod.ts:0..36
+  export import MyExport = Test.Inner;

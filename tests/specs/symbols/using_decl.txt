@@ -11,10 +11,10 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "test",
-            #2,
+            0,
         ): 1,
     },
     symbols: {
@@ -28,16 +28,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "using test = 5;\n\nexport { test };",
+                            <node @ 0..66>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            32,
-                        ),
-                        end: SourcePos(
-                            65,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 66,
                     },
                     flags: 0,
                 },
@@ -62,16 +58,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "test: using test = 5;",
+                            <node @ 38..42>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            38,
-                        ),
-                        end: SourcePos(
-                            46,
-                        ),
+                    range: Span {
+                        start: 38,
+                        end: 46,
                     },
                     flags: 0,
                 },
@@ -93,16 +85,12 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "test",
-                            #2,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            58,
-                        ),
-                        end: SourcePos(
-                            62,
-                        ),
+                    range: Span {
+                        start: 58,
+                        end: 62,
                     },
                     flags: 0,
                 },

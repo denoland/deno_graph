@@ -91,69 +91,13 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  {}
-  export class Application<S> {
-    declare prop: S;
-  }
-  export const str: "foo" & {
-    __brand: "foo";
-  } = {} as never;
-  export function createMockApp<S extends Record<string | number | symbol, any> = Record<string, any>>(state?: S): Application<S> {
-    return {} as never;
-  }
-  export class A {
-    declare prop: Public1;
-    constructor(prop?: Public1){}
-    declare handler: Public2<Public3>;
-    declare secondProp: Public4;
-  }
-  export const var1: Public5<Public6> = {} as never;
-  interface Public1<T> {
-  }
-  interface Public2 {
-  }
-  interface Public3 {
-  }
-  interface Public4 {
-  }
-  interface Public5 {
-  }
-  interface Public6 {
-  }
-  class Public7 {
-  }
-  export const str2: "foo" & {
-    data: Public7;
-  } = {} as never;
-  --- DTS ---
-  export declare class Application<S> {
-    prop: S;
-  }
-  export declare const str: "foo" & {
-    __brand: "foo";
-  };
-  export declare function createMockApp<S extends Record<string | number | symbol, any> = Record<string, any>>(state?: S): Application<S>;
-  export declare class A {
-    prop: Public1;
-    constructor(prop?: Public1);
-    handler: Public2<Public3>;
-    secondProp: Public4;
-  }
-  export declare const var1: Public5<Public6>;
-  interface Public1<T> {
-  }
-  interface Public2 {
-  }
-  interface Public3 {
-  }
-  interface Public4 {
-  }
-  interface Public5 {
-  }
-  interface Public6 {
-  }
-  declare class Public7 {
-  }
-  export declare const str2: "foo" & {
-    data: Public7;
-  };
+  error[missing-explicit-type]: missing explicit type in the public API
+    --> https://jsr.io/@scope/a/1.0.0/mod.ts:10:3
+     |
+  10 |   state = {} as S,
+     |   ^^^^^ this symbol is missing an explicit type
+     |
+     = hint: add an explicit type annotation to the symbol
+
+    info: all symbols in the public API must have an explicit type
+    docs: https://jsr.io/go/slow-type-missing-explicit-type

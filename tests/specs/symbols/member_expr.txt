@@ -16,26 +16,22 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "MyClass",
-            #2,
+            0,
         ): 1,
         (
             "OtherClass",
-            #2,
+            0,
         ): 2,
         (
             "MyNamespace",
-            #2,
+            0,
         ): 3,
         (
-            "MyClass",
-            #3,
-        ): 4,
-        (
             "Test",
-            #2,
+            0,
         ): 5,
     },
     symbols: {
@@ -49,16 +45,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class MyClass extends MyNamespace.MyClass {}\nexport class OtherClass extends MyNamespace.MyClass<Test> {}\n\nexport namespace MyNamespace {\n  export class MyClass {}\n}\n\nexport class Test {\n}",
+                            <node @ 0..196>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            195,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 196,
                     },
                     flags: 0,
                 },
@@ -89,16 +81,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class MyClass extends MyNamespace.MyClass {}",
+                            <node @ 0..51>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            51,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 51,
                     },
                     flags: 0,
                 },
@@ -119,16 +107,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class OtherClass extends MyNamespace.MyClass<Test> {}",
+                            <node @ 52..112>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            52,
-                        ),
-                        end: SourcePos(
-                            112,
-                        ),
+                    range: Span {
+                        start: 52,
+                        end: 112,
                     },
                     flags: 0,
                 },
@@ -149,16 +133,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export namespace MyNamespace {\n  export class MyClass {}\n}",
+                            <node @ 114..172>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            114,
-                        ),
-                        end: SourcePos(
-                            172,
-                        ),
+                    range: Span {
+                        start: 114,
+                        end: 172,
                     },
                     flags: 0,
                 },
@@ -183,16 +163,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class MyClass {}",
+                            <node @ 147..170>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            147,
-                        ),
-                        end: SourcePos(
-                            170,
-                        ),
+                    range: Span {
+                        start: 147,
+                        end: 170,
                     },
                     flags: 0,
                 },
@@ -213,16 +189,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class Test {\n}",
+                            <node @ 174..195>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            174,
-                        ),
-                        end: SourcePos(
-                            195,
-                        ),
+                    range: Span {
+                        start: 174,
+                        end: 195,
                     },
                     flags: 0,
                 },
@@ -234,12 +206,12 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-1:0..51 [QualifiedId(("MyNamespace", #2), ["MyClass"])]
-2:52..112 [QualifiedId(("MyNamespace", #2), ["MyClass"]), Id(("Test", #2))]
+1:0..51 [QualifiedId(("MyNamespace", 0), ["MyClass"])]
+2:52..112 [QualifiedId(("MyNamespace", 0), ["MyClass"]), Id(("Test", 0))]
 
 == symbol deps (types only) ==
-1:0..51 [QualifiedId(("MyNamespace", #2), ["MyClass"])]
-2:52..112 [QualifiedId(("MyNamespace", #2), ["MyClass"]), Id(("Test", #2))]
+1:0..51 [QualifiedId(("MyNamespace", 0), ["MyClass"])]
+2:52..112 [QualifiedId(("MyNamespace", 0), ["MyClass"]), Id(("Test", 0))]
 
 == export definitions ==
 [MyClass]: file:///mod.ts:0..51

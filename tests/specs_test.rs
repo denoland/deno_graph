@@ -13,11 +13,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::rc::Rc;
 
-use deno_ast::EmitOptions;
-use deno_ast::EmittedSourceText;
-use deno_ast::SourceMap;
 use deno_ast::diagnostics::Diagnostic;
-use deno_ast::emit;
 use deno_graph::WorkspaceMember;
 use deno_graph::fast_check::FastCheckCacheModuleItem;
 use deno_graph::packages::NewestDependencyDateOptions;
@@ -194,24 +190,10 @@ fn run_graph_test(test: &CollectedTest) {
         ));
 
         if let Some(dts) = &fast_check.dts {
-          let source_map = SourceMap::single(
-            module.specifier.clone(),
-            module.source.text.to_string(),
-          );
-          let EmittedSourceText { text, .. } = emit(
-            (&dts.program).into(),
-            &dts.comments.as_single_threaded(),
-            &source_map,
-            &EmitOptions {
-              remove_comments: false,
-              source_map: deno_ast::SourceMapOption::None,
-              ..Default::default()
-            },
-          )
-          .unwrap();
+          let text = &dts.program_text;
           if !text.is_empty() {
             output_text.push_str(&indent("--- DTS ---\n"));
-            output_text.push_str(&indent(&text));
+            output_text.push_str(&indent(text));
           }
           if !dts.diagnostics.is_empty() {
             output_text.push_str(&indent("--- DTS Diagnostics ---\n"));

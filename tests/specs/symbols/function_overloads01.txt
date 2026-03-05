@@ -21,22 +21,22 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "test",
-            #2,
+            0,
         ): 1,
         (
             "Inner",
-            #2,
+            0,
         ): 2,
         (
             "inner",
-            #6,
+            0,
         ): 3,
         (
             "InnerInner",
-            #2,
+            0,
         ): 4,
     },
     symbols: {
@@ -50,16 +50,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export function test(value: number);\nexport function test(value: string);\nexport function test(value: string | number) {\n}\n\nnamespace Inner {\n  export function inner(value: number);\n  export function inner(value: string);\n  export function inner(value: string | number) {\n  }\n}\n\nimport InnerInner = Inner.inner;\nexport { InnerInner };",
+                            <node @ 0..335>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            334,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 335,
                     },
                     flags: 0,
                 },
@@ -86,48 +82,36 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export function test(value: number);",
+                            <node @ 0..36>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            36,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 36,
                     },
                     flags: 0,
                 },
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export function test(value: string);",
+                            <node @ 37..73>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            37,
-                        ),
-                        end: SourcePos(
-                            73,
-                        ),
+                    range: Span {
+                        start: 37,
+                        end: 73,
                     },
                     flags: 0,
                 },
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export function test(value: string | number) {\n}",
+                            <node @ 74..122>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            74,
-                        ),
-                        end: SourcePos(
-                            122,
-                        ),
+                    range: Span {
+                        start: 74,
+                        end: 122,
                     },
                     flags: 1,
                 },
@@ -148,16 +132,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "namespace Inner {\n  export function inner(value: number);\n  export function inner(value: string);\n  export function inner(value: string | number) {\n  }\n}",
+                            <node @ 124..277>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            124,
-                        ),
-                        end: SourcePos(
-                            277,
-                        ),
+                    range: Span {
+                        start: 124,
+                        end: 277,
                     },
                     flags: 0,
                 },
@@ -182,48 +162,36 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export function inner(value: number);",
+                            <node @ 144..181>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            144,
-                        ),
-                        end: SourcePos(
-                            181,
-                        ),
+                    range: Span {
+                        start: 144,
+                        end: 181,
                     },
                     flags: 0,
                 },
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export function inner(value: string);",
+                            <node @ 184..221>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            184,
-                        ),
-                        end: SourcePos(
-                            221,
-                        ),
+                    range: Span {
+                        start: 184,
+                        end: 221,
                     },
                     flags: 0,
                 },
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export function inner(value: string | number) {\n  }",
+                            <node @ 224..275>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            224,
-                        ),
-                        end: SourcePos(
-                            275,
-                        ),
+                    range: Span {
+                        start: 224,
+                        end: 275,
                     },
                     flags: 1,
                 },
@@ -245,19 +213,15 @@ file:///mod.ts: EsModuleInfo {
                     kind: QualifiedTarget(
                         (
                             "Inner",
-                            #2,
+                            0,
                         ),
                         [
                             "inner",
                         ],
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            279,
-                        ),
-                        end: SourcePos(
-                            311,
-                        ),
+                    range: Span {
+                        start: 279,
+                        end: 311,
                     },
                     flags: 0,
                 },
@@ -279,16 +243,12 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "InnerInner",
-                            #2,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            321,
-                        ),
-                        end: SourcePos(
-                            331,
-                        ),
+                    range: Span {
+                        start: 321,
+                        end: 331,
                     },
                     flags: 0,
                 },

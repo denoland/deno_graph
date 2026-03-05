@@ -1,19 +1,29 @@
 use deno_ast::ModuleSpecifier;
-use deno_ast::SourceRange;
-use deno_ast::SourceRangedForSpanned;
 use deno_ast::SourceTextInfo;
-use deno_ast::swc::ast::*;
-use deno_ast::swc::common::DUMMY_SP;
-use deno_ast::swc::common::SyntaxContext;
+use deno_ast::oxc::allocator::Allocator;
+use deno_ast::oxc::allocator::Box;
+use deno_ast::oxc::allocator::CloneIn;
+use deno_ast::oxc::allocator::Vec;
+use deno_ast::oxc::ast::ast::*;
+use deno_ast::oxc::span::GetSpan;
+use deno_ast::oxc::span::Ident;
+use deno_ast::oxc::span::SPAN;
+use deno_ast::oxc::span::Span;
+use deno_ast::oxc::syntax::node::NodeId;
+use std::cell::Cell;
 
 use super::FastCheckDiagnosticRange;
 use super::range_finder::ModulePublicRanges;
-use super::swc_helpers::DeclMutabilityKind;
-use super::swc_helpers::any_type_ann;
-use super::swc_helpers::maybe_lit_to_ts_type;
-use super::swc_helpers::ts_readonly;
-use super::swc_helpers::ts_tuple_element;
-use super::swc_helpers::type_ann;
+use super::helpers::DeclMutabilityKind;
+use super::helpers::any_type_ann;
+use super::helpers::maybe_lit_to_ts_type;
+use super::helpers::new_ident;
+use super::helpers::ts_keyword_type;
+use super::helpers::TSKeywordKind;
+use super::helpers::ts_readonly;
+use super::helpers::ts_tuple_element;
+use super::helpers::type_ann;
+
 
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum FastCheckDtsDiagnostic {
@@ -57,22 +67,25 @@ impl FastCheckDtsDiagnostic {
   }
 }
 
-pub struct FastCheckDtsTransformer<'a> {
+pub struct FastCheckDtsTransformer<'a, 'b> {
+  allocator: &'a Allocator,
   id_counter: usize,
-  text_info: &'a SourceTextInfo,
-  public_ranges: &'a ModulePublicRanges,
-  pub diagnostics: Vec<FastCheckDtsDiagnostic>,
-  specifier: &'a ModuleSpecifier,
+  text_info: &'b SourceTextInfo,
+  public_ranges: &'b ModulePublicRanges,
+  pub diagnostics: std::vec::Vec<FastCheckDtsDiagnostic>,
+  specifier: &'b ModuleSpecifier,
   is_top_level: bool,
 }
 
-impl<'a> FastCheckDtsTransformer<'a> {
+impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
   pub fn new(
-    text_info: &'a SourceTextInfo,
-    public_ranges: &'a ModulePublicRanges,
-    specifier: &'a ModuleSpecifier,
+    allocator: &'a Allocator,
+    text_info: &'b SourceTextInfo,
+    public_ranges: &'b ModulePublicRanges,
+    specifier: &'b ModuleSpecifier,
   ) -> Self {
     Self {
+      allocator,
       id_counter: 0,
       text_info,
       specifier,
@@ -93,7 +106,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
 
   fn source_range_to_range(
     &self,
-    range: SourceRange,
+    range: Span,
   ) -> FastCheckDiagnosticRange {
     FastCheckDiagnosticRange {
       specifier: self.specifier.clone(),
@@ -102,168 +115,251 @@ impl<'a> FastCheckDtsTransformer<'a> {
     }
   }
 
-  fn mark_diagnostic_unable_to_infer(&mut self, range: SourceRange) {
+  fn mark_diagnostic_unable_to_infer(&mut self, range: Span) {
     self.mark_diagnostic(FastCheckDtsDiagnostic::UnableToInferType {
       range: self.source_range_to_range(range),
     })
   }
 
-  fn mark_diagnostic_any_fallback(&mut self, range: SourceRange) {
+  fn mark_diagnostic_any_fallback(&mut self, range: Span) {
     self.mark_diagnostic(FastCheckDtsDiagnostic::UnableToInferTypeFallbackAny {
       range: self.source_range_to_range(range),
     })
   }
 
-  fn mark_diagnostic_unsupported_prop(&mut self, range: SourceRange) {
+  fn mark_diagnostic_unsupported_prop(&mut self, range: Span) {
     self.mark_diagnostic(FastCheckDtsDiagnostic::UnableToInferTypeFromProp {
       range: self.source_range_to_range(range),
     })
   }
 
-  pub fn transform(&mut self, program: Program) -> Program {
+  pub fn transform(&mut self, mut program: Program<'a>) -> Program<'a> {
     self.is_top_level = true;
-    match program {
-      Program::Module(mut module) => {
-        let body = module.body;
-        module.body = self.transform_module_items(body);
-        Program::Module(module)
-      }
-      Program::Script(mut script) => {
-        script.body = script
-          .body
-          .into_iter()
-          .filter_map(|stmt| {
-            let new_stmt = self.transform_module_stmt(stmt)?;
-            Some(new_stmt)
-          })
-          .collect();
-        Program::Script(script)
-      }
-    }
+    let body = std::mem::replace(&mut program.body, Vec::new_in(self.allocator));
+    program.body = self.transform_stmts(body);
+    program
   }
 
-  fn transform_module_items(
+  fn transform_stmts(
     &mut self,
-    body: Vec<ModuleItem>,
-  ) -> Vec<ModuleItem> {
-    let mut new_items: Vec<ModuleItem> = vec![];
+    body: Vec<'a, Statement<'a>>,
+  ) -> Vec<'a, Statement<'a>> {
+    let mut new_items: Vec<'a, Statement<'a>> = Vec::new_in(self.allocator);
 
     for item in body {
       match item {
-        ModuleItem::ModuleDecl(module_decl) => match module_decl {
-          ModuleDecl::Import(_) => {
-            new_items.push(ModuleItem::ModuleDecl(module_decl));
-          }
-          ModuleDecl::ExportDecl(export_decl) => {
-            if let Decl::Fn(_) = &export_decl.decl
-              && self
+        Statement::ImportDeclaration(_) => {
+          new_items.push(item);
+        }
+        Statement::ExportNamedDeclaration(export_decl) => {
+          if let Some(ref decl) = export_decl.declaration {
+            if let Declaration::FunctionDeclaration(_) = decl {
+              if self
                 .public_ranges
-                .is_impl_with_overloads(&export_decl.range())
-            {
-              continue; // skip implementation signature
+                .is_impl_with_overloads(&export_decl.span)
+              {
+                continue; // skip implementation signature
+              }
             }
+          }
 
-            match self.decl_to_type_decl(export_decl.decl.clone()) {
-              Some(decl) => {
-                new_items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(
-                  ExportDecl {
-                    decl,
-                    span: export_decl.span,
-                  },
-                )));
+          if let Some(ref decl) = export_decl.declaration {
+            match self.decl_to_type_decl(decl.clone_in(self.allocator)) {
+              Some(new_decl) => {
+                new_items.push(Statement::ExportNamedDeclaration(
+                  Box::new_in(
+                    ExportNamedDeclaration {
+                      node_id: Cell::new(NodeId::DUMMY),
+                      declaration: Some(new_decl),
+                      span: export_decl.span,
+                      specifiers: Vec::new_in(self.allocator),
+                      source: None,
+                      export_kind: ImportOrExportKind::Value,
+                      with_clause: None,
+                    },
+                    self.allocator,
+                  ),
+                ));
               }
               _ => self.mark_diagnostic(
                 FastCheckDtsDiagnostic::UnableToInferType {
-                  range: self.source_range_to_range(export_decl.range()),
+                  range: self.source_range_to_range(export_decl.span),
                 },
               ),
             }
+          } else {
+            // Re-export like `export { foo } from "bar"` - keep as is
+            new_items.push(Statement::ExportNamedDeclaration(export_decl));
           }
-          ModuleDecl::ExportDefaultDecl(export_decl) => {
-            let value = match export_decl.decl {
-              DefaultDecl::Class(mut class_expr) => {
-                class_expr.class.body =
-                  self.class_body_to_type(class_expr.class.body);
-                ExportDefaultDecl {
-                  span: export_decl.span,
-                  decl: DefaultDecl::Class(class_expr),
-                }
+        }
+        Statement::ExportDefaultDeclaration(mut export_decl) => {
+          match &export_decl.declaration {
+            ExportDefaultDeclarationKind::ClassDeclaration(_) => {
+              let mut cloned = export_decl.clone_in(self.allocator);
+              if let ExportDefaultDeclarationKind::ClassDeclaration(ref mut class_expr) = cloned.declaration {
+                class_expr.body = self.class_body_to_type(&class_expr.body);
               }
-              DefaultDecl::Fn(mut fn_expr) => {
-                if self
-                  .public_ranges
-                  .is_impl_with_overloads(&export_decl.span.range())
-                {
-                  continue; // skip implementation signature
-                }
-
-                fn_expr.function.body = None;
-                ExportDefaultDecl {
-                  span: export_decl.span,
-                  decl: DefaultDecl::Fn(fn_expr),
-                }
+              new_items.push(Statement::ExportDefaultDeclaration(cloned));
+            }
+            ExportDefaultDeclarationKind::FunctionDeclaration(_) => {
+              if self
+                .public_ranges
+                .is_impl_with_overloads(&export_decl.span)
+              {
+                continue; // skip implementation signature
               }
-              DefaultDecl::TsInterfaceDecl(_) => export_decl,
-            };
 
-            new_items.push(ModuleItem::ModuleDecl(
-              ModuleDecl::ExportDefaultDecl(value),
-            ))
-          }
-          ModuleDecl::ExportDefaultExpr(export_default_expr) => {
-            let name = self.gen_unique_name();
-            let name_ident =
-              Ident::new(name.into(), DUMMY_SP, SyntaxContext::default());
-            let type_ann = self
-              .expr_to_ts_type(*export_default_expr.expr.clone(), false, true)
-              .map(type_ann);
+              let mut cloned = export_decl.clone_in(self.allocator);
+              if let ExportDefaultDeclarationKind::FunctionDeclaration(ref mut fn_expr) = cloned.declaration {
+                fn_expr.body = None;
+              }
+              new_items.push(Statement::ExportDefaultDeclaration(cloned));
+            }
+            ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
+              new_items.push(Statement::ExportDefaultDeclaration(export_decl));
+            }
+            _ => {
+              // Expression variant - handle like ExportDefaultExpr
+              let expr_span = export_decl.declaration.span();
+              let decl_cloned = export_decl.declaration.clone_in(self.allocator);
+              let expr = match decl_cloned {
+                ExportDefaultDeclarationKind::BooleanLiteral(_)
+                | ExportDefaultDeclarationKind::NullLiteral(_)
+                | ExportDefaultDeclarationKind::NumericLiteral(_)
+                | ExportDefaultDeclarationKind::BigIntLiteral(_)
+                | ExportDefaultDeclarationKind::RegExpLiteral(_)
+                | ExportDefaultDeclarationKind::StringLiteral(_)
+                | ExportDefaultDeclarationKind::TemplateLiteral(_)
+                | ExportDefaultDeclarationKind::Identifier(_)
+                | ExportDefaultDeclarationKind::MetaProperty(_)
+                | ExportDefaultDeclarationKind::Super(_)
+                | ExportDefaultDeclarationKind::ArrayExpression(_)
+                | ExportDefaultDeclarationKind::ArrowFunctionExpression(_)
+                | ExportDefaultDeclarationKind::AssignmentExpression(_)
+                | ExportDefaultDeclarationKind::AwaitExpression(_)
+                | ExportDefaultDeclarationKind::BinaryExpression(_)
+                | ExportDefaultDeclarationKind::CallExpression(_)
+                | ExportDefaultDeclarationKind::ChainExpression(_)
+                | ExportDefaultDeclarationKind::ClassExpression(_)
+                | ExportDefaultDeclarationKind::ConditionalExpression(_)
+                | ExportDefaultDeclarationKind::FunctionExpression(_)
+                | ExportDefaultDeclarationKind::ImportExpression(_)
+                | ExportDefaultDeclarationKind::LogicalExpression(_)
+                | ExportDefaultDeclarationKind::NewExpression(_)
+                | ExportDefaultDeclarationKind::ObjectExpression(_)
+                | ExportDefaultDeclarationKind::ParenthesizedExpression(_)
+                | ExportDefaultDeclarationKind::SequenceExpression(_)
+                | ExportDefaultDeclarationKind::TaggedTemplateExpression(_)
+                | ExportDefaultDeclarationKind::ThisExpression(_)
+                | ExportDefaultDeclarationKind::UnaryExpression(_)
+                | ExportDefaultDeclarationKind::UpdateExpression(_)
+                | ExportDefaultDeclarationKind::YieldExpression(_)
+                | ExportDefaultDeclarationKind::PrivateInExpression(_)
+                | ExportDefaultDeclarationKind::JSXElement(_)
+                | ExportDefaultDeclarationKind::JSXFragment(_)
+                | ExportDefaultDeclarationKind::TSAsExpression(_)
+                | ExportDefaultDeclarationKind::TSSatisfiesExpression(_)
+                | ExportDefaultDeclarationKind::TSTypeAssertion(_)
+                | ExportDefaultDeclarationKind::TSNonNullExpression(_)
+                | ExportDefaultDeclarationKind::TSInstantiationExpression(_)
+                | ExportDefaultDeclarationKind::V8IntrinsicExpression(_)
+                | ExportDefaultDeclarationKind::ComputedMemberExpression(_)
+                | ExportDefaultDeclarationKind::StaticMemberExpression(_)
+                | ExportDefaultDeclarationKind::PrivateFieldExpression(_) => {
+                  // Convert ExportDefaultDeclarationKind to Expression
+                  // We need to extract the expression
+                  export_default_decl_kind_to_expr(self.allocator, decl_cloned)
+                }
+                _ => unreachable!(),
+              };
 
-            if let Some(type_ann) = type_ann {
-              new_items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(
-                Box::new(VarDecl {
-                  span: DUMMY_SP,
-                  ctxt: Default::default(),
-                  kind: VarDeclKind::Const,
-                  declare: true,
-                  decls: vec![VarDeclarator {
-                    span: DUMMY_SP,
-                    name: Pat::Ident(BindingIdent {
-                      id: name_ident.clone(),
-                      type_ann: Some(type_ann),
-                    }),
+              if let Some(expr) = expr {
+                let name = self.gen_unique_name();
+                let name_ident = new_ident(self.allocator, &name);
+                let type_ann_opt = self
+                  .expr_to_ts_type(&expr, false, true)
+                  .map(|t| type_ann(self.allocator, t));
+
+                if let Some(ta) = type_ann_opt {
+                  // Create: declare const _dts_N: Type;
+                  let mut declarations = Vec::new_in(self.allocator);
+                  declarations.push(VariableDeclarator {
+                    node_id: Cell::new(NodeId::DUMMY),
+                    span: SPAN,
+                    kind: VariableDeclarationKind::Const,
+                    id: BindingPattern::BindingIdentifier(Box::new_in(
+                      name_ident.clone_in(self.allocator),
+                      self.allocator,
+                    )),
+                    type_annotation: Some(ta),
                     init: None,
                     definite: false,
-                  }],
-                }),
-              ))));
+                  });
+                  new_items.push(Statement::VariableDeclaration(
+                    Box::new_in(
+                      VariableDeclaration {
+                        node_id: Cell::new(NodeId::DUMMY),
+                        span: SPAN,
+                        kind: VariableDeclarationKind::Const,
+                        declarations,
+                        declare: true,
+                      },
+                      self.allocator,
+                    ),
+                  ));
 
-              new_items.push(ModuleItem::ModuleDecl(
-                ModuleDecl::ExportDefaultExpr(ExportDefaultExpr {
-                  span: export_default_expr.span,
-                  expr: Box::new(Expr::Ident(name_ident)),
-                }),
-              ))
-            } else {
-              new_items.push(ModuleItem::ModuleDecl(
-                ModuleDecl::ExportDefaultExpr(ExportDefaultExpr {
-                  span: export_default_expr.span,
-                  expr: export_default_expr.expr,
-                }),
-              ))
+                  // Create: export default _dts_N;
+                  new_items.push(Statement::ExportDefaultDeclaration(
+                    Box::new_in(
+                      ExportDefaultDeclaration {
+                        node_id: Cell::new(NodeId::DUMMY),
+                        span: export_decl.span,
+                        declaration: ExportDefaultDeclarationKind::Identifier(
+                          Box::new_in(
+                            IdentifierReference {
+                              node_id: Cell::new(NodeId::DUMMY),
+                              span: SPAN,
+                              name: Ident::from(
+                                self.allocator.alloc_str(&name),
+                              ),
+                              reference_id: Cell::new(None),
+                            },
+                            self.allocator,
+                          ),
+                        ),
+                      },
+                      self.allocator,
+                    ),
+                  ));
+                } else {
+                  // Re-emit with original expression
+                  let kind = expr_to_export_default_decl_kind(self.allocator, expr);
+                  new_items.push(Statement::ExportDefaultDeclaration(
+                    Box::new_in(
+                      ExportDefaultDeclaration {
+                        node_id: Cell::new(NodeId::DUMMY),
+                        span: export_decl.span,
+                        declaration: kind,
+                      },
+                      self.allocator,
+                    ),
+                  ));
+                }
+              }
             }
           }
-          // Keep all these
-          ModuleDecl::TsImportEquals(_)
-          | ModuleDecl::TsNamespaceExport(_)
-          | ModuleDecl::TsExportAssignment(_)
-          | ModuleDecl::ExportNamed(_)
-          | ModuleDecl::ExportAll(_) => {
-            new_items.push(ModuleItem::ModuleDecl(module_decl));
-          }
-        },
-        ModuleItem::Stmt(stmt) => {
-          if let Some(new_stmt) = self.transform_module_stmt(stmt) {
-            new_items.push(ModuleItem::Stmt(new_stmt));
+        }
+        // Keep all these
+        Statement::TSImportEqualsDeclaration(_)
+        | Statement::TSNamespaceExportDeclaration(_)
+        | Statement::TSExportAssignment(_)
+        | Statement::ExportAllDeclaration(_) => {
+          new_items.push(item);
+        }
+        _ => {
+          // Regular statements and declarations
+          if let Some(new_stmt) = self.transform_module_stmt(item) {
+            new_items.push(new_stmt);
           }
         }
       }
@@ -272,260 +368,384 @@ impl<'a> FastCheckDtsTransformer<'a> {
     new_items
   }
 
-  fn transform_module_stmt(&mut self, stmt: Stmt) -> Option<Stmt> {
-    let Stmt::Decl(decl) = stmt else {
-      return None;
+  fn transform_module_stmt(
+    &mut self,
+    stmt: Statement<'a>,
+  ) -> Option<Statement<'a>> {
+    // Extract the declaration from a statement
+    let decl = match stmt {
+      Statement::VariableDeclaration(d) => {
+        Declaration::VariableDeclaration(d)
+      }
+      Statement::FunctionDeclaration(d) => {
+        Declaration::FunctionDeclaration(d)
+      }
+      Statement::ClassDeclaration(d) => {
+        Declaration::ClassDeclaration(d)
+      }
+      Statement::TSTypeAliasDeclaration(d) => {
+        Declaration::TSTypeAliasDeclaration(d)
+      }
+      Statement::TSInterfaceDeclaration(d) => {
+        Declaration::TSInterfaceDeclaration(d)
+      }
+      Statement::TSEnumDeclaration(d) => {
+        Declaration::TSEnumDeclaration(d)
+      }
+      Statement::TSModuleDeclaration(d) => {
+        Declaration::TSModuleDeclaration(d)
+      }
+      Statement::TSGlobalDeclaration(d) => {
+        Declaration::TSGlobalDeclaration(d)
+      }
+      Statement::TSImportEqualsDeclaration(d) => {
+        Declaration::TSImportEqualsDeclaration(d)
+      }
+      _ => return None,
     };
-    if let Decl::Fn(_) = &decl
-      && self.public_ranges.is_impl_with_overloads(&decl.range())
-    {
-      return None; // skip implementation signature
+
+    if let Declaration::FunctionDeclaration(_) = &decl {
+      if self.public_ranges.is_impl_with_overloads(&decl.span()) {
+        return None; // skip implementation signature
+      }
     }
-    match decl {
-      Decl::TsEnum(_)
-      | Decl::Class(_)
-      | Decl::Fn(_)
-      | Decl::Var(_)
-      | Decl::TsModule(_) => match self.decl_to_type_decl(decl.clone()) {
-        Some(decl) => Some(Stmt::Decl(decl)),
-        _ => {
-          self.mark_diagnostic_unable_to_infer(decl.range());
-          None
+
+    match &decl {
+      Declaration::TSEnumDeclaration(_)
+      | Declaration::ClassDeclaration(_)
+      | Declaration::FunctionDeclaration(_)
+      | Declaration::VariableDeclaration(_)
+      | Declaration::TSModuleDeclaration(_) => {
+        match self.decl_to_type_decl(decl.clone_in(self.allocator)) {
+          Some(new_decl) => Some(decl_to_stmt(self.allocator, new_decl)),
+          _ => {
+            self.mark_diagnostic_unable_to_infer(decl.span());
+            None
+          }
         }
-      },
-      Decl::TsInterface(_) | Decl::TsTypeAlias(_) | Decl::Using(_) => {
-        Some(Stmt::Decl(decl))
+      }
+      Declaration::TSInterfaceDeclaration(_)
+      | Declaration::TSTypeAliasDeclaration(_)
+      | Declaration::TSGlobalDeclaration(_)
+      | Declaration::TSImportEqualsDeclaration(_) => {
+        Some(decl_to_stmt(self.allocator, decl))
+      }
+      Declaration::VariableDeclaration(var_decl) => {
+        if matches!(
+          var_decl.kind,
+          VariableDeclarationKind::Using
+            | VariableDeclarationKind::AwaitUsing
+        ) {
+          Some(decl_to_stmt(self.allocator, decl))
+        } else {
+          match self.decl_to_type_decl(decl.clone_in(self.allocator)) {
+            Some(new_decl) => Some(decl_to_stmt(self.allocator, new_decl)),
+            _ => {
+              self.mark_diagnostic_unable_to_infer(decl.span());
+              None
+            }
+          }
+        }
       }
     }
   }
 
   fn expr_to_ts_type(
     &mut self,
-    expr: Expr,
+    expr: &Expression<'a>,
     as_const: bool,
     as_readonly: bool,
-  ) -> Option<TsType> {
+  ) -> Option<TSType<'a>> {
     match expr {
-      Expr::Array(arr) => {
-        let mut elem_types: Vec<TsTupleElement> = vec![];
+      Expression::ArrayExpression(arr) => {
+        let mut elem_types: std::vec::Vec<TSTupleElement<'a>> = vec![];
 
-        for elems in arr.elems {
-          if let Some(expr_or_spread) = elems {
-            match self.expr_to_ts_type(
-              *expr_or_spread.expr.clone(),
-              as_const,
-              as_readonly,
-            ) {
-              Some(ts_expr) => {
-                elem_types.push(ts_tuple_element(ts_expr));
-              }
-              _ => {
-                self.mark_diagnostic_unable_to_infer(expr_or_spread.range());
+        for elem in &arr.elements {
+          match elem {
+            ArrayExpressionElement::Elision(_) => {
+              // TypeScript converts holey arrays to any
+              elem_types.push(ts_tuple_element(
+                ts_keyword_type(self.allocator, TSKeywordKind::Any),
+              ));
+            }
+            ArrayExpressionElement::SpreadElement(spread) => {
+              match self.expr_to_ts_type(
+                &spread.argument,
+                as_const,
+                as_readonly,
+              ) {
+                Some(ts_expr) => {
+                  elem_types.push(ts_tuple_element(ts_expr));
+                }
+                _ => {
+                  self.mark_diagnostic_unable_to_infer(spread.span);
+                }
               }
             }
-          } else {
-            // TypeScript converts holey arrays to any
-            // Example: const a = [,,] -> const a = [any, any, any]
-            elem_types.push(ts_tuple_element(TsType::TsKeywordType(
-              TsKeywordType {
-                kind: TsKeywordTypeKind::TsAnyKeyword,
-                span: DUMMY_SP,
-              },
-            )))
+            _ => {
+              // Expression variants
+              let expr_inner = array_expression_element_to_expr(elem);
+              if let Some(e) = expr_inner {
+                match self.expr_to_ts_type(e, as_const, as_readonly) {
+                  Some(ts_expr) => {
+                    elem_types.push(ts_tuple_element(ts_expr));
+                  }
+                  _ => {
+                    self.mark_diagnostic_unable_to_infer(e.span());
+                  }
+                }
+              }
+            }
           }
         }
 
-        let mut result = TsType::TsTupleType(TsTupleType {
-          span: arr.span,
-          elem_types,
-        });
+        let mut oxc_elem_types = Vec::new_in(self.allocator);
+        for et in elem_types {
+          oxc_elem_types.push(et);
+        }
+
+        let mut result = TSType::TSTupleType(Box::new_in(
+          TSTupleType {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: arr.span,
+            element_types: oxc_elem_types,
+          },
+          self.allocator,
+        ));
 
         if as_readonly {
-          result = ts_readonly(result);
+          result = ts_readonly(self.allocator, result);
         }
         Some(result)
       }
-      Expr::Object(obj) => {
-        let mut members: Vec<TsTypeElement> = vec![];
+      Expression::ObjectExpression(obj) => {
+        let mut members: std::vec::Vec<TSSignature<'a>> = vec![];
 
-        // TODO: Prescan all object properties to know which ones
-        // have a getter or a setter. This allows us to apply
-        // TypeScript's `readonly` keyword accordingly.
-
-        for item in obj.props {
+        for item in &obj.properties {
           match item {
-            PropOrSpread::Prop(prop_box) => {
-              let prop = *prop_box;
-              match prop {
-                Prop::KeyValue(key_value) => {
-                  let (key, computed) = match key_value.key {
-                    PropName::Ident(ident_name) => (
-                      Expr::Ident(Ident {
-                        span: ident_name.span,
-                        ctxt: SyntaxContext::default(),
-                        sym: ident_name.sym,
-                        optional: false,
-                      }),
-                      false,
-                    ),
-                    PropName::Str(str_prop) => {
-                      (Expr::Lit(Lit::Str(str_prop)), false)
-                    }
-                    PropName::Num(num) => (Expr::Lit(Lit::Num(num)), true),
-                    PropName::Computed(computed) => (*computed.expr, true),
-                    PropName::BigInt(big_int) => {
-                      (Expr::Lit(Lit::BigInt(big_int)), true)
-                    }
-                  };
-
-                  let init_type = self
-                    .expr_to_ts_type(*key_value.value, as_const, as_readonly)
-                    .map(type_ann);
-
-                  members.push(TsTypeElement::TsPropertySignature(
-                    TsPropertySignature {
-                      span: DUMMY_SP,
-                      readonly: as_readonly,
-                      key: Box::new(key),
-                      computed,
-                      optional: false,
-                      type_ann: init_type,
-                    },
-                  ));
-                }
-                Prop::Shorthand(_)
-                | Prop::Assign(_)
-                | Prop::Getter(_)
-                | Prop::Setter(_)
-                | Prop::Method(_) => {
-                  self.mark_diagnostic_unsupported_prop(prop.range());
-                }
+            ObjectPropertyKind::ObjectProperty(prop) => {
+              if prop.kind != PropertyKind::Init
+                || prop.method
+                || prop.shorthand
+              {
+                // getter/setter/method/shorthand
+                self.mark_diagnostic_unsupported_prop(prop.span);
+                continue;
               }
+
+              let (key, computed) =
+                self.prop_key_to_expr_key(&prop.key, prop.computed);
+
+              let init_type = self
+                .expr_to_ts_type(&prop.value, as_const, as_readonly)
+                .map(|t| type_ann(self.allocator, t));
+
+              members.push(TSSignature::TSPropertySignature(
+                Box::new_in(
+                  TSPropertySignature {
+                    node_id: Cell::new(NodeId::DUMMY),
+                    span: SPAN,
+                    readonly: as_readonly,
+                    key,
+                    computed,
+                    optional: false,
+                    type_annotation: init_type,
+                  },
+                  self.allocator,
+                ),
+              ));
             }
-            PropOrSpread::Spread(_) => self.mark_diagnostic(
-              FastCheckDtsDiagnostic::UnableToInferTypeFromSpread {
-                range: self.source_range_to_range(item.range()),
-              },
-            ),
+            ObjectPropertyKind::SpreadProperty(spread) => {
+              self.mark_diagnostic(
+                FastCheckDtsDiagnostic::UnableToInferTypeFromSpread {
+                  range: self.source_range_to_range(spread.span),
+                },
+              );
+            }
           }
         }
 
-        Some(TsType::TsTypeLit(TsTypeLit {
-          span: obj.span,
-          members,
-        }))
+        let mut oxc_members = Vec::new_in(self.allocator);
+        for m in members {
+          oxc_members.push(m);
+        }
+
+        Some(TSType::TSTypeLiteral(Box::new_in(
+          TSTypeLiteral {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: obj.span,
+            members: oxc_members,
+          },
+          self.allocator,
+        )))
       }
-      Expr::Lit(lit) => maybe_lit_to_ts_type(
-        &lit,
+      Expression::BooleanLiteral(_)
+      | Expression::NullLiteral(_)
+      | Expression::NumericLiteral(_)
+      | Expression::BigIntLiteral(_)
+      | Expression::RegExpLiteral(_)
+      | Expression::StringLiteral(_) => maybe_lit_to_ts_type(
+        self.allocator,
+        expr,
         match as_const {
           true => DeclMutabilityKind::Const,
           false => DeclMutabilityKind::Mutable,
         },
       ),
-      Expr::TsConstAssertion(ts_const) => {
-        self.expr_to_ts_type(*ts_const.expr, true, true)
+      Expression::TSAsExpression(ts_as) => {
+        // Check if this is `as const` - OXC represents it as TSAsExpression
+        // with type_annotation being TSTypeReference("const")
+        if is_ts_const_type(&ts_as.type_annotation) {
+          return self.expr_to_ts_type(&ts_as.expression, true, true);
+        }
+        Some(ts_as.type_annotation.clone_in(self.allocator))
       }
-      Expr::TsSatisfies(satisifies) => {
-        self.expr_to_ts_type(*satisifies.expr, as_const, as_readonly)
+      Expression::TSSatisfiesExpression(satisfies) => {
+        self.expr_to_ts_type(&satisfies.expression, as_const, as_readonly)
       }
-      Expr::TsAs(ts_as) => Some(*ts_as.type_ann),
-      Expr::Fn(fn_expr) => {
+      Expression::TSTypeAssertion(ts_assertion) => {
+        // TsConstAssertion in SWC is TSTypeAssertion in OXC when
+        // the type is "const". Check if it's `as const`.
+        // Actually, OXC doesn't have a separate TsConstAssertion;
+        // `as const` is represented as TSAsExpression with type TSTypeReference("const").
+        // Let's just treat this as a type assertion and return the type.
+        Some(ts_assertion.type_annotation.clone_in(self.allocator))
+      }
+      Expression::FunctionExpression(fn_expr) => {
         let return_type = fn_expr
-          .function
           .return_type
-          .map_or(any_type_ann(), |val| val);
+          .as_ref()
+          .map(|val| val.clone_in(self.allocator))
+          .unwrap_or_else(|| any_type_ann(self.allocator));
 
-        let params: Vec<TsFnParam> = fn_expr
-          .function
-          .params
-          .into_iter()
-          .filter_map(|param| self.pat_to_ts_fn_param(param.pat))
-          .collect();
+        let params = self.fn_params_to_ts_fn_params(&fn_expr.params);
 
-        Some(TsType::TsFnOrConstructorType(
-          TsFnOrConstructorType::TsFnType(TsFnType {
-            span: fn_expr.function.span,
+        Some(TSType::TSFunctionType(Box::new_in(
+          TSFunctionType {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: fn_expr.span,
             params,
-            type_ann: return_type,
-            type_params: fn_expr.function.type_params,
-          }),
-        ))
+            return_type,
+            type_parameters: fn_expr
+              .type_parameters
+              .clone_in(self.allocator),
+            this_param: None,
+            scope_id: Cell::new(None),
+          },
+          self.allocator,
+        )))
       }
-      Expr::Arrow(arrow_expr) => {
-        let return_type =
-          arrow_expr.return_type.map_or(any_type_ann(), |val| val);
+      Expression::ArrowFunctionExpression(arrow_expr) => {
+        let return_type = arrow_expr
+          .return_type
+          .as_ref()
+          .map(|val| val.clone_in(self.allocator))
+          .unwrap_or_else(|| any_type_ann(self.allocator));
 
-        let params = arrow_expr
-          .params
-          .into_iter()
-          .filter_map(|pat| self.pat_to_ts_fn_param(pat))
-          .collect();
+        let params = self.fn_params_to_ts_fn_params(&arrow_expr.params);
 
-        Some(TsType::TsFnOrConstructorType(
-          TsFnOrConstructorType::TsFnType(TsFnType {
+        Some(TSType::TSFunctionType(Box::new_in(
+          TSFunctionType {
+            node_id: Cell::new(NodeId::DUMMY),
             span: arrow_expr.span,
             params,
-            type_ann: return_type,
-            type_params: arrow_expr.type_params,
-          }),
-        ))
+            return_type,
+            type_parameters: arrow_expr
+              .type_parameters
+              .clone_in(self.allocator),
+            this_param: None,
+            scope_id: Cell::new(None),
+          },
+          self.allocator,
+        )))
       }
       // Since fast check requires explicit type annotations these
       // can be dropped as they are not part of an export declaration
-      Expr::This(_)
-      | Expr::Unary(_)
-      | Expr::Update(_)
-      | Expr::Bin(_)
-      | Expr::Assign(_)
-      | Expr::Member(_)
-      | Expr::SuperProp(_)
-      | Expr::Cond(_)
-      | Expr::Call(_)
-      | Expr::New(_)
-      | Expr::Seq(_)
-      | Expr::Ident(_)
-      | Expr::Tpl(_)
-      | Expr::TaggedTpl(_)
-      | Expr::Class(_)
-      | Expr::Yield(_)
-      | Expr::MetaProp(_)
-      | Expr::Await(_)
-      | Expr::Paren(_)
-      | Expr::JSXMember(_)
-      | Expr::JSXNamespacedName(_)
-      | Expr::JSXEmpty(_)
-      | Expr::JSXElement(_)
-      | Expr::JSXFragment(_)
-      | Expr::TsTypeAssertion(_)
-      | Expr::TsNonNull(_)
-      | Expr::TsInstantiation(_)
-      | Expr::PrivateName(_)
-      | Expr::OptChain(_)
-      | Expr::Invalid(_) => None,
+      Expression::ThisExpression(_)
+      | Expression::UnaryExpression(_)
+      | Expression::UpdateExpression(_)
+      | Expression::BinaryExpression(_)
+      | Expression::AssignmentExpression(_)
+      | Expression::ConditionalExpression(_)
+      | Expression::CallExpression(_)
+      | Expression::NewExpression(_)
+      | Expression::SequenceExpression(_)
+      | Expression::Identifier(_)
+      | Expression::TemplateLiteral(_)
+      | Expression::TaggedTemplateExpression(_)
+      | Expression::ClassExpression(_)
+      | Expression::YieldExpression(_)
+      | Expression::MetaProperty(_)
+      | Expression::AwaitExpression(_)
+      | Expression::ParenthesizedExpression(_)
+      | Expression::JSXElement(_)
+      | Expression::JSXFragment(_)
+      | Expression::TSNonNullExpression(_)
+      | Expression::TSInstantiationExpression(_)
+      | Expression::PrivateInExpression(_)
+      | Expression::Super(_)
+      | Expression::LogicalExpression(_)
+      | Expression::ImportExpression(_)
+      | Expression::ChainExpression(_)
+      | Expression::V8IntrinsicExpression(_)
+      | Expression::ComputedMemberExpression(_)
+      | Expression::StaticMemberExpression(_)
+      | Expression::PrivateFieldExpression(_) => None,
     }
   }
 
-  fn decl_to_type_decl(&mut self, decl: Decl) -> Option<Decl> {
+  fn prop_key_to_expr_key(
+    &self,
+    key: &PropertyKey<'a>,
+    computed: bool,
+  ) -> (PropertyKey<'a>, bool) {
+    match key {
+      PropertyKey::StaticIdentifier(_)
+      | PropertyKey::PrivateIdentifier(_) => {
+        (key.clone_in(self.allocator), computed)
+      }
+      _ => {
+        // Expression variant - keep as computed
+        (key.clone_in(self.allocator), true)
+      }
+    }
+  }
+
+  fn decl_to_type_decl(
+    &mut self,
+    decl: Declaration<'a>,
+  ) -> Option<Declaration<'a>> {
     let is_declare = self.is_top_level;
     match decl {
-      Decl::Class(mut class_decl) => {
-        class_decl.class.body = self.class_body_to_type(class_decl.class.body);
+      Declaration::ClassDeclaration(mut class_decl) => {
+        class_decl.body = self.class_body_to_type(&class_decl.body);
         class_decl.declare = is_declare;
-        Some(Decl::Class(class_decl))
+        Some(Declaration::ClassDeclaration(class_decl))
       }
-      Decl::Fn(mut fn_decl) => {
-        fn_decl.function.body = None;
+      Declaration::FunctionDeclaration(mut fn_decl) => {
+        fn_decl.body = None;
         fn_decl.declare = is_declare;
 
-        self.handle_func_params(&mut fn_decl.function.params);
-        Some(Decl::Fn(fn_decl))
+        self.handle_func_params(&mut fn_decl.params);
+        Some(Declaration::FunctionDeclaration(fn_decl))
       }
-      Decl::Var(mut var_decl) => {
+      Declaration::VariableDeclaration(mut var_decl) => {
+        if matches!(
+          var_decl.kind,
+          VariableDeclarationKind::Using
+            | VariableDeclarationKind::AwaitUsing
+        ) {
+          self.mark_diagnostic(FastCheckDtsDiagnostic::UnsupportedUsing {
+            range: self.source_range_to_range(var_decl.span),
+          });
+          return None;
+        }
+
         var_decl.declare = is_declare;
 
-        for decl in &mut var_decl.decls {
-          if let Pat::Ident(ident) = &mut decl.name {
-            if ident.type_ann.is_some() {
+        for decl in var_decl.declarations.iter_mut() {
+          if let BindingPattern::BindingIdentifier(ident) = &mut decl.id {
+            if decl.type_annotation.is_some() {
               decl.init = None;
               continue;
             }
@@ -533,75 +753,77 @@ impl<'a> FastCheckDtsTransformer<'a> {
             let ts_type = decl
               .init
               .as_ref()
-              .and_then(|init_box| {
-                let init = *init_box.clone();
+              .and_then(|init| {
                 self.expr_to_ts_type(init, false, true)
               })
-              .map(type_ann)
+              .map(|t| type_ann(self.allocator, t))
               .or_else(|| {
-                self.mark_diagnostic_any_fallback(ident.range());
-                Some(any_type_ann())
+                self.mark_diagnostic_any_fallback(ident.span);
+                Some(any_type_ann(self.allocator))
               });
-            ident.type_ann = ts_type;
+            decl.type_annotation = ts_type;
           } else {
-            self.mark_diagnostic_unable_to_infer(decl.range());
+            self.mark_diagnostic_unable_to_infer(decl.span);
           }
 
           decl.init = None;
         }
 
-        Some(Decl::Var(var_decl))
+        Some(Declaration::VariableDeclaration(var_decl))
       }
-      Decl::TsEnum(mut ts_enum) => {
+      Declaration::TSEnumDeclaration(mut ts_enum) => {
         ts_enum.declare = is_declare;
 
-        for member in &mut ts_enum.members {
-          if let Some(init) = &member.init {
-            // Support for expressions is limited in enums,
-            // see https://www.typescriptlang.org/docs/handbook/enums.html
-            member.init = if self.valid_enum_init_expr(*init.clone()) {
-              Some(init.clone())
-            } else {
-              None
-            };
+        for member in ts_enum.body.members.iter_mut() {
+          if let Some(init) = &member.initializer {
+            // Support for expressions is limited in enums
+            member.initializer =
+              if self.valid_enum_init_expr(init) {
+                Some(init.clone_in(self.allocator))
+              } else {
+                None
+              };
           }
         }
 
-        Some(Decl::TsEnum(ts_enum))
+        Some(Declaration::TSEnumDeclaration(ts_enum))
       }
-      Decl::TsModule(mut ts_module) => {
+      Declaration::TSModuleDeclaration(mut ts_module) => {
         ts_module.declare = is_declare;
 
-        match ts_module.body.clone() {
-          Some(body) => {
-            ts_module.body = Some(self.transform_ts_ns_body(body));
-
-            Some(Decl::TsModule(ts_module))
-          }
-          _ => Some(Decl::TsModule(ts_module)),
+        if let Some(body) = ts_module.body.take() {
+          ts_module.body =
+            Some(self.transform_ts_ns_body(body));
         }
+
+        Some(Declaration::TSModuleDeclaration(ts_module))
       }
-      Decl::TsInterface(_) | Decl::TsTypeAlias(_) => Some(decl),
-      Decl::Using(_) => {
-        self.mark_diagnostic(FastCheckDtsDiagnostic::UnsupportedUsing {
-          range: self.source_range_to_range(decl.range()),
-        });
-        None
-      }
+      Declaration::TSInterfaceDeclaration(_)
+      | Declaration::TSTypeAliasDeclaration(_) => Some(decl),
+      Declaration::TSGlobalDeclaration(_)
+      | Declaration::TSImportEqualsDeclaration(_) => Some(decl),
     }
   }
 
-  fn transform_ts_ns_body(&mut self, ns: TsNamespaceBody) -> TsNamespaceBody {
+  fn transform_ts_ns_body(
+    &mut self,
+    ns: TSModuleDeclarationBody<'a>,
+  ) -> TSModuleDeclarationBody<'a> {
     let original_is_top_level = self.is_top_level;
     self.is_top_level = false;
     let body = match ns {
-      TsNamespaceBody::TsModuleBlock(mut ts_module_block) => {
-        ts_module_block.body =
-          self.transform_module_items(ts_module_block.body);
-        TsNamespaceBody::TsModuleBlock(ts_module_block)
+      TSModuleDeclarationBody::TSModuleBlock(mut ts_module_block) => {
+        let stmts =
+          std::mem::replace(&mut ts_module_block.body, Vec::new_in(self.allocator));
+        ts_module_block.body = self.transform_stmts(stmts);
+        TSModuleDeclarationBody::TSModuleBlock(ts_module_block)
       }
-      TsNamespaceBody::TsNamespaceDecl(ts_ns) => {
-        self.transform_ts_ns_body(*ts_ns.body)
+      TSModuleDeclarationBody::TSModuleDeclaration(mut ts_ns) => {
+        if let Some(inner_body) = ts_ns.body.take() {
+          self.transform_ts_ns_body(inner_body)
+        } else {
+          TSModuleDeclarationBody::TSModuleDeclaration(ts_ns)
+        }
       }
     };
     self.is_top_level = original_is_top_level;
@@ -610,202 +832,183 @@ impl<'a> FastCheckDtsTransformer<'a> {
 
   // Support for expressions is limited in enums,
   // see https://www.typescriptlang.org/docs/handbook/enums.html
-  fn valid_enum_init_expr(&mut self, expr: Expr) -> bool {
+  fn valid_enum_init_expr(&mut self, expr: &Expression<'a>) -> bool {
     match expr {
-      Expr::Bin(bin_expr) => {
-        if !self.valid_enum_init_expr(*bin_expr.left) {
+      Expression::BinaryExpression(bin_expr) => {
+        if !self.valid_enum_init_expr(&bin_expr.left) {
           false
         } else {
-          self.valid_enum_init_expr(*bin_expr.right)
+          self.valid_enum_init_expr(&bin_expr.right)
         }
       }
-
-      Expr::Member(member_expr) => self.valid_enum_init_expr(*member_expr.obj),
-      Expr::OptChain(opt_expr) => match *opt_expr.base {
-        OptChainBase::Member(member_expr) => {
-          self.valid_enum_init_expr(Expr::Member(member_expr))
+      Expression::StaticMemberExpression(member_expr) => {
+        self.valid_enum_init_expr(&member_expr.object)
+      }
+      Expression::ComputedMemberExpression(member_expr) => {
+        self.valid_enum_init_expr(&member_expr.object)
+      }
+      Expression::ChainExpression(chain_expr) => match &chain_expr.expression {
+        ChainElement::StaticMemberExpression(member_expr) => {
+          self.valid_enum_init_expr(&member_expr.object)
         }
-        OptChainBase::Call(_) => false,
+        ChainElement::ComputedMemberExpression(member_expr) => {
+          self.valid_enum_init_expr(&member_expr.object)
+        }
+        ChainElement::PrivateFieldExpression(member_expr) => {
+          self.valid_enum_init_expr(&member_expr.object)
+        }
+        ChainElement::CallExpression(_)
+        | ChainElement::TSNonNullExpression(_) => false,
       },
       // TS does infer the type of identifiers
-      Expr::Ident(_) => true,
-      Expr::Lit(lit) => match lit {
-        Lit::Num(_) | Lit::Str(_) => true,
-        Lit::Bool(_)
-        | Lit::Null(_)
-        | Lit::BigInt(_)
-        | Lit::Regex(_)
-        | Lit::JSXText(_) => false,
-      },
-      Expr::Tpl(tpl_expr) => {
-        for expr in tpl_expr.exprs {
-          if !self.valid_enum_init_expr(*expr) {
+      Expression::Identifier(_) => true,
+      Expression::NumericLiteral(_) | Expression::StringLiteral(_) => true,
+      Expression::BooleanLiteral(_)
+      | Expression::NullLiteral(_)
+      | Expression::BigIntLiteral(_)
+      | Expression::RegExpLiteral(_) => false,
+      Expression::TemplateLiteral(tpl_expr) => {
+        for expr in &tpl_expr.expressions {
+          if !self.valid_enum_init_expr(expr) {
             return false;
           }
         }
         true
       }
-
-      Expr::Paren(paren_expr) => self.valid_enum_init_expr(*paren_expr.expr),
-
-      Expr::TsTypeAssertion(ts_ass) => {
+      Expression::ParenthesizedExpression(paren_expr) => {
+        self.valid_enum_init_expr(&paren_expr.expression)
+      }
+      Expression::TSTypeAssertion(ts_ass) => {
         // Only assertions to number are allowed for computed
         // enum members.
-        match *ts_ass.type_ann {
-          TsType::TsLitType(ts_lit) => match ts_lit.lit {
-            TsLit::Number(_) => true,
-            TsLit::Str(_)
-            | TsLit::Bool(_)
-            | TsLit::BigInt(_)
-            | TsLit::Tpl(_) => false,
-          },
-          TsType::TsKeywordType(_)
-          | TsType::TsThisType(_)
-          | TsType::TsFnOrConstructorType(_)
-          | TsType::TsTypeRef(_)
-          | TsType::TsTypeQuery(_)
-          | TsType::TsTypeLit(_)
-          | TsType::TsArrayType(_)
-          | TsType::TsTupleType(_)
-          | TsType::TsOptionalType(_)
-          | TsType::TsRestType(_)
-          | TsType::TsUnionOrIntersectionType(_)
-          | TsType::TsConditionalType(_)
-          | TsType::TsInferType(_)
-          | TsType::TsParenthesizedType(_)
-          | TsType::TsTypeOperator(_)
-          | TsType::TsIndexedAccessType(_)
-          | TsType::TsMappedType(_)
-          | TsType::TsTypePredicate(_)
-          | TsType::TsImportType(_) => false,
-        }
+        self.valid_enum_ts_type(&ts_ass.type_annotation)
+      }
+      Expression::TSAsExpression(ts_as) => {
+        self.valid_enum_ts_type(&ts_as.type_annotation)
       }
 
-      Expr::TsAs(ts_as) => self.valid_enum_ts_type(*ts_as.type_ann),
-
-      // These are not valid as enum member initializer and
-      // TS will throw a type error. For declaration generation
-      // they will be dropped in TS so we do that too.
-      Expr::TsInstantiation(_)
-      | Expr::Call(_)
-      | Expr::Update(_)
-      | Expr::PrivateName(_)
-      | Expr::TsSatisfies(_)
-      | Expr::TsNonNull(_)
-      | Expr::TsConstAssertion(_)
-      | Expr::Cond(_)
-      | Expr::Seq(_)
-      | Expr::TaggedTpl(_)
-      | Expr::Object(_)
-      | Expr::Array(_)
-      | Expr::Arrow(_)
-      | Expr::Class(_)
-      | Expr::Await(_)
-      | Expr::MetaProp(_)
-      | Expr::New(_)
-      | Expr::JSXMember(_)
-      | Expr::JSXNamespacedName(_)
-      | Expr::JSXEmpty(_)
-      | Expr::JSXElement(_)
-      | Expr::JSXFragment(_)
-      | Expr::Unary(_)
-      | Expr::Assign(_)
-      | Expr::Yield(_)
-      | Expr::SuperProp(_)
-      | Expr::Fn(_)
-      | Expr::This(_)
-      | Expr::Invalid(_) => false,
+      // These are not valid as enum member initializer
+      Expression::TSInstantiationExpression(_)
+      | Expression::CallExpression(_)
+      | Expression::UpdateExpression(_)
+      | Expression::PrivateInExpression(_)
+      | Expression::TSSatisfiesExpression(_)
+      | Expression::TSNonNullExpression(_)
+      | Expression::ConditionalExpression(_)
+      | Expression::SequenceExpression(_)
+      | Expression::TaggedTemplateExpression(_)
+      | Expression::ObjectExpression(_)
+      | Expression::ArrayExpression(_)
+      | Expression::ArrowFunctionExpression(_)
+      | Expression::ClassExpression(_)
+      | Expression::AwaitExpression(_)
+      | Expression::MetaProperty(_)
+      | Expression::NewExpression(_)
+      | Expression::JSXElement(_)
+      | Expression::JSXFragment(_)
+      | Expression::UnaryExpression(_)
+      | Expression::AssignmentExpression(_)
+      | Expression::YieldExpression(_)
+      | Expression::Super(_)
+      | Expression::FunctionExpression(_)
+      | Expression::ThisExpression(_)
+      | Expression::LogicalExpression(_)
+      | Expression::ImportExpression(_)
+      | Expression::V8IntrinsicExpression(_)
+      | Expression::PrivateFieldExpression(_) => false,
     }
   }
 
-  fn valid_enum_ts_type(&mut self, ts_type: TsType) -> bool {
+  fn valid_enum_ts_type(&mut self, ts_type: &TSType<'a>) -> bool {
     match ts_type {
-      TsType::TsLitType(ts_lit) => match ts_lit.lit {
-        TsLit::Number(_) => true,
-        TsLit::Str(_) | TsLit::Bool(_) | TsLit::BigInt(_) | TsLit::Tpl(_) => {
-          false
-        }
+      TSType::TSLiteralType(ts_lit) => match &ts_lit.literal {
+        TSLiteral::NumericLiteral(_) => true,
+        TSLiteral::StringLiteral(_)
+        | TSLiteral::BooleanLiteral(_)
+        | TSLiteral::BigIntLiteral(_)
+        | TSLiteral::TemplateLiteral(_)
+        | TSLiteral::UnaryExpression(_) => false,
       },
-      TsType::TsKeywordType(_)
-      | TsType::TsThisType(_)
-      | TsType::TsFnOrConstructorType(_)
-      | TsType::TsTypeRef(_)
-      | TsType::TsTypeQuery(_)
-      | TsType::TsTypeLit(_)
-      | TsType::TsArrayType(_)
-      | TsType::TsTupleType(_)
-      | TsType::TsOptionalType(_)
-      | TsType::TsRestType(_)
-      | TsType::TsUnionOrIntersectionType(_)
-      | TsType::TsConditionalType(_)
-      | TsType::TsInferType(_)
-      | TsType::TsParenthesizedType(_)
-      | TsType::TsTypeOperator(_)
-      | TsType::TsIndexedAccessType(_)
-      | TsType::TsMappedType(_)
-      | TsType::TsTypePredicate(_)
-      | TsType::TsImportType(_) => false,
+      _ => false,
     }
   }
 
   fn infer_expr_fallback_any(
     &mut self,
-    expr: Expr,
+    expr: &Expression<'a>,
     as_const: bool,
     as_readonly: bool,
-  ) -> Box<TsTypeAnn> {
-    match self.expr_to_ts_type(expr.clone(), as_const, as_readonly) {
-      Some(ts_type) => type_ann(ts_type),
+  ) -> Box<'a, TSTypeAnnotation<'a>> {
+    match self.expr_to_ts_type(expr, as_const, as_readonly) {
+      Some(ts_type) => type_ann(self.allocator, ts_type),
       _ => {
-        self.mark_diagnostic_any_fallback(expr.range());
-        any_type_ann()
+        self.mark_diagnostic_any_fallback(expr.span());
+        any_type_ann(self.allocator)
       }
     }
   }
 
-  fn class_body_to_type(&mut self, body: Vec<ClassMember>) -> Vec<ClassMember> {
-    body
+  fn class_body_to_type(
+    &mut self,
+    body: &Box<'a, ClassBody<'a>>,
+  ) -> Box<'a, ClassBody<'a>> {
+    let filtered: std::vec::Vec<ClassElement<'a>> = body
+      .body
+      .clone_in(self.allocator)
       .into_iter()
       .filter(|member| match member {
-        ClassMember::Constructor(constructor) => !self
-          .public_ranges
-          .is_impl_with_overloads(&constructor.range()),
-        ClassMember::Method(method) => {
-          !self.public_ranges.is_impl_with_overloads(&method.range())
+        ClassElement::MethodDefinition(method) => {
+          if method.kind == MethodDefinitionKind::Constructor {
+            !self
+              .public_ranges
+              .is_impl_with_overloads(&method.span)
+          } else {
+            !self.public_ranges.is_impl_with_overloads(&method.span)
+          }
         }
-        ClassMember::TsIndexSignature(_)
-        | ClassMember::ClassProp(_)
-        | ClassMember::PrivateProp(_)
-        | ClassMember::Empty(_)
-        | ClassMember::StaticBlock(_)
-        | ClassMember::AutoAccessor(_)
-        | ClassMember::PrivateMethod(_) => true,
+        ClassElement::TSIndexSignature(_)
+        | ClassElement::PropertyDefinition(_)
+        | ClassElement::StaticBlock(_)
+        | ClassElement::AccessorProperty(_) => true,
       })
       .filter_map(|member| match member {
-        ClassMember::Constructor(mut class_constructor) => {
-          class_constructor.body = None;
-          self.handle_ts_param_props(&mut class_constructor.params);
-          Some(ClassMember::Constructor(class_constructor))
-        }
-        ClassMember::Method(mut method) => {
-          match valid_prop_name(&method.key) {
-            Some(new_prop_name) => {
-              method.key = new_prop_name;
-            }
-            _ => {
-              return None;
-            }
+        ClassElement::MethodDefinition(mut method) => {
+          // Skip private methods (PrivateIdentifier / #name)
+          if let PropertyKey::PrivateIdentifier(_) = &method.key {
+            return None;
           }
 
-          method.function.body = None;
-          if method.kind == MethodKind::Setter {
-            method.function.return_type = None;
+          if method.kind == MethodDefinitionKind::Constructor {
+            // Constructor
+            method.value.body = None;
+            self.handle_func_params(&mut method.value.params);
+            Some(ClassElement::MethodDefinition(method))
+          } else {
+            // Regular method / getter / setter
+            match valid_prop_name(self.allocator, &method.key) {
+              Some(new_prop_name) => {
+                method.key = new_prop_name;
+              }
+              _ => {
+                return None;
+              }
+            }
+
+            method.value.body = None;
+            if method.kind == MethodDefinitionKind::Set {
+              method.value.return_type = None;
+            }
+            self.handle_func_params(&mut method.value.params);
+            Some(ClassElement::MethodDefinition(method))
           }
-          self.handle_func_params(&mut method.function.params);
-          Some(ClassMember::Method(method))
         }
-        ClassMember::ClassProp(mut prop) => {
-          match valid_prop_name(&prop.key) {
+        ClassElement::PropertyDefinition(mut prop) => {
+          // Skip private properties (PrivateIdentifier)
+          if let PropertyKey::PrivateIdentifier(_) = &prop.key {
+            return None;
+          }
+
+          match valid_prop_name(self.allocator, &prop.key) {
             Some(new_prop_name) => {
               prop.key = new_prop_name;
             }
@@ -813,245 +1016,665 @@ impl<'a> FastCheckDtsTransformer<'a> {
               return None;
             }
           }
-          if prop.type_ann.is_none()
-            && let Some(value) = prop.value
-          {
-            prop.type_ann = self
-              .expr_to_ts_type(*value, false, false)
-              .map(type_ann)
-              .or_else(|| Some(any_type_ann()));
+          if prop.type_annotation.is_none() {
+            if let Some(ref value) = prop.value {
+              prop.type_annotation = self
+                .expr_to_ts_type(value, false, false)
+                .map(|t| type_ann(self.allocator, t))
+                .or_else(|| Some(any_type_ann(self.allocator)));
+            }
           }
           prop.value = None;
           prop.definite = false;
           prop.declare = false;
 
-          Some(ClassMember::ClassProp(prop))
+          Some(ClassElement::PropertyDefinition(prop))
         }
-        ClassMember::TsIndexSignature(index_sig) => {
-          Some(ClassMember::TsIndexSignature(index_sig))
+        ClassElement::TSIndexSignature(index_sig) => {
+          Some(ClassElement::TSIndexSignature(index_sig))
         }
 
         // These can be removed as they are not relevant for types
-        ClassMember::PrivateMethod(_)
-        | ClassMember::PrivateProp(_)
-        | ClassMember::Empty(_)
-        | ClassMember::StaticBlock(_)
-        | ClassMember::AutoAccessor(_) => None,
+        ClassElement::StaticBlock(_)
+        | ClassElement::AccessorProperty(_) => None,
       })
-      .collect()
-  }
+      .collect();
 
-  fn handle_ts_param_props(
-    &mut self,
-    param_props: &mut Vec<ParamOrTsParamProp>,
-  ) {
-    for param in param_props {
-      match param {
-        ParamOrTsParamProp::TsParamProp(param) => {
-          match &mut param.param {
-            TsParamPropParam::Ident(ident) => {
-              self.handle_func_param_ident(ident);
-            }
-            TsParamPropParam::Assign(assign) => {
-              if let Some(new_pat) = self.handle_func_param_assign(assign) {
-                match new_pat {
-                  Pat::Ident(new_ident) => {
-                    param.param = TsParamPropParam::Ident(new_ident)
-                  }
-                  Pat::Assign(new_assign) => {
-                    param.param = TsParamPropParam::Assign(new_assign)
-                  }
-                  Pat::Rest(_)
-                  | Pat::Object(_)
-                  | Pat::Array(_)
-                  | Pat::Invalid(_)
-                  | Pat::Expr(_) => {
-                    // should never happen for parameter properties
-                    unreachable!();
-                  }
-                }
-              }
-            }
-          }
-        }
-        ParamOrTsParamProp::Param(param) => self.handle_func_param(param),
-      }
+    let mut oxc_body = Vec::new_in(self.allocator);
+    for el in filtered {
+      oxc_body.push(el);
     }
+
+    Box::new_in(ClassBody {
+      node_id: Cell::new(NodeId::DUMMY),
+      span: body.span,
+      body: oxc_body,
+    }, self.allocator)
   }
 
-  fn handle_func_params(&mut self, params: &mut Vec<Param>) {
-    for param in params {
+  fn handle_func_params(
+    &mut self,
+    params: &mut Box<'a, FormalParameters<'a>>,
+  ) {
+    for param in params.items.iter_mut() {
       self.handle_func_param(param);
     }
   }
 
-  fn handle_func_param(&mut self, param: &mut Param) {
-    match &mut param.pat {
-      Pat::Ident(ident) => {
-        self.handle_func_param_ident(ident);
+  fn handle_func_param(&mut self, param: &mut FormalParameter<'a>) {
+    // In OXC, parameter defaults are stored in FormalParameter::initializer
+    // (not as AssignmentPattern in the pattern field).
+    if let Some(init) = param.initializer.take() {
+      // Has a default value: infer type if missing, make optional, remove default
+      if param.type_annotation.is_none() {
+        param.type_annotation = Some(self.infer_expr_fallback_any(
+          &init,
+          false,
+          false,
+        ));
       }
-      Pat::Assign(assign_pat) => {
-        if let Some(new_pat) = self.handle_func_param_assign(assign_pat) {
-          param.pat = new_pat;
+      param.optional = true;
+      // initializer already taken via take()
+      return;
+    }
+
+    match &mut param.pattern {
+      BindingPattern::BindingIdentifier(ident) => {
+        if param.type_annotation.is_none() {
+          self.mark_diagnostic_any_fallback(ident.span);
+          param.type_annotation = Some(any_type_ann(self.allocator));
         }
       }
-      Pat::Array(_)
-      | Pat::Rest(_)
-      | Pat::Object(_)
-      | Pat::Invalid(_)
-      | Pat::Expr(_) => {}
-    }
-  }
-
-  fn handle_func_param_ident(&mut self, ident: &mut BindingIdent) {
-    if ident.type_ann.is_none() {
-      self.mark_diagnostic_any_fallback(ident.range());
-      ident.type_ann = Some(any_type_ann());
+      BindingPattern::AssignmentPattern(assign_pat) => {
+        if let Some(new_result) =
+          self.handle_func_param_assign(assign_pat, &mut param.type_annotation)
+        {
+          param.pattern = new_result;
+          param.optional = true;
+        }
+      }
+      BindingPattern::ArrayPattern(_)
+      | BindingPattern::ObjectPattern(_) => {}
     }
   }
 
   fn handle_func_param_assign(
     &mut self,
-    assign_pat: &mut AssignPat,
-  ) -> Option<Pat> {
-    match &mut *assign_pat.left {
-      Pat::Ident(ident) => {
-        if ident.type_ann.is_none() {
-          ident.type_ann = Some(self.infer_expr_fallback_any(
-            *assign_pat.right.clone(),
+    assign_pat: &mut AssignmentPattern<'a>,
+    param_type_annotation: &mut Option<Box<'a, TSTypeAnnotation<'a>>>,
+  ) -> Option<BindingPattern<'a>> {
+    match &mut assign_pat.left {
+      BindingPattern::BindingIdentifier(ident) => {
+        if param_type_annotation.is_none() {
+          *param_type_annotation = Some(self.infer_expr_fallback_any(
+            &assign_pat.right,
             false,
             false,
           ));
         }
 
-        ident.optional = true;
-        Some(Pat::Ident(ident.clone()))
+        Some(BindingPattern::BindingIdentifier(
+          ident.clone_in(self.allocator),
+        ))
       }
-      Pat::Array(arr_pat) => {
-        if arr_pat.type_ann.is_none() {
-          arr_pat.type_ann = Some(self.infer_expr_fallback_any(
-            *assign_pat.right.clone(),
+      BindingPattern::ArrayPattern(arr_pat) => {
+        if param_type_annotation.is_none() {
+          *param_type_annotation = Some(self.infer_expr_fallback_any(
+            &assign_pat.right,
             false,
             false,
           ));
         }
 
-        arr_pat.optional = true;
-        Some(Pat::Array(arr_pat.clone()))
+        Some(BindingPattern::ArrayPattern(
+          arr_pat.clone_in(self.allocator),
+        ))
       }
-      Pat::Object(obj_pat) => {
-        if obj_pat.type_ann.is_none() {
-          obj_pat.type_ann = Some(self.infer_expr_fallback_any(
-            *assign_pat.right.clone(),
+      BindingPattern::ObjectPattern(obj_pat) => {
+        if param_type_annotation.is_none() {
+          *param_type_annotation = Some(self.infer_expr_fallback_any(
+            &assign_pat.right,
             false,
             false,
           ));
         }
 
-        obj_pat.optional = true;
-        Some(Pat::Object(obj_pat.clone()))
+        Some(BindingPattern::ObjectPattern(
+          obj_pat.clone_in(self.allocator),
+        ))
       }
-      Pat::Rest(_) | Pat::Assign(_) | Pat::Expr(_) | Pat::Invalid(_) => None,
+      BindingPattern::AssignmentPattern(_) => None,
     }
   }
 
-  fn pat_to_ts_fn_param(&mut self, pat: Pat) -> Option<TsFnParam> {
-    match pat {
-      Pat::Ident(binding_id) => Some(TsFnParam::Ident(binding_id)),
-      Pat::Array(arr_pat) => Some(TsFnParam::Array(arr_pat)),
-      Pat::Rest(rest_pat) => Some(TsFnParam::Rest(rest_pat)),
-      Pat::Object(obj) => Some(TsFnParam::Object(obj)),
-      Pat::Assign(assign_pat) => self
-        .expr_to_ts_type(*assign_pat.right, false, false)
-        .map(|param| {
-          let name = if let Pat::Ident(ident) = *assign_pat.left {
-            ident.id.sym.clone()
-          } else {
-            self.gen_unique_name().into()
-          };
-
-          TsFnParam::Ident(BindingIdent {
-            id: Ident::new(name, assign_pat.span, Default::default()),
-            type_ann: Some(type_ann(param)),
-          })
-        }),
-      Pat::Expr(expr) => {
-        self.mark_diagnostic_unable_to_infer(expr.range());
-        None
+  fn fn_params_to_ts_fn_params(
+    &mut self,
+    params: &FormalParameters<'a>,
+  ) -> Box<'a, FormalParameters<'a>> {
+    let mut items = Vec::new_in(self.allocator);
+    for param in &params.items {
+      if let Some(fp) = self.param_to_ts_fn_param(param) {
+        items.push(fp);
       }
-      // Invalid code is invalid, not sure why SWC doesn't throw
-      // a parse error here.
-      Pat::Invalid(_) => None,
+    }
+    let rest = params.rest.clone_in(self.allocator);
+    Box::new_in(
+      FormalParameters {
+        node_id: Cell::new(NodeId::DUMMY),
+        span: params.span,
+        kind: FormalParameterKind::Signature,
+        items,
+        rest,
+      },
+      self.allocator,
+    )
+  }
+
+  fn param_to_ts_fn_param(
+    &mut self,
+    param: &FormalParameter<'a>,
+  ) -> Option<FormalParameter<'a>> {
+    // In OXC, parameter defaults are in FormalParameter::initializer
+    if let Some(init) = &param.initializer {
+      let ta = param.type_annotation.clone_in(self.allocator)
+        .or_else(|| {
+          self.expr_to_ts_type(init, false, false)
+            .map(|t| type_ann(self.allocator, t))
+        });
+      return Some(FormalParameter {
+        node_id: Cell::new(NodeId::DUMMY),
+        span: param.span,
+        decorators: Vec::new_in(self.allocator),
+        pattern: param.pattern.clone_in(self.allocator),
+        type_annotation: ta,
+        initializer: None,
+        optional: false,
+        accessibility: param.accessibility,
+        readonly: param.readonly,
+        r#override: param.r#override,
+      });
+    }
+
+    match &param.pattern {
+      BindingPattern::BindingIdentifier(binding_id) => {
+        Some(FormalParameter {
+          node_id: Cell::new(NodeId::DUMMY),
+          span: param.span,
+          decorators: Vec::new_in(self.allocator),
+          pattern: BindingPattern::BindingIdentifier(
+            binding_id.clone_in(self.allocator),
+          ),
+          type_annotation: param.type_annotation.clone_in(self.allocator),
+          initializer: None,
+          optional: param.optional,
+          accessibility: param.accessibility,
+          readonly: param.readonly,
+          r#override: param.r#override,
+        })
+      }
+      BindingPattern::ArrayPattern(_) => {
+        Some(param.clone_in(self.allocator))
+      }
+      BindingPattern::ObjectPattern(_) => {
+        Some(param.clone_in(self.allocator))
+      }
+      BindingPattern::AssignmentPattern(assign_pat) => {
+        self
+          .expr_to_ts_type(&assign_pat.right, false, false)
+          .map(|ts_type| {
+            let name = if let BindingPattern::BindingIdentifier(ident) =
+              &assign_pat.left
+            {
+              ident.name.clone()
+            } else {
+              Ident::from(self.allocator.alloc_str(&self.gen_unique_name()))
+            };
+
+            FormalParameter {
+              node_id: Cell::new(NodeId::DUMMY),
+              span: assign_pat.span,
+              decorators: Vec::new_in(self.allocator),
+              pattern: BindingPattern::BindingIdentifier(Box::new_in(
+                BindingIdentifier {
+                  node_id: Cell::new(NodeId::DUMMY),
+                  span: assign_pat.span,
+                  name,
+                  symbol_id: Cell::new(None),
+                },
+                self.allocator,
+              )),
+              type_annotation: Some(type_ann(self.allocator, ts_type)),
+              initializer: None,
+              optional: false,
+              accessibility: None,
+              readonly: false,
+              r#override: false,
+            }
+          })
+      }
     }
   }
 }
 
-fn valid_prop_name(prop_name: &PropName) -> Option<PropName> {
-  fn prop_name_from_expr(expr: &Expr) -> Option<PropName> {
-    match expr {
-      Expr::Lit(e) => match &e {
-        Lit::Str(e) => Some(PropName::Str(e.clone())),
-        Lit::Num(e) => Some(PropName::Num(e.clone())),
-        Lit::BigInt(e) => Some(PropName::BigInt(e.clone())),
-        Lit::Bool(_) | Lit::Null(_) | Lit::Regex(_) | Lit::JSXText(_) => None,
-      },
-      Expr::Tpl(e) => {
-        if e.quasis.is_empty() && e.exprs.len() == 1 {
-          prop_name_from_expr(&e.exprs[0])
+/// Check if a TSType is the `const` type reference used in `as const`.
+fn is_ts_const_type(ty: &TSType) -> bool {
+  if let TSType::TSTypeReference(type_ref) = ty {
+    if let TSTypeName::IdentifierReference(ident) = &type_ref.type_name {
+      return ident.name.as_str() == "const";
+    }
+  }
+  false
+}
+
+fn decl_to_stmt<'a>(
+  allocator: &'a Allocator,
+  decl: Declaration<'a>,
+) -> Statement<'a> {
+  match decl {
+    Declaration::VariableDeclaration(d) => Statement::VariableDeclaration(d),
+    Declaration::FunctionDeclaration(d) => Statement::FunctionDeclaration(d),
+    Declaration::ClassDeclaration(d) => Statement::ClassDeclaration(d),
+    Declaration::TSTypeAliasDeclaration(d) => {
+      Statement::TSTypeAliasDeclaration(d)
+    }
+    Declaration::TSInterfaceDeclaration(d) => {
+      Statement::TSInterfaceDeclaration(d)
+    }
+    Declaration::TSEnumDeclaration(d) => Statement::TSEnumDeclaration(d),
+    Declaration::TSModuleDeclaration(d) => Statement::TSModuleDeclaration(d),
+    Declaration::TSGlobalDeclaration(d) => Statement::TSGlobalDeclaration(d),
+    Declaration::TSImportEqualsDeclaration(d) => {
+      Statement::TSImportEqualsDeclaration(d)
+    }
+  }
+}
+
+/// Convert an ArrayExpressionElement (expression variant) to an Expression reference.
+/// ArrayExpressionElement inherits all Expression variants via @inherit,
+/// so OXC provides an `as_expression()` method for the conversion.
+fn array_expression_element_to_expr<'a, 'b>(
+  elem: &'b ArrayExpressionElement<'a>,
+) -> Option<&'b Expression<'a>> {
+  match elem {
+    ArrayExpressionElement::SpreadElement(_) | ArrayExpressionElement::Elision(_) => None,
+    _ => elem.as_expression(),
+  }
+}
+
+fn export_default_decl_kind_to_expr<'a>(
+  _allocator: &'a Allocator,
+  kind: ExportDefaultDeclarationKind<'a>,
+) -> Option<Expression<'a>> {
+  // ExportDefaultDeclarationKind inherits Expression variants
+  // We need to convert back to Expression
+  match kind {
+    ExportDefaultDeclarationKind::BooleanLiteral(e) => {
+      Some(Expression::BooleanLiteral(e))
+    }
+    ExportDefaultDeclarationKind::NullLiteral(e) => {
+      Some(Expression::NullLiteral(e))
+    }
+    ExportDefaultDeclarationKind::NumericLiteral(e) => {
+      Some(Expression::NumericLiteral(e))
+    }
+    ExportDefaultDeclarationKind::BigIntLiteral(e) => {
+      Some(Expression::BigIntLiteral(e))
+    }
+    ExportDefaultDeclarationKind::RegExpLiteral(e) => {
+      Some(Expression::RegExpLiteral(e))
+    }
+    ExportDefaultDeclarationKind::StringLiteral(e) => {
+      Some(Expression::StringLiteral(e))
+    }
+    ExportDefaultDeclarationKind::TemplateLiteral(e) => {
+      Some(Expression::TemplateLiteral(e))
+    }
+    ExportDefaultDeclarationKind::Identifier(e) => {
+      Some(Expression::Identifier(e))
+    }
+    ExportDefaultDeclarationKind::MetaProperty(e) => {
+      Some(Expression::MetaProperty(e))
+    }
+    ExportDefaultDeclarationKind::Super(e) => Some(Expression::Super(e)),
+    ExportDefaultDeclarationKind::ArrayExpression(e) => {
+      Some(Expression::ArrayExpression(e))
+    }
+    ExportDefaultDeclarationKind::ArrowFunctionExpression(e) => {
+      Some(Expression::ArrowFunctionExpression(e))
+    }
+    ExportDefaultDeclarationKind::AssignmentExpression(e) => {
+      Some(Expression::AssignmentExpression(e))
+    }
+    ExportDefaultDeclarationKind::AwaitExpression(e) => {
+      Some(Expression::AwaitExpression(e))
+    }
+    ExportDefaultDeclarationKind::BinaryExpression(e) => {
+      Some(Expression::BinaryExpression(e))
+    }
+    ExportDefaultDeclarationKind::CallExpression(e) => {
+      Some(Expression::CallExpression(e))
+    }
+    ExportDefaultDeclarationKind::ChainExpression(e) => {
+      Some(Expression::ChainExpression(e))
+    }
+    ExportDefaultDeclarationKind::ClassExpression(e) => {
+      Some(Expression::ClassExpression(e))
+    }
+    ExportDefaultDeclarationKind::ConditionalExpression(e) => {
+      Some(Expression::ConditionalExpression(e))
+    }
+    ExportDefaultDeclarationKind::FunctionExpression(e) => {
+      Some(Expression::FunctionExpression(e))
+    }
+    ExportDefaultDeclarationKind::ImportExpression(e) => {
+      Some(Expression::ImportExpression(e))
+    }
+    ExportDefaultDeclarationKind::LogicalExpression(e) => {
+      Some(Expression::LogicalExpression(e))
+    }
+    ExportDefaultDeclarationKind::NewExpression(e) => {
+      Some(Expression::NewExpression(e))
+    }
+    ExportDefaultDeclarationKind::ObjectExpression(e) => {
+      Some(Expression::ObjectExpression(e))
+    }
+    ExportDefaultDeclarationKind::ParenthesizedExpression(e) => {
+      Some(Expression::ParenthesizedExpression(e))
+    }
+    ExportDefaultDeclarationKind::SequenceExpression(e) => {
+      Some(Expression::SequenceExpression(e))
+    }
+    ExportDefaultDeclarationKind::TaggedTemplateExpression(e) => {
+      Some(Expression::TaggedTemplateExpression(e))
+    }
+    ExportDefaultDeclarationKind::ThisExpression(e) => {
+      Some(Expression::ThisExpression(e))
+    }
+    ExportDefaultDeclarationKind::UnaryExpression(e) => {
+      Some(Expression::UnaryExpression(e))
+    }
+    ExportDefaultDeclarationKind::UpdateExpression(e) => {
+      Some(Expression::UpdateExpression(e))
+    }
+    ExportDefaultDeclarationKind::YieldExpression(e) => {
+      Some(Expression::YieldExpression(e))
+    }
+    ExportDefaultDeclarationKind::PrivateInExpression(e) => {
+      Some(Expression::PrivateInExpression(e))
+    }
+    ExportDefaultDeclarationKind::JSXElement(e) => {
+      Some(Expression::JSXElement(e))
+    }
+    ExportDefaultDeclarationKind::JSXFragment(e) => {
+      Some(Expression::JSXFragment(e))
+    }
+    ExportDefaultDeclarationKind::TSAsExpression(e) => {
+      Some(Expression::TSAsExpression(e))
+    }
+    ExportDefaultDeclarationKind::TSSatisfiesExpression(e) => {
+      Some(Expression::TSSatisfiesExpression(e))
+    }
+    ExportDefaultDeclarationKind::TSTypeAssertion(e) => {
+      Some(Expression::TSTypeAssertion(e))
+    }
+    ExportDefaultDeclarationKind::TSNonNullExpression(e) => {
+      Some(Expression::TSNonNullExpression(e))
+    }
+    ExportDefaultDeclarationKind::TSInstantiationExpression(e) => {
+      Some(Expression::TSInstantiationExpression(e))
+    }
+    ExportDefaultDeclarationKind::V8IntrinsicExpression(e) => {
+      Some(Expression::V8IntrinsicExpression(e))
+    }
+    ExportDefaultDeclarationKind::ComputedMemberExpression(e) => {
+      Some(Expression::ComputedMemberExpression(e))
+    }
+    ExportDefaultDeclarationKind::StaticMemberExpression(e) => {
+      Some(Expression::StaticMemberExpression(e))
+    }
+    ExportDefaultDeclarationKind::PrivateFieldExpression(e) => {
+      Some(Expression::PrivateFieldExpression(e))
+    }
+    _ => None,
+  }
+}
+
+fn expr_to_export_default_decl_kind<'a>(
+  _allocator: &'a Allocator,
+  expr: Expression<'a>,
+) -> ExportDefaultDeclarationKind<'a> {
+  match expr {
+    Expression::BooleanLiteral(e) => {
+      ExportDefaultDeclarationKind::BooleanLiteral(e)
+    }
+    Expression::NullLiteral(e) => {
+      ExportDefaultDeclarationKind::NullLiteral(e)
+    }
+    Expression::NumericLiteral(e) => {
+      ExportDefaultDeclarationKind::NumericLiteral(e)
+    }
+    Expression::BigIntLiteral(e) => {
+      ExportDefaultDeclarationKind::BigIntLiteral(e)
+    }
+    Expression::RegExpLiteral(e) => {
+      ExportDefaultDeclarationKind::RegExpLiteral(e)
+    }
+    Expression::StringLiteral(e) => {
+      ExportDefaultDeclarationKind::StringLiteral(e)
+    }
+    Expression::TemplateLiteral(e) => {
+      ExportDefaultDeclarationKind::TemplateLiteral(e)
+    }
+    Expression::Identifier(e) => {
+      ExportDefaultDeclarationKind::Identifier(e)
+    }
+    Expression::MetaProperty(e) => {
+      ExportDefaultDeclarationKind::MetaProperty(e)
+    }
+    Expression::Super(e) => ExportDefaultDeclarationKind::Super(e),
+    Expression::ArrayExpression(e) => {
+      ExportDefaultDeclarationKind::ArrayExpression(e)
+    }
+    Expression::ArrowFunctionExpression(e) => {
+      ExportDefaultDeclarationKind::ArrowFunctionExpression(e)
+    }
+    Expression::AssignmentExpression(e) => {
+      ExportDefaultDeclarationKind::AssignmentExpression(e)
+    }
+    Expression::AwaitExpression(e) => {
+      ExportDefaultDeclarationKind::AwaitExpression(e)
+    }
+    Expression::BinaryExpression(e) => {
+      ExportDefaultDeclarationKind::BinaryExpression(e)
+    }
+    Expression::CallExpression(e) => {
+      ExportDefaultDeclarationKind::CallExpression(e)
+    }
+    Expression::ChainExpression(e) => {
+      ExportDefaultDeclarationKind::ChainExpression(e)
+    }
+    Expression::ClassExpression(e) => {
+      ExportDefaultDeclarationKind::ClassExpression(e)
+    }
+    Expression::ConditionalExpression(e) => {
+      ExportDefaultDeclarationKind::ConditionalExpression(e)
+    }
+    Expression::FunctionExpression(e) => {
+      ExportDefaultDeclarationKind::FunctionExpression(e)
+    }
+    Expression::ImportExpression(e) => {
+      ExportDefaultDeclarationKind::ImportExpression(e)
+    }
+    Expression::LogicalExpression(e) => {
+      ExportDefaultDeclarationKind::LogicalExpression(e)
+    }
+    Expression::NewExpression(e) => {
+      ExportDefaultDeclarationKind::NewExpression(e)
+    }
+    Expression::ObjectExpression(e) => {
+      ExportDefaultDeclarationKind::ObjectExpression(e)
+    }
+    Expression::ParenthesizedExpression(e) => {
+      ExportDefaultDeclarationKind::ParenthesizedExpression(e)
+    }
+    Expression::SequenceExpression(e) => {
+      ExportDefaultDeclarationKind::SequenceExpression(e)
+    }
+    Expression::TaggedTemplateExpression(e) => {
+      ExportDefaultDeclarationKind::TaggedTemplateExpression(e)
+    }
+    Expression::ThisExpression(e) => {
+      ExportDefaultDeclarationKind::ThisExpression(e)
+    }
+    Expression::UnaryExpression(e) => {
+      ExportDefaultDeclarationKind::UnaryExpression(e)
+    }
+    Expression::UpdateExpression(e) => {
+      ExportDefaultDeclarationKind::UpdateExpression(e)
+    }
+    Expression::YieldExpression(e) => {
+      ExportDefaultDeclarationKind::YieldExpression(e)
+    }
+    Expression::PrivateInExpression(e) => {
+      ExportDefaultDeclarationKind::PrivateInExpression(e)
+    }
+    Expression::JSXElement(e) => {
+      ExportDefaultDeclarationKind::JSXElement(e)
+    }
+    Expression::JSXFragment(e) => {
+      ExportDefaultDeclarationKind::JSXFragment(e)
+    }
+    Expression::TSAsExpression(e) => {
+      ExportDefaultDeclarationKind::TSAsExpression(e)
+    }
+    Expression::TSSatisfiesExpression(e) => {
+      ExportDefaultDeclarationKind::TSSatisfiesExpression(e)
+    }
+    Expression::TSTypeAssertion(e) => {
+      ExportDefaultDeclarationKind::TSTypeAssertion(e)
+    }
+    Expression::TSNonNullExpression(e) => {
+      ExportDefaultDeclarationKind::TSNonNullExpression(e)
+    }
+    Expression::TSInstantiationExpression(e) => {
+      ExportDefaultDeclarationKind::TSInstantiationExpression(e)
+    }
+    Expression::V8IntrinsicExpression(e) => {
+      ExportDefaultDeclarationKind::V8IntrinsicExpression(e)
+    }
+    Expression::ComputedMemberExpression(e) => {
+      ExportDefaultDeclarationKind::ComputedMemberExpression(e)
+    }
+    Expression::StaticMemberExpression(e) => {
+      ExportDefaultDeclarationKind::StaticMemberExpression(e)
+    }
+    Expression::PrivateFieldExpression(e) => {
+      ExportDefaultDeclarationKind::PrivateFieldExpression(e)
+    }
+  }
+}
+
+fn valid_prop_name<'a>(
+  allocator: &'a Allocator,
+  prop_key: &PropertyKey<'a>,
+) -> Option<PropertyKey<'a>> {
+  fn prop_name_from_property_key<'a>(
+    allocator: &'a Allocator,
+    key: &PropertyKey<'a>,
+  ) -> Option<PropertyKey<'a>> {
+    match key {
+      PropertyKey::StaticIdentifier(_) => Some(key.clone_in(allocator)),
+      PropertyKey::PrivateIdentifier(_) => Some(key.clone_in(allocator)),
+      // Expression variants
+      PropertyKey::StringLiteral(_)
+      | PropertyKey::NumericLiteral(_)
+      | PropertyKey::BigIntLiteral(_) => Some(key.clone_in(allocator)),
+      PropertyKey::TemplateLiteral(tpl) => {
+        if tpl.quasis.is_empty() && tpl.expressions.len() == 1 {
+          prop_name_from_expr(allocator, &tpl.expressions[0])
         } else {
           None
         }
       }
-      Expr::Paren(e) => prop_name_from_expr(&e.expr),
-      Expr::TsTypeAssertion(e) => prop_name_from_expr(&e.expr),
-      Expr::TsConstAssertion(e) => prop_name_from_expr(&e.expr),
-      Expr::TsNonNull(e) => prop_name_from_expr(&e.expr),
-      Expr::TsAs(e) => prop_name_from_expr(&e.expr),
-      Expr::TsSatisfies(e) => prop_name_from_expr(&e.expr),
-      Expr::Ident(_) => Some(PropName::Computed(ComputedPropName {
-        #[allow(clippy::disallowed_methods)]
-        span: deno_ast::swc::common::Spanned::span(&expr),
-        expr: Box::new(expr.clone()),
-      })),
-      Expr::TaggedTpl(_)
-      | Expr::This(_)
-      | Expr::Array(_)
-      | Expr::Object(_)
-      | Expr::Fn(_)
-      | Expr::Unary(_)
-      | Expr::Update(_)
-      | Expr::Bin(_)
-      | Expr::Assign(_)
-      | Expr::Member(_)
-      | Expr::SuperProp(_)
-      | Expr::Cond(_)
-      | Expr::Call(_)
-      | Expr::New(_)
-      | Expr::Seq(_)
-      | Expr::Arrow(_)
-      | Expr::Class(_)
-      | Expr::Yield(_)
-      | Expr::Await(_)
-      | Expr::MetaProp(_)
-      | Expr::JSXMember(_)
-      | Expr::JSXNamespacedName(_)
-      | Expr::JSXEmpty(_)
-      | Expr::JSXElement(_)
-      | Expr::JSXFragment(_)
-      | Expr::TsInstantiation(_)
-      | Expr::PrivateName(_)
-      | Expr::OptChain(_)
-      | Expr::Invalid(_) => None,
+      PropertyKey::ParenthesizedExpression(e) => {
+        prop_name_from_expr(allocator, &e.expression)
+      }
+      PropertyKey::TSTypeAssertion(e) => {
+        prop_name_from_expr(allocator, &e.expression)
+      }
+      PropertyKey::TSNonNullExpression(e) => {
+        prop_name_from_expr(allocator, &e.expression)
+      }
+      PropertyKey::TSAsExpression(e) => {
+        prop_name_from_expr(allocator, &e.expression)
+      }
+      PropertyKey::TSSatisfiesExpression(e) => {
+        prop_name_from_expr(allocator, &e.expression)
+      }
+      PropertyKey::Identifier(ident) => {
+        // Computed identifier - keep as computed property key
+        Some(key.clone_in(allocator))
+      }
+      _ => None,
     }
   }
 
-  match prop_name {
-    PropName::Ident(_)
-    | PropName::Str(_)
-    | PropName::Num(_)
-    | PropName::BigInt(_) => Some(prop_name.clone()),
-    PropName::Computed(computed) => prop_name_from_expr(&computed.expr),
+  fn prop_name_from_expr<'a>(
+    allocator: &'a Allocator,
+    expr: &Expression<'a>,
+  ) -> Option<PropertyKey<'a>> {
+    match expr {
+      Expression::StringLiteral(s) => Some(PropertyKey::StringLiteral(
+        s.clone_in(allocator),
+      )),
+      Expression::NumericLiteral(n) => Some(PropertyKey::NumericLiteral(
+        n.clone_in(allocator),
+      )),
+      Expression::BigIntLiteral(b) => Some(PropertyKey::BigIntLiteral(
+        b.clone_in(allocator),
+      )),
+      Expression::TemplateLiteral(e) => {
+        if e.quasis.is_empty() && e.expressions.len() == 1 {
+          prop_name_from_expr(allocator, &e.expressions[0])
+        } else {
+          None
+        }
+      }
+      Expression::ParenthesizedExpression(e) => {
+        prop_name_from_expr(allocator, &e.expression)
+      }
+      Expression::TSTypeAssertion(e) => {
+        prop_name_from_expr(allocator, &e.expression)
+      }
+      Expression::TSNonNullExpression(e) => {
+        prop_name_from_expr(allocator, &e.expression)
+      }
+      Expression::TSAsExpression(e) => {
+        prop_name_from_expr(allocator, &e.expression)
+      }
+      Expression::TSSatisfiesExpression(e) => {
+        prop_name_from_expr(allocator, &e.expression)
+      }
+      Expression::Identifier(_) => {
+        // Computed identifier reference
+        Some(PropertyKey::Identifier(Box::new_in(
+          IdentifierReference {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: expr.span(),
+            name: match expr {
+              Expression::Identifier(id) => id.name.clone(),
+              _ => unreachable!(),
+            },
+            reference_id: Cell::new(None),
+          },
+          allocator,
+        )))
+      }
+      _ => None,
+    }
   }
+
+  prop_name_from_property_key(allocator, prop_key)
 }
 
 #[cfg(test)]
@@ -1063,6 +1686,7 @@ mod tests {
   use crate::ModuleGraph;
   use crate::WorkspaceMember;
   use crate::ast::CapturingModuleAnalyzer;
+  use crate::ast::EsParser;
   use crate::fast_check::range_finder::find_public_ranges;
   use crate::fast_check::transform_dts::FastCheckDtsTransformer;
   use crate::source::MemoryLoader;
@@ -1071,8 +1695,8 @@ mod tests {
   use deno_ast::EmitOptions;
   use deno_ast::EmittedSourceText;
   use deno_ast::ModuleSpecifier;
-  use deno_ast::SourceMap;
   use deno_ast::emit;
+  use deno_ast::oxc::allocator::CloneIn;
   use deno_semver::package::PackageNv;
   use indexmap::IndexMap;
   use url::Url;
@@ -1092,6 +1716,7 @@ mod tests {
       vec![],
     );
     let analyzer = CapturingModuleAnalyzer::default();
+    let allocator = deno_ast::oxc::allocator::Allocator::default();
     let mut graph = ModuleGraph::new(GraphKind::All);
     graph
       .build(
@@ -1105,7 +1730,7 @@ mod tests {
       )
       .await;
 
-    let root_sym = RootSymbol::new(&graph, &analyzer);
+    let root_sym = RootSymbol::new(&graph, &analyzer, &allocator);
 
     let module_info = root_sym
       .module_from_specifier(&specifier)
@@ -1113,8 +1738,16 @@ mod tests {
       .esm()
       .unwrap();
 
-    let parsed_source = module_info.source();
-    let program = parsed_source.program_ref().to_owned();
+    let parsed_source = analyzer.parse_program(
+      &allocator,
+      crate::ast::ParseOptions {
+        specifier: &specifier,
+        source: source.into(),
+        media_type: deno_ast::MediaType::TypeScript,
+        scope_analysis: false,
+      },
+    ).unwrap();
+    let program = parsed_source.program().clone_in(&allocator);
     let nv = PackageNv::from_str("package@1.0.0").unwrap();
     let public_ranges = find_public_ranges(
       None,
@@ -1136,21 +1769,17 @@ mod tests {
     .unwrap();
 
     let mut transformer = FastCheckDtsTransformer::new(
+      &allocator,
       parsed_source.text_info_lazy(),
       &public_ranges,
       &specifier,
     );
     let program = transformer.transform(program);
 
-    let comments = parsed_source.comments().as_single_threaded();
-
-    let source_map =
-      SourceMap::single(specifier, parsed_source.text().to_string());
-
     let EmittedSourceText { text: actual, .. } = emit(
-      (&program).into(),
-      &comments,
-      &source_map,
+      &program,
+      parsed_source.text(),
+      &specifier.to_string(),
       &EmitOptions {
         remove_comments: false,
         source_map: deno_ast::SourceMapOption::None,
@@ -1447,8 +2076,7 @@ export function foo(a: any): number {
     // TODO: Requires type resolving
     transform_dts_test(
       r#"export const foo = { bar } as const;"#,
-      r#"export declare const foo: {
-};"#,
+      r#"export declare const foo: {};"#,
     )
     .await;
   }
@@ -1581,12 +2209,12 @@ export function foo(a: any): number {
 
   #[tokio::test]
   async fn dts_type_export() {
-    transform_dts_test(r#"interface Foo {}"#, "interface Foo {\n}").await;
+    transform_dts_test(r#"interface Foo {}"#, "interface Foo {}").await;
     transform_dts_test(r#"type Foo = number;"#, "type Foo = number;").await;
 
     transform_dts_test(
       r#"export interface Foo {}"#,
-      "export interface Foo {\n}",
+      "export interface Foo {}",
     )
     .await;
     transform_dts_test(

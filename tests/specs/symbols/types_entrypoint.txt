@@ -17,10 +17,10 @@ file:///mod.d.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.d.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "MyInterface",
-            #2,
+            0,
         ): 1,
     },
     symbols: {
@@ -34,16 +34,12 @@ file:///mod.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export interface MyInterface {\n  a: string;\n}",
+                            <node @ 0..46>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            45,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 46,
                     },
                     flags: 0,
                 },
@@ -68,16 +64,12 @@ file:///mod.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export interface MyInterface {\n  a: string;\n}",
+                            <node @ 0..45>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            45,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 45,
                     },
                     flags: 0,
                 },
@@ -100,16 +92,12 @@ file:///mod.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "a: string;",
+                            <node @ 33..43>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            33,
-                        ),
-                        end: SourcePos(
-                            43,
-                        ),
+                    range: Span {
+                        start: 33,
+                        end: 43,
                     },
                     flags: 0,
                 },
@@ -126,10 +114,10 @@ file:///mod.js: EsModuleInfo {
     ),
     specifier: "file:///mod.d.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "MyInterface",
-            #2,
+            0,
         ): 1,
     },
     symbols: {
@@ -143,16 +131,12 @@ file:///mod.js: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export interface MyInterface {\n  a: string;\n}",
+                            <node @ 0..46>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            45,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 46,
                     },
                     flags: 0,
                 },
@@ -177,16 +161,12 @@ file:///mod.js: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export interface MyInterface {\n  a: string;\n}",
+                            <node @ 0..45>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            45,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 45,
                     },
                     flags: 0,
                 },
@@ -209,16 +189,12 @@ file:///mod.js: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "a: string;",
+                            <node @ 33..43>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            33,
-                        ),
-                        end: SourcePos(
-                            43,
-                        ),
+                    range: Span {
+                        start: 33,
+                        end: 43,
                     },
                     flags: 0,
                 },

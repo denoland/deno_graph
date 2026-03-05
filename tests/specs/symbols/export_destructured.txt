@@ -21,22 +21,22 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "c",
-            #2,
+            0,
         ): 1,
         (
             "d",
-            #2,
+            0,
         ): 2,
         (
             "a",
-            #2,
+            0,
         ): 3,
         (
             "b",
-            #2,
+            0,
         ): 4,
     },
     symbols: {
@@ -50,16 +50,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "const c = { a: \"a\", b: 2 };\nconst d: { f: string; g: number; } = { f: \"f\", g: 2 };\n\nexport const {\n  /** export a doc */\n  a,\n  /** export b doc */\n  b,\n}: {\n  /** type alias doc */\n  a: string;\n  /** other doc */\n  b: number;\n} = c;",
+                            <node @ 0..234>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            233,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 234,
                     },
                     flags: 0,
                 },
@@ -88,16 +84,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "c: const c = { a: \"a\", b: 2 };",
+                            <node @ 6..7>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            6,
-                        ),
-                        end: SourcePos(
-                            26,
-                        ),
+                    range: Span {
+                        start: 6,
+                        end: 26,
                     },
                     flags: 0,
                 },
@@ -118,16 +110,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "d: const d: { f: string; g: number; } = { f: \"f\", g: 2 };",
+                            <node @ 34..35>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            34,
-                        ),
-                        end: SourcePos(
-                            81,
-                        ),
+                    range: Span {
+                        start: 34,
+                        end: 81,
                     },
                     flags: 0,
                 },
@@ -148,16 +136,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export const {\n  /** export a doc */\n  a,\n  /** export b doc */\n  b,\n}: {\n  /** type alias doc */\n  a: string;\n  /** other doc */\n  b: number;\n} = c;",
+                            <node @ 84..233>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            97,
-                        ),
-                        end: SourcePos(
-                            232,
-                        ),
+                    range: Span {
+                        start: 97,
+                        end: 232,
                     },
                     flags: 0,
                 },
@@ -178,16 +162,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export const {\n  /** export a doc */\n  a,\n  /** export b doc */\n  b,\n}: {\n  /** type alias doc */\n  a: string;\n  /** other doc */\n  b: number;\n} = c;",
+                            <node @ 84..233>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            97,
-                        ),
-                        end: SourcePos(
-                            232,
-                        ),
+                    range: Span {
+                        start: 97,
+                        end: 232,
                     },
                     flags: 0,
                 },

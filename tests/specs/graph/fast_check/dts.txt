@@ -177,11 +177,9 @@ import 'jsr:@scope/a/foo'
 
 Fast check https://jsr.io/@scope/a/1.0.0/foo.d.ts:
   {}
-  export class Test {
-  }
+  export class Test {}
   --- DTS ---
-  export declare class Test {
-  }
+  export declare class Test {}
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.d.ts:
   {}

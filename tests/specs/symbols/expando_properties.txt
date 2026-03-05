@@ -20,18 +20,18 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "myFunc",
-            #2,
+            0,
         ): 1,
         (
             "myNamespace",
-            #2,
+            0,
         ): 5,
         (
             "myClass",
-            #2,
+            0,
         ): 6,
     },
     symbols: {
@@ -45,16 +45,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "function myFunc() {}\n\nmyFunc[\"str\"] = true;\nmyFunc[\"invalid-name\"] = \"not expando\";\nmyFunc.skip = () => {};\nmyFunc.prop = \"\";\n\nexport namespace myNamespace {}\nmyNamespace.value = \"\"; // not expando\nexport class myClass {}\nmyClass.value = \"\"; // not expando\n\nexport { myFunc };",
+                            <node @ 0..277>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            276,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 277,
                     },
                     flags: 0,
                 },
@@ -83,16 +79,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "function myFunc() {}",
+                            <node @ 0..20>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            20,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 20,
                     },
                     flags: 0,
                 },
@@ -121,16 +113,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "myFunc[\"str\"] = true",
+                            <node @ 22..42>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            22,
-                        ),
-                        end: SourcePos(
-                            42,
-                        ),
+                    range: Span {
+                        start: 22,
+                        end: 42,
                     },
                     flags: 0,
                 },
@@ -151,16 +139,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "myFunc.skip = () => {}",
+                            <node @ 84..106>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            84,
-                        ),
-                        end: SourcePos(
-                            106,
-                        ),
+                    range: Span {
+                        start: 84,
+                        end: 106,
                     },
                     flags: 0,
                 },
@@ -181,16 +165,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "myFunc.prop = \"\"",
+                            <node @ 108..124>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            108,
-                        ),
-                        end: SourcePos(
-                            124,
-                        ),
+                    range: Span {
+                        start: 108,
+                        end: 124,
                     },
                     flags: 0,
                 },
@@ -211,16 +191,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export namespace myNamespace {}",
+                            <node @ 127..158>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            127,
-                        ),
-                        end: SourcePos(
-                            158,
-                        ),
+                    range: Span {
+                        start: 127,
+                        end: 158,
                     },
                     flags: 0,
                 },
@@ -241,16 +217,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class myClass {}",
+                            <node @ 198..221>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            198,
-                        ),
-                        end: SourcePos(
-                            221,
-                        ),
+                    range: Span {
+                        start: 198,
+                        end: 221,
                     },
                     flags: 0,
                 },
@@ -272,16 +244,12 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "myFunc",
-                            #2,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            267,
-                        ),
-                        end: SourcePos(
-                            273,
-                        ),
+                    range: Span {
+                        start: 267,
+                        end: 273,
                     },
                     flags: 0,
                 },

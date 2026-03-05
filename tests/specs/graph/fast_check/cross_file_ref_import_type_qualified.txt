@@ -87,11 +87,9 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/a.ts:
   {}
-  export default class Test {
-  }
+  export default class Test {}
   --- DTS ---
-  export default class Test {
-  }
+  export default class Test {}
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {

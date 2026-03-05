@@ -16,18 +16,18 @@ file:///declaration.d.ts: EsModuleInfo {
     ),
     specifier: "file:///declaration.d.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "Test",
-            #2,
+            0,
         ): 1,
         (
             "random",
-            #2,
+            0,
         ): 3,
         (
             "publicVar",
-            #2,
+            0,
         ): 4,
     },
     symbols: {
@@ -41,16 +41,12 @@ file:///declaration.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class Test {\n  method(): typeof publicVar;\n}\n\ndeclare function random(): number;\ndeclare var publicVar: number;",
+                            <node @ 0..119>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            118,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 119,
                     },
                     flags: 0,
                 },
@@ -77,16 +73,12 @@ file:///declaration.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class Test {\n  method(): typeof publicVar;\n}",
+                            <node @ 0..51>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            51,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 51,
                     },
                     flags: 0,
                 },
@@ -109,16 +101,12 @@ file:///declaration.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "method(): typeof publicVar;",
+                            <node @ 22..49>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            22,
-                        ),
-                        end: SourcePos(
-                            49,
-                        ),
+                    range: Span {
+                        start: 22,
+                        end: 49,
                     },
                     flags: 0,
                 },
@@ -139,16 +127,12 @@ file:///declaration.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "declare function random(): number;",
+                            <node @ 53..87>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            53,
-                        ),
-                        end: SourcePos(
-                            87,
-                        ),
+                    range: Span {
+                        start: 53,
+                        end: 87,
                     },
                     flags: 0,
                 },
@@ -169,16 +153,12 @@ file:///declaration.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "publicVar: declare var publicVar: number;",
+                            <node @ 100..109>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            100,
-                        ),
-                        end: SourcePos(
-                            117,
-                        ),
+                    range: Span {
+                        start: 100,
+                        end: 117,
                     },
                     flags: 0,
                 },
@@ -190,10 +170,10 @@ file:///declaration.d.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-2:22..49 [Id(("publicVar", #2))]
+2:22..49 [Id(("publicVar", 0))]
 
 == symbol deps (types only) ==
-2:22..49 [Id(("publicVar", #2))]
+2:22..49 [Id(("publicVar", 0))]
 
 file:///mod.ts: EsModuleInfo {
     module_id: ModuleId(
@@ -201,7 +181,7 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {},
+    id_to_symbol_id: {},
     symbols: {
         0: Symbol {
             module_id: ModuleId(
@@ -213,16 +193,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "import \"./declaration.d.ts\"",
+                            <node @ 0..28>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            27,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 28,
                     },
                     flags: 0,
                 },

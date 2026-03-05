@@ -33,14 +33,14 @@ file:///a.ts: EsModuleInfo {
     ),
     specifier: "file:///a.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "A1",
-            #2,
+            0,
         ): 1,
         (
             "Prop2",
-            #2,
+            0,
         ): 4,
     },
     symbols: {
@@ -54,16 +54,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface A1 {\n  prop1: string;\n}\ninterface A1 {\n  prop2: Prop2;\n}\n\ninterface Prop2 {}\n\nexport { A1 };",
+                            <node @ 0..103>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            102,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 103,
                     },
                     flags: 0,
                 },
@@ -89,32 +85,24 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface A1 {\n  prop1: string;\n}",
+                            <node @ 0..33>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            33,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 33,
                     },
                     flags: 0,
                 },
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface A1 {\n  prop2: Prop2;\n}",
+                            <node @ 34..66>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            34,
-                        ),
-                        end: SourcePos(
-                            66,
-                        ),
+                    range: Span {
+                        start: 34,
+                        end: 66,
                     },
                     flags: 0,
                 },
@@ -138,16 +126,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "prop1: string;",
+                            <node @ 17..31>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            17,
-                        ),
-                        end: SourcePos(
-                            31,
-                        ),
+                    range: Span {
+                        start: 17,
+                        end: 31,
                     },
                     flags: 0,
                 },
@@ -168,16 +152,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "prop2: Prop2;",
+                            <node @ 51..64>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            51,
-                        ),
-                        end: SourcePos(
-                            64,
-                        ),
+                    range: Span {
+                        start: 51,
+                        end: 64,
                     },
                     flags: 0,
                 },
@@ -198,16 +178,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface Prop2 {}",
+                            <node @ 68..86>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            68,
-                        ),
-                        end: SourcePos(
-                            86,
-                        ),
+                    range: Span {
+                        start: 68,
+                        end: 86,
                     },
                     flags: 0,
                 },
@@ -229,16 +205,12 @@ file:///a.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "A1",
-                            #2,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            97,
-                        ),
-                        end: SourcePos(
-                            99,
-                        ),
+                    range: Span {
+                        start: 97,
+                        end: 99,
                     },
                     flags: 0,
                 },
@@ -250,10 +222,10 @@ file:///a.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-3:51..64 [Id(("Prop2", #2))]
+3:51..64 [Id(("Prop2", 0))]
 
 == symbol deps (types only) ==
-3:51..64 [Id(("Prop2", #2))]
+3:51..64 [Id(("Prop2", 0))]
 
 file:///mod.ts: EsModuleInfo {
     module_id: ModuleId(
@@ -263,18 +235,18 @@ file:///mod.ts: EsModuleInfo {
     re_exports: [
         "./a.ts",
     ],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "Test",
-            #2,
+            0,
         ): 1,
         (
             "Prop1",
-            #2,
+            0,
         ): 4,
         (
             "Prop2",
-            #2,
+            0,
         ): 5,
     },
     symbols: {
@@ -288,16 +260,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface Test {\n  prop1: Prop1;\n}\ninterface Test {\n  prop2: Prop2;\n}\n\ninterface Prop1 {}\ninterface Prop2 {}\n\nexport { Test };\n\nexport * from \"./a.ts\";",
+                            <node @ 0..175>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            23,
-                        ),
-                        end: SourcePos(
-                            174,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 175,
                     },
                     flags: 0,
                 },
@@ -324,32 +292,24 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface Test {\n  prop1: Prop1;\n}",
+                            <node @ 23..57>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            23,
-                        ),
-                        end: SourcePos(
-                            57,
-                        ),
+                    range: Span {
+                        start: 23,
+                        end: 57,
                     },
                     flags: 0,
                 },
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface Test {\n  prop2: Prop2;\n}",
+                            <node @ 58..92>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            58,
-                        ),
-                        end: SourcePos(
-                            92,
-                        ),
+                    range: Span {
+                        start: 58,
+                        end: 92,
                     },
                     flags: 0,
                 },
@@ -373,16 +333,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "prop1: Prop1;",
+                            <node @ 42..55>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            42,
-                        ),
-                        end: SourcePos(
-                            55,
-                        ),
+                    range: Span {
+                        start: 42,
+                        end: 55,
                     },
                     flags: 0,
                 },
@@ -403,16 +359,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "prop2: Prop2;",
+                            <node @ 77..90>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            77,
-                        ),
-                        end: SourcePos(
-                            90,
-                        ),
+                    range: Span {
+                        start: 77,
+                        end: 90,
                     },
                     flags: 0,
                 },
@@ -433,16 +385,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface Prop1 {}",
+                            <node @ 94..112>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            94,
-                        ),
-                        end: SourcePos(
-                            112,
-                        ),
+                    range: Span {
+                        start: 94,
+                        end: 112,
                     },
                     flags: 0,
                 },
@@ -463,16 +411,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface Prop2 {}",
+                            <node @ 113..131>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            113,
-                        ),
-                        end: SourcePos(
-                            131,
-                        ),
+                    range: Span {
+                        start: 113,
+                        end: 131,
                     },
                     flags: 0,
                 },
@@ -494,16 +438,12 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "Test",
-                            #2,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            142,
-                        ),
-                        end: SourcePos(
-                            146,
-                        ),
+                    range: Span {
+                        start: 142,
+                        end: 146,
                     },
                     flags: 0,
                 },
@@ -515,12 +455,12 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-2:42..55 [Id(("Prop1", #2))]
-3:77..90 [Id(("Prop2", #2))]
+2:42..55 [Id(("Prop1", 0))]
+3:77..90 [Id(("Prop2", 0))]
 
 == symbol deps (types only) ==
-2:42..55 [Id(("Prop1", #2))]
-3:77..90 [Id(("Prop2", #2))]
+2:42..55 [Id(("Prop1", 0))]
+3:77..90 [Id(("Prop2", 0))]
 
 == export definitions ==
 [Test]: file:///mod.ts:23..57

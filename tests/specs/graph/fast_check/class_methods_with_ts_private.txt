@@ -141,11 +141,10 @@ import 'jsr:@scope/a'
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export class PrivateMethodOverloadable {
-    private constructor(){}
+    private constructor() {}
     declare private method: any;
     declare private methodWithOverload: any;
-    declare private "stringAndIdent": any;
-    declare private "stringOnly": any;
+    declare private stringAndIdent: any;
   }
   export declare class AmbientPrivateMethodOverloadable {
     private constructor(value: string);
@@ -153,19 +152,15 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     private method(value: string): string;
     private methodWithOverload(value: string): string;
     private methodWithOverload(): string;
-    private "stringAndIdent"(value: string): string;
     private stringAndIdent(): string;
-    private "stringOnly"(value: string): string;
-    private "stringOnly"(): string;
   }
-  export declare namespace Test {
+  export declare module Test {
     export class AmbientClassInModule {
       private constructor(value: string);
       private constructor(private: Private);
     }
   }
-  class Base {
-  }
+  class Base {}
   export class TsPrivateMethodWithOverrideKeyword extends Base {
     declare private test: any;
   }
@@ -174,8 +169,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     private constructor();
     private method: any;
     private methodWithOverload: any;
-    private "stringAndIdent": any;
-    private "stringOnly": any;
+    private stringAndIdent: any;
   }
   export declare class AmbientPrivateMethodOverloadable {
     private constructor(value: string);
@@ -183,19 +177,15 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     private method(value: string): string;
     private methodWithOverload(value: string): string;
     private methodWithOverload(): string;
-    private "stringAndIdent"(value: string): string;
     private stringAndIdent(): string;
-    private "stringOnly"(value: string): string;
-    private "stringOnly"(): string;
   }
-  export declare namespace Test {
+  export declare module Test {
     export class AmbientClassInModule {
       private constructor(value: string);
       private constructor(private: Private);
     }
   }
-  declare class Base {
-  }
+  declare class Base {}
   export declare class TsPrivateMethodWithOverrideKeyword extends Base {
     private test: any;
   }

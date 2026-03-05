@@ -18,18 +18,18 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "Class",
-            #2,
+            0,
         ): 1,
         (
             "PublicClass",
-            #2,
+            0,
         ): 5,
         (
             "PrivateClass",
-            #2,
+            0,
         ): 6,
     },
     symbols: {
@@ -43,16 +43,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class Class {\n  private constructor(\n    public param: PublicClass,\n    private privateParam: PrivateClass,\n    regularParam: PrivateClass,\n  ) {\n  }\n}\n\nclass PublicClass {}\nclass PrivateClass {}",
+                            <node @ 0..203>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            202,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 203,
                     },
                     flags: 0,
                 },
@@ -79,16 +75,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class Class {\n  private constructor(\n    public param: PublicClass,\n    private privateParam: PrivateClass,\n    regularParam: PrivateClass,\n  ) {\n  }\n}",
+                            <node @ 0..158>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            158,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 158,
                     },
                     flags: 0,
                 },
@@ -116,16 +108,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "private constructor(\n    public param: PublicClass,\n    private privateParam: PrivateClass,\n    regularParam: PrivateClass,\n  ) {\n  }",
+                            <node @ 23..156>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            23,
-                        ),
-                        end: SourcePos(
-                            156,
-                        ),
+                    range: Span {
+                        start: 23,
+                        end: 156,
                     },
                     flags: 0,
                 },
@@ -146,16 +134,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "public param: PublicClass",
+                            <node @ 48..73>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            48,
-                        ),
-                        end: SourcePos(
-                            73,
-                        ),
+                    range: Span {
+                        start: 48,
+                        end: 73,
                     },
                     flags: 0,
                 },
@@ -176,16 +160,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "private privateParam: PrivateClass",
+                            <node @ 79..113>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            79,
-                        ),
-                        end: SourcePos(
-                            113,
-                        ),
+                    range: Span {
+                        start: 79,
+                        end: 113,
                     },
                     flags: 0,
                 },
@@ -206,16 +186,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class PublicClass {}",
+                            <node @ 160..180>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            160,
-                        ),
-                        end: SourcePos(
-                            180,
-                        ),
+                    range: Span {
+                        start: 160,
+                        end: 180,
                     },
                     flags: 0,
                 },
@@ -236,16 +212,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class PrivateClass {}",
+                            <node @ 181..202>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            181,
-                        ),
-                        end: SourcePos(
-                            202,
-                        ),
+                    range: Span {
+                        start: 181,
+                        end: 202,
                     },
                     flags: 0,
                 },
@@ -257,14 +229,14 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-2:23..156 [Id(("PublicClass", #2)), Id(("PrivateClass", #2)), Id(("PrivateClass", #2))]
-3:48..73 [Id(("PublicClass", #2))]
-4:79..113 [Id(("PrivateClass", #2))]
+2:23..156 [Id(("PublicClass", 0)), Id(("PrivateClass", 0)), Id(("PrivateClass", 0))]
+3:48..73 [Id(("PublicClass", 0))]
+4:79..113 [Id(("PrivateClass", 0))]
 
 == symbol deps (types only) ==
-2:23..156 [Id(("PublicClass", #2)), Id(("PrivateClass", #2)), Id(("PrivateClass", #2))]
-3:48..73 [Id(("PublicClass", #2))]
-4:79..113 [Id(("PrivateClass", #2))]
+2:23..156 [Id(("PublicClass", 0)), Id(("PrivateClass", 0)), Id(("PrivateClass", 0))]
+3:48..73 [Id(("PublicClass", 0))]
+4:79..113 [Id(("PrivateClass", 0))]
 
 == export definitions ==
 [Class]: file:///mod.ts:0..158

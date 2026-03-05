@@ -26,38 +26,38 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "A",
-            #2,
+            0,
         ): 1,
         (
             "Main",
-            #2,
+            0,
         ): 2,
         (
             "Extends",
-            #2,
+            0,
         ): 6,
         (
             "Prop",
-            #2,
+            0,
         ): 7,
         (
             "Param",
-            #2,
+            0,
         ): 8,
         (
             "Return",
-            #2,
+            0,
         ): 9,
         (
             "SignatureValueType",
-            #2,
+            0,
         ): 10,
         (
             "B",
-            #2,
+            0,
         ): 12,
     },
     symbols: {
@@ -71,16 +71,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface A {\n}\n\nexport interface Main extends Extends {\n  prop: Prop;\n  method(method: Param): Return;\n  [key: string]: SignatureValueType;\n}\n\ninterface Extends {}\ninterface Prop {}\ninterface Param {}\ninterface Return {}\ninterface SignatureValueType {\n  other: B;\n}\n\ninterface B {\n}",
+                            <node @ 0..284>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            283,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 284,
                     },
                     flags: 0,
                 },
@@ -112,16 +108,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface A {\n}",
+                            <node @ 0..15>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            15,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 15,
                     },
                     flags: 0,
                 },
@@ -142,16 +134,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export interface Main extends Extends {\n  prop: Prop;\n  method(method: Param): Return;\n  [key: string]: SignatureValueType;\n}",
+                            <node @ 17..142>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            17,
-                        ),
-                        end: SourcePos(
-                            142,
-                        ),
+                    range: Span {
+                        start: 17,
+                        end: 142,
                     },
                     flags: 0,
                 },
@@ -176,16 +164,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "prop: Prop;",
+                            <node @ 59..70>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            59,
-                        ),
-                        end: SourcePos(
-                            70,
-                        ),
+                    range: Span {
+                        start: 59,
+                        end: 70,
                     },
                     flags: 0,
                 },
@@ -206,16 +190,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "method(method: Param): Return;",
+                            <node @ 73..103>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            73,
-                        ),
-                        end: SourcePos(
-                            103,
-                        ),
+                    range: Span {
+                        start: 73,
+                        end: 103,
                     },
                     flags: 0,
                 },
@@ -236,16 +216,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "[key: string]: SignatureValueType;",
+                            <node @ 106..140>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            106,
-                        ),
-                        end: SourcePos(
-                            140,
-                        ),
+                    range: Span {
+                        start: 106,
+                        end: 140,
                     },
                     flags: 0,
                 },
@@ -266,16 +242,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface Extends {}",
+                            <node @ 144..164>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            144,
-                        ),
-                        end: SourcePos(
-                            164,
-                        ),
+                    range: Span {
+                        start: 144,
+                        end: 164,
                     },
                     flags: 0,
                 },
@@ -296,16 +268,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface Prop {}",
+                            <node @ 165..182>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            165,
-                        ),
-                        end: SourcePos(
-                            182,
-                        ),
+                    range: Span {
+                        start: 165,
+                        end: 182,
                     },
                     flags: 0,
                 },
@@ -326,16 +294,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface Param {}",
+                            <node @ 183..201>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            183,
-                        ),
-                        end: SourcePos(
-                            201,
-                        ),
+                    range: Span {
+                        start: 183,
+                        end: 201,
                     },
                     flags: 0,
                 },
@@ -356,16 +320,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface Return {}",
+                            <node @ 202..221>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            202,
-                        ),
-                        end: SourcePos(
-                            221,
-                        ),
+                    range: Span {
+                        start: 202,
+                        end: 221,
                     },
                     flags: 0,
                 },
@@ -386,16 +346,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface SignatureValueType {\n  other: B;\n}",
+                            <node @ 222..266>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            222,
-                        ),
-                        end: SourcePos(
-                            266,
-                        ),
+                    range: Span {
+                        start: 222,
+                        end: 266,
                     },
                     flags: 0,
                 },
@@ -418,16 +374,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "other: B;",
+                            <node @ 255..264>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            255,
-                        ),
-                        end: SourcePos(
-                            264,
-                        ),
+                    range: Span {
+                        start: 255,
+                        end: 264,
                     },
                     flags: 0,
                 },
@@ -448,16 +400,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface B {\n}",
+                            <node @ 268..283>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            268,
-                        ),
-                        end: SourcePos(
-                            283,
-                        ),
+                    range: Span {
+                        start: 268,
+                        end: 283,
                     },
                     flags: 0,
                 },
@@ -469,18 +417,18 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-2:17..142 [Id(("Extends", #2))]
-3:59..70 [Id(("Prop", #2))]
-4:73..103 [Id(("Param", #2)), Id(("Return", #2))]
-5:106..140 [Id(("SignatureValueType", #2))]
-11:255..264 [Id(("B", #2))]
+2:17..142 [Id(("Extends", 0))]
+3:59..70 [Id(("Prop", 0))]
+4:73..103 [Id(("Param", 0)), Id(("Return", 0))]
+5:106..140 [Id(("SignatureValueType", 0))]
+11:255..264 [Id(("B", 0))]
 
 == symbol deps (types only) ==
-2:17..142 [Id(("Extends", #2))]
-3:59..70 [Id(("Prop", #2))]
-4:73..103 [Id(("Param", #2)), Id(("Return", #2))]
-5:106..140 [Id(("SignatureValueType", #2))]
-11:255..264 [Id(("B", #2))]
+2:17..142 [Id(("Extends", 0))]
+3:59..70 [Id(("Prop", 0))]
+4:73..103 [Id(("Param", 0)), Id(("Return", 0))]
+5:106..140 [Id(("SignatureValueType", 0))]
+11:255..264 [Id(("B", 0))]
 
 == export definitions ==
 [Main]: file:///mod.ts:17..142
