@@ -574,12 +574,8 @@ fn clean_parse_message(message: &str) -> String {
       // Find the closing `)'`
       if let Some(end) = result[start..].find(")'") {
         let full_end = start + end + 2;
-        result = format!(
-          "{}\"{}\"{}",
-          &result[..start],
-          value,
-          &result[full_end..]
-        );
+        result =
+          format!("{}\"{}\"{}", &result[..start], value, &result[full_end..]);
         continue;
       }
     }
@@ -671,12 +667,7 @@ fn format_parse_diagnostic(
           } else {
             0
           };
-          writeln!(
-            f,
-            "{padding} | {}{}",
-            " ".repeat(offset),
-            ul
-          )?;
+          writeln!(f, "{padding} | {}{}", " ".repeat(offset), ul)?;
         } else {
           writeln!(f)?;
           writeln!(f, "  {src}")?;
