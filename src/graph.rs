@@ -562,21 +562,48 @@ impl std::error::Error for ModuleErrorKind {
   }
 }
 
+/// Cleans up SWC token descriptions in error messages.
+/// e.g. `'string literal ("./foo.js", "./foo.js")'` -> `"./foo.js"`
+fn clean_parse_message(message: &str) -> String {
+  // Replace `'string literal ("{value}", "{value}")'` with `"{value}"`
+  let mut result = message.to_string();
+  while let Some(start) = result.find("'string literal (\"") {
+    let after = &result[start + 18..]; // skip `'string literal ("`
+    if let Some(quote_end) = after.find('"') {
+      let value = &after[..quote_end];
+      // Find the closing `)'`
+      if let Some(end) = result[start..].find(")'") {
+        let full_end = start + end + 2;
+        result = format!(
+          "{}\"{}\"{}",
+          &result[..start],
+          value,
+          &result[full_end..]
+        );
+        continue;
+      }
+    }
+    break;
+  }
+  result
+}
+
 /// Reformats a parse diagnostic message into a nicer format with
-/// `-->` location arrows, line numbers, and carets.
+/// line numbers and carets, with the location shown after the snippet.
 ///
 /// Input format (from ParseDiagnostic::Display):
 ///   `{message} at {specifier}:{line}:{col}\n\n  {source_line}\n  {underline}`
 ///
 /// Output format:
-///   `{message}\n    at {specifier}:{line}:{col}\n\n      {line_num} | {source_line}\n              {carets}`
+///   `{message}\n  |\nN | {source_line}\n  | {carets}\n    at {location}`
 fn format_parse_diagnostic(
   f: &mut fmt::Formatter<'_>,
   diagnostic: &str,
 ) -> fmt::Result {
   // Try to parse the diagnostic format: "{message} at {location}\n\n  {snippet}"
   if let Some(at_pos) = diagnostic.find(" at ") {
-    let message = &diagnostic[..at_pos];
+    let raw_message = &diagnostic[..at_pos];
+    let message = clean_parse_message(raw_message);
 
     // Find the end of the location line (first newline after " at ")
     let after_at = &diagnostic[at_pos + 4..];
@@ -593,7 +620,7 @@ fn format_parse_diagnostic(
       .nth(1)
       .and_then(|s| s.parse::<usize>().ok());
 
-    write!(f, "{message}\n    at {location}")?;
+    write!(f, "{message}")?;
 
     if !rest.is_empty() {
       // The rest contains the source snippet, indented with "  "
@@ -622,9 +649,7 @@ fn format_parse_diagnostic(
           let padding = " ".repeat(num_str.len());
           writeln!(f, "{padding} |")?;
           writeln!(f, "{num_str} | {src}")?;
-          // Calculate indent: we need to align the underline under the source
-          // The underline in the original starts at the same column as the
-          // source, so we need to figure out the offset
+          // Calculate indent: align the underline under the source
           let src_start = source_line
             .and_then(|s| {
               lines
@@ -641,13 +666,12 @@ fn format_parse_diagnostic(
                 .map(|l| l.len() - l.trim_start().len())
             })
             .unwrap_or(2);
-          // The offset of the underline relative to the source
           let offset = if ul_start >= src_start {
             ul_start - src_start
           } else {
             0
           };
-          write!(
+          writeln!(
             f,
             "{padding} | {}{}",
             " ".repeat(offset),
@@ -656,10 +680,12 @@ fn format_parse_diagnostic(
         } else {
           writeln!(f)?;
           writeln!(f, "  {src}")?;
-          write!(f, "  {ul}")?;
+          writeln!(f, "  {ul}")?;
         }
       }
     }
+
+    write!(f, "    at {location}")?;
 
     Ok(())
   } else {
