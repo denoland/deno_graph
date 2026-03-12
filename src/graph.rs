@@ -662,11 +662,7 @@ fn format_parse_diagnostic(
                 .map(|l| l.len() - l.trim_start().len())
             })
             .unwrap_or(2);
-          let offset = if ul_start >= src_start {
-            ul_start - src_start
-          } else {
-            0
-          };
+          let offset = ul_start.saturating_sub(src_start);
           writeln!(f, "{padding} | {}{}", " ".repeat(offset), ul)?;
         } else {
           writeln!(f)?;
