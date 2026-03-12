@@ -12,7 +12,7 @@ export class Test {}
   "modules": [
     {
       "specifier": "file:///file.cjs",
-      "error": "The module's source code could not be parsed: 'import', and 'export' cannot be used outside of module code at file:///file.cjs:1:1\n\n  export class Test {}\n  ~~~~~~"
+      "error": "'import', and 'export' cannot be used outside of module code\n    at file:///file.cjs:1:1\n  |\n1 | export class Test {}\n  | ~~~~~~"
     },
     {
       "kind": "esm",

@@ -562,14 +562,119 @@ impl std::error::Error for ModuleErrorKind {
   }
 }
 
+/// Reformats a parse diagnostic message into a nicer format with
+/// `-->` location arrows, line numbers, and carets.
+///
+/// Input format (from ParseDiagnostic::Display):
+///   `{message} at {specifier}:{line}:{col}\n\n  {source_line}\n  {underline}`
+///
+/// Output format:
+///   `{message}\n    at {specifier}:{line}:{col}\n\n      {line_num} | {source_line}\n              {carets}`
+fn format_parse_diagnostic(
+  f: &mut fmt::Formatter<'_>,
+  diagnostic: &str,
+) -> fmt::Result {
+  // Try to parse the diagnostic format: "{message} at {location}\n\n  {snippet}"
+  if let Some(at_pos) = diagnostic.find(" at ") {
+    let message = &diagnostic[..at_pos];
+
+    // Find the end of the location line (first newline after " at ")
+    let after_at = &diagnostic[at_pos + 4..];
+    let (location, rest) = if let Some(newline_pos) = after_at.find('\n') {
+      (&after_at[..newline_pos], &after_at[newline_pos..])
+    } else {
+      (after_at, "")
+    };
+
+    // Parse location to extract line number
+    // Location format: {specifier}:{line}:{col}
+    let line_num = location
+      .rsplit(':')
+      .nth(1)
+      .and_then(|s| s.parse::<usize>().ok());
+
+    write!(f, "{message}\n    at {location}")?;
+
+    if !rest.is_empty() {
+      // The rest contains the source snippet, indented with "  "
+      // Reformat with line numbers
+      let lines: Vec<&str> = rest.lines().collect();
+
+      // Find source line and underline (skip empty lines)
+      let mut source_line = None;
+      let mut underline = None;
+      for line in &lines {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+          continue;
+        }
+        if source_line.is_none() {
+          source_line = Some(trimmed);
+        } else if underline.is_none() {
+          underline = Some(trimmed);
+        }
+      }
+
+      if let (Some(src), Some(ul)) = (source_line, underline) {
+        writeln!(f)?;
+        if let Some(num) = line_num {
+          let num_str = num.to_string();
+          let padding = " ".repeat(num_str.len());
+          writeln!(f, "{padding} |")?;
+          writeln!(f, "{num_str} | {src}")?;
+          // Calculate indent: we need to align the underline under the source
+          // The underline in the original starts at the same column as the
+          // source, so we need to figure out the offset
+          let src_start = source_line
+            .and_then(|s| {
+              lines
+                .iter()
+                .find(|l| l.trim() == s)
+                .map(|l| l.len() - l.trim_start().len())
+            })
+            .unwrap_or(2);
+          let ul_start = underline
+            .and_then(|u| {
+              lines
+                .iter()
+                .find(|l| l.trim() == u)
+                .map(|l| l.len() - l.trim_start().len())
+            })
+            .unwrap_or(2);
+          // The offset of the underline relative to the source
+          let offset = if ul_start >= src_start {
+            ul_start - src_start
+          } else {
+            0
+          };
+          write!(
+            f,
+            "{padding} | {}{}",
+            " ".repeat(offset),
+            ul
+          )?;
+        } else {
+          writeln!(f)?;
+          writeln!(f, "  {src}")?;
+          write!(f, "  {ul}")?;
+        }
+      }
+    }
+
+    Ok(())
+  } else {
+    // Fallback: just write the diagnostic as-is
+    write!(f, "{}", diagnostic)
+  }
+}
+
 impl fmt::Display for ModuleErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Self::Load { err, .. } => err.fmt(f),
-      Self::Parse { diagnostic, .. } => write!(
-        f,
-        "The module's source code could not be parsed: {diagnostic}"
-      ),
+      Self::Parse { diagnostic, .. } => {
+        format_parse_diagnostic(f, &diagnostic.to_string())
+      }
       Self::WasmParse { specifier, err, .. } => write!(
         f,
         "The Wasm module could not be parsed: {err}\n  Specifier: {specifier}"
