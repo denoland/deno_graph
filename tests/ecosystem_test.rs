@@ -383,7 +383,7 @@ async fn test_version(
     };
 
     let temp_file =
-      std::env::temp_dir().join(format!("{}_{}_{}.lock", scope, name, version));
+      tmpdir_path.join(format!("{}_{}_{}.lock", scope, name, version));
     std::fs::write(&temp_file, lockfile.trim()).unwrap();
     let lockfile_path = temp_file.canonicalize().unwrap();
 
@@ -430,6 +430,8 @@ async fn test_version(
       writeln!(&mut output, "\n== TYPE CHECK FAILED ==").unwrap();
       let initialize_regexp =
         regex::Regex::new(r"(:?Initialize|Download|Check) [^\n]*\n").unwrap();
+      let warning_box_regexp =
+        regex::Regex::new(r"(?s)╭ Warning.*?╰─\n?").unwrap();
       let node_modules_dir_regexp =
         regex::Regex::new(r"([A-Z]:\/|\/)[^\s\n]*\/registry\.npmjs\.org")
           .unwrap();
@@ -438,6 +440,7 @@ async fn test_version(
         .replace(&tmpdir_path_str, "<tmpdir>")
         .replace('\\', "/");
       let stdout = initialize_regexp.replace_all(&stdout, "");
+      let stdout = warning_box_regexp.replace_all(&stdout, "");
       let stdout =
         node_modules_dir_regexp.replace_all(&stdout, "<global_npm_dir>");
       let stderr = String::from_utf8_lossy(&deno_out.stderr)
@@ -445,6 +448,7 @@ async fn test_version(
         .replace(&tmpdir_path_str, "<tmpdir>")
         .replace('\\', "/");
       let stderr = initialize_regexp.replace_all(&stderr, "");
+      let stderr = warning_box_regexp.replace_all(&stderr, "");
       let stderr =
         node_modules_dir_regexp.replace_all(&stderr, "<global_npm_dir>");
       writeln!(&mut output, "-- stdout --\n{}", stdout).unwrap();
