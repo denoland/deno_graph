@@ -347,6 +347,7 @@ checksum = "be1e0bca6c3637f992fc1cc7cbc52a78c1ef6db076dbf1059c4323d6a2048376"
 [[package]]
 name = "deno_ast"
 version = "0.53.1"
+source = "git+https://github.com/nathanwhit/deno_ast?branch=oxc-port#f2a2d4c8d838825356ee95a7642ffbd0fd891bcd"
 dependencies = [
  "base64",
  "capacity_builder",
