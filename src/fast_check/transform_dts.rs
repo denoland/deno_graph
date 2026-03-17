@@ -1786,6 +1786,7 @@ mod tests {
         source_map_base: None,
         source_map_file: None,
         inline_sources: false,
+        ascii_only: false,
       },
     )
     .unwrap();
