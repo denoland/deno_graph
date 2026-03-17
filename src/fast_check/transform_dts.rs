@@ -149,12 +149,11 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
           new_items.push(item);
         }
         Statement::ExportNamedDeclaration(export_decl) => {
-          if let Some(ref decl) = export_decl.declaration {
-            if let Declaration::FunctionDeclaration(_) = decl {
-              if self.public_ranges.is_impl_with_overloads(&export_decl.span) {
-                continue; // skip implementation signature
-              }
-            }
+          if let Some(ref decl) = export_decl.declaration
+            && let Declaration::FunctionDeclaration(_) = decl
+            && self.public_ranges.is_impl_with_overloads(&export_decl.span)
+          {
+            continue; // skip implementation signature
           }
 
           if let Some(ref decl) = export_decl.declaration {
@@ -184,7 +183,7 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
             new_items.push(Statement::ExportNamedDeclaration(export_decl));
           }
         }
-        Statement::ExportDefaultDeclaration(mut export_decl) => {
+        Statement::ExportDefaultDeclaration(export_decl) => {
           match &export_decl.declaration {
             ExportDefaultDeclarationKind::ClassDeclaration(_) => {
               let mut cloned = export_decl.clone_in(self.allocator);
@@ -215,7 +214,7 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
             }
             _ => {
               // Expression variant - handle like ExportDefaultExpr
-              let expr_span = export_decl.declaration.span();
+              let _expr_span = export_decl.declaration.span();
               let decl_cloned =
                 export_decl.declaration.clone_in(self.allocator);
               let expr = match decl_cloned {
@@ -387,13 +386,21 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
       _ => return None,
     };
 
-    if let Declaration::FunctionDeclaration(_) = &decl {
-      if self.public_ranges.is_impl_with_overloads(&decl.span()) {
-        return None; // skip implementation signature
-      }
+    if let Declaration::FunctionDeclaration(_) = &decl
+      && self.public_ranges.is_impl_with_overloads(&decl.span())
+    {
+      return None; // skip implementation signature
     }
 
     match &decl {
+      Declaration::VariableDeclaration(var_decl)
+        if matches!(
+          var_decl.kind,
+          VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
+        ) =>
+      {
+        Some(decl_to_stmt(self.allocator, decl))
+      }
       Declaration::TSEnumDeclaration(_)
       | Declaration::ClassDeclaration(_)
       | Declaration::FunctionDeclaration(_)
@@ -412,22 +419,6 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
       | Declaration::TSGlobalDeclaration(_)
       | Declaration::TSImportEqualsDeclaration(_) => {
         Some(decl_to_stmt(self.allocator, decl))
-      }
-      Declaration::VariableDeclaration(var_decl) => {
-        if matches!(
-          var_decl.kind,
-          VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
-        ) {
-          Some(decl_to_stmt(self.allocator, decl))
-        } else {
-          match self.decl_to_type_decl(decl.clone_in(self.allocator)) {
-            Some(new_decl) => Some(decl_to_stmt(self.allocator, new_decl)),
-            _ => {
-              self.mark_diagnostic_unable_to_infer(decl.span());
-              None
-            }
-          }
-        }
       }
     }
   }
@@ -933,11 +924,7 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
       .into_iter()
       .filter(|member| match member {
         ClassElement::MethodDefinition(method) => {
-          if method.kind == MethodDefinitionKind::Constructor {
-            !self.public_ranges.is_impl_with_overloads(&method.span)
-          } else {
-            !self.public_ranges.is_impl_with_overloads(&method.span)
-          }
+          !self.public_ranges.is_impl_with_overloads(&method.span)
         }
         ClassElement::TSIndexSignature(_)
         | ClassElement::PropertyDefinition(_)
@@ -989,13 +976,13 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
               return None;
             }
           }
-          if prop.type_annotation.is_none() {
-            if let Some(ref value) = prop.value {
-              prop.type_annotation = self
-                .expr_to_ts_type(value, false, false)
-                .map(|t| type_ann(self.allocator, t))
-                .or_else(|| Some(any_type_ann(self.allocator)));
-            }
+          if prop.type_annotation.is_none()
+            && let Some(ref value) = prop.value
+          {
+            prop.type_annotation = self
+              .expr_to_ts_type(value, false, false)
+              .map(|t| type_ann(self.allocator, t))
+              .or_else(|| Some(any_type_ann(self.allocator)));
           }
           prop.value = None;
           prop.definite = false;
@@ -1179,7 +1166,7 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
           let name = if let BindingPattern::BindingIdentifier(ident) =
             &assign_pat.left
           {
-            ident.name.clone()
+            ident.name
           } else {
             Ident::from(self.allocator.alloc_str(&self.gen_unique_name()))
           };
@@ -1211,16 +1198,16 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
 
 /// Check if a TSType is the `const` type reference used in `as const`.
 fn is_ts_const_type(ty: &TSType) -> bool {
-  if let TSType::TSTypeReference(type_ref) = ty {
-    if let TSTypeName::IdentifierReference(ident) = &type_ref.type_name {
-      return ident.name.as_str() == "const";
-    }
+  if let TSType::TSTypeReference(type_ref) = ty
+    && let TSTypeName::IdentifierReference(ident) = &type_ref.type_name
+  {
+    return ident.name.as_str() == "const";
   }
   false
 }
 
 fn decl_to_stmt<'a>(
-  allocator: &'a Allocator,
+  _allocator: &'a Allocator,
   decl: Declaration<'a>,
 ) -> Statement<'a> {
   match decl {
@@ -1557,7 +1544,7 @@ fn valid_prop_name<'a>(
       PropertyKey::TSSatisfiesExpression(e) => {
         prop_name_from_expr(allocator, &e.expression)
       }
-      PropertyKey::Identifier(ident) => {
+      PropertyKey::Identifier(_ident) => {
         // Computed identifier - keep as computed property key
         Some(key.clone_in(allocator))
       }
@@ -1608,7 +1595,7 @@ fn valid_prop_name<'a>(
             node_id: Cell::new(NodeId::DUMMY),
             span: expr.span(),
             name: match expr {
-              Expression::Identifier(id) => id.name.clone(),
+              Expression::Identifier(id) => id.name,
               _ => unreachable!(),
             },
             reference_id: Cell::new(None),
@@ -1678,7 +1665,7 @@ mod tests {
 
     let root_sym = RootSymbol::new(&graph, &analyzer, &allocator);
 
-    let module_info = root_sym
+    let _module_info = root_sym
       .module_from_specifier(&specifier)
       .unwrap()
       .esm()
@@ -1727,7 +1714,7 @@ mod tests {
     let EmittedSourceText { text: actual, .. } = emit(
       &program,
       parsed_source.text(),
-      &specifier.to_string(),
+      specifier.as_ref(),
       &EmitOptions {
         remove_comments: false,
         source_map: deno_ast::SourceMapOption::None,

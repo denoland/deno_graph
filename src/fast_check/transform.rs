@@ -294,7 +294,7 @@ impl<'a> FastCheckTransformer<'a> {
     for (id, var_decls) in
       std::mem::take(&mut self.expando_namespaces).drain(..)
     {
-      let swc_id = (id.0.clone().into(), id.1.into());
+      let swc_id = (id.0.clone(), id.1);
       let symbol = self.es_module_info.symbol_from_swc(&swc_id).unwrap();
       for decl in &var_decls {
         self.check_expando_property_diagnostics(decl, &id, symbol)?;
@@ -486,10 +486,8 @@ impl<'a> FastCheckTransformer<'a> {
         n.specifiers
           .retain(|s| self.public_ranges.contains(&s.span()));
         let retain = !n.specifiers.is_empty();
-        if retain {
-          if let Some(src) = &mut n.source {
-            self.transform_module_specifier(src);
-          }
+        if retain && let Some(src) = &mut n.source {
+          self.transform_module_specifier(src);
         }
         Ok(TransformItemResult::from_retain(retain))
       }
@@ -795,15 +793,13 @@ impl<'a> FastCheckTransformer<'a> {
     let mut members: Vec<ClassElement<'a>> =
       Vec::with_capacity(n.body.body.len());
     let mut had_private = false;
-    if let Some(super_class) = &n.super_class {
-      if !is_expr_ident_or_member_idents(super_class) {
-        let super_span = super_class.span();
-        self.mark_diagnostic(
-          FastCheckDiagnostic::UnsupportedSuperClassExpr {
-            range: self.source_range_to_range(super_span),
-          },
-        )?;
-      }
+    if let Some(super_class) = &n.super_class
+      && !is_expr_ident_or_member_idents(super_class)
+    {
+      let super_span = super_class.span();
+      self.mark_diagnostic(FastCheckDiagnostic::UnsupportedSuperClassExpr {
+        range: self.source_range_to_range(super_span),
+      })?;
     }
     let mut insert_members: Vec<ClassElement<'a>> = Vec::new();
     let mut had_private_constructor = false;
@@ -1133,7 +1129,7 @@ impl<'a> FastCheckTransformer<'a> {
                 IdentifierName {
                   node_id: Cell::new(NodeId::DUMMY),
                   span: ident.span,
-                  name: ident.name.clone(),
+                  name: ident.name,
                 },
                 self.allocator,
               ))
@@ -1144,7 +1140,7 @@ impl<'a> FastCheckTransformer<'a> {
                   IdentifierName {
                     node_id: Cell::new(NodeId::DUMMY),
                     span: ident.span,
-                    name: ident.name.clone(),
+                    name: ident.name,
                   },
                   self.allocator,
                 ))
@@ -1296,7 +1292,7 @@ impl<'a> FastCheckTransformer<'a> {
       }
 
       let params = n.value.params.as_mut();
-      let optional_start_index = ParamsOptionalStartIndex::build(&params);
+      let optional_start_index = ParamsOptionalStartIndex::build(params);
       for (i, param) in params.items.iter_mut().enumerate() {
         self.handle_param_pattern(
           param,
@@ -1395,7 +1391,7 @@ impl<'a> FastCheckTransformer<'a> {
     };
 
     if missing_return_type {
-      let span = parent_id_span.unwrap_or_else(|| n.span);
+      let span = parent_id_span.unwrap_or(n.span);
       if n.generator {
         self.mark_diagnostic(
           FastCheckDiagnostic::MissingExplicitReturnType {
@@ -1439,7 +1435,7 @@ impl<'a> FastCheckTransformer<'a> {
 
     {
       let params = n.params.as_mut();
-      let optional_start_index = ParamsOptionalStartIndex::build(&params);
+      let optional_start_index = ParamsOptionalStartIndex::build(params);
       for (i, param) in params.items.iter_mut().enumerate() {
         self.handle_param_pattern(
           param,
@@ -1460,43 +1456,42 @@ impl<'a> FastCheckTransformer<'a> {
     n: &mut ArrowFunctionExpression<'a>,
     parent_id_span: Option<Span>,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
-    let span = parent_id_span.unwrap_or_else(|| n.span);
+    let span = parent_id_span.unwrap_or(n.span);
 
     if n.return_type.is_none() {
       // arrow functions can not be generators, let's ignore
 
       if n.expression {
         // Arrow with expression body
-        if let Some(expr_stmt) = n.body.statements.first_mut() {
-          if let Statement::ExpressionStatement(expr_s) = expr_stmt {
-            let inferred_type = self.maybe_infer_type_from_expr(
-              &expr_s.expression,
-              DeclMutabilityKind::Mutable,
-            );
-            match inferred_type {
-              Some(t) => {
-                let mut return_type_inner = t;
-                if n.r#async {
-                  return_type_inner =
-                    self.promise_wrap_type_owned(return_type_inner);
-                }
-                n.return_type =
-                  Some(type_ann(self.allocator, return_type_inner));
+        if let Some(expr_stmt) = n.body.statements.first_mut()
+          && let Statement::ExpressionStatement(expr_s) = expr_stmt
+        {
+          let inferred_type = self.maybe_infer_type_from_expr(
+            &expr_s.expression,
+            DeclMutabilityKind::Mutable,
+          );
+          match inferred_type {
+            Some(t) => {
+              let mut return_type_inner = t;
+              if n.r#async {
+                return_type_inner =
+                  self.promise_wrap_type_owned(return_type_inner);
               }
-              None => {
-                let is_expr_leavable = self.maybe_transform_expr_if_leavable(
-                  &mut expr_s.expression,
-                  None,
+              n.return_type = Some(type_ann(self.allocator, return_type_inner));
+            }
+            None => {
+              let is_expr_leavable = self.maybe_transform_expr_if_leavable(
+                &mut expr_s.expression,
+                None,
+              )?;
+              if !is_expr_leavable {
+                self.mark_diagnostic(
+                  FastCheckDiagnostic::MissingExplicitReturnType {
+                    range: self.source_range_to_range(span),
+                    is_definitely_void_or_never: false,
+                    is_async: n.r#async,
+                  },
                 )?;
-                if !is_expr_leavable {
-                  self.mark_diagnostic(
-                    FastCheckDiagnostic::MissingExplicitReturnType {
-                      range: self.source_range_to_range(span),
-                      is_definitely_void_or_never: false,
-                      is_async: n.r#async,
-                    },
-                  )?;
-                }
               }
             }
           }
@@ -1554,7 +1549,7 @@ impl<'a> FastCheckTransformer<'a> {
 
     {
       let params = n.params.as_mut();
-      let optional_start_index = ParamsOptionalStartIndex::build(&params);
+      let optional_start_index = ParamsOptionalStartIndex::build(params);
       for (i, param) in params.items.iter_mut().enumerate() {
         self.handle_param_pattern(
           param,
@@ -1807,56 +1802,46 @@ impl<'a> FastCheckTransformer<'a> {
         // ArrayPattern case
         if !has_type_annotation {
           if let BindingPattern::AssignmentPattern(assign) = &mut param.pattern
-          {
-            if !self
+            && !self
               .maybe_transform_expr_if_leavable(&mut assign.right, None)?
-            {
-              let p_span = assign.left.span();
-              self.mark_diagnostic(
-                FastCheckDiagnostic::MissingExplicitType {
-                  range: self.source_range_to_range(p_span),
-                },
-              )?;
-            }
-          }
-        } else {
-          if let BindingPattern::AssignmentPattern(assign) = &mut param.pattern
           {
-            assign.right = array_as_never_expr(self.allocator);
+            let p_span = assign.left.span();
+            self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
+              range: self.source_range_to_range(p_span),
+            })?;
           }
+        } else if let BindingPattern::AssignmentPattern(assign) =
+          &mut param.pattern
+        {
+          assign.right = array_as_never_expr(self.allocator);
         }
-        if let BindingPattern::AssignmentPattern(assign) = &mut param.pattern {
-          if let BindingPattern::ArrayPattern(p) = &mut assign.left {
-            p.elements = OxcVec::new_in(self.allocator);
-          }
+        if let BindingPattern::AssignmentPattern(assign) = &mut param.pattern
+          && let BindingPattern::ArrayPattern(p) = &mut assign.left
+        {
+          p.elements = OxcVec::new_in(self.allocator);
         }
       }
       2 => {
         // ObjectPattern case
         if !has_type_annotation {
           if let BindingPattern::AssignmentPattern(assign) = &mut param.pattern
-          {
-            if !self
+            && !self
               .maybe_transform_expr_if_leavable(&mut assign.right, None)?
-            {
-              let p_span = assign.left.span();
-              self.mark_diagnostic(
-                FastCheckDiagnostic::MissingExplicitType {
-                  range: self.source_range_to_range(p_span),
-                },
-              )?;
-            }
-          }
-        } else {
-          if let BindingPattern::AssignmentPattern(assign) = &mut param.pattern
           {
-            assign.right = obj_as_never_expr(self.allocator);
+            let p_span = assign.left.span();
+            self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
+              range: self.source_range_to_range(p_span),
+            })?;
           }
+        } else if let BindingPattern::AssignmentPattern(assign) =
+          &mut param.pattern
+        {
+          assign.right = obj_as_never_expr(self.allocator);
         }
-        if let BindingPattern::AssignmentPattern(assign) = &mut param.pattern {
-          if let BindingPattern::ObjectPattern(p) = &mut assign.left {
-            p.properties = OxcVec::new_in(self.allocator);
-          }
+        if let BindingPattern::AssignmentPattern(assign) = &mut param.pattern
+          && let BindingPattern::ObjectPattern(p) = &mut assign.left
+        {
+          p.properties = OxcVec::new_in(self.allocator);
         }
       }
       _ => {
@@ -2166,12 +2151,7 @@ impl<'a> FastCheckTransformer<'a> {
               } else if prop.method || matches!(prop.kind, PropertyKind::Get | PropertyKind::Set) {
                 false
               } else {
-                let key_leavable = if prop.computed {
-                  recurse(&mut prop.value)?
-                } else {
-                  recurse(&mut prop.value)?
-                };
-                key_leavable
+                recurse(&mut prop.value)?
               }
             }
             ObjectPropertyKind::SpreadProperty(spread) => {
@@ -2321,16 +2301,13 @@ impl<'a> FastCheckTransformer<'a> {
 
   fn promise_wrap_type_owned(&self, ty: TSType<'a>) -> TSType<'a> {
     // Check if it's already Promise<T>
-    if let TSType::TSTypeReference(type_ref) = &ty {
-      if let TSTypeName::IdentifierReference(ident) = &type_ref.type_name {
-        if ident.name == "Promise" {
-          if let Some(type_args) = &type_ref.type_arguments {
-            if type_args.params.len() == 1 {
-              return ty;
-            }
-          }
-        }
-      }
+    if let TSType::TSTypeReference(type_ref) = &ty
+      && let TSTypeName::IdentifierReference(ident) = &type_ref.type_name
+      && ident.name == "Promise"
+      && let Some(type_args) = &type_ref.type_arguments
+      && type_args.params.len() == 1
+    {
+      return ty;
     }
 
     let mut params = OxcVec::with_capacity_in(1, self.allocator);

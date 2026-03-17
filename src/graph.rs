@@ -858,8 +858,9 @@ pub struct ResolutionResolved {
   pub range: Range,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum Resolution {
+  #[default]
   None,
   Ok(Box<ResolutionResolved>),
   Err(Box<ResolutionError>),
@@ -941,12 +942,6 @@ impl Resolution {
     } else {
       None
     }
-  }
-}
-
-impl Default for Resolution {
-  fn default() -> Self {
-    Self::None
   }
 }
 
@@ -4286,9 +4281,10 @@ fn analyze_dynamic_arg_template_parts(
 }
 
 /// The kind of module graph.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum GraphKind {
   /// All types of dependencies should be analyzed and included in the graph.
+  #[default]
   All,
   /// Only code dependencies should be analyzed and included in the graph. This
   /// is useful when transpiling and running code, but not caring about type
@@ -4303,12 +4299,6 @@ pub enum GraphKind {
   /// still be loaded into the graph, but further code only dependencies will
   /// not be followed.
   TypesOnly,
-}
-
-impl Default for GraphKind {
-  fn default() -> Self {
-    Self::All
-  }
 }
 
 impl GraphKind {

@@ -184,31 +184,29 @@ impl<'a, 'b> Visit<'a> for DependencyCollector<'a, 'b> {
       // Check for `export import X = require("...")` pattern
       if let Some(Declaration::TSImportEqualsDeclaration(import_eq)) =
         &node.declaration
-      {
-        if let TSModuleReference::ExternalModuleReference(module) =
+        && let TSModuleReference::ExternalModuleReference(module) =
           &import_eq.module_reference
-        {
-          let leading_comments = self.get_leading_comments(node.span.start);
-          let expr = &module.expression;
-          let kind = if import_eq.import_kind == ImportOrExportKind::Type {
-            StaticDependencyKind::ImportType
-          } else {
-            StaticDependencyKind::ExportEquals
-          };
-          self.items.push(
-            StaticDependencyDescriptor {
-              kind,
-              leading_comments,
-              span: node.span,
-              specifier: expr.value.to_string(),
-              specifier_span: expr.span,
-              import_attributes: Default::default(),
-              is_side_effect: false,
-            }
-            .into(),
-          );
-          return;
-        }
+      {
+        let leading_comments = self.get_leading_comments(node.span.start);
+        let expr = &module.expression;
+        let kind = if import_eq.import_kind == ImportOrExportKind::Type {
+          StaticDependencyKind::ImportType
+        } else {
+          StaticDependencyKind::ExportEquals
+        };
+        self.items.push(
+          StaticDependencyDescriptor {
+            kind,
+            leading_comments,
+            span: node.span,
+            specifier: expr.value.to_string(),
+            specifier_span: expr.span,
+            import_attributes: Default::default(),
+            is_side_effect: false,
+          }
+          .into(),
+        );
+        return;
       }
       walk::walk_export_named_declaration(self, node);
       return;

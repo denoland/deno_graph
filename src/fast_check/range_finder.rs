@@ -670,7 +670,7 @@ impl<'a> PublicRangeFinder<'a> {
           for re_export_all_node in re_export_all_nodes {
             log::trace!(
               "Found re-export all - {}",
-              re_export_all_node.source.value.to_string()
+              re_export_all_node.source.value
             );
             found_ranges.insert(re_export_all_node.span);
             let specifier_text = re_export_all_node.source.value.to_string();
@@ -751,7 +751,7 @@ impl<'a> PublicRangeFinder<'a> {
                   if found_ranges.insert(re_export_all_node.span) {
                     log::trace!(
                       "Found re-export all - {}",
-                      re_export_all_node.source.value.to_string()
+                      re_export_all_node.source.value
                     );
                   }
                   let export_name = export_name.clone();
@@ -788,7 +788,7 @@ impl<'a> PublicRangeFinder<'a> {
               for re_export_all_node in re_export_all_nodes {
                 log::trace!(
                   "Found re-export all - {}",
-                  re_export_all_node.source.value.to_string()
+                  re_export_all_node.source.value
                 );
                 found_ranges.insert(re_export_all_node.span);
               }

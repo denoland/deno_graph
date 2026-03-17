@@ -391,13 +391,12 @@ impl<'a> Visit<'a> for DepsFiller {
     } else if n.expression {
       // Arrow with expression body and no return type annotation -
       // the body has a single expression statement
-      if let Some(stmt) = n.body.statements.first() {
-        if let deno_ast::oxc::ast::ast::Statement::ExpressionStatement(
+      if let Some(stmt) = n.body.statements.first()
+        && let deno_ast::oxc::ast::ast::Statement::ExpressionStatement(
           expr_stmt,
         ) = stmt
-        {
-          self.visit_expression(&expr_stmt.expression);
-        }
+      {
+        self.visit_expression(&expr_stmt.expression);
       }
     }
   }

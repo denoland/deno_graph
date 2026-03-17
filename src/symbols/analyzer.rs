@@ -11,6 +11,7 @@ use deno_ast::MediaType;
 use deno_ast::ModuleSpecifier;
 use deno_ast::ParsedSource;
 use deno_ast::SourceTextInfo;
+use deno_ast::oxc::allocator::CloneIn;
 use deno_ast::oxc::ast::ast::*;
 use deno_ast::oxc::span::GetSpan;
 use deno_ast::oxc::span::Span;
@@ -40,7 +41,6 @@ use super::cross_module::DefinitionOrUnresolved;
 use super::cross_module::DefinitionPathNode;
 use super::cross_module::ModuleExports;
 use super::dep_analyzer::ResolveDepsMode;
-use super::helpers::ts_entity_name_to_parts;
 
 /// The root symbol from which module symbols can be retrieved.
 ///
@@ -51,9 +51,6 @@ pub struct RootSymbol<'a> {
   allocator: &'a deno_ast::oxc::allocator::Allocator,
   specifiers_to_ids: AdditiveOnlyMapForCopyValues<ModuleSpecifier, ModuleId>,
   ids_to_modules: AdditiveOnlyMap<ModuleId, ModuleInfo<'a>>,
-  /// Stores parsed sources so they live long enough for symbol references.
-  /// Uses UnsafeCell + Vec<Box<_>> to provide stable `&'a` references.
-  parsed_sources: std::cell::UnsafeCell<Vec<Box<ParsedSource<'a>>>>,
 }
 
 impl<'a> RootSymbol<'a> {
@@ -68,25 +65,7 @@ impl<'a> RootSymbol<'a> {
       allocator,
       specifiers_to_ids: Default::default(),
       ids_to_modules: Default::default(),
-      parsed_sources: Default::default(),
     }
-  }
-
-  /// Store a ParsedSource and return a reference that lives for 'a.
-  /// Safety: The Box provides heap stability, and we never remove entries,
-  /// so the reference remains valid for the lifetime of RootSymbol.
-  fn store_parsed_source(
-    &self,
-    source: ParsedSource<'a>,
-  ) -> &'a ParsedSource<'a> {
-    let sources = unsafe { &mut *self.parsed_sources.get() };
-    sources.push(Box::new(source));
-    let boxed = sources.last().unwrap();
-    // SAFETY: The Box is heap-allocated and stable. We never remove from the Vec
-    // or replace entries, so this reference is valid as long as `self` lives.
-    // Since `self` is `&RootSymbol<'a>` and the caller ensures RootSymbol lives
-    // for 'a, this is safe.
-    unsafe { &*(boxed.as_ref() as *const ParsedSource<'a>) }
   }
 
   /// Checks if a specifier has been analyzed before.
@@ -200,7 +179,6 @@ impl<'a> RootSymbol<'a> {
     let Ok(source) = self.parsed_source(script_module) else {
       return None;
     };
-    let source = self.store_parsed_source(source);
     Some(self.build_raw_es_module_info(&script_module.specifier, source))
   }
 
@@ -268,20 +246,26 @@ impl<'a> RootSymbol<'a> {
     let Ok(source) = maybe_parsed_source else {
       return None;
     };
-    let source = self.store_parsed_source(source);
     Some(self.build_raw_es_module_info(&wasm_module.specifier, source))
   }
 
   fn build_raw_es_module_info(
     &self,
     specifier: &ModuleSpecifier,
-    source: &'a ParsedSource<'a>,
+    source: ParsedSource<'a>,
   ) -> ModuleInfoRef<'_> {
-    let program = source.program();
+    let is_declaration = source.media_type().is_declaration();
+    let source_text = source.text().clone();
+    let source_text_info = source.text_info_lazy().clone();
+    let media_type = source.media_type();
+    let comments: Vec<Comment> = source.comments().iter().copied().collect();
+    let program: &'a Program<'a> = self
+      .allocator
+      .alloc(source.program().clone_in(self.allocator));
 
     let module_id = ModuleId(self.ids_to_modules.len() as u32);
     let filler = SymbolFiller {
-      is_declaration: source.media_type().is_declaration(),
+      is_declaration,
       builder: ModuleBuilder::new(module_id),
     };
     filler.fill(program);
@@ -289,11 +273,11 @@ impl<'a> RootSymbol<'a> {
     let module_symbol = EsModuleInfo {
       specifier: specifier.clone(),
       module_id,
-      source_text: source.text().clone(),
-      source_text_info: source.text_info_lazy().clone(),
-      media_type: source.media_type(),
-      comments: source.comments().iter().copied().collect(),
-      statements: source.body().as_slice(),
+      source_text,
+      source_text_info,
+      media_type,
+      comments,
+      statements: program.body.as_slice(),
       re_exports: builder.re_exports.take(),
       swc_id_to_symbol_id: builder.swc_id_to_symbol_id.take(),
       symbols: builder
@@ -615,10 +599,10 @@ impl<'a> SymbolNodeRef<'a> {
   pub fn maybe_name(&self) -> Option<Cow<'a, str>> {
     fn ts_module_name_to_string<'b>(
       module_name: &'b TSModuleDeclarationName<'b>,
-    ) -> Option<&'b str> {
+    ) -> &'b str {
       match module_name {
-        TSModuleDeclarationName::Identifier(ident) => Some(&ident.name),
-        TSModuleDeclarationName::StringLiteral(str) => Some(&str.value),
+        TSModuleDeclarationName::Identifier(ident) => &ident.name,
+        TSModuleDeclarationName::StringLiteral(str) => &str.value,
       }
     }
 
@@ -656,18 +640,6 @@ impl<'a> SymbolNodeRef<'a> {
       }
     }
 
-    fn maybe_expr<'b>(expr: &'b Expression<'b>) -> Option<Cow<'b, str>> {
-      match expr {
-        Expression::Identifier(n) => Some(Cow::Borrowed(n.name.as_str())),
-        Expression::StringLiteral(n) => Some(Cow::Borrowed(n.value.as_str())),
-        Expression::NumericLiteral(n) => Some(Cow::Owned(n.value.to_string())),
-        Expression::BigIntLiteral(n) => Some(Cow::Owned(
-          n.raw.as_ref().map(|r| r.to_string()).unwrap_or_default(),
-        )),
-        _ => None,
-      }
-    }
-
     match self {
       Self::Module(_) => None,
       Self::ClassDecl(n) => {
@@ -688,7 +660,7 @@ impl<'a> SymbolNodeRef<'a> {
           Some(Cow::Borrowed(n.id.name.as_str()))
         }
         ExportDeclRef::TsModule(n) => {
-          ts_module_name_to_string(&n.id).map(Cow::Borrowed)
+          Some(Cow::Borrowed(ts_module_name_to_string(&n.id)))
         }
         ExportDeclRef::TsTypeAlias(n) => {
           Some(Cow::Borrowed(n.id.name.as_str()))
@@ -716,7 +688,7 @@ impl<'a> SymbolNodeRef<'a> {
       Self::TsEnum(n) => Some(Cow::Borrowed(n.id.name.as_str())),
       Self::TsInterface(n) => Some(Cow::Borrowed(n.id.name.as_str())),
       Self::TsNamespace(n) => {
-        ts_module_name_to_string(&n.id).map(Cow::Borrowed)
+        Some(Cow::Borrowed(ts_module_name_to_string(&n.id)))
       }
       Self::TsTypeAlias(n) => Some(Cow::Borrowed(n.id.name.as_str())),
       Self::Var(_, _, ident) => Some(Cow::Borrowed(ident.name.as_str())),
@@ -1045,17 +1017,15 @@ impl<'a> ExpandoPropertyRef<'a> {
     expr: &'b AssignmentExpression<'b>,
   ) -> Option<&'b IdentifierReference<'b>> {
     // Try static member first, then computed member
-    if let Some(member) = Self::maybe_static_member(expr) {
-      match &member.object {
-        Expression::Identifier(ident) => return Some(ident),
-        _ => {}
-      }
+    if let Some(member) = Self::maybe_static_member(expr)
+      && let Expression::Identifier(ident) = &member.object
+    {
+      return Some(ident);
     }
-    if let Some(member) = Self::maybe_computed_member(expr) {
-      match &member.object {
-        Expression::Identifier(ident) => return Some(ident),
-        _ => {}
-      }
+    if let Some(member) = Self::maybe_computed_member(expr)
+      && let Expression::Identifier(ident) = &member.object
+    {
+      return Some(ident);
     }
     None
   }
@@ -1066,10 +1036,10 @@ impl<'a> ExpandoPropertyRef<'a> {
     if let Some(member) = Self::maybe_static_member(expr) {
       return Some(member.property.name.as_str());
     }
-    if let Some(member) = Self::maybe_computed_member(expr) {
-      if let Expression::StringLiteral(str) = &member.expression {
-        return Some(str.value.as_str());
-      }
+    if let Some(member) = Self::maybe_computed_member(expr)
+      && let Expression::StringLiteral(str) = &member.expression
+    {
+      return Some(str.value.as_str());
     }
     None
   }
@@ -1287,7 +1257,7 @@ impl<'a> Symbol<'a> {
 
   /// The symbol's associated declarations. A symbol can represent many declarations
   /// if they have the same name via declaration merging or if they are overloads.
-  pub fn decls(&self) -> &[SymbolDecl] {
+  pub fn decls(&self) -> &[SymbolDecl<'_>] {
     &self.decls
   }
 
@@ -1504,7 +1474,7 @@ impl<'a> ModuleInfoRef<'a> {
 }
 
 /// Holds information about the module like symbols and re-exports.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 #[allow(clippy::large_enum_variant)] // ok because EsModuleInfo is way more common
 pub enum ModuleInfo<'a> {
   Json(Box<JsonModuleInfo>),
@@ -1608,7 +1578,6 @@ impl JsonModuleInfo {
   }
 }
 
-#[derive(Clone)]
 pub struct EsModuleInfo<'a> {
   module_id: ModuleId,
   specifier: ModuleSpecifier,
@@ -2127,26 +2096,25 @@ impl<'a> SymbolFiller<'a> {
         // ignore
       }
       Statement::ExpressionStatement(n) => {
-        if let Expression::AssignmentExpression(assign_expr) = &n.expression {
-          if let Some(expando_ref) = ExpandoPropertyRef::maybe_new(assign_expr)
-            && let Some(symbol_id) = self
-              .builder
-              .swc_id_to_symbol_id
-              .get(&expando_ref.obj_ident().to_id())
+        if let Expression::AssignmentExpression(assign_expr) = &n.expression
+          && let Some(expando_ref) = ExpandoPropertyRef::maybe_new(assign_expr)
+          && let Some(symbol_id) = self
+            .builder
+            .swc_id_to_symbol_id
+            .get(&expando_ref.obj_ident().to_id())
+        {
+          let symbol = self.builder.symbol_mut(symbol_id).unwrap();
+          // expando properties are only valid on a function
+          if symbol
+            .borrow_inner()
+            .decls()
+            .iter()
+            .any(|d| d.is_function())
           {
-            let symbol = self.builder.symbol_mut(symbol_id).unwrap();
-            // expando properties are only valid on a function
-            if symbol
-              .borrow_inner()
-              .decls()
-              .iter()
-              .any(|d| d.is_function())
-            {
-              self.create_symbol_member_or_export(
-                symbol,
-                SymbolNodeRef::ExpandoProperty(expando_ref),
-              );
-            }
+            self.create_symbol_member_or_export(
+              symbol,
+              SymbolNodeRef::ExpandoProperty(expando_ref),
+            );
           }
         }
       }
@@ -2695,7 +2663,6 @@ impl<'a> SymbolFiller<'a> {
 
     // fill the exported declarations
     if let Some(body) = &n.body {
-      let mod_symbol = mod_symbol;
       match body {
         TSModuleDeclarationBody::TSModuleBlock(block) => {
           for item in &block.body {
