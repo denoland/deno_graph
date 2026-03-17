@@ -28,69 +28,55 @@ pub fn ts_keyword_type<'a>(
   kind: TSKeywordKind,
 ) -> TSType<'a> {
   match kind {
-    TSKeywordKind::Any => {
-      TSType::TSAnyKeyword(Box::new_in(
-        TSAnyKeyword {
-          node_id: Cell::new(NodeId::DUMMY),
-          span: SPAN,
-        },
-        allocator,
-      ))
-    }
-    TSKeywordKind::Boolean => {
-      TSType::TSBooleanKeyword(Box::new_in(
-        TSBooleanKeyword {
-          node_id: Cell::new(NodeId::DUMMY),
-          span: SPAN,
-        },
-        allocator,
-      ))
-    }
-    TSKeywordKind::Number => {
-      TSType::TSNumberKeyword(Box::new_in(
-        TSNumberKeyword {
-          node_id: Cell::new(NodeId::DUMMY),
-          span: SPAN,
-        },
-        allocator,
-      ))
-    }
-    TSKeywordKind::String => {
-      TSType::TSStringKeyword(Box::new_in(
-        TSStringKeyword {
-          node_id: Cell::new(NodeId::DUMMY),
-          span: SPAN,
-        },
-        allocator,
-      ))
-    }
-    TSKeywordKind::Void => {
-      TSType::TSVoidKeyword(Box::new_in(
-        TSVoidKeyword {
-          node_id: Cell::new(NodeId::DUMMY),
-          span: SPAN,
-        },
-        allocator,
-      ))
-    }
-    TSKeywordKind::Null => {
-      TSType::TSNullKeyword(Box::new_in(
-        TSNullKeyword {
-          node_id: Cell::new(NodeId::DUMMY),
-          span: SPAN,
-        },
-        allocator,
-      ))
-    }
-    TSKeywordKind::BigInt => {
-      TSType::TSBigIntKeyword(Box::new_in(
-        TSBigIntKeyword {
-          node_id: Cell::new(NodeId::DUMMY),
-          span: SPAN,
-        },
-        allocator,
-      ))
-    }
+    TSKeywordKind::Any => TSType::TSAnyKeyword(Box::new_in(
+      TSAnyKeyword {
+        node_id: Cell::new(NodeId::DUMMY),
+        span: SPAN,
+      },
+      allocator,
+    )),
+    TSKeywordKind::Boolean => TSType::TSBooleanKeyword(Box::new_in(
+      TSBooleanKeyword {
+        node_id: Cell::new(NodeId::DUMMY),
+        span: SPAN,
+      },
+      allocator,
+    )),
+    TSKeywordKind::Number => TSType::TSNumberKeyword(Box::new_in(
+      TSNumberKeyword {
+        node_id: Cell::new(NodeId::DUMMY),
+        span: SPAN,
+      },
+      allocator,
+    )),
+    TSKeywordKind::String => TSType::TSStringKeyword(Box::new_in(
+      TSStringKeyword {
+        node_id: Cell::new(NodeId::DUMMY),
+        span: SPAN,
+      },
+      allocator,
+    )),
+    TSKeywordKind::Void => TSType::TSVoidKeyword(Box::new_in(
+      TSVoidKeyword {
+        node_id: Cell::new(NodeId::DUMMY),
+        span: SPAN,
+      },
+      allocator,
+    )),
+    TSKeywordKind::Null => TSType::TSNullKeyword(Box::new_in(
+      TSNullKeyword {
+        node_id: Cell::new(NodeId::DUMMY),
+        span: SPAN,
+      },
+      allocator,
+    )),
+    TSKeywordKind::BigInt => TSType::TSBigIntKeyword(Box::new_in(
+      TSBigIntKeyword {
+        node_id: Cell::new(NodeId::DUMMY),
+        span: SPAN,
+      },
+      allocator,
+    )),
   }
 }
 
@@ -227,10 +213,7 @@ pub fn is_void_type(return_type: &TSType) -> bool {
 pub fn any_type_ann<'a>(
   allocator: &'a Allocator,
 ) -> Box<'a, TSTypeAnnotation<'a>> {
-  type_ann(
-    allocator,
-    ts_keyword_type(allocator, TSKeywordKind::Any),
-  )
+  type_ann(allocator, ts_keyword_type(allocator, TSKeywordKind::Any))
 }
 
 pub fn ts_readonly<'a>(
@@ -341,9 +324,7 @@ pub fn ts_tuple_element<'a>(ts_type: TSType<'a>) -> TSTupleElement<'a> {
     TSType::TSUnionType(t) => TSTupleElement::TSUnionType(t),
     TSType::TSParenthesizedType(t) => TSTupleElement::TSParenthesizedType(t),
     TSType::JSDocNullableType(t) => TSTupleElement::JSDocNullableType(t),
-    TSType::JSDocNonNullableType(t) => {
-      TSTupleElement::JSDocNonNullableType(t)
-    }
+    TSType::JSDocNonNullableType(t) => TSTupleElement::JSDocNonNullableType(t),
     TSType::JSDocUnknownType(t) => TSTupleElement::JSDocUnknownType(t),
   }
 }
@@ -362,22 +343,34 @@ pub fn maybe_lit_to_ts_type<'a>(
     DeclMutabilityKind::Const => match expr {
       Expression::StringLiteral(lit_str) => Some(ts_lit_type(
         allocator,
-        TSLiteral::StringLiteral(Box::new_in(lit_str.as_ref().clone_in(allocator), allocator)),
+        TSLiteral::StringLiteral(Box::new_in(
+          lit_str.as_ref().clone_in(allocator),
+          allocator,
+        )),
       )),
       Expression::BooleanLiteral(lit_bool) => Some(ts_lit_type(
         allocator,
-        TSLiteral::BooleanLiteral(Box::new_in(lit_bool.as_ref().clone_in(allocator), allocator)),
+        TSLiteral::BooleanLiteral(Box::new_in(
+          lit_bool.as_ref().clone_in(allocator),
+          allocator,
+        )),
       )),
       Expression::NullLiteral(_) => {
         Some(ts_keyword_type(allocator, TSKeywordKind::Null))
       }
       Expression::NumericLiteral(lit_num) => Some(ts_lit_type(
         allocator,
-        TSLiteral::NumericLiteral(Box::new_in(lit_num.as_ref().clone_in(allocator), allocator)),
+        TSLiteral::NumericLiteral(Box::new_in(
+          lit_num.as_ref().clone_in(allocator),
+          allocator,
+        )),
       )),
       Expression::BigIntLiteral(lit_bigint) => Some(ts_lit_type(
         allocator,
-        TSLiteral::BigIntLiteral(Box::new_in(lit_bigint.as_ref().clone_in(allocator), allocator)),
+        TSLiteral::BigIntLiteral(Box::new_in(
+          lit_bigint.as_ref().clone_in(allocator),
+          allocator,
+        )),
       )),
       Expression::RegExpLiteral(_) => Some(regex_type(allocator)),
       _ => None,

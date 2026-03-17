@@ -6,11 +6,11 @@ use std::cell::Ref;
 use std::cell::RefCell;
 use std::hash::Hash;
 
+use deno_ast::Comment;
 use deno_ast::MediaType;
 use deno_ast::ModuleSpecifier;
 use deno_ast::ParsedSource;
 use deno_ast::SourceTextInfo;
-use deno_ast::Comment;
 use deno_ast::oxc::ast::ast::*;
 use deno_ast::oxc::span::GetSpan;
 use deno_ast::oxc::span::Span;
@@ -75,7 +75,10 @@ impl<'a> RootSymbol<'a> {
   /// Store a ParsedSource and return a reference that lives for 'a.
   /// Safety: The Box provides heap stability, and we never remove entries,
   /// so the reference remains valid for the lifetime of RootSymbol.
-  fn store_parsed_source(&self, source: ParsedSource<'a>) -> &'a ParsedSource<'a> {
+  fn store_parsed_source(
+    &self,
+    source: ParsedSource<'a>,
+  ) -> &'a ParsedSource<'a> {
     let sources = unsafe { &mut *self.parsed_sources.get() };
     sources.push(Box::new(source));
     let boxed = sources.last().unwrap();
@@ -253,13 +256,15 @@ impl<'a> RootSymbol<'a> {
     &self,
     wasm_module: &WasmModule,
   ) -> Option<ModuleInfoRef<'_>> {
-    let maybe_parsed_source =
-      self.parser.parse_program(self.allocator, ParseOptions {
+    let maybe_parsed_source = self.parser.parse_program(
+      self.allocator,
+      ParseOptions {
         specifier: &wasm_module.specifier,
         source: wasm_module.source_dts.clone(),
         media_type: MediaType::Dmts,
         scope_analysis: true,
-      });
+      },
+    );
     let Ok(source) = maybe_parsed_source else {
       return None;
     };
@@ -314,12 +319,15 @@ impl<'a> RootSymbol<'a> {
     &self,
     graph_module: &JsModule,
   ) -> Result<ParsedSource<'a>, deno_ast::ParseDiagnostic> {
-    self.parser.parse_program(self.allocator, ParseOptions {
-      specifier: &graph_module.specifier,
-      source: graph_module.source.text.clone(),
-      media_type: graph_module.media_type,
-      scope_analysis: true,
-    })
+    self.parser.parse_program(
+      self.allocator,
+      ParseOptions {
+        specifier: &graph_module.specifier,
+        source: graph_module.source.text.clone(),
+        media_type: graph_module.media_type,
+        scope_analysis: true,
+      },
+    )
   }
 }
 
@@ -363,14 +371,15 @@ impl std::fmt::Debug for SymbolId {
   }
 }
 
-
 #[derive(Clone, Copy)]
 pub struct SymbolNode<'a>(SymbolNodeInner<'a>);
 
 impl std::fmt::Debug for SymbolNode<'_> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let span = match &self.0 {
-      SymbolNodeInner::Json => return f.debug_tuple("SymbolNode").field(&"<json>").finish(),
+      SymbolNodeInner::Json => {
+        return f.debug_tuple("SymbolNode").field(&"<json>").finish();
+      }
       SymbolNodeInner::Module(span) => *span,
       SymbolNodeInner::ClassDecl(n) => n.span(),
       SymbolNodeInner::ExportDecl(n, _) => n.span(),
@@ -413,8 +422,8 @@ impl<'a> SymbolNode<'a> {
       SymbolNodeInner::Json => None,
       SymbolNodeInner::Module(span) => Some(SymbolNodeRef::Module(*span)),
       SymbolNodeInner::ClassDecl(n) => Some(SymbolNodeRef::ClassDecl(n)),
-      SymbolNodeInner::ExportDecl(export_decl, inner) => Some(
-        SymbolNodeRef::ExportDecl(
+      SymbolNodeInner::ExportDecl(export_decl, inner) => {
+        Some(SymbolNodeRef::ExportDecl(
           export_decl,
           match inner {
             SymbolNodeInnerExportDecl::Class(n) => ExportDeclRef::Class(n),
@@ -423,15 +432,27 @@ impl<'a> SymbolNode<'a> {
               ExportDeclRef::Var(decl, declarator, id)
             }
             SymbolNodeInnerExportDecl::TsEnum(n) => ExportDeclRef::TsEnum(n),
-            SymbolNodeInnerExportDecl::TsInterface(n) => ExportDeclRef::TsInterface(n),
-            SymbolNodeInnerExportDecl::TsNamespace(n) => ExportDeclRef::TsModule(n),
-            SymbolNodeInnerExportDecl::TsTypeAlias(n) => ExportDeclRef::TsTypeAlias(n),
-            SymbolNodeInnerExportDecl::TsImportEquals(n) => ExportDeclRef::TsImportEquals(n),
+            SymbolNodeInnerExportDecl::TsInterface(n) => {
+              ExportDeclRef::TsInterface(n)
+            }
+            SymbolNodeInnerExportDecl::TsNamespace(n) => {
+              ExportDeclRef::TsModule(n)
+            }
+            SymbolNodeInnerExportDecl::TsTypeAlias(n) => {
+              ExportDeclRef::TsTypeAlias(n)
+            }
+            SymbolNodeInnerExportDecl::TsImportEquals(n) => {
+              ExportDeclRef::TsImportEquals(n)
+            }
           },
-        ),
-      ),
-      SymbolNodeInner::ExportDefaultDecl(n) => Some(SymbolNodeRef::ExportDefaultDecl(n)),
-      SymbolNodeInner::ExportDefaultExpr(n) => Some(SymbolNodeRef::ExportDefaultExpr(n)),
+        ))
+      }
+      SymbolNodeInner::ExportDefaultDecl(n) => {
+        Some(SymbolNodeRef::ExportDefaultDecl(n))
+      }
+      SymbolNodeInner::ExportDefaultExpr(n) => {
+        Some(SymbolNodeRef::ExportDefaultExpr(n))
+      }
       SymbolNodeInner::FnDecl(n) => Some(SymbolNodeRef::FnDecl(n)),
       SymbolNodeInner::TsEnum(n) => Some(SymbolNodeRef::TsEnum(n)),
       SymbolNodeInner::TsNamespace(n) => Some(SymbolNodeRef::TsNamespace(n)),
@@ -446,18 +467,34 @@ impl<'a> SymbolNode<'a> {
       SymbolNodeInner::AutoAccessor(n) => Some(SymbolNodeRef::AutoAccessor(n)),
       SymbolNodeInner::ClassMethod(n) => Some(SymbolNodeRef::ClassMethod(n)),
       SymbolNodeInner::ClassProp(n) => Some(SymbolNodeRef::ClassProp(n)),
-      SymbolNodeInner::ClassParamProp(n) => Some(SymbolNodeRef::ClassParamProp(n)),
+      SymbolNodeInner::ClassParamProp(n) => {
+        Some(SymbolNodeRef::ClassParamProp(n))
+      }
       SymbolNodeInner::Constructor(n) => Some(SymbolNodeRef::Constructor(n)),
       SymbolNodeInner::ExpandoProperty(n) => {
         Some(SymbolNodeRef::ExpandoProperty(ExpandoPropertyRef(n)))
       }
-      SymbolNodeInner::TsIndexSignature(n) => Some(SymbolNodeRef::TsIndexSignature(n)),
-      SymbolNodeInner::TsCallSignatureDecl(n) => Some(SymbolNodeRef::TsCallSignatureDecl(n)),
-      SymbolNodeInner::TsConstructSignatureDecl(n) => Some(SymbolNodeRef::TsConstructSignatureDecl(n)),
-      SymbolNodeInner::TsPropertySignature(n) => Some(SymbolNodeRef::TsPropertySignature(n)),
-      SymbolNodeInner::TsGetterSignature(n) => Some(SymbolNodeRef::TsGetterSignature(n)),
-      SymbolNodeInner::TsSetterSignature(n) => Some(SymbolNodeRef::TsSetterSignature(n)),
-      SymbolNodeInner::TsMethodSignature(n) => Some(SymbolNodeRef::TsMethodSignature(n)),
+      SymbolNodeInner::TsIndexSignature(n) => {
+        Some(SymbolNodeRef::TsIndexSignature(n))
+      }
+      SymbolNodeInner::TsCallSignatureDecl(n) => {
+        Some(SymbolNodeRef::TsCallSignatureDecl(n))
+      }
+      SymbolNodeInner::TsConstructSignatureDecl(n) => {
+        Some(SymbolNodeRef::TsConstructSignatureDecl(n))
+      }
+      SymbolNodeInner::TsPropertySignature(n) => {
+        Some(SymbolNodeRef::TsPropertySignature(n))
+      }
+      SymbolNodeInner::TsGetterSignature(n) => {
+        Some(SymbolNodeRef::TsGetterSignature(n))
+      }
+      SymbolNodeInner::TsSetterSignature(n) => {
+        Some(SymbolNodeRef::TsSetterSignature(n))
+      }
+      SymbolNodeInner::TsMethodSignature(n) => {
+        Some(SymbolNodeRef::TsMethodSignature(n))
+      }
     }
   }
 }
@@ -466,7 +503,11 @@ impl<'a> SymbolNode<'a> {
 enum SymbolNodeInnerExportDecl<'a> {
   Class(&'a Class<'a>),
   Fn(&'a Function<'a>),
-  Var(&'a VariableDeclaration<'a>, &'a VariableDeclarator<'a>, &'a BindingIdentifier<'a>),
+  Var(
+    &'a VariableDeclaration<'a>,
+    &'a VariableDeclarator<'a>,
+    &'a BindingIdentifier<'a>,
+  ),
   TsEnum(&'a TSEnumDeclaration<'a>),
   TsInterface(&'a TSInterfaceDeclaration<'a>),
   TsNamespace(&'a TSModuleDeclaration<'a>),
@@ -479,7 +520,10 @@ enum SymbolNodeInner<'a> {
   Json,
   Module(Span),
   ClassDecl(&'a Class<'a>),
-  ExportDecl(&'a ExportNamedDeclaration<'a>, SymbolNodeInnerExportDecl<'a>),
+  ExportDecl(
+    &'a ExportNamedDeclaration<'a>,
+    SymbolNodeInnerExportDecl<'a>,
+  ),
   ExportDefaultDecl(&'a ExportDefaultDeclaration<'a>),
   ExportDefaultExpr(&'a ExportDefaultDeclarationKind<'a>),
   FnDecl(&'a Function<'a>),
@@ -487,8 +531,16 @@ enum SymbolNodeInner<'a> {
   TsNamespace(&'a TSModuleDeclaration<'a>),
   TsTypeAlias(&'a TSTypeAliasDeclaration<'a>),
   TsInterface(&'a TSInterfaceDeclaration<'a>),
-  Var(&'a VariableDeclaration<'a>, &'a VariableDeclarator<'a>, &'a BindingIdentifier<'a>),
-  UsingVar(&'a VariableDeclaration<'a>, &'a VariableDeclarator<'a>, &'a BindingIdentifier<'a>),
+  Var(
+    &'a VariableDeclaration<'a>,
+    &'a VariableDeclarator<'a>,
+    &'a BindingIdentifier<'a>,
+  ),
+  UsingVar(
+    &'a VariableDeclaration<'a>,
+    &'a VariableDeclarator<'a>,
+    &'a BindingIdentifier<'a>,
+  ),
   AutoAccessor(&'a AccessorProperty<'a>),
   ClassMethod(&'a MethodDefinition<'a>),
   ClassProp(&'a PropertyDefinition<'a>),
@@ -508,7 +560,11 @@ enum SymbolNodeInner<'a> {
 pub enum ExportDeclRef<'a> {
   Class(&'a Class<'a>),
   Fn(&'a Function<'a>),
-  Var(&'a VariableDeclaration<'a>, &'a VariableDeclarator<'a>, &'a BindingIdentifier<'a>),
+  Var(
+    &'a VariableDeclaration<'a>,
+    &'a VariableDeclarator<'a>,
+    &'a BindingIdentifier<'a>,
+  ),
   TsEnum(&'a TSEnumDeclaration<'a>),
   TsInterface(&'a TSInterfaceDeclaration<'a>),
   TsModule(&'a TSModuleDeclaration<'a>),
@@ -528,8 +584,16 @@ pub enum SymbolNodeRef<'a> {
   TsInterface(&'a TSInterfaceDeclaration<'a>),
   TsNamespace(&'a TSModuleDeclaration<'a>),
   TsTypeAlias(&'a TSTypeAliasDeclaration<'a>),
-  Var(&'a VariableDeclaration<'a>, &'a VariableDeclarator<'a>, &'a BindingIdentifier<'a>),
-  UsingVar(&'a VariableDeclaration<'a>, &'a VariableDeclarator<'a>, &'a BindingIdentifier<'a>),
+  Var(
+    &'a VariableDeclaration<'a>,
+    &'a VariableDeclarator<'a>,
+    &'a BindingIdentifier<'a>,
+  ),
+  UsingVar(
+    &'a VariableDeclaration<'a>,
+    &'a VariableDeclarator<'a>,
+    &'a BindingIdentifier<'a>,
+  ),
   // members
   AutoAccessor(&'a AccessorProperty<'a>),
   ClassMethod(&'a MethodDefinition<'a>),
@@ -549,28 +613,43 @@ pub enum SymbolNodeRef<'a> {
 impl<'a> SymbolNodeRef<'a> {
   /// The local name of the node, if it has a name.
   pub fn maybe_name(&self) -> Option<Cow<'a, str>> {
-    fn ts_module_name_to_string<'b>(module_name: &'b TSModuleDeclarationName<'b>) -> Option<&'b str> {
+    fn ts_module_name_to_string<'b>(
+      module_name: &'b TSModuleDeclarationName<'b>,
+    ) -> Option<&'b str> {
       match module_name {
         TSModuleDeclarationName::Identifier(ident) => Some(&ident.name),
         TSModuleDeclarationName::StringLiteral(str) => Some(&str.value),
       }
     }
 
-    fn maybe_property_key_name<'b>(key: &'b PropertyKey<'b>) -> Option<Cow<'b, str>> {
+    fn maybe_property_key_name<'b>(
+      key: &'b PropertyKey<'b>,
+    ) -> Option<Cow<'b, str>> {
       match key {
-        PropertyKey::StaticIdentifier(n) => Some(Cow::Borrowed(n.name.as_str())),
-        PropertyKey::PrivateIdentifier(n) => Some(Cow::Owned(format!("#{}", n.name))),
+        PropertyKey::StaticIdentifier(n) => {
+          Some(Cow::Borrowed(n.name.as_str()))
+        }
+        PropertyKey::PrivateIdentifier(n) => {
+          Some(Cow::Owned(format!("#{}", n.name)))
+        }
         PropertyKey::StringLiteral(n) => Some(Cow::Borrowed(n.value.as_str())),
         PropertyKey::NumericLiteral(n) => Some(Cow::Owned(n.value.to_string())),
         _ => None,
       }
     }
 
-    fn maybe_param_prop_name<'b>(param: &'b FormalParameter<'b>) -> Option<Cow<'b, str>> {
+    fn maybe_param_prop_name<'b>(
+      param: &'b FormalParameter<'b>,
+    ) -> Option<Cow<'b, str>> {
       match &param.pattern {
-        BindingPattern::BindingIdentifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
-        BindingPattern::AssignmentPattern(assign_pat) => match &assign_pat.left {
-          BindingPattern::BindingIdentifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
+        BindingPattern::BindingIdentifier(ident) => {
+          Some(Cow::Borrowed(ident.name.as_str()))
+        }
+        BindingPattern::AssignmentPattern(assign_pat) => match &assign_pat.left
+        {
+          BindingPattern::BindingIdentifier(ident) => {
+            Some(Cow::Borrowed(ident.name.as_str()))
+          }
           _ => unreachable!(),
         },
         _ => unreachable!(),
@@ -582,34 +661,58 @@ impl<'a> SymbolNodeRef<'a> {
         Expression::Identifier(n) => Some(Cow::Borrowed(n.name.as_str())),
         Expression::StringLiteral(n) => Some(Cow::Borrowed(n.value.as_str())),
         Expression::NumericLiteral(n) => Some(Cow::Owned(n.value.to_string())),
-        Expression::BigIntLiteral(n) => Some(Cow::Owned(n.raw.as_ref().map(|r| r.to_string()).unwrap_or_default())),
+        Expression::BigIntLiteral(n) => Some(Cow::Owned(
+          n.raw.as_ref().map(|r| r.to_string()).unwrap_or_default(),
+        )),
         _ => None,
       }
     }
 
     match self {
       Self::Module(_) => None,
-      Self::ClassDecl(n) => n.id.as_ref().map(|id| Cow::Borrowed(id.name.as_str())),
+      Self::ClassDecl(n) => {
+        n.id.as_ref().map(|id| Cow::Borrowed(id.name.as_str()))
+      }
       Self::ExportDecl(_, n) => match n {
-        ExportDeclRef::Class(n) => n.id.as_ref().map(|id| Cow::Borrowed(id.name.as_str())),
-        ExportDeclRef::Fn(n) => n.id.as_ref().map(|id| Cow::Borrowed(id.name.as_str())),
-        ExportDeclRef::Var(_, _, ident) => Some(Cow::Borrowed(ident.name.as_str())),
+        ExportDeclRef::Class(n) => {
+          n.id.as_ref().map(|id| Cow::Borrowed(id.name.as_str()))
+        }
+        ExportDeclRef::Fn(n) => {
+          n.id.as_ref().map(|id| Cow::Borrowed(id.name.as_str()))
+        }
+        ExportDeclRef::Var(_, _, ident) => {
+          Some(Cow::Borrowed(ident.name.as_str()))
+        }
         ExportDeclRef::TsEnum(n) => Some(Cow::Borrowed(n.id.name.as_str())),
-        ExportDeclRef::TsInterface(n) => Some(Cow::Borrowed(n.id.name.as_str())),
+        ExportDeclRef::TsInterface(n) => {
+          Some(Cow::Borrowed(n.id.name.as_str()))
+        }
         ExportDeclRef::TsModule(n) => {
           ts_module_name_to_string(&n.id).map(Cow::Borrowed)
         }
-        ExportDeclRef::TsTypeAlias(n) => Some(Cow::Borrowed(n.id.name.as_str())),
-        ExportDeclRef::TsImportEquals(n) => Some(Cow::Borrowed(n.id.name.as_str())),
+        ExportDeclRef::TsTypeAlias(n) => {
+          Some(Cow::Borrowed(n.id.name.as_str()))
+        }
+        ExportDeclRef::TsImportEquals(n) => {
+          Some(Cow::Borrowed(n.id.name.as_str()))
+        }
       },
       Self::ExportDefaultDecl(n) => match &n.declaration {
-        ExportDefaultDeclarationKind::ClassDeclaration(n) => n.id.as_ref().map(|id| Cow::Borrowed(id.name.as_str())),
-        ExportDefaultDeclarationKind::FunctionDeclaration(n) => n.id.as_ref().map(|id| Cow::Borrowed(id.name.as_str())),
-        ExportDefaultDeclarationKind::TSInterfaceDeclaration(n) => Some(Cow::Borrowed(n.id.name.as_str())),
+        ExportDefaultDeclarationKind::ClassDeclaration(n) => {
+          n.id.as_ref().map(|id| Cow::Borrowed(id.name.as_str()))
+        }
+        ExportDefaultDeclarationKind::FunctionDeclaration(n) => {
+          n.id.as_ref().map(|id| Cow::Borrowed(id.name.as_str()))
+        }
+        ExportDefaultDeclarationKind::TSInterfaceDeclaration(n) => {
+          Some(Cow::Borrowed(n.id.name.as_str()))
+        }
         _ => None,
       },
       Self::ExportDefaultExpr(_) => None,
-      Self::FnDecl(n) => n.id.as_ref().map(|id| Cow::Borrowed(id.name.as_str())),
+      Self::FnDecl(n) => {
+        n.id.as_ref().map(|id| Cow::Borrowed(id.name.as_str()))
+      }
       Self::TsEnum(n) => Some(Cow::Borrowed(n.id.name.as_str())),
       Self::TsInterface(n) => Some(Cow::Borrowed(n.id.name.as_str())),
       Self::TsNamespace(n) => {
@@ -667,7 +770,8 @@ impl<'a> SymbolNodeRef<'a> {
   /// If the node is an interface.
   pub fn is_interface(&self) -> bool {
     match self {
-      Self::TsInterface(_) | Self::ExportDecl(_, ExportDeclRef::TsInterface(_)) => true,
+      Self::TsInterface(_)
+      | Self::ExportDecl(_, ExportDeclRef::TsInterface(_)) => true,
       Self::ExportDefaultDecl(n) => matches!(
         n.declaration,
         ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
@@ -706,7 +810,9 @@ impl<'a> SymbolNodeRef<'a> {
       SymbolNodeRef::ClassMethod(m) => m.value.body.is_some(),
       SymbolNodeRef::Constructor(n) => n.value.body.is_some(),
       SymbolNodeRef::ExportDefaultDecl(n) => match &n.declaration {
-        ExportDefaultDeclarationKind::FunctionDeclaration(n) => n.body.is_some(),
+        ExportDefaultDeclarationKind::FunctionDeclaration(n) => {
+          n.body.is_some()
+        }
         ExportDefaultDeclarationKind::ClassDeclaration(_)
         | ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => true,
         _ => false,
@@ -717,7 +823,9 @@ impl<'a> SymbolNodeRef<'a> {
         ExportDeclRef::Class(_)
         | ExportDeclRef::TsEnum(_)
         | ExportDeclRef::TsInterface(_) => true,
-        ExportDeclRef::TsTypeAlias(_) | ExportDeclRef::Var(..) | ExportDeclRef::TsImportEquals(_) => false,
+        ExportDeclRef::TsTypeAlias(_)
+        | ExportDeclRef::Var(..)
+        | ExportDeclRef::TsImportEquals(_) => false,
       },
       SymbolNodeRef::Module(_)
       | SymbolNodeRef::ClassDecl(_)
@@ -915,21 +1023,27 @@ impl<'a> ExpandoPropertyRef<'a> {
       }
   }
 
-  fn maybe_static_member<'b>(expr: &'b AssignmentExpression<'b>) -> Option<&'b StaticMemberExpression<'b>> {
+  fn maybe_static_member<'b>(
+    expr: &'b AssignmentExpression<'b>,
+  ) -> Option<&'b StaticMemberExpression<'b>> {
     match &expr.left {
       AssignmentTarget::StaticMemberExpression(member) => Some(member),
       _ => None,
     }
   }
 
-  fn maybe_computed_member<'b>(expr: &'b AssignmentExpression<'b>) -> Option<&'b ComputedMemberExpression<'b>> {
+  fn maybe_computed_member<'b>(
+    expr: &'b AssignmentExpression<'b>,
+  ) -> Option<&'b ComputedMemberExpression<'b>> {
     match &expr.left {
       AssignmentTarget::ComputedMemberExpression(member) => Some(member),
       _ => None,
     }
   }
 
-  fn maybe_obj_ident<'b>(expr: &'b AssignmentExpression<'b>) -> Option<&'b IdentifierReference<'b>> {
+  fn maybe_obj_ident<'b>(
+    expr: &'b AssignmentExpression<'b>,
+  ) -> Option<&'b IdentifierReference<'b>> {
     // Try static member first, then computed member
     if let Some(member) = Self::maybe_static_member(expr) {
       match &member.object {
@@ -946,7 +1060,9 @@ impl<'a> ExpandoPropertyRef<'a> {
     None
   }
 
-  fn maybe_prop_name_str<'b>(expr: &'b AssignmentExpression<'b>) -> Option<&'b str> {
+  fn maybe_prop_name_str<'b>(
+    expr: &'b AssignmentExpression<'b>,
+  ) -> Option<&'b str> {
     if let Some(member) = Self::maybe_static_member(expr) {
       return Some(member.property.name.as_str());
     }
@@ -1343,11 +1459,9 @@ impl<'a> ModuleInfoRef<'a> {
   ) -> Option<impl Iterator<Item = &'a str> + use<'a>> {
     match self {
       Self::Json(_) => None,
-      Self::Esm(m) => Some(
-        m.re_exports
-          .iter()
-          .map(|e| e.source.value.as_str()),
-      ),
+      Self::Esm(m) => {
+        Some(m.re_exports.iter().map(|e| e.source.value.as_str()))
+      }
     }
   }
 
@@ -1718,7 +1832,10 @@ impl<'a> ModuleBuilder<'a> {
     symbol
   }
 
-  fn create_new_symbol_inner(&self, parent_id: Option<SymbolId>) -> &SymbolMut<'a> {
+  fn create_new_symbol_inner(
+    &self,
+    parent_id: Option<SymbolId>,
+  ) -> &SymbolMut<'a> {
     let symbol_id = self.get_next_symbol_id();
     self.symbols.insert(
       symbol_id,
@@ -1812,11 +1929,7 @@ impl<'a> SymbolFiller<'a> {
     ));
     let is_declaration = self.is_declaration;
     for stmt in &program.body {
-      self.fill_stmt(
-        stmt,
-        module_symbol,
-        is_declaration,
-      );
+      self.fill_stmt(stmt, module_symbol, is_declaration);
     }
   }
 
@@ -1879,7 +1992,12 @@ impl<'a> SymbolFiller<'a> {
       Statement::ExportNamedDeclaration(export_decl) => {
         if let Some(decl) = &export_decl.declaration {
           // export { declaration }
-          self.fill_export_named_decl(export_decl, decl, module_symbol, is_ambient);
+          self.fill_export_named_decl(
+            export_decl,
+            decl,
+            module_symbol,
+            is_ambient,
+          );
         } else {
           // export { specifiers } or export { specifiers } from 'source'
           self.fill_export_named_specifiers(export_decl, module_symbol);
@@ -1899,9 +2017,13 @@ impl<'a> SymbolFiller<'a> {
                 ),
               );
             if let Some(ident) = n.id.as_ref() {
-              self.builder.swc_id_to_symbol_id.insert(ident.to_id(), default_export_symbol_id);
+              self
+                .builder
+                .swc_id_to_symbol_id
+                .insert(ident.to_id(), default_export_symbol_id);
             }
-            let symbol = self.builder.symbol_mut(default_export_symbol_id).unwrap();
+            let symbol =
+              self.builder.symbol_mut(default_export_symbol_id).unwrap();
             self.fill_class(symbol, n);
           }
           ExportDefaultDeclarationKind::FunctionDeclaration(n) => {
@@ -1916,7 +2038,10 @@ impl<'a> SymbolFiller<'a> {
                 ),
               );
             if let Some(ident) = n.id.as_ref() {
-              self.builder.swc_id_to_symbol_id.insert(ident.to_id(), default_export_symbol_id);
+              self
+                .builder
+                .swc_id_to_symbol_id
+                .insert(ident.to_id(), default_export_symbol_id);
             }
             // nothing to fill for functions
           }
@@ -1931,8 +2056,12 @@ impl<'a> SymbolFiller<'a> {
                   default_decl.span,
                 ),
               );
-            self.builder.swc_id_to_symbol_id.insert(n.id.to_id(), default_export_symbol_id);
-            let symbol = self.builder.symbol_mut(default_export_symbol_id).unwrap();
+            self
+              .builder
+              .swc_id_to_symbol_id
+              .insert(n.id.to_id(), default_export_symbol_id);
+            let symbol =
+              self.builder.symbol_mut(default_export_symbol_id).unwrap();
             self.fill_ts_interface(symbol, n)
           }
           _ => {
@@ -1962,9 +2091,7 @@ impl<'a> SymbolFiller<'a> {
           module_symbol.add_export(export_name, symbol_id);
         } else {
           // `export * from "..."` - bare star re-export
-          self
-            .builder
-            .add_re_export(n);
+          self.builder.add_re_export(n);
         }
       }
       Statement::TSImportEqualsDeclaration(import_equals) => {
@@ -2033,9 +2160,7 @@ impl<'a> SymbolFiller<'a> {
             id,
             SymbolDecl::new(
               SymbolDeclKind::Definition(SymbolNode(
-                SymbolNodeInner::ClassDecl(
-                  n,
-                ),
+                SymbolNodeInner::ClassDecl(n),
               )),
               n.span,
             ),
@@ -2056,11 +2181,9 @@ impl<'a> SymbolFiller<'a> {
           let symbol_id = self.builder.ensure_symbol_for_swc_id(
             ident.to_id(),
             SymbolDecl::new(
-              SymbolDeclKind::Definition(SymbolNode(
-                SymbolNodeInner::FnDecl(
-                  n,
-                ),
-              )),
+              SymbolDeclKind::Definition(SymbolNode(SymbolNodeInner::FnDecl(
+                n,
+              ))),
               n.span,
             ),
             module_symbol.symbol_id(),
@@ -2080,20 +2203,11 @@ impl<'a> SymbolFiller<'a> {
         );
         for decl in &var_decl.declarations {
           for ident in find_binding_ids(&decl.id) {
-            let export_name =
-              decls_are_exports.then(|| ident.name.to_string());
+            let export_name = decls_are_exports.then(|| ident.name.to_string());
             let node_inner = if is_using {
-              SymbolNodeInner::UsingVar(
-                var_decl,
-                decl,
-                ident,
-              )
+              SymbolNodeInner::UsingVar(var_decl, decl, ident)
             } else {
-              SymbolNodeInner::Var(
-                var_decl,
-                decl,
-                ident,
-              )
+              SymbolNodeInner::Var(var_decl, decl, ident)
             };
             let symbol_id = self.builder.ensure_symbol_for_swc_id(
               ident.to_id(),
@@ -2118,9 +2232,7 @@ impl<'a> SymbolFiller<'a> {
           id,
           SymbolDecl::new(
             SymbolDeclKind::Definition(SymbolNode(
-              SymbolNodeInner::TsInterface(
-                n,
-              ),
+              SymbolNodeInner::TsInterface(n),
             )),
             n.span,
           ),
@@ -2140,9 +2252,7 @@ impl<'a> SymbolFiller<'a> {
           n.id.to_id(),
           SymbolDecl::new(
             SymbolDeclKind::Definition(SymbolNode(
-              SymbolNodeInner::TsTypeAlias(
-                n,
-              ),
+              SymbolNodeInner::TsTypeAlias(n),
             )),
             n.span,
           ),
@@ -2159,9 +2269,7 @@ impl<'a> SymbolFiller<'a> {
         let symbol_id = self.builder.ensure_symbol_for_swc_id(
           n.id.to_id(),
           SymbolDecl::new(
-            SymbolDeclKind::Definition(SymbolNode(
-              SymbolNodeInner::TsEnum(n),
-            )),
+            SymbolDeclKind::Definition(SymbolNode(SymbolNodeInner::TsEnum(n))),
             n.span,
           ),
           module_symbol.symbol_id(),
@@ -2263,11 +2371,7 @@ impl<'a> SymbolFiller<'a> {
                 SymbolDeclKind::Definition(SymbolNode(
                   SymbolNodeInner::ExportDecl(
                     export_decl,
-                    SymbolNodeInnerExportDecl::Var(
-                      n,
-                      decl,
-                      ident,
-                    ),
+                    SymbolNodeInnerExportDecl::Var(n, decl, ident),
                   ),
                 )),
                 decl.span,
@@ -2286,9 +2390,7 @@ impl<'a> SymbolFiller<'a> {
             SymbolDeclKind::Definition(SymbolNode(
               SymbolNodeInner::ExportDecl(
                 export_decl,
-                SymbolNodeInnerExportDecl::TsInterface(
-                  n,
-                ),
+                SymbolNodeInnerExportDecl::TsInterface(n),
               ),
             )),
             export_decl.span,
@@ -2307,9 +2409,7 @@ impl<'a> SymbolFiller<'a> {
             SymbolDeclKind::Definition(SymbolNode(
               SymbolNodeInner::ExportDecl(
                 export_decl,
-                SymbolNodeInnerExportDecl::TsTypeAlias(
-                  n,
-                ),
+                SymbolNodeInnerExportDecl::TsTypeAlias(n),
               ),
             )),
             export_decl.span,
@@ -2342,9 +2442,7 @@ impl<'a> SymbolFiller<'a> {
             SymbolDeclKind::Definition(SymbolNode(
               SymbolNodeInner::ExportDecl(
                 export_decl,
-                SymbolNodeInnerExportDecl::TsNamespace(
-                  n,
-                ),
+                SymbolNodeInnerExportDecl::TsNamespace(n),
               ),
             )),
             export_decl.span,
@@ -2373,9 +2471,7 @@ impl<'a> SymbolFiller<'a> {
             SymbolDeclKind::Definition(SymbolNode(
               SymbolNodeInner::ExportDecl(
                 export_decl,
-                SymbolNodeInnerExportDecl::TsImportEquals(
-                  n.as_ref(),
-                ),
+                SymbolNodeInnerExportDecl::TsImportEquals(n.as_ref()),
               ),
             )),
             export_decl.span,
@@ -2414,27 +2510,21 @@ impl<'a> SymbolFiller<'a> {
         None => {
           let local_id = module_export_name_to_id(&specifier.local);
           if local_name != exported_name {
-            let orig_symbol = self
-              .builder
-              .create_new_symbol(module_symbol.symbol_id());
+            let orig_symbol =
+              self.builder.create_new_symbol(module_symbol.symbol_id());
             orig_symbol.add_decl(SymbolDecl::new(
               SymbolDeclKind::Target(local_id),
               specifier.span,
             ));
-            module_symbol
-              .add_export(exported_name, orig_symbol.symbol_id());
+            module_symbol.add_export(exported_name, orig_symbol.symbol_id());
           } else {
-            let named_symbol = self
-              .builder
-              .create_new_symbol(module_symbol.symbol_id());
+            let named_symbol =
+              self.builder.create_new_symbol(module_symbol.symbol_id());
             named_symbol.add_decl(SymbolDecl::new(
               SymbolDeclKind::Target(local_id),
               specifier.span,
             ));
-            module_symbol.add_export(
-              local_name,
-              named_symbol.symbol_id(),
-            );
+            module_symbol.add_export(local_name, named_symbol.symbol_id());
           }
         }
       }
@@ -2510,7 +2600,8 @@ impl<'a> SymbolFiller<'a> {
         )
       }
       TSModuleReference::QualifiedName(qualified_name) => {
-        let (leftmost_id, parts) = super::helpers::ts_qualified_name_parts(qualified_name);
+        let (leftmost_id, parts) =
+          super::helpers::ts_qualified_name_parts(qualified_name);
         self.builder.ensure_symbol_for_swc_id(
           id,
           SymbolDecl::new(
@@ -2540,7 +2631,11 @@ impl<'a> SymbolFiller<'a> {
     self.fill_class_elements(symbol, &n.body.body);
   }
 
-  fn fill_ts_interface(&self, symbol: &SymbolMut<'a>, n: &'a TSInterfaceDeclaration<'a>) {
+  fn fill_ts_interface(
+    &self,
+    symbol: &SymbolMut<'a>,
+    n: &'a TSInterfaceDeclaration<'a>,
+  ) {
     for member in &n.body.body {
       match member {
         TSSignature::TSCallSignatureDeclaration(n) => {
@@ -2612,7 +2707,9 @@ impl<'a> SymbolFiller<'a> {
           let previous_symbol = mod_symbol;
           id = match &inner_decl.id {
             TSModuleDeclarationName::Identifier(ident) => ident.to_id(),
-            TSModuleDeclarationName::StringLiteral(_) => return Some(mod_symbol.symbol_id()),
+            TSModuleDeclarationName::StringLiteral(_) => {
+              return Some(mod_symbol.symbol_id());
+            }
           };
           let nested_mod_symbol = self.builder.get_symbol_from_swc_id(
             id.clone(),
@@ -2633,7 +2730,11 @@ impl<'a> SymbolFiller<'a> {
             match inner_body {
               TSModuleDeclarationBody::TSModuleBlock(block) => {
                 for item in &block.body {
-                  self.fill_stmt(item, nested_mod_symbol, is_ambient || inner_decl.declare);
+                  self.fill_stmt(
+                    item,
+                    nested_mod_symbol,
+                    is_ambient || inner_decl.declare,
+                  );
                 }
               }
               TSModuleDeclarationBody::TSModuleDeclaration(_) => {
@@ -2648,7 +2749,11 @@ impl<'a> SymbolFiller<'a> {
     Some(mod_symbol.symbol_id())
   }
 
-  fn fill_class_elements(&self, symbol: &SymbolMut<'a>, members: &'a [ClassElement<'a>]) {
+  fn fill_class_elements(
+    &self,
+    symbol: &SymbolMut<'a>,
+    members: &'a [ClassElement<'a>],
+  ) {
     for member in members {
       match member {
         ClassElement::MethodDefinition(method) => {
@@ -2659,7 +2764,10 @@ impl<'a> SymbolFiller<'a> {
             );
             // Check for parameter properties in the constructor
             for param in &method.value.params.items {
-              if param.accessibility.is_some() || param.r#override || param.readonly {
+              if param.accessibility.is_some()
+                || param.r#override
+                || param.readonly
+              {
                 self.create_symbol_member_or_export(
                   symbol,
                   SymbolNodeRef::ClassParamProp(param),
@@ -2704,71 +2812,47 @@ impl<'a> SymbolFiller<'a> {
     node_ref: SymbolNodeRef<'a>,
   ) -> &'b SymbolMut<'a> {
     let (node_inner, is_static, source_range) = match node_ref {
-      SymbolNodeRef::AutoAccessor(n) => (
-        SymbolNodeInner::AutoAccessor(n),
-        n.r#static,
-        n.span,
-      ),
-      SymbolNodeRef::ClassMethod(n) => (
-        SymbolNodeInner::ClassMethod(n),
-        n.r#static,
-        n.span,
-      ),
-      SymbolNodeRef::ClassProp(n) => (
-        SymbolNodeInner::ClassProp(n),
-        n.r#static,
-        n.span,
-      ),
+      SymbolNodeRef::AutoAccessor(n) => {
+        (SymbolNodeInner::AutoAccessor(n), n.r#static, n.span)
+      }
+      SymbolNodeRef::ClassMethod(n) => {
+        (SymbolNodeInner::ClassMethod(n), n.r#static, n.span)
+      }
+      SymbolNodeRef::ClassProp(n) => {
+        (SymbolNodeInner::ClassProp(n), n.r#static, n.span)
+      }
       SymbolNodeRef::ClassParamProp(n) => (
         SymbolNodeInner::ClassParamProp(n),
         /* is_static */ false,
         n.span,
       ),
-      SymbolNodeRef::Constructor(n) => (
-        SymbolNodeInner::Constructor(n),
-        true,
-        n.span,
-      ),
-      SymbolNodeRef::ExpandoProperty(n) => (
-        SymbolNodeInner::ExpandoProperty(n.0),
-        true,
-        n.0.span(),
-      ),
-      SymbolNodeRef::TsIndexSignature(n) => (
-        SymbolNodeInner::TsIndexSignature(n),
-        false,
-        n.span,
-      ),
-      SymbolNodeRef::TsCallSignatureDecl(n) => (
-        SymbolNodeInner::TsCallSignatureDecl(n),
-        false,
-        n.span,
-      ),
-      SymbolNodeRef::TsConstructSignatureDecl(n) => (
-        SymbolNodeInner::TsConstructSignatureDecl(n),
-        false,
-        n.span,
-      ),
-      SymbolNodeRef::TsPropertySignature(n) => (
-        SymbolNodeInner::TsPropertySignature(n),
-        false,
-        n.span,
-      ),
-      SymbolNodeRef::TsGetterSignature(n) => (
-        SymbolNodeInner::TsGetterSignature(n),
-        false,
-        n.span,
-      ),
-      SymbolNodeRef::TsSetterSignature(n) => (
-        SymbolNodeInner::TsSetterSignature(n),
-        false,
-        n.span,
-      ),
-      SymbolNodeRef::TsMethodSignature(n) => (
-        SymbolNodeInner::TsMethodSignature(n),
-        false,
-        n.span,
-      ),
+      SymbolNodeRef::Constructor(n) => {
+        (SymbolNodeInner::Constructor(n), true, n.span)
+      }
+      SymbolNodeRef::ExpandoProperty(n) => {
+        (SymbolNodeInner::ExpandoProperty(n.0), true, n.0.span())
+      }
+      SymbolNodeRef::TsIndexSignature(n) => {
+        (SymbolNodeInner::TsIndexSignature(n), false, n.span)
+      }
+      SymbolNodeRef::TsCallSignatureDecl(n) => {
+        (SymbolNodeInner::TsCallSignatureDecl(n), false, n.span)
+      }
+      SymbolNodeRef::TsConstructSignatureDecl(n) => {
+        (SymbolNodeInner::TsConstructSignatureDecl(n), false, n.span)
+      }
+      SymbolNodeRef::TsPropertySignature(n) => {
+        (SymbolNodeInner::TsPropertySignature(n), false, n.span)
+      }
+      SymbolNodeRef::TsGetterSignature(n) => {
+        (SymbolNodeInner::TsGetterSignature(n), false, n.span)
+      }
+      SymbolNodeRef::TsSetterSignature(n) => {
+        (SymbolNodeInner::TsSetterSignature(n), false, n.span)
+      }
+      SymbolNodeRef::TsMethodSignature(n) => {
+        (SymbolNodeInner::TsMethodSignature(n), false, n.span)
+      }
       SymbolNodeRef::Module(_)
       | SymbolNodeRef::ClassDecl(_)
       | SymbolNodeRef::ExportDecl(..)
@@ -2873,13 +2957,18 @@ impl<'a> SymbolFiller<'a> {
 }
 
 /// Extract all binding identifiers from a binding pattern.
-fn find_binding_ids<'a>(pattern: &'a BindingPattern<'a>) -> Vec<&'a BindingIdentifier<'a>> {
+fn find_binding_ids<'a>(
+  pattern: &'a BindingPattern<'a>,
+) -> Vec<&'a BindingIdentifier<'a>> {
   let mut result = Vec::new();
   collect_binding_ids(pattern, &mut result);
   result
 }
 
-fn collect_binding_ids<'a>(pattern: &'a BindingPattern<'a>, result: &mut Vec<&'a BindingIdentifier<'a>>) {
+fn collect_binding_ids<'a>(
+  pattern: &'a BindingPattern<'a>,
+  result: &mut Vec<&'a BindingIdentifier<'a>>,
+) {
   match pattern {
     BindingPattern::BindingIdentifier(ident) => {
       result.push(ident);
@@ -2921,4 +3010,3 @@ fn module_export_name_to_id(name: &ModuleExportName) -> Id {
     ModuleExportName::StringLiteral(n) => (n.value.to_string(), 0),
   }
 }
-

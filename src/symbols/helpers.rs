@@ -1,8 +1,8 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
 use deno_ast::oxc::ast::ast::BindingIdentifier;
-use deno_ast::oxc::ast::ast::IdentifierReference;
 use deno_ast::oxc::ast::ast::IdentifierName;
+use deno_ast::oxc::ast::ast::IdentifierReference;
 use deno_ast::oxc::ast::ast::TSQualifiedName;
 use deno_ast::oxc::ast::ast::TSTypeName;
 
@@ -32,9 +32,7 @@ impl ToId for IdentifierName<'_> {
   }
 }
 
-pub fn ts_entity_name_to_parts(
-  entity_name: &TSTypeName,
-) -> (Id, Vec<String>) {
+pub fn ts_entity_name_to_parts(entity_name: &TSTypeName) -> (Id, Vec<String>) {
   match entity_name {
     TSTypeName::QualifiedName(qualified_name) => {
       ts_qualified_name_parts(qualified_name)
@@ -42,9 +40,7 @@ pub fn ts_entity_name_to_parts(
     TSTypeName::IdentifierReference(ident) => {
       ((ident.name.to_string(), 0), Vec::new())
     }
-    TSTypeName::ThisExpression(_) => {
-      (("this".to_string(), 0), Vec::new())
-    }
+    TSTypeName::ThisExpression(_) => (("this".to_string(), 0), Vec::new()),
   }
 }
 

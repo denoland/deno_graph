@@ -167,18 +167,27 @@ impl<'a, 'b> Visit<'a> for DependencyCollector<'a, 'b> {
         span: node.span,
         specifier: node.source.value.to_string(),
         specifier_span: node.source.span,
-        import_attributes: parse_import_attributes(node.with_clause.as_ref().map(|b| b.as_ref())),
+        import_attributes: parse_import_attributes(
+          node.with_clause.as_ref().map(|b| b.as_ref()),
+        ),
         is_side_effect,
       }
       .into(),
     );
   }
 
-  fn visit_export_named_declaration(&mut self, node: &ExportNamedDeclaration<'a>) {
+  fn visit_export_named_declaration(
+    &mut self,
+    node: &ExportNamedDeclaration<'a>,
+  ) {
     let Some(src) = &node.source else {
       // Check for `export import X = require("...")` pattern
-      if let Some(Declaration::TSImportEqualsDeclaration(import_eq)) = &node.declaration {
-        if let TSModuleReference::ExternalModuleReference(module) = &import_eq.module_reference {
+      if let Some(Declaration::TSImportEqualsDeclaration(import_eq)) =
+        &node.declaration
+      {
+        if let TSModuleReference::ExternalModuleReference(module) =
+          &import_eq.module_reference
+        {
           let leading_comments = self.get_leading_comments(node.span.start);
           let expr = &module.expression;
           let kind = if import_eq.import_kind == ImportOrExportKind::Type {
@@ -217,7 +226,9 @@ impl<'a, 'b> Visit<'a> for DependencyCollector<'a, 'b> {
         span: node.span,
         specifier: src.value.to_string(),
         specifier_span: src.span,
-        import_attributes: parse_import_attributes(node.with_clause.as_ref().map(|b| b.as_ref())),
+        import_attributes: parse_import_attributes(
+          node.with_clause.as_ref().map(|b| b.as_ref()),
+        ),
         is_side_effect: false,
       }
       .into(),
@@ -238,7 +249,9 @@ impl<'a, 'b> Visit<'a> for DependencyCollector<'a, 'b> {
         span: node.span,
         specifier: node.source.value.to_string(),
         specifier_span: node.source.span,
-        import_attributes: parse_import_attributes(node.with_clause.as_ref().map(|b| b.as_ref())),
+        import_attributes: parse_import_attributes(
+          node.with_clause.as_ref().map(|b| b.as_ref()),
+        ),
         is_side_effect: false,
       }
       .into(),
@@ -477,7 +490,8 @@ fn parse_import_attributes(
       ImportAttributeKey::StringLiteral(s) => s.value.to_string(),
     };
     let value_str = attr.value.value.as_str();
-    import_attributes.insert(key, ImportAttribute::Known(value_str.to_string()));
+    import_attributes
+      .insert(key, ImportAttribute::Known(value_str.to_string()));
   }
   ImportAttributes::Known(import_attributes)
 }
@@ -587,10 +601,7 @@ fn parse_import_attributes_from_object_expr(
       _ => return ImportAttributes::Unknown,
     };
     if let Expression::StringLiteral(s) = &prop.value {
-      attributes_map.insert(
-        key,
-        ImportAttribute::Known(s.value.to_string()),
-      );
+      attributes_map.insert(key, ImportAttribute::Known(s.value.to_string()));
     } else {
       attributes_map.insert(key, ImportAttribute::Unknown);
     }
@@ -612,10 +623,7 @@ mod tests {
     Span::new(start, end)
   }
 
-  fn helper(
-    specifier: &str,
-    source: &str,
-  ) -> Vec<DependencyDescriptor> {
+  fn helper(specifier: &str, source: &str) -> Vec<DependencyDescriptor> {
     let allocator = deno_ast::oxc::allocator::Allocator::default();
     let source = deno_ast::parse_module(
       &allocator,
@@ -1274,5 +1282,4 @@ export declare const SomeValue: typeof Core & import("./a.d.ts").Constructor<{
       ],
     );
   }
-
 }

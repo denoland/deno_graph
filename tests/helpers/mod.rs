@@ -95,7 +95,11 @@ pub struct BuildResult {
 impl BuildResult {
   pub fn root_symbol(&self) -> deno_graph::symbols::RootSymbol<'_> {
     self.graph.valid().unwrap(); // assert valid
-    deno_graph::symbols::RootSymbol::new(&self.graph, &self.analyzer, &self.allocator)
+    deno_graph::symbols::RootSymbol::new(
+      &self.graph,
+      &self.analyzer,
+      &self.allocator,
+    )
   }
 }
 

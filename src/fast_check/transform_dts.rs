@@ -13,17 +13,16 @@ use deno_ast::oxc::syntax::node::NodeId;
 use std::cell::Cell;
 
 use super::FastCheckDiagnosticRange;
-use super::range_finder::ModulePublicRanges;
 use super::helpers::DeclMutabilityKind;
+use super::helpers::TSKeywordKind;
 use super::helpers::any_type_ann;
 use super::helpers::maybe_lit_to_ts_type;
 use super::helpers::new_ident;
 use super::helpers::ts_keyword_type;
-use super::helpers::TSKeywordKind;
 use super::helpers::ts_readonly;
 use super::helpers::ts_tuple_element;
 use super::helpers::type_ann;
-
+use super::range_finder::ModulePublicRanges;
 
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum FastCheckDtsDiagnostic {
@@ -104,10 +103,7 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
     self.diagnostics.push(diagnostic)
   }
 
-  fn source_range_to_range(
-    &self,
-    range: Span,
-  ) -> FastCheckDiagnosticRange {
+  fn source_range_to_range(&self, range: Span) -> FastCheckDiagnosticRange {
     FastCheckDiagnosticRange {
       specifier: self.specifier.clone(),
       text_info: self.text_info.clone(),
@@ -135,7 +131,8 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
 
   pub fn transform(&mut self, mut program: Program<'a>) -> Program<'a> {
     self.is_top_level = true;
-    let body = std::mem::replace(&mut program.body, Vec::new_in(self.allocator));
+    let body =
+      std::mem::replace(&mut program.body, Vec::new_in(self.allocator));
     program.body = self.transform_stmts(body);
     program
   }
@@ -154,10 +151,7 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
         Statement::ExportNamedDeclaration(export_decl) => {
           if let Some(ref decl) = export_decl.declaration {
             if let Declaration::FunctionDeclaration(_) = decl {
-              if self
-                .public_ranges
-                .is_impl_with_overloads(&export_decl.span)
-              {
+              if self.public_ranges.is_impl_with_overloads(&export_decl.span) {
                 continue; // skip implementation signature
               }
             }
@@ -166,20 +160,18 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
           if let Some(ref decl) = export_decl.declaration {
             match self.decl_to_type_decl(decl.clone_in(self.allocator)) {
               Some(new_decl) => {
-                new_items.push(Statement::ExportNamedDeclaration(
-                  Box::new_in(
-                    ExportNamedDeclaration {
-                      node_id: Cell::new(NodeId::DUMMY),
-                      declaration: Some(new_decl),
-                      span: export_decl.span,
-                      specifiers: Vec::new_in(self.allocator),
-                      source: None,
-                      export_kind: ImportOrExportKind::Value,
-                      with_clause: None,
-                    },
-                    self.allocator,
-                  ),
-                ));
+                new_items.push(Statement::ExportNamedDeclaration(Box::new_in(
+                  ExportNamedDeclaration {
+                    node_id: Cell::new(NodeId::DUMMY),
+                    declaration: Some(new_decl),
+                    span: export_decl.span,
+                    specifiers: Vec::new_in(self.allocator),
+                    source: None,
+                    export_kind: ImportOrExportKind::Value,
+                    with_clause: None,
+                  },
+                  self.allocator,
+                )));
               }
               _ => self.mark_diagnostic(
                 FastCheckDtsDiagnostic::UnableToInferType {
@@ -196,21 +188,24 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
           match &export_decl.declaration {
             ExportDefaultDeclarationKind::ClassDeclaration(_) => {
               let mut cloned = export_decl.clone_in(self.allocator);
-              if let ExportDefaultDeclarationKind::ClassDeclaration(ref mut class_expr) = cloned.declaration {
+              if let ExportDefaultDeclarationKind::ClassDeclaration(
+                ref mut class_expr,
+              ) = cloned.declaration
+              {
                 class_expr.body = self.class_body_to_type(&class_expr.body);
               }
               new_items.push(Statement::ExportDefaultDeclaration(cloned));
             }
             ExportDefaultDeclarationKind::FunctionDeclaration(_) => {
-              if self
-                .public_ranges
-                .is_impl_with_overloads(&export_decl.span)
-              {
+              if self.public_ranges.is_impl_with_overloads(&export_decl.span) {
                 continue; // skip implementation signature
               }
 
               let mut cloned = export_decl.clone_in(self.allocator);
-              if let ExportDefaultDeclarationKind::FunctionDeclaration(ref mut fn_expr) = cloned.declaration {
+              if let ExportDefaultDeclarationKind::FunctionDeclaration(
+                ref mut fn_expr,
+              ) = cloned.declaration
+              {
                 fn_expr.body = None;
               }
               new_items.push(Statement::ExportDefaultDeclaration(cloned));
@@ -221,7 +216,8 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
             _ => {
               // Expression variant - handle like ExportDefaultExpr
               let expr_span = export_decl.declaration.span();
-              let decl_cloned = export_decl.declaration.clone_in(self.allocator);
+              let decl_cloned =
+                export_decl.declaration.clone_in(self.allocator);
               let expr = match decl_cloned {
                 ExportDefaultDeclarationKind::BooleanLiteral(_)
                 | ExportDefaultDeclarationKind::NullLiteral(_)
@@ -295,18 +291,16 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
                     init: None,
                     definite: false,
                   });
-                  new_items.push(Statement::VariableDeclaration(
-                    Box::new_in(
-                      VariableDeclaration {
-                        node_id: Cell::new(NodeId::DUMMY),
-                        span: SPAN,
-                        kind: VariableDeclarationKind::Const,
-                        declarations,
-                        declare: true,
-                      },
-                      self.allocator,
-                    ),
-                  ));
+                  new_items.push(Statement::VariableDeclaration(Box::new_in(
+                    VariableDeclaration {
+                      node_id: Cell::new(NodeId::DUMMY),
+                      span: SPAN,
+                      kind: VariableDeclarationKind::Const,
+                      declarations,
+                      declare: true,
+                    },
+                    self.allocator,
+                  )));
 
                   // Create: export default _dts_N;
                   new_items.push(Statement::ExportDefaultDeclaration(
@@ -333,7 +327,8 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
                   ));
                 } else {
                   // Re-emit with original expression
-                  let kind = expr_to_export_default_decl_kind(self.allocator, expr);
+                  let kind =
+                    expr_to_export_default_decl_kind(self.allocator, expr);
                   new_items.push(Statement::ExportDefaultDeclaration(
                     Box::new_in(
                       ExportDefaultDeclaration {
@@ -374,30 +369,18 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
   ) -> Option<Statement<'a>> {
     // Extract the declaration from a statement
     let decl = match stmt {
-      Statement::VariableDeclaration(d) => {
-        Declaration::VariableDeclaration(d)
-      }
-      Statement::FunctionDeclaration(d) => {
-        Declaration::FunctionDeclaration(d)
-      }
-      Statement::ClassDeclaration(d) => {
-        Declaration::ClassDeclaration(d)
-      }
+      Statement::VariableDeclaration(d) => Declaration::VariableDeclaration(d),
+      Statement::FunctionDeclaration(d) => Declaration::FunctionDeclaration(d),
+      Statement::ClassDeclaration(d) => Declaration::ClassDeclaration(d),
       Statement::TSTypeAliasDeclaration(d) => {
         Declaration::TSTypeAliasDeclaration(d)
       }
       Statement::TSInterfaceDeclaration(d) => {
         Declaration::TSInterfaceDeclaration(d)
       }
-      Statement::TSEnumDeclaration(d) => {
-        Declaration::TSEnumDeclaration(d)
-      }
-      Statement::TSModuleDeclaration(d) => {
-        Declaration::TSModuleDeclaration(d)
-      }
-      Statement::TSGlobalDeclaration(d) => {
-        Declaration::TSGlobalDeclaration(d)
-      }
+      Statement::TSEnumDeclaration(d) => Declaration::TSEnumDeclaration(d),
+      Statement::TSModuleDeclaration(d) => Declaration::TSModuleDeclaration(d),
+      Statement::TSGlobalDeclaration(d) => Declaration::TSGlobalDeclaration(d),
       Statement::TSImportEqualsDeclaration(d) => {
         Declaration::TSImportEqualsDeclaration(d)
       }
@@ -433,8 +416,7 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
       Declaration::VariableDeclaration(var_decl) => {
         if matches!(
           var_decl.kind,
-          VariableDeclarationKind::Using
-            | VariableDeclarationKind::AwaitUsing
+          VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
         ) {
           Some(decl_to_stmt(self.allocator, decl))
         } else {
@@ -464,9 +446,10 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
           match elem {
             ArrayExpressionElement::Elision(_) => {
               // TypeScript converts holey arrays to any
-              elem_types.push(ts_tuple_element(
-                ts_keyword_type(self.allocator, TSKeywordKind::Any),
-              ));
+              elem_types.push(ts_tuple_element(ts_keyword_type(
+                self.allocator,
+                TSKeywordKind::Any,
+              )));
             }
             ArrayExpressionElement::SpreadElement(spread) => {
               match self.expr_to_ts_type(
@@ -540,20 +523,18 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
                 .expr_to_ts_type(&prop.value, as_const, as_readonly)
                 .map(|t| type_ann(self.allocator, t));
 
-              members.push(TSSignature::TSPropertySignature(
-                Box::new_in(
-                  TSPropertySignature {
-                    node_id: Cell::new(NodeId::DUMMY),
-                    span: SPAN,
-                    readonly: as_readonly,
-                    key,
-                    computed,
-                    optional: false,
-                    type_annotation: init_type,
-                  },
-                  self.allocator,
-                ),
-              ));
+              members.push(TSSignature::TSPropertySignature(Box::new_in(
+                TSPropertySignature {
+                  node_id: Cell::new(NodeId::DUMMY),
+                  span: SPAN,
+                  readonly: as_readonly,
+                  key,
+                  computed,
+                  optional: false,
+                  type_annotation: init_type,
+                },
+                self.allocator,
+              )));
             }
             ObjectPropertyKind::SpreadProperty(spread) => {
               self.mark_diagnostic(
@@ -626,9 +607,7 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
             span: fn_expr.span,
             params,
             return_type,
-            type_parameters: fn_expr
-              .type_parameters
-              .clone_in(self.allocator),
+            type_parameters: fn_expr.type_parameters.clone_in(self.allocator),
             this_param: None,
             scope_id: Cell::new(None),
           },
@@ -700,8 +679,7 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
     computed: bool,
   ) -> (PropertyKey<'a>, bool) {
     match key {
-      PropertyKey::StaticIdentifier(_)
-      | PropertyKey::PrivateIdentifier(_) => {
+      PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => {
         (key.clone_in(self.allocator), computed)
       }
       _ => {
@@ -732,8 +710,7 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
       Declaration::VariableDeclaration(mut var_decl) => {
         if matches!(
           var_decl.kind,
-          VariableDeclarationKind::Using
-            | VariableDeclarationKind::AwaitUsing
+          VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
         ) {
           self.mark_diagnostic(FastCheckDtsDiagnostic::UnsupportedUsing {
             range: self.source_range_to_range(var_decl.span),
@@ -753,9 +730,7 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
             let ts_type = decl
               .init
               .as_ref()
-              .and_then(|init| {
-                self.expr_to_ts_type(init, false, true)
-              })
+              .and_then(|init| self.expr_to_ts_type(init, false, true))
               .map(|t| type_ann(self.allocator, t))
               .or_else(|| {
                 self.mark_diagnostic_any_fallback(ident.span);
@@ -777,12 +752,11 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
         for member in ts_enum.body.members.iter_mut() {
           if let Some(init) = &member.initializer {
             // Support for expressions is limited in enums
-            member.initializer =
-              if self.valid_enum_init_expr(init) {
-                Some(init.clone_in(self.allocator))
-              } else {
-                None
-              };
+            member.initializer = if self.valid_enum_init_expr(init) {
+              Some(init.clone_in(self.allocator))
+            } else {
+              None
+            };
           }
         }
 
@@ -792,8 +766,7 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
         ts_module.declare = is_declare;
 
         if let Some(body) = ts_module.body.take() {
-          ts_module.body =
-            Some(self.transform_ts_ns_body(body));
+          ts_module.body = Some(self.transform_ts_ns_body(body));
         }
 
         Some(Declaration::TSModuleDeclaration(ts_module))
@@ -813,8 +786,10 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
     self.is_top_level = false;
     let body = match ns {
       TSModuleDeclarationBody::TSModuleBlock(mut ts_module_block) => {
-        let stmts =
-          std::mem::replace(&mut ts_module_block.body, Vec::new_in(self.allocator));
+        let stmts = std::mem::replace(
+          &mut ts_module_block.body,
+          Vec::new_in(self.allocator),
+        );
         ts_module_block.body = self.transform_stmts(stmts);
         TSModuleDeclarationBody::TSModuleBlock(ts_module_block)
       }
@@ -959,9 +934,7 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
       .filter(|member| match member {
         ClassElement::MethodDefinition(method) => {
           if method.kind == MethodDefinitionKind::Constructor {
-            !self
-              .public_ranges
-              .is_impl_with_overloads(&method.span)
+            !self.public_ranges.is_impl_with_overloads(&method.span)
           } else {
             !self.public_ranges.is_impl_with_overloads(&method.span)
           }
@@ -1035,8 +1008,9 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
         }
 
         // These can be removed as they are not relevant for types
-        ClassElement::StaticBlock(_)
-        | ClassElement::AccessorProperty(_) => None,
+        ClassElement::StaticBlock(_) | ClassElement::AccessorProperty(_) => {
+          None
+        }
       })
       .collect();
 
@@ -1045,17 +1019,17 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
       oxc_body.push(el);
     }
 
-    Box::new_in(ClassBody {
-      node_id: Cell::new(NodeId::DUMMY),
-      span: body.span,
-      body: oxc_body,
-    }, self.allocator)
+    Box::new_in(
+      ClassBody {
+        node_id: Cell::new(NodeId::DUMMY),
+        span: body.span,
+        body: oxc_body,
+      },
+      self.allocator,
+    )
   }
 
-  fn handle_func_params(
-    &mut self,
-    params: &mut Box<'a, FormalParameters<'a>>,
-  ) {
+  fn handle_func_params(&mut self, params: &mut Box<'a, FormalParameters<'a>>) {
     for param in params.items.iter_mut() {
       self.handle_func_param(param);
     }
@@ -1067,11 +1041,8 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
     if let Some(init) = param.initializer.take() {
       // Has a default value: infer type if missing, make optional, remove default
       if param.type_annotation.is_none() {
-        param.type_annotation = Some(self.infer_expr_fallback_any(
-          &init,
-          false,
-          false,
-        ));
+        param.type_annotation =
+          Some(self.infer_expr_fallback_any(&init, false, false));
       }
       param.optional = true;
       // initializer already taken via take()
@@ -1093,8 +1064,7 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
           param.optional = true;
         }
       }
-      BindingPattern::ArrayPattern(_)
-      | BindingPattern::ObjectPattern(_) => {}
+      BindingPattern::ArrayPattern(_) | BindingPattern::ObjectPattern(_) => {}
     }
   }
 
@@ -1106,11 +1076,8 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
     match &mut assign_pat.left {
       BindingPattern::BindingIdentifier(ident) => {
         if param_type_annotation.is_none() {
-          *param_type_annotation = Some(self.infer_expr_fallback_any(
-            &assign_pat.right,
-            false,
-            false,
-          ));
+          *param_type_annotation =
+            Some(self.infer_expr_fallback_any(&assign_pat.right, false, false));
         }
 
         Some(BindingPattern::BindingIdentifier(
@@ -1119,11 +1086,8 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
       }
       BindingPattern::ArrayPattern(arr_pat) => {
         if param_type_annotation.is_none() {
-          *param_type_annotation = Some(self.infer_expr_fallback_any(
-            &assign_pat.right,
-            false,
-            false,
-          ));
+          *param_type_annotation =
+            Some(self.infer_expr_fallback_any(&assign_pat.right, false, false));
         }
 
         Some(BindingPattern::ArrayPattern(
@@ -1132,11 +1096,8 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
       }
       BindingPattern::ObjectPattern(obj_pat) => {
         if param_type_annotation.is_none() {
-          *param_type_annotation = Some(self.infer_expr_fallback_any(
-            &assign_pat.right,
-            false,
-            false,
-          ));
+          *param_type_annotation =
+            Some(self.infer_expr_fallback_any(&assign_pat.right, false, false));
         }
 
         Some(BindingPattern::ObjectPattern(
@@ -1176,11 +1137,11 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
   ) -> Option<FormalParameter<'a>> {
     // In OXC, parameter defaults are in FormalParameter::initializer
     if let Some(init) = &param.initializer {
-      let ta = param.type_annotation.clone_in(self.allocator)
-        .or_else(|| {
-          self.expr_to_ts_type(init, false, false)
-            .map(|t| type_ann(self.allocator, t))
-        });
+      let ta = param.type_annotation.clone_in(self.allocator).or_else(|| {
+        self
+          .expr_to_ts_type(init, false, false)
+          .map(|t| type_ann(self.allocator, t))
+      });
       return Some(FormalParameter {
         node_id: Cell::new(NodeId::DUMMY),
         span: param.span,
@@ -1196,62 +1157,54 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
     }
 
     match &param.pattern {
-      BindingPattern::BindingIdentifier(binding_id) => {
-        Some(FormalParameter {
-          node_id: Cell::new(NodeId::DUMMY),
-          span: param.span,
-          decorators: Vec::new_in(self.allocator),
-          pattern: BindingPattern::BindingIdentifier(
-            binding_id.clone_in(self.allocator),
-          ),
-          type_annotation: param.type_annotation.clone_in(self.allocator),
-          initializer: None,
-          optional: param.optional,
-          accessibility: param.accessibility,
-          readonly: param.readonly,
-          r#override: param.r#override,
-        })
-      }
-      BindingPattern::ArrayPattern(_) => {
-        Some(param.clone_in(self.allocator))
-      }
-      BindingPattern::ObjectPattern(_) => {
-        Some(param.clone_in(self.allocator))
-      }
-      BindingPattern::AssignmentPattern(assign_pat) => {
-        self
-          .expr_to_ts_type(&assign_pat.right, false, false)
-          .map(|ts_type| {
-            let name = if let BindingPattern::BindingIdentifier(ident) =
-              &assign_pat.left
-            {
-              ident.name.clone()
-            } else {
-              Ident::from(self.allocator.alloc_str(&self.gen_unique_name()))
-            };
+      BindingPattern::BindingIdentifier(binding_id) => Some(FormalParameter {
+        node_id: Cell::new(NodeId::DUMMY),
+        span: param.span,
+        decorators: Vec::new_in(self.allocator),
+        pattern: BindingPattern::BindingIdentifier(
+          binding_id.clone_in(self.allocator),
+        ),
+        type_annotation: param.type_annotation.clone_in(self.allocator),
+        initializer: None,
+        optional: param.optional,
+        accessibility: param.accessibility,
+        readonly: param.readonly,
+        r#override: param.r#override,
+      }),
+      BindingPattern::ArrayPattern(_) => Some(param.clone_in(self.allocator)),
+      BindingPattern::ObjectPattern(_) => Some(param.clone_in(self.allocator)),
+      BindingPattern::AssignmentPattern(assign_pat) => self
+        .expr_to_ts_type(&assign_pat.right, false, false)
+        .map(|ts_type| {
+          let name = if let BindingPattern::BindingIdentifier(ident) =
+            &assign_pat.left
+          {
+            ident.name.clone()
+          } else {
+            Ident::from(self.allocator.alloc_str(&self.gen_unique_name()))
+          };
 
-            FormalParameter {
-              node_id: Cell::new(NodeId::DUMMY),
-              span: assign_pat.span,
-              decorators: Vec::new_in(self.allocator),
-              pattern: BindingPattern::BindingIdentifier(Box::new_in(
-                BindingIdentifier {
-                  node_id: Cell::new(NodeId::DUMMY),
-                  span: assign_pat.span,
-                  name,
-                  symbol_id: Cell::new(None),
-                },
-                self.allocator,
-              )),
-              type_annotation: Some(type_ann(self.allocator, ts_type)),
-              initializer: None,
-              optional: false,
-              accessibility: None,
-              readonly: false,
-              r#override: false,
-            }
-          })
-      }
+          FormalParameter {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: assign_pat.span,
+            decorators: Vec::new_in(self.allocator),
+            pattern: BindingPattern::BindingIdentifier(Box::new_in(
+              BindingIdentifier {
+                node_id: Cell::new(NodeId::DUMMY),
+                span: assign_pat.span,
+                name,
+                symbol_id: Cell::new(None),
+              },
+              self.allocator,
+            )),
+            type_annotation: Some(type_ann(self.allocator, ts_type)),
+            initializer: None,
+            optional: false,
+            accessibility: None,
+            readonly: false,
+            r#override: false,
+          }
+        }),
     }
   }
 }
@@ -1296,7 +1249,8 @@ fn array_expression_element_to_expr<'a, 'b>(
   elem: &'b ArrayExpressionElement<'a>,
 ) -> Option<&'b Expression<'a>> {
   match elem {
-    ArrayExpressionElement::SpreadElement(_) | ArrayExpressionElement::Elision(_) => None,
+    ArrayExpressionElement::SpreadElement(_)
+    | ArrayExpressionElement::Elision(_) => None,
     _ => elem.as_expression(),
   }
 }
@@ -1447,9 +1401,7 @@ fn expr_to_export_default_decl_kind<'a>(
     Expression::BooleanLiteral(e) => {
       ExportDefaultDeclarationKind::BooleanLiteral(e)
     }
-    Expression::NullLiteral(e) => {
-      ExportDefaultDeclarationKind::NullLiteral(e)
-    }
+    Expression::NullLiteral(e) => ExportDefaultDeclarationKind::NullLiteral(e),
     Expression::NumericLiteral(e) => {
       ExportDefaultDeclarationKind::NumericLiteral(e)
     }
@@ -1465,9 +1417,7 @@ fn expr_to_export_default_decl_kind<'a>(
     Expression::TemplateLiteral(e) => {
       ExportDefaultDeclarationKind::TemplateLiteral(e)
     }
-    Expression::Identifier(e) => {
-      ExportDefaultDeclarationKind::Identifier(e)
-    }
+    Expression::Identifier(e) => ExportDefaultDeclarationKind::Identifier(e),
     Expression::MetaProperty(e) => {
       ExportDefaultDeclarationKind::MetaProperty(e)
     }
@@ -1538,12 +1488,8 @@ fn expr_to_export_default_decl_kind<'a>(
     Expression::PrivateInExpression(e) => {
       ExportDefaultDeclarationKind::PrivateInExpression(e)
     }
-    Expression::JSXElement(e) => {
-      ExportDefaultDeclarationKind::JSXElement(e)
-    }
-    Expression::JSXFragment(e) => {
-      ExportDefaultDeclarationKind::JSXFragment(e)
-    }
+    Expression::JSXElement(e) => ExportDefaultDeclarationKind::JSXElement(e),
+    Expression::JSXFragment(e) => ExportDefaultDeclarationKind::JSXFragment(e),
     Expression::TSAsExpression(e) => {
       ExportDefaultDeclarationKind::TSAsExpression(e)
     }
@@ -1624,15 +1570,15 @@ fn valid_prop_name<'a>(
     expr: &Expression<'a>,
   ) -> Option<PropertyKey<'a>> {
     match expr {
-      Expression::StringLiteral(s) => Some(PropertyKey::StringLiteral(
-        s.clone_in(allocator),
-      )),
-      Expression::NumericLiteral(n) => Some(PropertyKey::NumericLiteral(
-        n.clone_in(allocator),
-      )),
-      Expression::BigIntLiteral(b) => Some(PropertyKey::BigIntLiteral(
-        b.clone_in(allocator),
-      )),
+      Expression::StringLiteral(s) => {
+        Some(PropertyKey::StringLiteral(s.clone_in(allocator)))
+      }
+      Expression::NumericLiteral(n) => {
+        Some(PropertyKey::NumericLiteral(n.clone_in(allocator)))
+      }
+      Expression::BigIntLiteral(b) => {
+        Some(PropertyKey::BigIntLiteral(b.clone_in(allocator)))
+      }
       Expression::TemplateLiteral(e) => {
         if e.quasis.is_empty() && e.expressions.len() == 1 {
           prop_name_from_expr(allocator, &e.expressions[0])
@@ -1738,15 +1684,17 @@ mod tests {
       .esm()
       .unwrap();
 
-    let parsed_source = analyzer.parse_program(
-      &allocator,
-      crate::ast::ParseOptions {
-        specifier: &specifier,
-        source: source.into(),
-        media_type: deno_ast::MediaType::TypeScript,
-        scope_analysis: false,
-      },
-    ).unwrap();
+    let parsed_source = analyzer
+      .parse_program(
+        &allocator,
+        crate::ast::ParseOptions {
+          specifier: &specifier,
+          source: source.into(),
+          media_type: deno_ast::MediaType::TypeScript,
+          scope_analysis: false,
+        },
+      )
+      .unwrap();
     let program = parsed_source.program().clone_in(&allocator);
     let nv = PackageNv::from_str("package@1.0.0").unwrap();
     let public_ranges = find_public_ranges(
@@ -2213,11 +2161,8 @@ export function foo(a: any): number {
     transform_dts_test(r#"interface Foo {}"#, "interface Foo {}").await;
     transform_dts_test(r#"type Foo = number;"#, "type Foo = number;").await;
 
-    transform_dts_test(
-      r#"export interface Foo {}"#,
-      "export interface Foo {}",
-    )
-    .await;
+    transform_dts_test(r#"export interface Foo {}"#, "export interface Foo {}")
+      .await;
     transform_dts_test(
       r#"export type Foo = number;"#,
       "export type Foo = number;",

@@ -91,9 +91,7 @@ pub struct CapturingEsParser<'a> {
 }
 
 impl<'a> CapturingEsParser<'a> {
-  pub fn new(
-    parser: Option<&'a dyn EsParser>,
-  ) -> Self {
+  pub fn new(parser: Option<&'a dyn EsParser>) -> Self {
     Self { parser }
   }
 }
@@ -254,9 +252,7 @@ impl Default for CapturingModuleAnalyzer {
 }
 
 impl CapturingModuleAnalyzer {
-  pub fn new(
-    parser: Option<Box<dyn EsParser>>,
-  ) -> Self {
+  pub fn new(parser: Option<Box<dyn EsParser>>) -> Self {
     Self {
       parser: parser.unwrap_or_else(|| Box::<DefaultEsParser>::default()),
     }
@@ -315,11 +311,7 @@ fn get_program_trailing_comments<'a>(
   program: &'a Program<'_>,
 ) -> Vec<&'a Comment> {
   use deno_ast::oxc::span::GetSpan;
-  let last_stmt_end = program
-    .body
-    .last()
-    .map(|s| s.span().end)
-    .unwrap_or(0);
+  let last_stmt_end = program.body.last().map(|s| s.span().end).unwrap_or(0);
 
   program
     .comments
@@ -387,10 +379,7 @@ fn analyze_dependencies(
             }
             self::dep::DynamicArgument::Expr => DynamicArgument::Expr,
           },
-          argument_range: PositionRange::from_span(
-            d.argument_span,
-            text_info,
-          ),
+          argument_range: PositionRange::from_span(d.argument_span, text_info),
           import_attributes: d.import_attributes,
         })
       }
@@ -406,9 +395,7 @@ fn analyze_ts_references(
   let mut references = Vec::new();
   for comment in leading_comments {
     let text = get_comment_text(comment, source_text);
-    if comment.is_line()
-      && is_comment_triple_slash_reference(text)
-    {
+    if comment.is_line() && is_comment_triple_slash_reference(text) {
       let comment_start = comment.content_span().start as usize;
       if let Some(m) = find_path_reference(text) {
         references.push(TypeScriptReference::Path(SpecifierWithRange {
@@ -912,12 +899,10 @@ mod tests {
       TypeScriptReference::Path(specifier) => {
         assert_eq!(specifier.text, "./ref.d.ts");
         let range = &specifier.range;
-        let start = text_info.line_start(range.start.line) + range.start.character;
+        let start =
+          text_info.line_start(range.start.line) + range.start.character;
         let end = text_info.line_start(range.end.line) + range.end.character;
-        assert_eq!(
-          text_info.range_text(start, end),
-          r#""./ref.d.ts""#
-        );
+        assert_eq!(text_info.range_text(start, end), r#""./ref.d.ts""#);
       }
       TypeScriptReference::Types { .. } => panic!("expected path"),
     }
@@ -930,12 +915,10 @@ mod tests {
         assert_eq!(*mode, None);
         assert_eq!(specifier.text, "./types.d.ts");
         let range = &specifier.range;
-        let start = text_info.line_start(range.start.line) + range.start.character;
+        let start =
+          text_info.line_start(range.start.line) + range.start.character;
         let end = text_info.line_start(range.end.line) + range.end.character;
-        assert_eq!(
-          text_info.range_text(start, end),
-          r#""./types.d.ts""#
-        );
+        assert_eq!(text_info.range_text(start, end), r#""./types.d.ts""#);
       }
     }
 

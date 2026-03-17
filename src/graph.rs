@@ -8411,7 +8411,10 @@ mod tests {
         unreachable!();
       };
       let dts = fsm.dts.unwrap();
-      assert_eq!(dts.program_text.trim(), "export * from \"jsr:@package/foo\";");
+      assert_eq!(
+        dts.program_text.trim(),
+        "export * from \"jsr:@package/foo\";"
+      );
       assert!(dts.diagnostics.is_empty());
     }
 
