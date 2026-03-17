@@ -648,9 +648,7 @@ file:///mod.ts: EsModuleInfo {
         0,
     ),
     specifier: "file:///mod.ts",
-    re_exports: [
-        "./a.ts",
-    ],
+    re_exports: [],
     id_to_symbol_id: {},
     symbols: {
         0: Symbol {
@@ -674,18 +672,40 @@ file:///mod.ts: EsModuleInfo {
                 },
             ],
             child_ids: {},
+            exports: {
+                "namespace": 1,
+            },
+            members: {},
+        },
+        1: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 1,
+            parent_id: Some(
+                0,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: FileRef(
+                        FileDep {
+                            name: Star,
+                            specifier: "./a.ts",
+                        },
+                    ),
+                    range: Span {
+                        start: 0,
+                        end: 36,
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
             exports: {},
             members: {},
         },
     },
 }
 == export definitions ==
-[C1]: file:///class.ts:0..29
-  export default class Test {
-  }
-[C2]: file:///function.ts:0..34
-  export default function Test() {
-  }
-[C3]: file:///interface.ts:0..33
-  export default interface Test {
-  }
+[namespace]: file:///mod.ts:0..36
+  export * as namespace from "./a.ts";

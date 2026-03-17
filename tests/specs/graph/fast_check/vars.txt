@@ -95,7 +95,7 @@ import 'jsr:@scope/a'
     },
     {
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts",
-      "error": "The module's source code could not be parsed: Cannot assign to this expression at https://jsr.io/@scope/a/1.0.0/mod.ts:28:6"
+      "error": "The module's source code could not be parsed: Cannot assign to this expression at https://jsr.io/@scope/a/1.0.0/mod.ts:28:6\n\n    g: 1++,\n       ~"
     }
   ],
   "redirects": {
