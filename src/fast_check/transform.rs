@@ -245,19 +245,7 @@ impl<'a> FastCheckTransformer<'a> {
 
   pub fn transform(&mut self) -> Result<Program<'a>, Vec<FastCheckDiagnostic>> {
     let is_ambient = self.media_type.is_declaration();
-    let parsed_source = deno_ast::parse_program(
-      self.allocator,
-      deno_ast::ParseParams {
-        specifier: self.specifier.clone(),
-        text: self.es_module_info.source_text().into(),
-        media_type: self.media_type,
-        capture_tokens: false,
-        scope_analysis: false,
-        maybe_source_type: None,
-      },
-    )
-    .expect("re-parsing already parsed source should not fail");
-    let mut program = parsed_source.program().clone_in(self.allocator);
+    let mut program = self.es_module_info.program().clone_in(self.allocator);
     let mut comments = CommentsMut::new(self.allocator, &program.comments);
 
     let body =
@@ -1623,10 +1611,67 @@ impl<'a> FastCheckTransformer<'a> {
     match &param.pattern {
       BindingPattern::BindingIdentifier(_ident) => {
         if param.type_annotation.is_none() {
-          let pat_span = param.pattern.span();
-          self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-            range: self.source_range_to_range(pat_span),
-          })?;
+          if let Some(initializer) = &param.initializer {
+            // Try to infer type from the default value (e.g. `param = 2` → `param?: number`)
+            let inferred_type = self.maybe_infer_type_from_expr(
+              initializer,
+              DeclMutabilityKind::Mutable,
+            );
+            match inferred_type {
+              Some(t) => {
+                let ta = type_ann(self.allocator, t);
+                if !is_optional {
+                  let inner_type = ta.type_annotation.clone_in(self.allocator);
+                  let union_type = TSType::TSUnionType(OxcBox::new_in(
+                    TSUnionType {
+                      node_id: Cell::new(NodeId::DUMMY),
+                      span: SPAN,
+                      types: {
+                        let mut types =
+                          OxcVec::with_capacity_in(2, self.allocator);
+                        types.push(inner_type);
+                        types.push(TSType::TSUndefinedKeyword(OxcBox::new_in(
+                          TSUndefinedKeyword {
+                            node_id: Cell::new(NodeId::DUMMY),
+                            span: SPAN,
+                          },
+                          self.allocator,
+                        )));
+                        types
+                      },
+                    },
+                    self.allocator,
+                  ));
+                  param.type_annotation =
+                    Some(type_ann(self.allocator, union_type));
+                  param.optional = false;
+                } else {
+                  param.type_annotation = Some(ta);
+                  param.optional = true;
+                }
+                param.initializer = None;
+              }
+              None => {
+                let pat_span = param.pattern.span();
+                let is_expr_leavable = self.maybe_transform_expr_if_leavable(
+                  param.initializer.as_mut().unwrap(),
+                  Some(pat_span),
+                )?;
+                if !is_expr_leavable {
+                  self.mark_diagnostic(
+                    FastCheckDiagnostic::MissingExplicitType {
+                      range: self.source_range_to_range(pat_span),
+                    },
+                  )?;
+                }
+              }
+            }
+          } else {
+            let pat_span = param.pattern.span();
+            self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
+              range: self.source_range_to_range(pat_span),
+            })?;
+          }
         }
       }
       BindingPattern::AssignmentPattern(_) => {

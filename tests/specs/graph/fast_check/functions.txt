@@ -126,13 +126,88 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  error[missing-explicit-type]: missing explicit type in the public API
-   --> https://jsr.io/@scope/a/1.0.0/mod.ts:8:23
-    |
-  8 | export function test4(param = 2): number {
-    |                       ^^^^^ this symbol is missing an explicit type
-    |
-    = hint: add an explicit type annotation to the symbol
-
-    info: all symbols in the public API must have an explicit type
-    docs: https://jsr.io/go/slow-type-missing-explicit-type
+  {}
+  export function test1(): void {}
+  export function test2(): number {
+    return {} as never;
+  }
+  /** Some Doc **/
+  export function test3(param: number): number {
+    return {} as never;
+  }
+  export function test4(param?: number): number {
+    return {} as never;
+  }
+  export function test5<T extends PublicOther>(param?: number): T {
+    return {} as never;
+  }
+  export function test6<T = PublicOther>(param: number = 2): T {
+    return {} as never;
+  }
+  export function test7(param?: number): number;
+  export function test7(param?: number, param2?: PublicOther2): number;
+  export function test7(param0?: any, param1?: any): any {
+    return {} as never;
+  }
+  function test8(param: number): number;
+  function test8(param: string): string;
+  function test8(param0?: any): any {
+    return {} as never;
+  }
+  export { test8 };
+  export default function test9(param: number): number;
+  export default function test9(param: string): string;
+  export default function test9(param0?: any): any {
+    return {} as never;
+  }
+  export function test10(...params: string[]): string[] {
+    return {} as never;
+  }
+  // should support leaving this expr as-is
+  export function test11(options = { copy: true }): void {}
+  export interface GlobOptions {}
+  export function test12({}: GlobOptions = {}): void {}
+  export function test13([]: number[] = [1, 2]): void {}
+  export function test14(): never {
+    return {} as never;
+  }
+  export function test15(): Generator<number> {
+    return {} as never;
+  }
+  class PublicOther {}
+  class PublicOther2 {}
+  class PublicDeclareFunc {}
+  export declare function declareFunc(param: number): number;
+  export declare function declareFunc(param: string): string;
+  export declare function declareFunc(param: PublicDeclareFunc): string;
+  --- DTS ---
+  export declare function test1(): void;
+  export declare function test2(): number;
+  /** Some Doc **/
+  export declare function test3(param: number): number;
+  export declare function test4(param?: number): number;
+  export declare function test5<T extends PublicOther>(param?: number): T;
+  export declare function test6<T = PublicOther>(param?: number): T;
+  export declare function test7(param?: number): number;
+  export declare function test7(param?: number, param2?: PublicOther2): number;
+  declare function test8(param: number): number;
+  declare function test8(param: string): string;
+  export { test8 };
+  export default function test9(param: number): number;
+  export default function test9(param: string): string;
+  export declare function test10(...params: string[]): string[];
+  // should support leaving this expr as-is
+  export declare function test11(options?: {
+    copy: boolean;
+  }): void;
+  export interface GlobOptions {}
+  export declare function test12({}?: GlobOptions): void;
+  export declare function test13([]?: number[]): void;
+  export declare function test14(): never;
+  export declare function test15(): Generator<number>;
+  declare class PublicOther {}
+  declare class PublicOther2 {}
+  declare class PublicDeclareFunc {}
+  export declare function declareFunc(param: number): number;
+  export declare function declareFunc(param: string): string;
+  export declare function declareFunc(param: PublicDeclareFunc): string;

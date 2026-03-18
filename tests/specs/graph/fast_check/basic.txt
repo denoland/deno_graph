@@ -176,14 +176,104 @@ import 'jsr:@scope/a'
   }
 }
 
-Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  error[missing-explicit-type]: missing explicit type in the public API
-   --> https://jsr.io/@scope/a/1.0.0/mod.ts:8:25
-    |
-  8 |   noReturnTypeVoid(@dec param = 5, param2 = "test") {
-    |                         ^^^^^ this symbol is missing an explicit type
-    |
-    = hint: add an explicit type annotation to the symbol
+Fast check https://jsr.io/@scope/a/1.0.0/a.ts:
+  {
+    "./a4.ts": {
+      "code": {
+        "specifier": "https://jsr.io/@scope/a/1.0.0/a4.ts",
+        "resolutionMode": "import",
+        "span": {
+          "start": {
+            "line": 4,
+            "character": 23
+          },
+          "end": {
+            "line": 4,
+            "character": 32
+          }
+        }
+      }
+    },
+    "./a6.ts": {
+      "code": {
+        "specifier": "https://jsr.io/@scope/a/1.0.0/a6.ts",
+        "resolutionMode": "import",
+        "span": {
+          "start": {
+            "line": 5,
+            "character": 14
+          },
+          "end": {
+            "line": 5,
+            "character": 23
+          }
+        }
+      }
+    }
+  }
+  export class A1 {}
+  export class A3 {}
+  export { A4 } from "./a4.ts";
+  export * from "./a6.ts";
+  --- DTS ---
+  export declare class A1 {}
+  export declare class A3 {}
+  export { A4 } from "./a4.ts";
+  export * from "./a6.ts";
 
-    info: all symbols in the public API must have an explicit type
-    docs: https://jsr.io/go/slow-type-missing-explicit-type
+Fast check https://jsr.io/@scope/a/1.0.0/a4.ts:
+  {}
+  export class A4 {}
+  --- DTS ---
+  export declare class A4 {}
+
+Fast check https://jsr.io/@scope/a/1.0.0/a6.ts:
+  {}
+  export class A6 {}
+  --- DTS ---
+  export declare class A6 {}
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {
+    "./a.ts": {
+      "code": {
+        "specifier": "https://jsr.io/@scope/a/1.0.0/a.ts",
+        "resolutionMode": "import",
+        "span": {
+          "start": {
+            "line": 0,
+            "character": 48
+          },
+          "end": {
+            "line": 0,
+            "character": 56
+          }
+        }
+      }
+    }
+  }
+  import { A1, A3 as RenamedA3, A4, A6 } from "./a.ts";
+  export class Test {
+    /** Testing */
+    @dec noReturnTypeVoid(param?: number, param2?: string): void {}
+    noReturnTypeAsync(): Promise<void> {
+      return {} as never;
+    }
+    returnTypeGenerator(): Generator<unknown, any, any> {
+      return {} as never;
+    }
+    hasReturnType(): A1 & RenamedA3 | A4 | A6 {
+      return {} as never;
+    }
+    declare private inner: any;
+  }
+  --- DTS ---
+  import { A1, A3 as RenamedA3, A4, A6 } from "./a.ts";
+  export declare class Test {
+    /** Testing */
+    @dec noReturnTypeVoid(param?: number, param2?: string): void;
+    noReturnTypeAsync(): Promise<void>;
+    returnTypeGenerator(): Generator<unknown, any, any>;
+    hasReturnType(): A1 & RenamedA3 | A4 | A6;
+    private inner: any;
+  }

@@ -148,13 +148,13 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   unable to infer type from object property, skipping
       at https://jsr.io/@scope/a/1.0.0/mod.ts@176
 Fast check https://jsr.io/@scope/b/1.0.0/mod.ts:
-  error[missing-explicit-type]: missing explicit type in the public API
-    --> https://jsr.io/@scope/b/1.0.0/mod.ts:11:3
-     |
-  11 |   a = BaseHandler,
-     |   ^ this symbol is missing an explicit type
-     |
-     = hint: add an explicit type annotation to the symbol
+  {}
+  export function test(a = BaseHandler, C = Test.A): void {}
+  --- DTS ---
+  export declare function test(a?: any, C?: any): void;
+  --- DTS Diagnostics ---
+  unable to infer type, falling back to any type
+      at https://jsr.io/@scope/b/1.0.0/mod.ts@140
 
-    info: all symbols in the public API must have an explicit type
-    docs: https://jsr.io/go/slow-type-missing-explicit-type
+  unable to infer type, falling back to any type
+      at https://jsr.io/@scope/b/1.0.0/mod.ts@159

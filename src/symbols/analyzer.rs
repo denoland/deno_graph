@@ -277,7 +277,7 @@ impl<'a> RootSymbol<'a> {
       source_text_info,
       media_type,
       comments,
-      statements: program.body.as_slice(),
+      program,
       re_exports: builder.re_exports.take(),
       swc_id_to_symbol_id: builder.swc_id_to_symbol_id.take(),
       symbols: builder
@@ -1585,7 +1585,7 @@ pub struct EsModuleInfo<'a> {
   source_text_info: SourceTextInfo,
   media_type: MediaType,
   comments: Vec<Comment>,
-  statements: &'a [Statement<'a>],
+  program: &'a Program<'a>,
   /// The re-export specifiers.
   re_exports: Vec<&'a ExportAllDeclaration<'a>>,
   // note: not all symbol ids have an swc id. For example, default exports
@@ -1641,8 +1641,12 @@ impl<'a> EsModuleInfo<'a> {
     &self.comments
   }
 
+  pub fn program(&self) -> &'a Program<'a> {
+    self.program
+  }
+
   pub fn statements(&self) -> &'a [Statement<'a>] {
-    self.statements
+    self.program.body.as_slice()
   }
 
   pub fn exports<'b>(

@@ -131,13 +131,123 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  error[missing-explicit-type]: missing explicit type in the public API
-   --> https://jsr.io/@scope/a/1.0.0/mod.ts:4:29
-    |
-  4 |   constructor(prop: string, other = 5) {
-    |                             ^^^^^ this symbol is missing an explicit type
-    |
-    = hint: add an explicit type annotation to the symbol
-
-    info: all symbols in the public API must have an explicit type
-    docs: https://jsr.io/go/slow-type-missing-explicit-type
+  {}
+  /** A */
+  export class ClassBasic {
+    /** B */
+    constructor(prop: string, other?: number) {}
+  }
+  export class ClassPrivateCtor {
+    private constructor() {}
+  }
+  export class ClassPrivateCtorWithOverloads {
+    private constructor() {}
+  }
+  export declare class ClassDeclarePrivateCtor {
+    private constructor(prop: string, other: Private1);
+  }
+  export class ClassProtectedCtor {
+    protected constructor(prop: string, other?: number) {}
+  }
+  export class ClassProtectedCtorWithOverloads {
+    protected constructor(prop: Public1);
+    protected constructor(param0?: any) {}
+  }
+  export class ClassCtorWithOverloads {
+    constructor(prop: Public1);
+    constructor(param0?: any) {}
+  }
+  export class ClassPrivateCtorPublicParamProp {
+    declare param1: Public2;
+    declare private param2: any;
+    private constructor() {}
+  }
+  export class ClassCtorPublicParamProp {
+    declare param1: Public3;
+    declare private param2: any;
+    declare private param3: any;
+    constructor(param1: Public3, param2: Public4, param3: Public5 = new Public5()) {}
+  }
+  export class ClassCtorPublicParamPropInit {
+    declare param1: Public3;
+    constructor(param1: Public3 = new Private1()) {}
+  }
+  export class ClassCtorPublicParamPropOptional {
+    declare param1?: string;
+    constructor(param1?: string) {}
+  }
+  export declare class AmbientClassCtor {
+    constructor(public param: string, private value: number);
+    constructor(public param: string);
+  }
+  class Public1 {}
+  class Public2 {}
+  class Public3 {}
+  class Public4 {}
+  class Public5 {}
+  export class Base {
+    protected constructor(prop: string) {}
+  }
+  export class Child extends Base {
+    private constructor() {
+      super({} as never);
+    }
+  }
+  --- DTS ---
+  /** A */
+  export declare class ClassBasic {
+    /** B */
+    constructor(prop: string, other?: number);
+  }
+  export declare class ClassPrivateCtor {
+    private constructor();
+  }
+  export declare class ClassPrivateCtorWithOverloads {
+    private constructor();
+  }
+  export declare class ClassDeclarePrivateCtor {
+    private constructor(prop: string, other: Private1);
+  }
+  export declare class ClassProtectedCtor {
+    protected constructor(prop: string, other?: number);
+  }
+  export declare class ClassProtectedCtorWithOverloads {
+    protected constructor(prop: Public1);
+  }
+  export declare class ClassCtorWithOverloads {
+    constructor(prop: Public1);
+  }
+  export declare class ClassPrivateCtorPublicParamProp {
+    param1: Public2;
+    private param2: any;
+    private constructor();
+  }
+  export declare class ClassCtorPublicParamProp {
+    param1: Public3;
+    private param2: any;
+    private param3: any;
+    constructor(param1: Public3, param2: Public4, param3?: Public5);
+  }
+  export declare class ClassCtorPublicParamPropInit {
+    param1: Public3;
+    constructor(param1?: Public3);
+  }
+  export declare class ClassCtorPublicParamPropOptional {
+    param1?: string;
+    constructor(param1?: string);
+  }
+  export declare class AmbientClassCtor {
+    constructor(public param: string, private value: number);
+    constructor(public param: string);
+  }
+  declare class Public1 {}
+  declare class Public2 {}
+  declare class Public3 {}
+  declare class Public4 {}
+  declare class Public5 {}
+  export declare class Base {
+    protected constructor(prop: string);
+  }
+  export declare class Child extends Base {
+    private constructor();
+  }
