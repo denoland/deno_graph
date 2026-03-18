@@ -2188,13 +2188,15 @@ impl<'a> FastCheckTransformer<'a> {
       },
       Expression::ObjectExpression(n) => {
         let mut is_leavable = true;
+        let mut has_methods = false;
         for prop in n.properties.iter_mut() {
           is_leavable = match prop {
             ObjectPropertyKind::ObjectProperty(prop) => {
               if prop.shorthand {
                 true
               } else if prop.method || matches!(prop.kind, PropertyKind::Get | PropertyKind::Set) {
-                false
+                has_methods = true;
+                true // we'll transform methods in a second pass
               } else {
                 recurse(&mut prop.value)?
               }
@@ -2205,6 +2207,28 @@ impl<'a> FastCheckTransformer<'a> {
           };
           if !is_leavable {
             break
+          }
+        }
+        // Transform methods/getters/setters in a second pass
+        // (can't do it in the first pass due to borrow of `self` by `recurse`)
+        if is_leavable && has_methods {
+          for prop in n.properties.iter_mut() {
+            if let ObjectPropertyKind::ObjectProperty(prop) = prop {
+              let is_method = prop.method || matches!(prop.kind, PropertyKind::Get | PropertyKind::Set);
+              if is_method {
+                let function_kind = match prop.kind {
+                  PropertyKind::Get => FunctionKind::Getter,
+                  PropertyKind::Set => FunctionKind::Setter,
+                  _ => FunctionKind::ExpressionLike,
+                };
+                if let Expression::FunctionExpression(func) = &mut prop.value {
+                  self.transform_fn(func, None, function_kind, false, false)?;
+                } else {
+                  is_leavable = false;
+                  break;
+                }
+              }
+            }
           }
         }
         is_leavable
@@ -2253,9 +2277,14 @@ impl<'a> FastCheckTransformer<'a> {
         self.transform_arrow(n, parent_id_span)?;
         true
       }
+      Expression::ClassExpression(n) => {
+        let empty_comments = OxcVec::new_in(self.allocator);
+        let mut comments = CommentsMut::new(self.allocator, &empty_comments);
+        self.transform_class(n, &mut comments, false)?;
+        true
+      }
       Expression::TemplateLiteral(_)
       | Expression::TaggedTemplateExpression(_)
-      | Expression::ClassExpression(_)
       | Expression::YieldExpression(_)
       | Expression::MetaProperty(_)
       | Expression::JSXElement(_)

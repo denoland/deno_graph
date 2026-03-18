@@ -34,21 +34,19 @@ export class D {
   }
 }
 
-// TODO: these are not yet handled
-// export const e = {
-//   e() {
-//     if (globalThis) return;
-//     return;
-//   }
-// };
+export const e = {
+  e() {
+    if (globalThis) return;
+    return;
+  }
+};
 
-// TODO: these are not yet handled
-// export const f = class {
-//   f() {
-//     if (globalThis) return;
-//     return;
-//   }
-// };
+export const f = class {
+  f() {
+    if (globalThis) return;
+    return;
+  }
+};
 
 
 # output
@@ -59,7 +57,7 @@ export class D {
   "modules": [
     {
       "kind": "esm",
-      "size": 528,
+      "size": 422,
       "mediaType": "TypeScript",
       "specifier": "file:///mod.ts"
     }
@@ -75,20 +73,10 @@ Fast check file:///mod.ts:
   export class D {
     d(): void {}
   }
-  // TODO: these are not yet handled
-  // export const e = {
-  //   e() {
-  //     if (globalThis) return;
-  //     return;
-  //   }
-  // };
-  // TODO: these are not yet handled
-  // export const f = class {
-  //   f() {
-  //     if (globalThis) return;
-  //     return;
-  //   }
-  // };
+  export const e = { e(): void {} };
+  export const f = class {
+    f(): void {}
+  };
   --- DTS ---
   export declare const a: () => void;
   export declare const b: () => void;
@@ -96,17 +84,11 @@ Fast check file:///mod.ts:
   export declare class D {
     d(): void;
   }
-  // TODO: these are not yet handled
-  // export const e = {
-  //   e() {
-  //     if (globalThis) return;
-  //     return;
-  //   }
-  // };
-  // TODO: these are not yet handled
-  // export const f = class {
-  //   f() {
-  //     if (globalThis) return;
-  //     return;
-  //   }
-  // };
+  export declare const e: {
+    e(): void;
+  };
+  export declare const f: {
+    new (): {
+      f(): void;
+    };
+  };

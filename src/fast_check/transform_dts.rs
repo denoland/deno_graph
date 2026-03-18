@@ -498,11 +498,47 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
         for item in &obj.properties {
           match item {
             ObjectPropertyKind::ObjectProperty(prop) => {
-              if prop.kind != PropertyKind::Init
-                || prop.method
-                || prop.shorthand
-              {
-                // getter/setter/method/shorthand
+              if prop.shorthand {
+                self.mark_diagnostic_unsupported_prop(prop.span);
+                continue;
+              }
+
+              if prop.method {
+                // Convert method to TSMethodSignature
+                if let Expression::FunctionExpression(func) = &prop.value {
+                  let (key, computed) =
+                    self.prop_key_to_expr_key(&prop.key, prop.computed);
+                  let kind = match prop.kind {
+                    PropertyKind::Get => TSMethodSignatureKind::Get,
+                    PropertyKind::Set => TSMethodSignatureKind::Set,
+                    _ => TSMethodSignatureKind::Method,
+                  };
+                  members.push(TSSignature::TSMethodSignature(Box::new_in(
+                    TSMethodSignature {
+                      node_id: Cell::new(NodeId::DUMMY),
+                      span: SPAN,
+                      key,
+                      computed,
+                      optional: false,
+                      kind,
+                      type_parameters: func
+                        .type_parameters
+                        .clone_in(self.allocator),
+                      this_param: func.this_param.clone_in(self.allocator),
+                      params: func.params.clone_in(self.allocator),
+                      return_type: func.return_type.clone_in(self.allocator),
+                      scope_id: Cell::new(None),
+                    },
+                    self.allocator,
+                  )));
+                } else {
+                  self.mark_diagnostic_unsupported_prop(prop.span);
+                }
+                continue;
+              }
+
+              if prop.kind != PropertyKind::Init {
+                // getter/setter without method flag
                 self.mark_diagnostic_unsupported_prop(prop.span);
                 continue;
               }
@@ -642,9 +678,143 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
       | Expression::SequenceExpression(_)
       | Expression::Identifier(_)
       | Expression::TemplateLiteral(_)
-      | Expression::TaggedTemplateExpression(_)
-      | Expression::ClassExpression(_)
-      | Expression::YieldExpression(_)
+      | Expression::TaggedTemplateExpression(_) => None,
+      Expression::ClassExpression(class_expr) => {
+        // Convert class expression to a type representing the class constructor.
+        // Produces: { new(...): { members... }; } plus static members at top level.
+        let body = self.class_body_to_type(&class_expr.body);
+
+        // Build instance type from non-static, non-constructor members
+        let mut instance_members: std::vec::Vec<TSSignature<'a>> =
+          std::vec::Vec::new();
+        for member in &body.body {
+          match member {
+            ClassElement::MethodDefinition(method) => {
+              if method.r#static
+                || method.kind == MethodDefinitionKind::Constructor
+              {
+                continue;
+              }
+              let kind = match method.kind {
+                MethodDefinitionKind::Get => TSMethodSignatureKind::Get,
+                MethodDefinitionKind::Set => TSMethodSignatureKind::Set,
+                _ => TSMethodSignatureKind::Method,
+              };
+              instance_members.push(TSSignature::TSMethodSignature(
+                Box::new_in(
+                  TSMethodSignature {
+                    node_id: Cell::new(NodeId::DUMMY),
+                    span: SPAN,
+                    key: method.key.clone_in(self.allocator),
+                    computed: method.computed,
+                    optional: method.optional,
+                    kind,
+                    type_parameters: method
+                      .value
+                      .type_parameters
+                      .clone_in(self.allocator),
+                    this_param: method
+                      .value
+                      .this_param
+                      .clone_in(self.allocator),
+                    params: method.value.params.clone_in(self.allocator),
+                    return_type: method
+                      .value
+                      .return_type
+                      .clone_in(self.allocator),
+                    scope_id: Cell::new(None),
+                  },
+                  self.allocator,
+                ),
+              ));
+            }
+            ClassElement::PropertyDefinition(prop) => {
+              if prop.r#static {
+                continue;
+              }
+              instance_members.push(TSSignature::TSPropertySignature(
+                Box::new_in(
+                  TSPropertySignature {
+                    node_id: Cell::new(NodeId::DUMMY),
+                    span: SPAN,
+                    readonly: prop.readonly,
+                    key: prop.key.clone_in(self.allocator),
+                    computed: prop.computed,
+                    optional: prop.optional,
+                    type_annotation: prop
+                      .type_annotation
+                      .clone_in(self.allocator),
+                  },
+                  self.allocator,
+                ),
+              ));
+            }
+            _ => {}
+          }
+        }
+
+        // Build the instance type literal
+        let mut oxc_instance_members = Vec::new_in(self.allocator);
+        for m in instance_members {
+          oxc_instance_members.push(m);
+        }
+        let instance_type = TSType::TSTypeLiteral(Box::new_in(
+          TSTypeLiteral {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: SPAN,
+            members: oxc_instance_members,
+          },
+          self.allocator,
+        ));
+
+        // Find constructor params
+        let ctor_params = body.body.iter().find_map(|m| {
+          if let ClassElement::MethodDefinition(method) = m
+            && method.kind == MethodDefinitionKind::Constructor {
+              return Some(method.value.params.clone_in(self.allocator));
+            }
+          None
+        });
+
+        // Build: { new(...): InstanceType }
+        let mut top_members = Vec::new_in(self.allocator);
+        top_members.push(TSSignature::TSConstructSignatureDeclaration(
+          Box::new_in(
+            TSConstructSignatureDeclaration {
+              node_id: Cell::new(NodeId::DUMMY),
+              span: SPAN,
+              type_parameters: class_expr
+                .type_parameters
+                .clone_in(self.allocator),
+              params: ctor_params.unwrap_or_else(|| {
+                Box::new_in(
+                  FormalParameters {
+                    node_id: Cell::new(NodeId::DUMMY),
+                    span: SPAN,
+                    kind: FormalParameterKind::Signature,
+                    items: Vec::new_in(self.allocator),
+                    rest: None,
+                  },
+                  self.allocator,
+                )
+              }),
+              return_type: Some(type_ann(self.allocator, instance_type)),
+              scope_id: Cell::new(None),
+            },
+            self.allocator,
+          ),
+        ));
+
+        Some(TSType::TSTypeLiteral(Box::new_in(
+          TSTypeLiteral {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: SPAN,
+            members: top_members,
+          },
+          self.allocator,
+        )))
+      }
+      Expression::YieldExpression(_)
       | Expression::MetaProperty(_)
       | Expression::AwaitExpression(_)
       | Expression::ParenthesizedExpression(_)
