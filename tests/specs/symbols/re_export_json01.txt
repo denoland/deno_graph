@@ -31,13 +31,9 @@ file:///bar.json: JsonModuleInfo {
                         "<json>",
                     ),
                 ),
-                range: SourceRange {
-                    start: SourcePos(
-                        0,
-                    ),
-                    end: SourcePos(
-                        15,
-                    ),
+                range: Span {
+                    start: 0,
+                    end: 15,
                 },
                 flags: 0,
             },
@@ -57,10 +53,10 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "other",
-            #2,
+            0,
         ): 1,
     },
     symbols: {
@@ -74,16 +70,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "import other from \"./non_public.json\" with { type: 'json' };\nexport { default as configFile } from './bar.json' assert { type: 'json' };\n\nconsole.log(other);",
+                            <node @ 0..158>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            157,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 158,
                     },
                     flags: 0,
                 },
@@ -112,13 +104,9 @@ file:///mod.ts: EsModuleInfo {
                             specifier: "./non_public.json",
                         },
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            7,
-                        ),
-                        end: SourcePos(
-                            12,
-                        ),
+                    range: Span {
+                        start: 7,
+                        end: 12,
                     },
                     flags: 0,
                 },
@@ -145,13 +133,9 @@ file:///mod.ts: EsModuleInfo {
                             specifier: "./bar.json",
                         },
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            70,
-                        ),
-                        end: SourcePos(
-                            91,
-                        ),
+                    range: Span {
+                        start: 70,
+                        end: 91,
                     },
                     flags: 0,
                 },
@@ -180,13 +164,9 @@ file:///non_public.json: JsonModuleInfo {
                         "<json>",
                     ),
                 ),
-                range: SourceRange {
-                    start: SourcePos(
-                        0,
-                    ),
-                    end: SourcePos(
-                        2,
-                    ),
+                range: Span {
+                    start: 0,
+                    end: 2,
                 },
                 flags: 0,
             },

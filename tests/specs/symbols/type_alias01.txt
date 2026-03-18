@@ -14,22 +14,22 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "Test",
-            #2,
+            0,
         ): 1,
         (
             "Other",
-            #2,
+            0,
         ): 2,
         (
             "Other2",
-            #2,
+            0,
         ): 3,
         (
             "Tuple",
-            #2,
+            0,
         ): 4,
     },
     symbols: {
@@ -43,16 +43,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export type Test<T extends Other> = Other2;\n\ninterface Other {}\ninterface Other2 {}\n\n// should not have lat and long in deps\nexport type Tuple = [lat: number, long: number];",
+                            <node @ 0..174>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            173,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 174,
                     },
                     flags: 0,
                 },
@@ -81,16 +77,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export type Test<T extends Other> = Other2;",
+                            <node @ 0..43>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            43,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 43,
                     },
                     flags: 0,
                 },
@@ -111,16 +103,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface Other {}",
+                            <node @ 45..63>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            45,
-                        ),
-                        end: SourcePos(
-                            63,
-                        ),
+                    range: Span {
+                        start: 45,
+                        end: 63,
                     },
                     flags: 0,
                 },
@@ -141,16 +129,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface Other2 {}",
+                            <node @ 64..83>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            64,
-                        ),
-                        end: SourcePos(
-                            83,
-                        ),
+                    range: Span {
+                        start: 64,
+                        end: 83,
                     },
                     flags: 0,
                 },
@@ -171,16 +155,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export type Tuple = [lat: number, long: number];",
+                            <node @ 125..173>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            125,
-                        ),
-                        end: SourcePos(
-                            173,
-                        ),
+                    range: Span {
+                        start: 125,
+                        end: 173,
                     },
                     flags: 0,
                 },
@@ -192,10 +172,10 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-1:0..43 [Id(("Other", #2)), Id(("Other2", #2))]
+1:0..43 [Id(("Other", 0)), Id(("Other2", 0))]
 
 == symbol deps (types only) ==
-1:0..43 [Id(("Other", #2)), Id(("Other2", #2))]
+1:0..43 [Id(("Other", 0)), Id(("Other2", 0))]
 
 == export definitions ==
 [Test]: file:///mod.ts:0..43

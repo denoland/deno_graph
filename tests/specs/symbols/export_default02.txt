@@ -8,10 +8,10 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "Test",
-            #2,
+            0,
         ): 2,
     },
     symbols: {
@@ -25,16 +25,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export default Test; class Test {}",
+                            <node @ 0..35>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            34,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 35,
                     },
                     flags: 0,
                 },
@@ -60,16 +56,12 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "Test",
-                            #2,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            15,
-                        ),
-                        end: SourcePos(
-                            19,
-                        ),
+                    range: Span {
+                        start: 15,
+                        end: 19,
                     },
                     flags: 0,
                 },
@@ -90,16 +82,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class Test {}",
+                            <node @ 21..34>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            21,
-                        ),
-                        end: SourcePos(
-                            34,
-                        ),
+                    range: Span {
+                        start: 21,
+                        end: 34,
                     },
                     flags: 0,
                 },

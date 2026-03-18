@@ -132,9 +132,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     }
   }
   export * from "./a.js";
-  export class Other {
-  }
+  export class Other {}
   --- DTS ---
   export * from "./a.js";
-  export declare class Other {
-  }
+  export declare class Other {}

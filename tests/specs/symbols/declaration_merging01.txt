@@ -31,30 +31,30 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "Album",
-            #2,
+            0,
         ): 1,
         (
             "Label",
-            #3,
+            0,
         ): 2,
         (
             "Color",
-            #2,
+            0,
         ): 3,
         (
             "mixColor",
-            #4,
+            0,
         ): 4,
         (
             "Test",
-            #2,
+            0,
         ): 5,
         (
             "other",
-            #7,
+            0,
         ): 6,
     },
     symbols: {
@@ -68,16 +68,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class Album {\n}\nnamespace Album {\n  export class Label {}\n}\n\nenum Color {\n  red,\n  green,\n  blue,\n}\nnamespace Color {\n  export function mixColor(colorName: string) {\n    // ...etc...\n  }\n}\n\nfunction Test() {\n}\nnamespace Test {\n  export function other() {}\n}\n\nexport { Album, Color, Test };",
+                            <node @ 0..290>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            289,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 290,
                     },
                     flags: 0,
                 },
@@ -106,32 +102,24 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class Album {\n}",
+                            <node @ 0..15>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            15,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 15,
                     },
                     flags: 0,
                 },
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "namespace Album {\n  export class Label {}\n}",
+                            <node @ 16..59>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            16,
-                        ),
-                        end: SourcePos(
-                            59,
-                        ),
+                    range: Span {
+                        start: 16,
+                        end: 59,
                     },
                     flags: 0,
                 },
@@ -156,16 +144,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class Label {}",
+                            <node @ 36..57>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            36,
-                        ),
-                        end: SourcePos(
-                            57,
-                        ),
+                    range: Span {
+                        start: 36,
+                        end: 57,
                     },
                     flags: 0,
                 },
@@ -186,32 +170,24 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "enum Color {\n  red,\n  green,\n  blue,\n}",
+                            <node @ 61..99>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            61,
-                        ),
-                        end: SourcePos(
-                            99,
-                        ),
+                    range: Span {
+                        start: 61,
+                        end: 99,
                     },
                     flags: 0,
                 },
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "namespace Color {\n  export function mixColor(colorName: string) {\n    // ...etc...\n  }\n}",
+                            <node @ 100..188>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            100,
-                        ),
-                        end: SourcePos(
-                            188,
-                        ),
+                    range: Span {
+                        start: 100,
+                        end: 188,
                     },
                     flags: 0,
                 },
@@ -236,16 +212,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export function mixColor(colorName: string) {\n    // ...etc...\n  }",
+                            <node @ 120..186>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            120,
-                        ),
-                        end: SourcePos(
-                            186,
-                        ),
+                    range: Span {
+                        start: 120,
+                        end: 186,
                     },
                     flags: 0,
                 },
@@ -266,32 +238,24 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "function Test() {\n}",
+                            <node @ 190..209>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            190,
-                        ),
-                        end: SourcePos(
-                            209,
-                        ),
+                    range: Span {
+                        start: 190,
+                        end: 209,
                     },
                     flags: 0,
                 },
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "namespace Test {\n  export function other() {}\n}",
+                            <node @ 210..257>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            210,
-                        ),
-                        end: SourcePos(
-                            257,
-                        ),
+                    range: Span {
+                        start: 210,
+                        end: 257,
                     },
                     flags: 0,
                 },
@@ -316,16 +280,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export function other() {}",
+                            <node @ 229..255>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            229,
-                        ),
-                        end: SourcePos(
-                            255,
-                        ),
+                    range: Span {
+                        start: 229,
+                        end: 255,
                     },
                     flags: 0,
                 },
@@ -347,16 +307,12 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "Album",
-                            #2,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            268,
-                        ),
-                        end: SourcePos(
-                            273,
-                        ),
+                    range: Span {
+                        start: 268,
+                        end: 273,
                     },
                     flags: 0,
                 },
@@ -378,16 +334,12 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "Color",
-                            #2,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            275,
-                        ),
-                        end: SourcePos(
-                            280,
-                        ),
+                    range: Span {
+                        start: 275,
+                        end: 280,
                     },
                     flags: 0,
                 },
@@ -409,16 +361,12 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "Test",
-                            #2,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            282,
-                        ),
-                        end: SourcePos(
-                            286,
-                        ),
+                    range: Span {
+                        start: 282,
+                        end: 286,
                     },
                     flags: 0,
                 },

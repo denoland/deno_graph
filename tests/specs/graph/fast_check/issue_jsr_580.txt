@@ -75,13 +75,15 @@ import 'jsr:@scope/a'
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export interface DebugFn {
-    (...args: unknown[]) : void;
+    (...args: unknown[]): void;
     enabled: boolean;
   }
-  export const createDebug = (namespace: string): DebugFn =>({} as never);
+  export const createDebug = (namespace: string): DebugFn => {
+    return {} as never;
+  };
   --- DTS ---
   export interface DebugFn {
-    (...args: unknown[]) : void;
+    (...args: unknown[]): void;
     enabled: boolean;
   }
   export declare const createDebug: (namespace: string) => DebugFn;

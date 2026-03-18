@@ -94,10 +94,8 @@ import 'jsr:@scope/a'
       "specifier": "file:///mod.ts"
     },
     {
-      "kind": "esm",
-      "size": 1434,
-      "mediaType": "TypeScript",
-      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts",
+      "error": "The module's source code could not be parsed: Cannot assign to this expression at https://jsr.io/@scope/a/1.0.0/mod.ts:28:6\n\n    g: 1++,\n       ~"
     }
   ],
   "redirects": {
@@ -107,111 +105,3 @@ import 'jsr:@scope/a'
     "@scope/a@*": "@scope/a@1.0.0"
   }
 }
-
-Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  {}
-  const public1: Public1 = {} as never;
-  export { public1 };
-  class Public1 {
-  }
-  const ERROR_STATUS_MAP = {
-    "BadRequest": 400,
-    "Unauthorized": 401,
-    "PaymentRequired": 402,
-    "Forbidden": 403
-  } as const;
-  export type ErrorStatusKeys = keyof typeof ERROR_STATUS_MAP;
-  export const asIs1 = [
-    1,
-    2,
-    3
-  ];
-  export const asIs2 = {
-    a: [
-      1,
-      2,
-      3
-    ],
-    b: true,
-    c: 10,
-    d: 10n,
-    e: 1 * 2,
-    [1]: 4,
-    f: 1 ? true : false,
-    g: 1++,
-    h: [
-      ...[
-        1,
-        2
-      ],
-      ...[
-        "test"
-      ]
-    ]
-  };
-  export const func1 = function(): string {
-    return {} as never;
-  };
-  export const func2 = (): string =>({} as never);
-  export const func3 = (): string =>({} as never);
-  export const func4 = ()=>"test" as const;
-  export const func5 = (): Promise<string> =>({} as never);
-  export const func6 = (): Promise<1> =>({} as never);
-  export const func7 = (): Promise<1> =>({} as never);
-  export const func8 = async ()=>"test" as const;
-  export const inferred1: 1 = {} as never;
-  export const inferred2: string = {} as never;
-  export const inferred3: true = {} as never;
-  export const inferred4: RegExp = {} as never;
-  export const inferred5: boolean = {} as never;
-  export const inferred6: boolean = {} as never;
-  export const inferred7: 1 | 2 | 3 & 4 = {} as never;
-  export const inferred8: ["test", 1] = {} as never;
-  export const inferred9: [...string] = {} as never;
-  export const inferred10: (1 | 2n)[] = {} as never;
-  export const inferred11: (keyof string)[] = {} as never;
-  export const inferred12: 1 = {} as never;
-  --- DTS ---
-  declare const public1: Public1;
-  export { public1 };
-  declare class Public1 {
-  }
-  declare const ERROR_STATUS_MAP: {
-    readonly "BadRequest": 400;
-    readonly "Unauthorized": 401;
-    readonly "PaymentRequired": 402;
-    readonly "Forbidden": 403;
-  };
-  export type ErrorStatusKeys = keyof typeof ERROR_STATUS_MAP;
-  export declare const asIs1: readonly [number, number, number];
-  export declare const asIs2: {
-    readonly a: readonly [number, number, number];
-    readonly b: boolean;
-    readonly c: number;
-    readonly d: bigint;
-    readonly e;
-    readonly [1]: number;
-    readonly f;
-    readonly g;
-    readonly h: readonly [readonly [number, number], readonly [string]];
-  };
-  export declare const func1: () => string;
-  export declare const func2: () => string;
-  export declare const func3: () => string;
-  export declare const func4: () => any;
-  export declare const func5: () => Promise<string>;
-  export declare const func6: () => Promise<1>;
-  export declare const func7: () => Promise<1>;
-  export declare const func8: () => any;
-  export declare const inferred1: 1;
-  export declare const inferred2: string;
-  export declare const inferred3: true;
-  export declare const inferred4: RegExp;
-  export declare const inferred5: boolean;
-  export declare const inferred6: boolean;
-  export declare const inferred7: 1 | 2 | 3 & 4;
-  export declare const inferred8: ["test", 1];
-  export declare const inferred9: [...string];
-  export declare const inferred10: (1 | 2n)[];
-  export declare const inferred11: (keyof string)[];
-  export declare const inferred12: 1;

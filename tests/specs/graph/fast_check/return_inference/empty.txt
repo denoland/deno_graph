@@ -57,12 +57,22 @@ export class D {
 
 Fast check file:///mod.ts:
   {}
-  export const a = (): void =>{};
+  export const a = (): void => {};
   export const b = function(): void {};
   export function c(): void {}
   export class D {
     d(): void {}
   }
+  // TODO: these are not yet handled
+  // export const e = {
+  //   e() {
+  //   }
+  // };
+  // TODO: these are not yet handled
+  // export const f = class {
+  //   f() {
+  //   }
+  // };
   --- DTS ---
   export declare const a: () => void;
   export declare const b: () => void;
@@ -70,3 +80,13 @@ Fast check file:///mod.ts:
   export declare class D {
     d(): void;
   }
+  // TODO: these are not yet handled
+  // export const e = {
+  //   e() {
+  //   }
+  // };
+  // TODO: these are not yet handled
+  // export const f = class {
+  //   f() {
+  //   }
+  // };

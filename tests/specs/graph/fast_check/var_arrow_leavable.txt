@@ -91,12 +91,10 @@ import 'jsr:@scope/a'
 Fast check https://jsr.io/@scope/a/1.0.0/b.ts:
   {}
   export type Foo = string;
-  export class Bar {
-  }
+  export class Bar {}
   --- DTS ---
   export type Foo = string;
-  export declare class Bar {
-  }
+  export declare class Bar {}
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {
@@ -118,8 +116,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     }
   }
   import type { Foo, Bar } from "./b.ts";
-  export const foo = (foo: Foo): string =>({} as never);
-  export const bar = (): Bar =>({} as never);
+  export const foo = (foo: Foo): string => ({}) as never;
+  export const bar = (): Bar => ({}) as never;
   --- DTS ---
   import type { Foo, Bar } from "./b.ts";
   export declare const foo: (foo: Foo) => string;

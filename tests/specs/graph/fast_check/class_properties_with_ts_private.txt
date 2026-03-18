@@ -67,18 +67,18 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  class Base {
-  }
+  class Base {}
   export class WithTsPrivate extends Base {
     declare private regular: any;
     declare private definiteShouldGoAway: any;
+    // though private override doesn't make much sense
     declare private withOverride: any;
   }
   --- DTS ---
-  declare class Base {
-  }
+  declare class Base {}
   export declare class WithTsPrivate extends Base {
     private regular: any;
     private definiteShouldGoAway: any;
+    // though private override doesn't make much sense
     private withOverride: any;
   }

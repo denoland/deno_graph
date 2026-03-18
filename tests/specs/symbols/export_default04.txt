@@ -8,7 +8,7 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {},
+    id_to_symbol_id: {},
     symbols: {
         0: Symbol {
             module_id: ModuleId(
@@ -20,16 +20,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export default 1 + 1;",
+                            <node @ 0..22>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            21,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 22,
                     },
                     flags: 0,
                 },
@@ -54,16 +50,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export default 1 + 1;",
+                            <node @ 15..20>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            21,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 21,
                     },
                     flags: 0,
                 },

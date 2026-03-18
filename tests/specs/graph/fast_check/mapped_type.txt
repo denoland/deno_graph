@@ -70,10 +70,8 @@ import 'jsr:@scope/a'
       "specifier": "file:///mod.ts"
     },
     {
-      "kind": "esm",
-      "size": 631,
-      "mediaType": "TypeScript",
-      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts",
+      "error": "The module's source code could not be parsed: An index signature must have a type annotation. at https://jsr.io/@scope/a/1.0.0/mod.ts:2:5\n\n      [value: string];\n      ~~~~~~~~~~~~~~~"
     }
   ],
   "redirects": {
@@ -83,65 +81,3 @@ import 'jsr:@scope/a'
     "@scope/a@*": "@scope/a@1.0.0"
   }
 }
-
-Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  {}
-  export type NoTypeAnn = {
-    [value: string];
-  };
-  type Private1 = string;
-  type Private2 = number;
-  export type MappedTypeWithNamedType = {
-    [K in T as U & Private1]: Private2;
-  };
-  export type Partial<T> = {
-    [P in keyof T]?: T[P];
-  };
-  export type OptionalPlus<T> = {
-    [P in keyof T]+?: T[P];
-  };
-  export type OptionalMinus<T> = {
-    [P in keyof T]-?: T[P];
-  };
-  export type Flags<T> = {
-    [P in keyof T]: boolean;
-  };
-  export type ReadOnly<T> = {
-    readonly [P in keyof T]: T[P];
-  };
-  export type ReadOnlyPlus<T> = {
-    +readonly [P in keyof T]: T[P];
-  };
-  export type ReadOnlyMinus<T> = {
-    -readonly [P in keyof T]: T[P];
-  };
-  --- DTS ---
-  export type NoTypeAnn = {
-    [value: string];
-  };
-  type Private1 = string;
-  type Private2 = number;
-  export type MappedTypeWithNamedType = {
-    [K in T as U & Private1]: Private2;
-  };
-  export type Partial<T> = {
-    [P in keyof T]?: T[P];
-  };
-  export type OptionalPlus<T> = {
-    [P in keyof T]+?: T[P];
-  };
-  export type OptionalMinus<T> = {
-    [P in keyof T]-?: T[P];
-  };
-  export type Flags<T> = {
-    [P in keyof T]: boolean;
-  };
-  export type ReadOnly<T> = {
-    readonly [P in keyof T]: T[P];
-  };
-  export type ReadOnlyPlus<T> = {
-    +readonly [P in keyof T]: T[P];
-  };
-  export type ReadOnlyMinus<T> = {
-    -readonly [P in keyof T]: T[P];
-  };

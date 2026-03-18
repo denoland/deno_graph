@@ -60,7 +60,7 @@ import 'jsr:@scope/a'
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   type y = string;
-  export const x = (): y =>({} as never);
+  export const x = (): y => ({}) as never;
   --- DTS ---
   type y = string;
   export declare const x: () => y;

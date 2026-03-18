@@ -73,7 +73,8 @@ import 'jsr:@scope/a'
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export class AutoAccessor {
-    /** Some comment */ declare public_accessor: string;
+    /** Some comment */
+    declare public_accessor: string;
     declare override_accessor: string;
     declare private private_accessor: any;
     declare static static_accessor: number;
@@ -81,16 +82,16 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     declare private static private_static_unanalyzable: any;
   }
   export class PrivateAccessor {
-    #private!: unknown;
+    declare #private!: any;
   }
   --- DTS ---
   export declare class AutoAccessor {
-    /** Some comment */ public_accessor: string;
+    /** Some comment */
+    public_accessor: string;
     override_accessor: string;
     private private_accessor: any;
     static static_accessor: number;
     private static private_static: any;
     private static private_static_unanalyzable: any;
   }
-  export declare class PrivateAccessor {
-  }
+  export declare class PrivateAccessor {}

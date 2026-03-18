@@ -66,13 +66,21 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  error[missing-explicit-type]: missing explicit type in the public API
-   --> https://jsr.io/@scope/a/1.0.0/mod.ts:4:7
-    |
-  4 | const key = Symbol("#keys");
-    |       ^^^ this symbol is missing an explicit type
-    |
-    = hint: add an explicit type annotation to the symbol
-
-    info: all symbols in the public API must have an explicit type
-    docs: https://jsr.io/go/slow-type-missing-explicit-type
+  {}
+  // this will fail because Symbol is local
+  function Symbol(): void {}
+  const key: unique symbol = {} as never;
+  const key2: unique symbol = {} as never;
+  export class MyClass {
+    declare [key]: number;
+    declare [key2]: string;
+  }
+  --- DTS ---
+  // this will fail because Symbol is local
+  declare function Symbol(): void;
+  declare const key: unique symbol;
+  declare const key2: unique symbol;
+  export declare class MyClass {
+    [key]: number;
+    [key2]: string;
+  }

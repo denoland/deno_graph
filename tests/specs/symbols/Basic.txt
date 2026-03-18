@@ -33,30 +33,30 @@ file:///a.ts: EsModuleInfo {
     ),
     specifier: "file:///a.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "AInner",
-            #2,
+            0,
         ): 1,
         (
             "AInnerUnused",
-            #2,
+            0,
         ): 3,
         (
             "A",
-            #2,
+            0,
         ): 5,
         (
             "B",
-            #2,
+            0,
         ): 7,
         (
             "C",
-            #2,
+            0,
         ): 8,
         (
             "D",
-            #2,
+            0,
         ): 9,
     },
     symbols: {
@@ -70,16 +70,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface AInner {\n  prop: string;\n}\n\ninterface AInnerUnused {\n  prop2: string;\n}\n\nexport class A {\n  prop: AInner;\n}\n\nexport type B = string;\n\nexport default class C {\n};\n\nexport type D = typeof C;",
+                            <node @ 0..199>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            198,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 199,
                     },
                     flags: 0,
                 },
@@ -112,16 +108,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface AInner {\n  prop: string;\n}",
+                            <node @ 0..36>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            36,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 36,
                     },
                     flags: 0,
                 },
@@ -144,16 +136,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "prop: string;",
+                            <node @ 21..34>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            21,
-                        ),
-                        end: SourcePos(
-                            34,
-                        ),
+                    range: Span {
+                        start: 21,
+                        end: 34,
                     },
                     flags: 0,
                 },
@@ -174,16 +162,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface AInnerUnused {\n  prop2: string;\n}",
+                            <node @ 38..81>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            38,
-                        ),
-                        end: SourcePos(
-                            81,
-                        ),
+                    range: Span {
+                        start: 38,
+                        end: 81,
                     },
                     flags: 0,
                 },
@@ -206,16 +190,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "prop2: string;",
+                            <node @ 65..79>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            65,
-                        ),
-                        end: SourcePos(
-                            79,
-                        ),
+                    range: Span {
+                        start: 65,
+                        end: 79,
                     },
                     flags: 0,
                 },
@@ -236,16 +216,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class A {\n  prop: AInner;\n}",
+                            <node @ 83..117>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            83,
-                        ),
-                        end: SourcePos(
-                            117,
-                        ),
+                    range: Span {
+                        start: 83,
+                        end: 117,
                     },
                     flags: 0,
                 },
@@ -268,16 +244,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "prop: AInner;",
+                            <node @ 102..115>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            102,
-                        ),
-                        end: SourcePos(
-                            115,
-                        ),
+                    range: Span {
+                        start: 102,
+                        end: 115,
                     },
                     flags: 0,
                 },
@@ -298,16 +270,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export type B = string;",
+                            <node @ 119..142>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            119,
-                        ),
-                        end: SourcePos(
-                            142,
-                        ),
+                    range: Span {
+                        start: 119,
+                        end: 142,
                     },
                     flags: 0,
                 },
@@ -328,16 +296,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export default class C {\n}",
+                            <node @ 144..170>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            144,
-                        ),
-                        end: SourcePos(
-                            170,
-                        ),
+                    range: Span {
+                        start: 144,
+                        end: 170,
                     },
                     flags: 0,
                 },
@@ -358,16 +322,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export type D = typeof C;",
+                            <node @ 173..198>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            173,
-                        ),
-                        end: SourcePos(
-                            198,
-                        ),
+                    range: Span {
+                        start: 173,
+                        end: 198,
                     },
                     flags: 0,
                 },
@@ -379,12 +339,12 @@ file:///a.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-6:102..115 [Id(("AInner", #2))]
-9:173..198 [Id(("C", #2))]
+6:102..115 [Id(("AInner", 0))]
+9:173..198 [Id(("C", 0))]
 
 == symbol deps (types only) ==
-6:102..115 [Id(("AInner", #2))]
-9:173..198 [Id(("C", #2))]
+6:102..115 [Id(("AInner", 0))]
+9:173..198 [Id(("C", 0))]
 
 file:///mod.ts: EsModuleInfo {
     module_id: ModuleId(
@@ -392,26 +352,26 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "A",
-            #2,
+            0,
         ): 1,
         (
             "B",
-            #2,
+            0,
         ): 2,
         (
             "D",
-            #2,
+            0,
         ): 3,
         (
             "ExportA",
-            #2,
+            0,
         ): 4,
         (
             "test",
-            #2,
+            0,
         ): 5,
     },
     symbols: {
@@ -425,16 +385,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "import { A, B, D } from \"./a.ts\";\n\nexport const ExportA: typeof A = A;\n\nconst test: B;\nexport { D };",
+                            <node @ 0..101>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            100,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 101,
                     },
                     flags: 0,
                 },
@@ -467,13 +423,9 @@ file:///mod.ts: EsModuleInfo {
                             specifier: "./a.ts",
                         },
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            9,
-                        ),
-                        end: SourcePos(
-                            10,
-                        ),
+                    range: Span {
+                        start: 9,
+                        end: 10,
                     },
                     flags: 0,
                 },
@@ -500,13 +452,9 @@ file:///mod.ts: EsModuleInfo {
                             specifier: "./a.ts",
                         },
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            12,
-                        ),
-                        end: SourcePos(
-                            13,
-                        ),
+                    range: Span {
+                        start: 12,
+                        end: 13,
                     },
                     flags: 0,
                 },
@@ -533,13 +481,9 @@ file:///mod.ts: EsModuleInfo {
                             specifier: "./a.ts",
                         },
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            15,
-                        ),
-                        end: SourcePos(
-                            16,
-                        ),
+                    range: Span {
+                        start: 15,
+                        end: 16,
                     },
                     flags: 0,
                 },
@@ -560,16 +504,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export const ExportA: typeof A = A;",
+                            <node @ 35..70>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            48,
-                        ),
-                        end: SourcePos(
-                            69,
-                        ),
+                    range: Span {
+                        start: 48,
+                        end: 69,
                     },
                     flags: 0,
                 },
@@ -590,16 +530,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "test: const test: B;",
+                            <node @ 78..82>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            78,
-                        ),
-                        end: SourcePos(
-                            85,
-                        ),
+                    range: Span {
+                        start: 78,
+                        end: 85,
                     },
                     flags: 0,
                 },
@@ -621,16 +557,12 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "D",
-                            #2,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            96,
-                        ),
-                        end: SourcePos(
-                            97,
-                        ),
+                    range: Span {
+                        start: 96,
+                        end: 97,
                     },
                     flags: 0,
                 },
@@ -641,14 +573,6 @@ file:///mod.ts: EsModuleInfo {
         },
     },
 }
-== symbol deps (types and exprs) ==
-4:48..69 [Id(("A", #2))]
-5:78..85 [Id(("B", #2))]
-
-== symbol deps (types only) ==
-4:48..69 [Id(("A", #2))]
-5:78..85 [Id(("B", #2))]
-
 == export definitions ==
 [ExportA]: file:///mod.ts:48..69
   ExportA: typeof A = A

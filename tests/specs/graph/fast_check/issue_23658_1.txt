@@ -94,11 +94,9 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/base.ts:
   {}
-  export class Base {
-  }
+  export class Base {}
   --- DTS ---
-  export declare class Base {
-  }
+  export declare class Base {}
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {

@@ -4,26 +4,27 @@
 #![allow(clippy::disallowed_methods)]
 #![allow(clippy::disallowed_types)]
 
+use std::cell::Cell;
 use std::collections::HashSet;
 use std::sync::Arc;
 
 use deno_ast::EmitOptions;
+use deno_ast::MediaType;
 use deno_ast::ModuleSpecifier;
-use deno_ast::MultiThreadedComments;
-use deno_ast::ParsedSource;
-use deno_ast::ProgramRef;
-use deno_ast::SourceMap;
-use deno_ast::SourceRange;
-use deno_ast::SourceRangedForSpanned;
+use deno_ast::SourceTextInfo;
 use deno_ast::emit;
-use deno_ast::swc::ast::*;
-use deno_ast::swc::common::DUMMY_SP;
-use deno_ast::swc::common::Spanned;
-use deno_ast::swc::common::SyntaxContext;
-use deno_ast::swc::common::comments::CommentKind;
-use deno_ast::swc::common::comments::SingleThreadedComments;
-use deno_ast::swc::common::comments::SingleThreadedCommentsMapInner;
-use deno_ast::swc::ecma_visit::VisitWith;
+use deno_ast::oxc::allocator::Allocator;
+use deno_ast::oxc::allocator::Box as OxcBox;
+use deno_ast::oxc::allocator::CloneIn;
+use deno_ast::oxc::allocator::Vec as OxcVec;
+use deno_ast::oxc::ast::Comment;
+use deno_ast::oxc::ast::ast::*;
+use deno_ast::oxc::span::Atom;
+use deno_ast::oxc::span::GetSpan;
+use deno_ast::oxc::span::Ident;
+use deno_ast::oxc::span::SPAN;
+use deno_ast::oxc::span::Span;
+use deno_ast::oxc::syntax::node::NodeId;
 use indexmap::IndexMap;
 
 use crate::ModuleGraph;
@@ -31,67 +32,52 @@ use crate::WorkspaceMember;
 use crate::analysis::ModuleInfo;
 use crate::ast::ParserModuleAnalyzer;
 use crate::symbols::EsModuleInfo;
-use crate::symbols::ExpandoPropertyRef;
 use crate::symbols::Symbol;
 
 use super::FastCheckDiagnostic;
 use super::FastCheckDiagnosticRange;
+use super::helpers::DeclMutabilityKind;
+use super::helpers::ReturnStatementAnalysis;
+use super::helpers::TSKeywordKind;
+use super::helpers::analyze_return_stmts_in_function_body;
+use super::helpers::any_type_ann;
+use super::helpers::is_void_type;
+use super::helpers::maybe_lit_to_ts_type;
+use super::helpers::ts_keyword_type;
+use super::helpers::type_ann;
 use super::range_finder::ModulePublicRanges;
-use super::swc_helpers::DeclMutabilityKind;
-use super::swc_helpers::ReturnStatementAnalysis;
-use super::swc_helpers::analyze_return_stmts_in_function_body;
-use super::swc_helpers::any_type_ann;
-use super::swc_helpers::is_void_type;
-use super::swc_helpers::maybe_lit_to_ts_type;
-use super::swc_helpers::new_ident;
-use super::swc_helpers::ts_keyword_type;
 use super::transform_dts::FastCheckDtsDiagnostic;
 use super::transform_dts::FastCheckDtsTransformer;
 
-pub struct CommentsMut {
-  leading: SingleThreadedCommentsMapInner,
-  trailing: SingleThreadedCommentsMapInner,
+/// Comments management for fast check transforms.
+/// In OXC, comments are stored as `Vec<Comment>` in `Program.comments`.
+pub struct CommentsMut<'a> {
+  comments: OxcVec<'a, Comment>,
 }
 
-impl CommentsMut {
-  pub fn new(single_threaded: SingleThreadedComments) -> Self {
-    fn prune_comments(comments: &mut SingleThreadedCommentsMapInner) {
-      comments.retain(|_key, value| {
-        value.retain(|c| {
-          match c.kind {
-            // only keep js docs and @ts-* comments
-            CommentKind::Line => c.text.trim_start().starts_with("@ts-"),
-            CommentKind::Block => c.text.starts_with('*'),
-          }
-        });
-        !value.is_empty()
-      });
+impl<'a> CommentsMut<'a> {
+  pub fn new(allocator: &'a Allocator, comments: &[Comment]) -> Self {
+    let mut filtered = OxcVec::new_in(allocator);
+    for c in comments {
+      // keep all comments (line, single-line block, multi-line block)
+      filtered.push(c.clone_in(allocator));
     }
-
-    let (leading, trailing) = single_threaded.take_all();
-    let mut leading = leading.take();
-    let mut trailing = trailing.take();
-    prune_comments(&mut leading);
-    prune_comments(&mut trailing);
-    Self { leading, trailing }
+    Self { comments: filtered }
   }
 
-  pub fn remove_leading(&mut self, start: deno_ast::SourcePos) {
-    self.leading.remove(&start.as_byte_pos());
+  pub fn remove_leading(&mut self, span: Span) {
+    // Remove comments attached to the given span start position
+    self.comments.retain(|c| c.attached_to != span.start);
   }
 
-  pub fn into_multi_threaded(self) -> MultiThreadedComments {
-    MultiThreadedComments::from_leading_and_trailing(
-      self.leading,
-      self.trailing,
-    )
+  pub fn into_comments(self) -> OxcVec<'a, Comment> {
+    self.comments
   }
 }
 
 #[derive(Debug, Clone)]
 pub struct FastCheckDtsModule {
-  pub program: Program,
-  pub comments: MultiThreadedComments,
+  pub program_text: String,
   pub diagnostics: Vec<FastCheckDtsDiagnostic>,
 }
 
@@ -115,47 +101,41 @@ pub fn transform(
   public_ranges: &ModulePublicRanges,
   options: &TransformOptions,
 ) -> Result<FastCheckModule, Vec<FastCheckDiagnostic>> {
+  let allocator = Allocator::default();
   let mut transformer = FastCheckTransformer::new(
+    &allocator,
     graph,
     es_module_info,
     public_ranges,
     options.should_error_on_first_diagnostic,
   );
-  let (module, comments) = transformer.transform()?;
+  let program = transformer.transform()?;
   if !transformer.diagnostics.is_empty() {
     return Err(transformer.diagnostics);
   }
-  let parsed_source = es_module_info.source();
   let specifier = es_module_info.specifier();
-  let module_info = ParserModuleAnalyzer::module_info_from_swc(
-    parsed_source.media_type(),
-    ProgramRef::Module(&module),
-    parsed_source.text_info_lazy(),
-    &comments,
+  let source_text = es_module_info.source_text();
+  let text_info = es_module_info.source_text_info();
+
+  let module_info = ParserModuleAnalyzer::module_info_from_program(
+    es_module_info.media_type(),
+    &program,
+    text_info,
+    source_text,
   );
 
-  // swc will modify the comment collection internally when emitting,
-  // so if we're emitting with dts, make a copy of the comments for
-  // each emit
-  let (fast_check_comments, dts_comments) = if options.dts {
-    (comments.as_single_threaded(), Some(comments))
-  } else {
-    (comments.into_single_threaded(), None)
-  };
-
   // now emit
-  let source_map =
-    SourceMap::single(specifier.clone(), parsed_source.text().to_string());
   let emitted_source = emit(
-    ProgramRef::Module(&module),
-    &fast_check_comments,
-    &source_map,
+    &program,
+    source_text,
+    specifier.as_str(),
     &EmitOptions {
       remove_comments: false,
       source_map: deno_ast::SourceMapOption::Separate,
       source_map_base: None,
       source_map_file: None,
       inline_sources: false,
+      ascii_only: false,
     },
   )
   .map_err(|e| {
@@ -166,18 +146,38 @@ pub fn transform(
   })?;
   let emitted_text = emitted_source.text;
 
-  let dts = if let Some(dts_comments) = dts_comments {
+  let dts = if options.dts {
     let mut dts_transformer = FastCheckDtsTransformer::new(
-      parsed_source.text_info_lazy(),
+      &allocator,
+      text_info,
       public_ranges,
       specifier,
     );
 
-    let program = dts_transformer.transform(Program::Module(module));
+    let dts_program = dts_transformer.transform(program);
+
+    let dts_emitted = emit(
+      &dts_program,
+      source_text,
+      specifier.as_str(),
+      &EmitOptions {
+        remove_comments: false,
+        source_map: deno_ast::SourceMapOption::None,
+        source_map_base: None,
+        source_map_file: None,
+        inline_sources: false,
+        ascii_only: false,
+      },
+    )
+    .map_err(|e| {
+      vec![FastCheckDiagnostic::Emit {
+        specifier: specifier.clone(),
+        inner: Arc::new(e),
+      }]
+    })?;
 
     Some(FastCheckDtsModule {
-      program,
-      comments: dts_comments,
+      program_text: dts_emitted.text,
       diagnostics: dts_transformer.diagnostics,
     })
   } else {
@@ -205,73 +205,65 @@ impl TransformItemResult {
   }
 }
 
+/// OXC equivalent of SWC's Id type: (name, scope_id)
+type Id = (String, usize);
+
 struct FastCheckTransformer<'a> {
+  allocator: &'a Allocator,
   graph: &'a ModuleGraph,
   specifier: &'a ModuleSpecifier,
-  es_module_info: &'a EsModuleInfo,
+  es_module_info: &'a EsModuleInfo<'a>,
   public_ranges: &'a ModulePublicRanges,
-  parsed_source: &'a ParsedSource,
+  media_type: MediaType,
+  text_info: SourceTextInfo,
   should_error_on_first_diagnostic: bool,
   diagnostics: Vec<FastCheckDiagnostic>,
-  expando_namespaces: IndexMap<Id, Vec<VarDeclarator>>,
+  expando_namespaces: IndexMap<Id, Vec<VariableDeclarator<'a>>>,
 }
 
 impl<'a> FastCheckTransformer<'a> {
   pub fn new(
+    allocator: &'a Allocator,
     graph: &'a ModuleGraph,
-    es_module_info: &'a EsModuleInfo,
+    es_module_info: &'a EsModuleInfo<'a>,
     public_ranges: &'a ModulePublicRanges,
     should_error_on_first_diagnostic: bool,
   ) -> Self {
     Self {
+      allocator,
       graph,
       specifier: es_module_info.specifier(),
       es_module_info,
       public_ranges,
-      parsed_source: es_module_info.source(),
+      media_type: es_module_info.media_type(),
+      text_info: es_module_info.source_text_info().clone(),
       should_error_on_first_diagnostic,
       diagnostics: Default::default(),
       expando_namespaces: Default::default(),
     }
   }
 
-  pub fn transform(
-    &mut self,
-  ) -> Result<
-    (deno_ast::swc::ast::Module, MultiThreadedComments),
-    Vec<FastCheckDiagnostic>,
-  > {
-    let is_ambient = self.parsed_source.media_type().is_declaration();
-    let program = self.parsed_source.program_ref();
-    let mut comments =
-      CommentsMut::new(self.parsed_source.comments().as_single_threaded());
-    // gracefully handle a script
-    let mut module = match program {
-      ProgramRef::Module(module) => module.clone(),
-      ProgramRef::Script(script) => Module {
-        span: script.span,
-        body: script
-          .body
-          .iter()
-          .map(|stmt| ModuleItem::Stmt(stmt.clone()))
-          .collect(),
-        shebang: script.shebang.clone(),
-      },
-    };
-    module.body = self.transform_module_body(
-      std::mem::take(&mut module.body),
-      &mut comments,
-      is_ambient,
-    )?;
-    Ok((module, comments.into_multi_threaded()))
+  pub fn transform(&mut self) -> Result<Program<'a>, Vec<FastCheckDiagnostic>> {
+    let is_ambient = self.media_type.is_declaration();
+    let mut program = self.es_module_info.program().clone_in(self.allocator);
+    let mut comments = CommentsMut::new(self.allocator, &program.comments);
+
+    let body =
+      std::mem::replace(&mut program.body, OxcVec::new_in(self.allocator));
+    let body_vec: Vec<Statement<'a>> = body.into_iter().collect();
+    let new_body =
+      self.transform_module_body(body_vec, &mut comments, is_ambient)?;
+    program.body = OxcVec::from_iter_in(new_body, self.allocator);
+    program.comments = comments.into_comments();
+    Ok(program)
   }
 
   fn transform_module_body(
     &mut self,
-    body: Vec<ModuleItem>,
-    comments: &mut CommentsMut,
+    body: Vec<Statement<'a>>,
+    comments: &mut CommentsMut<'a>,
     is_ambient: bool,
-  ) -> Result<Vec<ModuleItem>, Vec<FastCheckDiagnostic>> {
+  ) -> Result<Vec<Statement<'a>>, Vec<FastCheckDiagnostic>> {
     let parent_expando_namespaces =
       std::mem::take(&mut self.expando_namespaces);
     let mut final_body = Vec::with_capacity(body.len());
@@ -280,19 +272,20 @@ impl<'a> FastCheckTransformer<'a> {
       match result {
         TransformItemResult::Retain => final_body.push(item),
         TransformItemResult::Remove => {
-          comments.remove_leading(item.start());
+          comments.remove_leading(item.span());
         }
       }
     }
 
     // Add accumulated namespaces
     final_body.reserve(self.expando_namespaces.len());
-    for (swc_id, var_decls) in
+    for (id, var_decls) in
       std::mem::take(&mut self.expando_namespaces).drain(..)
     {
+      let swc_id = (id.0.clone(), id.1);
       let symbol = self.es_module_info.symbol_from_swc(&swc_id).unwrap();
       for decl in &var_decls {
-        self.check_expando_property_diagnostics(decl, &swc_id, symbol)?;
+        self.check_expando_property_diagnostics(decl, &id, symbol)?;
       }
 
       // typescript requires the export keyword to match the other
@@ -304,39 +297,83 @@ impl<'a> FastCheckTransformer<'a> {
           .map(|n| n.has_export_keyword())
           .unwrap_or(false)
       });
-      let module_decl = Decl::TsModule(Box::new(TsModuleDecl {
-        span: DUMMY_SP,
+
+      let mut decls_vec =
+        OxcVec::with_capacity_in(var_decls.len(), self.allocator);
+      for d in var_decls {
+        decls_vec.push(d);
+      }
+
+      let var_decl_inner = OxcBox::new_in(
+        VariableDeclaration {
+          node_id: Cell::new(NodeId::DUMMY),
+          span: SPAN,
+          kind: VariableDeclarationKind::Var,
+          declarations: decls_vec,
+          declare: false,
+        },
+        self.allocator,
+      );
+
+      let export_named = Statement::ExportNamedDeclaration(OxcBox::new_in(
+        ExportNamedDeclaration {
+          node_id: Cell::new(NodeId::DUMMY),
+          span: SPAN,
+          declaration: Some(Declaration::VariableDeclaration(var_decl_inner)),
+          specifiers: OxcVec::new_in(self.allocator),
+          source: None,
+          export_kind: ImportOrExportKind::Value,
+          with_clause: None,
+        },
+        self.allocator,
+      ));
+
+      let module_body = {
+        let mut body = OxcVec::with_capacity_in(1, self.allocator);
+        body.push(export_named);
+        body
+      };
+
+      let ts_module = TSModuleDeclaration {
+        node_id: Cell::new(NodeId::DUMMY),
+        span: SPAN,
+        id: TSModuleDeclarationName::Identifier(BindingIdentifier {
+          node_id: Cell::new(NodeId::DUMMY),
+          span: SPAN,
+          name: Ident::from(self.allocator.alloc_str(&id.0)),
+          symbol_id: Cell::new(None),
+        }),
+        body: Some(TSModuleDeclarationBody::TSModuleBlock(OxcBox::new_in(
+          TSModuleBlock {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: SPAN,
+            directives: OxcVec::new_in(self.allocator),
+            body: module_body,
+          },
+          self.allocator,
+        ))),
+        kind: TSModuleDeclarationKind::Namespace,
         declare: false,
-        global: false,
-        namespace: true,
-        id: TsModuleName::Ident(Ident::new(
-          swc_id.0,
-          DUMMY_SP,
-          SyntaxContext::default(),
-        )),
-        body: Some(TsNamespaceBody::TsModuleBlock(TsModuleBlock {
-          span: DUMMY_SP,
-          body: vec![ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(
-            ExportDecl {
-              span: DUMMY_SP,
-              decl: Decl::Var(Box::new(VarDecl {
-                span: DUMMY_SP,
-                ctxt: SyntaxContext::empty(),
-                kind: VarDeclKind::Var,
-                declare: false,
-                decls: var_decls,
-              })),
-            },
-          ))],
-        })),
-      }));
+        scope_id: Cell::new(None),
+      };
+
+      let ts_module_box = OxcBox::new_in(ts_module, self.allocator);
+
       final_body.push(if has_export_keyword {
-        ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(ExportDecl {
-          span: DUMMY_SP,
-          decl: module_decl,
-        }))
+        Statement::ExportNamedDeclaration(OxcBox::new_in(
+          ExportNamedDeclaration {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: SPAN,
+            declaration: Some(Declaration::TSModuleDeclaration(ts_module_box)),
+            specifiers: OxcVec::new_in(self.allocator),
+            source: None,
+            export_kind: ImportOrExportKind::Value,
+            with_clause: None,
+          },
+          self.allocator,
+        ))
       } else {
-        ModuleItem::Stmt(Stmt::Decl(module_decl))
+        Statement::TSModuleDeclaration(ts_module_box)
       });
     }
 
@@ -347,376 +384,453 @@ impl<'a> FastCheckTransformer<'a> {
 
   fn check_expando_property_diagnostics(
     &mut self,
-    decl: &VarDeclarator,
+    decl: &VariableDeclarator<'a>,
     parent_id: &Id,
     parent_symbol: &Symbol,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
-    struct VisitExpandoPropInits<'a> {
-      symbol: &'a Symbol,
-      parent_context: SyntaxContext,
-      diagnostics: IndexMap<String, SourceRange>,
-    }
-
-    impl deno_ast::swc::ecma_visit::Visit for VisitExpandoPropInits<'_> {
-      fn visit_ident(&mut self, ident: &Ident) {
-        let (name, context) = ident.to_id();
-        if context == self.parent_context && self.symbol.export(&name).is_some()
-        {
-          self.diagnostics.insert(name.to_string(), ident.range());
+    // In OXC we don't have the same visitor infrastructure, so we do a simpler check.
+    // Walk the init expression looking for identifier references that match exports
+    // of the parent symbol.
+    if let Some(init) = &decl.init {
+      let mut diagnostics: IndexMap<String, Span> = Default::default();
+      collect_ident_refs_in_expr(init, &mut |name: &str, span: Span| {
+        if parent_symbol.export(name).is_some() {
+          diagnostics.insert(name.to_string(), span);
         }
+      });
+      for (reference_name, span) in diagnostics {
+        self.mark_diagnostic(
+          FastCheckDiagnostic::UnsupportedExpandoProperty {
+            object_name: parent_id.0.to_string(),
+            reference_name,
+            range: self.source_range_to_range(span),
+          },
+        )?;
       }
-    }
-
-    let mut inits = VisitExpandoPropInits {
-      symbol: parent_symbol,
-      parent_context: parent_id.1,
-      diagnostics: Default::default(),
-    };
-    decl.init.visit_with(&mut inits);
-    for (reference_name, range) in inits.diagnostics {
-      self.mark_diagnostic(
-        FastCheckDiagnostic::UnsupportedExpandoProperty {
-          object_name: parent_id.0.to_string(),
-          reference_name,
-          range: self.source_range_to_range(range),
-        },
-      )?;
     }
     Ok(())
   }
 
-  fn transform_module_specifier(&mut self, src: &mut Str) {
+  fn transform_module_specifier(&mut self, src: &mut StringLiteral<'a>) {
     // only do this for relative specifiers (specifiers to specifiers within the package)
-    let specifier = src.value.to_string_lossy();
+    let specifier = src.value.as_str();
     if !specifier.starts_with('.') {
       return;
     }
     let Some(resolved_specifier) =
       self
         .graph
-        .resolve_dependency(&specifier, self.specifier, true)
+        .resolve_dependency(specifier, self.specifier, true)
     else {
       return;
     };
     if let Some(relative) = self.specifier.make_relative(resolved_specifier) {
       if !relative.starts_with("../") {
-        src.value = format!("./{}", relative).into();
+        src.value =
+          Atom::from(self.allocator.alloc_str(&format!("./{}", relative)));
       } else {
-        src.value = relative.into();
+        src.value = Atom::from(self.allocator.alloc_str(&relative));
       }
-      src.raw = None;
     }
   }
 
   fn transform_item(
     &mut self,
-    item: &mut ModuleItem,
-    comments: &mut CommentsMut,
+    item: &mut Statement<'a>,
+    comments: &mut CommentsMut<'a>,
     is_ambient: bool,
   ) -> Result<TransformItemResult, Vec<FastCheckDiagnostic>> {
     match item {
-      ModuleItem::ModuleDecl(decl) => match decl {
-        ModuleDecl::Import(n) => {
-          n.specifiers
-            .retain(|s| self.public_ranges.contains(&s.range()));
-          let retain = !n.specifiers.is_empty();
+      Statement::ImportDeclaration(n) => {
+        let n = n.as_mut();
+        if let Some(specifiers) = &mut n.specifiers {
+          specifiers.retain(|s| self.public_ranges.contains(&s.span()));
+          let retain = !specifiers.is_empty();
           if retain {
-            self.transform_module_specifier(&mut n.src);
+            self.transform_module_specifier(&mut n.source);
           }
           Ok(TransformItemResult::from_retain(retain))
+        } else {
+          // Side-effect import (no specifiers), keep if in public ranges
+          Ok(TransformItemResult::from_retain(
+            self.public_ranges.contains(&n.span),
+          ))
         }
-        ModuleDecl::ExportNamed(n) => {
-          n.specifiers
-            .retain(|s| self.public_ranges.contains(&s.range()));
-          let retain = !n.specifiers.is_empty();
-          if retain && let Some(src) = &mut n.src {
-            self.transform_module_specifier(src);
-          }
-          Ok(TransformItemResult::from_retain(retain))
+      }
+      Statement::ExportNamedDeclaration(n) => {
+        let n = n.as_mut();
+        // If it has a declaration, handle it as a decl export
+        if n.declaration.is_some() {
+          let export_decl_span = n.span;
+          let decl = n.declaration.as_mut().unwrap();
+          return self.transform_decl_stmt(
+            decl,
+            comments,
+            Some(export_decl_span),
+            is_ambient,
+          );
         }
-        ModuleDecl::ExportAll(n) => {
-          let retain = self.public_ranges.contains(&n.range());
-          if retain {
-            self.transform_module_specifier(&mut n.src);
-          }
-          Ok(TransformItemResult::from_retain(retain))
+        // Otherwise it's a re-export with specifiers
+        n.specifiers
+          .retain(|s| self.public_ranges.contains(&s.span()));
+        let retain = !n.specifiers.is_empty();
+        if retain && let Some(src) = &mut n.source {
+          self.transform_module_specifier(src);
         }
-        ModuleDecl::ExportDefaultExpr(n) => {
-          // todo: investigate why both these checks are needed
-          if !self.public_ranges.contains(&n.range())
-            && !self.public_ranges.contains(&n.expr.range())
-          {
-            return Ok(TransformItemResult::Remove);
-          }
+        Ok(TransformItemResult::from_retain(retain))
+      }
+      Statement::ExportAllDeclaration(n) => {
+        let n = n.as_mut();
+        let retain = self.public_ranges.contains(&n.span);
+        if retain {
+          self.transform_module_specifier(&mut n.source);
+        }
+        Ok(TransformItemResult::from_retain(retain))
+      }
+      Statement::ExportDefaultDeclaration(n) => {
+        let n = n.as_mut();
+        if !self.public_ranges.contains(&n.span) {
+          return Ok(TransformItemResult::Remove);
+        }
 
-          if self.maybe_transform_expr_if_leavable(&mut n.expr, None)?
-            || is_expr_ident_or_member_idents(&n.expr)
-          {
-            Ok(TransformItemResult::Retain)
-          } else {
-            self.mark_diagnostic(
-              FastCheckDiagnostic::UnsupportedDefaultExportExpr {
-                range: self.source_range_to_range(n.range()),
-              },
+        let node_span = n.span;
+        match &mut n.declaration {
+          ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
+            let ident_span = func.id.as_ref().map(|i| i.span);
+            self.transform_fn(
+              func,
+              ident_span,
+              FunctionKind::DeclarationLike,
+              self.public_ranges.is_impl_with_overloads(&node_span),
+              is_ambient,
             )?;
-            Ok(TransformItemResult::Remove)
+            Ok(TransformItemResult::Retain)
+          }
+          ExportDefaultDeclarationKind::ClassDeclaration(class) => {
+            self.transform_class(
+              class, comments, /* has declare keyword */ false,
+            )?;
+            Ok(TransformItemResult::Retain)
+          }
+          ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
+            Ok(TransformItemResult::Retain)
+          }
+          _ => {
+            // Expression variant - corresponds to old ExportDefaultExpr
+            if let Some(expr) = n.declaration.as_expression_mut() {
+              if self.maybe_transform_expr_if_leavable(expr, None)?
+                || is_expr_ident_or_member_idents(expr)
+              {
+                Ok(TransformItemResult::Retain)
+              } else {
+                self.mark_diagnostic(
+                  FastCheckDiagnostic::UnsupportedDefaultExportExpr {
+                    range: self.source_range_to_range(node_span),
+                  },
+                )?;
+                Ok(TransformItemResult::Remove)
+              }
+            } else {
+              Ok(TransformItemResult::Retain)
+            }
           }
         }
-        ModuleDecl::ExportDefaultDecl(n) => {
-          if !self.public_ranges.contains(&n.range()) {
-            return Ok(TransformItemResult::Remove);
-          }
-
-          let node_range = n.range();
-          self.transform_default_decl(
-            &mut n.decl,
-            comments,
-            node_range,
-            is_ambient,
-          )
-        }
-        ModuleDecl::ExportDecl(n) => {
-          let export_decl_range = n.range();
-          self.transform_decl(
-            &mut n.decl,
-            comments,
-            Some(export_decl_range),
-            is_ambient,
-          )
-        }
-        ModuleDecl::TsImportEquals(n) => match &n.module_ref {
-          TsModuleRef::TsEntityName(_) => {
-            let retain = self.public_ranges.contains(&n.range());
+      }
+      Statement::TSExportAssignment(n) => {
+        self.mark_diagnostic(
+          FastCheckDiagnostic::UnsupportedTsExportAssignment {
+            range: self.source_range_to_range(n.span),
+          },
+        )?;
+        Ok(TransformItemResult::Remove)
+      }
+      Statement::TSNamespaceExportDeclaration(n) => {
+        self.mark_diagnostic(
+          FastCheckDiagnostic::UnsupportedTsNamespaceExport {
+            range: self.source_range_to_range(n.span),
+          },
+        )?;
+        Ok(TransformItemResult::Remove)
+      }
+      Statement::TSImportEqualsDeclaration(n) => {
+        let n_span = n.span;
+        match &n.module_reference {
+          TSModuleReference::IdentifierReference(_)
+          | TSModuleReference::QualifiedName(_) => {
+            let retain = self.public_ranges.contains(&n_span);
             Ok(TransformItemResult::from_retain(retain))
           }
-          TsModuleRef::TsExternalModuleRef(_) => {
+          TSModuleReference::ExternalModuleReference(_) => {
             self.mark_diagnostic(FastCheckDiagnostic::UnsupportedRequire {
-              range: self.source_range_to_range(n.range()),
+              range: self.source_range_to_range(n_span),
             })?;
             Ok(TransformItemResult::Remove)
           }
-        },
-        ModuleDecl::TsExportAssignment(n) => {
-          self.mark_diagnostic(
-            FastCheckDiagnostic::UnsupportedTsExportAssignment {
-              range: self.source_range_to_range(n.range()),
-            },
-          )?;
-          Ok(TransformItemResult::Remove)
         }
-        ModuleDecl::TsNamespaceExport(n) => {
-          self.mark_diagnostic(
-            FastCheckDiagnostic::UnsupportedTsNamespaceExport {
-              range: self.source_range_to_range(n.range()),
-            },
-          )?;
-          Ok(TransformItemResult::Remove)
-        }
-      },
-      ModuleItem::Stmt(stmt) => match stmt {
-        Stmt::Decl(n) => self.transform_decl(n, comments, None, is_ambient),
-        Stmt::Expr(n) => match &mut *n.expr {
-          Expr::Assign(assign_expr) => self.transform_assign_expr(assign_expr),
-          _ => Ok(TransformItemResult::Remove),
-        },
-        Stmt::Block(_)
-        | Stmt::Empty(_)
-        | Stmt::Debugger(_)
-        | Stmt::With(_)
-        | Stmt::Return(_)
-        | Stmt::Labeled(_)
-        | Stmt::Break(_)
-        | Stmt::Continue(_)
-        | Stmt::If(_)
-        | Stmt::Switch(_)
-        | Stmt::Throw(_)
-        | Stmt::Try(_)
-        | Stmt::While(_)
-        | Stmt::DoWhile(_)
-        | Stmt::For(_)
-        | Stmt::ForIn(_)
-        | Stmt::ForOf(_) => Ok(TransformItemResult::Remove),
-      },
-    }
-  }
-
-  fn transform_default_decl(
-    &mut self,
-    default_decl: &mut DefaultDecl,
-    comments: &mut CommentsMut,
-    parent_range: SourceRange,
-    is_ambient: bool,
-  ) -> Result<TransformItemResult, Vec<FastCheckDiagnostic>> {
-    match default_decl {
-      DefaultDecl::Class(n) => {
-        (self.transform_class(
-          &mut n.class,
-          comments,
-          /* has declare keyword */ false,
-        )?);
-        Ok(TransformItemResult::Retain)
       }
-      DefaultDecl::Fn(n) => {
-        self.transform_fn(
-          &mut n.function,
-          n.ident.as_ref().map(|i| i.range()),
-          FunctionKind::DeclarationLike,
-          self.public_ranges.is_impl_with_overloads(&parent_range),
-          is_ambient,
-        )?;
-        Ok(TransformItemResult::Retain)
+      // Declaration statements (not exported)
+      Statement::ClassDeclaration(n) => {
+        let n_span = n.span;
+        self.transform_decl_class(n, comments, None, is_ambient, n_span)
       }
-      DefaultDecl::TsInterfaceDecl(_) => Ok(TransformItemResult::Retain),
-    }
-  }
-
-  fn transform_decl(
-    &mut self,
-    decl: &mut Decl,
-    comments: &mut CommentsMut,
-    parent_range: Option<SourceRange>,
-    is_ambient: bool,
-  ) -> Result<TransformItemResult, Vec<FastCheckDiagnostic>> {
-    let public_range = parent_range.unwrap_or_else(|| decl.range());
-    match decl {
-      Decl::Class(n) => {
-        if !self.public_ranges.contains(&public_range) {
+      Statement::FunctionDeclaration(n) => {
+        let n_span = n.span;
+        self.transform_decl_fn(n, None, is_ambient, n_span)
+      }
+      Statement::VariableDeclaration(n) => {
+        let n_span = n.span;
+        if matches!(
+          n.kind,
+          VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
+        ) {
+          if self.public_ranges.contains(&n_span)
+            || n
+              .declarations
+              .iter()
+              .any(|d| self.public_ranges.contains(&d.span))
+          {
+            self.mark_diagnostic(FastCheckDiagnostic::UnsupportedUsing {
+              range: self.source_range_to_range(
+                n.declarations.first().map(|d| d.span).unwrap_or(n_span),
+              ),
+            })?;
+          }
           return Ok(TransformItemResult::Remove);
         }
-        self.transform_class(
-          &mut n.class,
-          comments,
-          is_ambient || n.declare,
-        )?;
-        Ok(TransformItemResult::Retain)
+        let is_declare = n.declare;
+        self.transform_var(n.as_mut(), is_ambient || is_declare, n_span)
       }
-      Decl::Fn(n) => {
-        if !self.public_ranges.contains(&public_range) {
-          return Ok(TransformItemResult::Remove);
-        }
-
-        let is_overload =
-          self.public_ranges.is_impl_with_overloads(&public_range);
-        self.transform_fn(
-          &mut n.function,
-          Some(n.ident.range()),
-          FunctionKind::DeclarationLike,
-          is_overload,
-          is_ambient,
-        )?;
-        Ok(TransformItemResult::Retain)
-      }
-      Decl::Var(n) => self.transform_var(n, is_ambient || n.declare),
-      Decl::TsInterface(_) => Ok(TransformItemResult::from_retain(
-        self.public_ranges.contains(&public_range),
-      )),
-      Decl::TsTypeAlias(_) => Ok(TransformItemResult::from_retain(
-        self.public_ranges.contains(&public_range),
-      )),
-      Decl::TsEnum(_) => Ok(TransformItemResult::from_retain(
-        self.public_ranges.contains(&public_range),
-      )),
-      Decl::TsModule(m) => self.transform_ts_module(
-        m,
-        &public_range,
-        comments,
-        is_ambient || m.declare || m.global,
+      Statement::TSInterfaceDeclaration(n) => Ok(
+        TransformItemResult::from_retain(self.public_ranges.contains(&n.span)),
       ),
-      Decl::Using(n) => {
-        if self.public_ranges.contains(&public_range)
-          || n
-            .decls
-            .iter()
-            .any(|d| self.public_ranges.contains(&d.range()))
-        {
-          self.mark_diagnostic(FastCheckDiagnostic::UnsupportedUsing {
-            range: self.source_range_to_range(
-              n.decls
-                .first()
-                .map(|n| n.range())
-                .unwrap_or_else(|| n.range()),
-            ),
-          })?;
+      Statement::TSTypeAliasDeclaration(n) => Ok(
+        TransformItemResult::from_retain(self.public_ranges.contains(&n.span)),
+      ),
+      Statement::TSEnumDeclaration(n) => Ok(TransformItemResult::from_retain(
+        self.public_ranges.contains(&n.span),
+      )),
+      Statement::TSModuleDeclaration(n) => {
+        let n_span = n.span;
+        self.transform_ts_module(n.as_mut(), &n_span, comments, is_ambient)
+      }
+      Statement::TSGlobalDeclaration(n) => {
+        self.mark_diagnostic(FastCheckDiagnostic::UnsupportedGlobalModule {
+          range: self.source_range_to_range(n.span),
+        })?;
+        Ok(TransformItemResult::Remove)
+      }
+      Statement::ExpressionStatement(n) => match &mut n.expression {
+        Expression::AssignmentExpression(assign_expr) => {
+          self.transform_assign_expr(assign_expr.as_mut())
         }
+        _ => Ok(TransformItemResult::Remove),
+      },
+      Statement::BlockStatement(_)
+      | Statement::EmptyStatement(_)
+      | Statement::DebuggerStatement(_)
+      | Statement::WithStatement(_)
+      | Statement::ReturnStatement(_)
+      | Statement::LabeledStatement(_)
+      | Statement::BreakStatement(_)
+      | Statement::ContinueStatement(_)
+      | Statement::IfStatement(_)
+      | Statement::SwitchStatement(_)
+      | Statement::ThrowStatement(_)
+      | Statement::TryStatement(_)
+      | Statement::WhileStatement(_)
+      | Statement::DoWhileStatement(_)
+      | Statement::ForStatement(_)
+      | Statement::ForInStatement(_)
+      | Statement::ForOfStatement(_) => Ok(TransformItemResult::Remove),
+    }
+  }
+
+  /// Handle declaration statements that appear inside ExportNamedDeclaration
+  fn transform_decl_stmt(
+    &mut self,
+    decl: &mut Declaration<'a>,
+    comments: &mut CommentsMut<'a>,
+    parent_span: Option<Span>,
+    is_ambient: bool,
+  ) -> Result<TransformItemResult, Vec<FastCheckDiagnostic>> {
+    let public_span = parent_span.unwrap_or_else(|| GetSpan::span(decl));
+    match decl {
+      Declaration::ClassDeclaration(n) => self.transform_decl_class(
+        n,
+        comments,
+        parent_span,
+        is_ambient,
+        public_span,
+      ),
+      Declaration::FunctionDeclaration(n) => {
+        self.transform_decl_fn(n, parent_span, is_ambient, public_span)
+      }
+      Declaration::VariableDeclaration(n) => {
+        if matches!(
+          n.kind,
+          VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
+        ) {
+          if self.public_ranges.contains(&public_span)
+            || n
+              .declarations
+              .iter()
+              .any(|d| self.public_ranges.contains(&d.span))
+          {
+            self.mark_diagnostic(FastCheckDiagnostic::UnsupportedUsing {
+              range: self.source_range_to_range(
+                n.declarations
+                  .first()
+                  .map(|d| d.span)
+                  .unwrap_or(public_span),
+              ),
+            })?;
+          }
+          return Ok(TransformItemResult::Remove);
+        }
+        let is_declare = n.declare;
+        self.transform_var(n.as_mut(), is_ambient || is_declare, public_span)
+      }
+      Declaration::TSInterfaceDeclaration(_) => {
+        Ok(TransformItemResult::from_retain(
+          self.public_ranges.contains(&public_span),
+        ))
+      }
+      Declaration::TSTypeAliasDeclaration(_) => {
+        Ok(TransformItemResult::from_retain(
+          self.public_ranges.contains(&public_span),
+        ))
+      }
+      Declaration::TSEnumDeclaration(_) => {
+        Ok(TransformItemResult::from_retain(
+          self.public_ranges.contains(&public_span),
+        ))
+      }
+      Declaration::TSModuleDeclaration(n) => {
+        let is_declare = n.declare;
+        self.transform_ts_module(
+          n.as_mut(),
+          &public_span,
+          comments,
+          is_ambient || is_declare,
+        )
+      }
+      Declaration::TSGlobalDeclaration(_) => {
+        self.mark_diagnostic(FastCheckDiagnostic::UnsupportedGlobalModule {
+          range: self.source_range_to_range(public_span),
+        })?;
+        Ok(TransformItemResult::Remove)
+      }
+      Declaration::TSImportEqualsDeclaration(_) => {
         Ok(TransformItemResult::Remove)
       }
     }
   }
 
+  fn transform_decl_class(
+    &mut self,
+    n: &mut Class<'a>,
+    comments: &mut CommentsMut<'a>,
+    _parent_span: Option<Span>,
+    is_ambient: bool,
+    public_span: Span,
+  ) -> Result<TransformItemResult, Vec<FastCheckDiagnostic>> {
+    if !self.public_ranges.contains(&public_span) {
+      return Ok(TransformItemResult::Remove);
+    }
+    self.transform_class(n, comments, is_ambient || n.declare)?;
+    Ok(TransformItemResult::Retain)
+  }
+
+  fn transform_decl_fn(
+    &mut self,
+    n: &mut Function<'a>,
+    _parent_span: Option<Span>,
+    is_ambient: bool,
+    public_span: Span,
+  ) -> Result<TransformItemResult, Vec<FastCheckDiagnostic>> {
+    if !self.public_ranges.contains(&public_span) {
+      return Ok(TransformItemResult::Remove);
+    }
+
+    let is_overload = self.public_ranges.is_impl_with_overloads(&public_span);
+    let ident_span = n.id.as_ref().map(|i| i.span);
+    self.transform_fn(
+      n,
+      ident_span,
+      FunctionKind::DeclarationLike,
+      is_overload,
+      is_ambient,
+    )?;
+    Ok(TransformItemResult::Retain)
+  }
+
   fn transform_class(
     &mut self,
-    n: &mut Class,
-    comments: &mut CommentsMut,
+    n: &mut Class<'a>,
+    comments: &mut CommentsMut<'a>,
     is_ambient: bool,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
     if is_ambient {
       // ignore private computed members
-      n.body.retain(|m| !is_ts_private_computed_class_member(m));
+      n.body
+        .body
+        .retain(|m| !is_ts_private_computed_class_element(m));
       return Ok(());
     }
 
-    let mut members = Vec::with_capacity(n.body.len());
+    let mut members: Vec<ClassElement<'a>> =
+      Vec::with_capacity(n.body.body.len());
     let mut had_private = false;
     if let Some(super_class) = &n.super_class
       && !is_expr_ident_or_member_idents(super_class)
     {
+      let super_span = super_class.span();
       self.mark_diagnostic(FastCheckDiagnostic::UnsupportedSuperClassExpr {
-        range: self.source_range_to_range(n.super_class.range()),
+        range: self.source_range_to_range(super_span),
       })?;
     }
-    let mut insert_members = Vec::new();
+    let mut insert_members: Vec<ClassElement<'a>> = Vec::new();
     let mut had_private_constructor = false;
     let mut seen_ts_private_methods = HashSet::new();
-    for mut member in std::mem::take(&mut n.body) {
+    for mut member in
+      std::mem::replace(&mut n.body.body, OxcVec::new_in(self.allocator))
+        .into_iter()
+    {
       had_private = had_private
         || matches!(
-          member,
-          ClassMember::PrivateMethod(_)
-            | ClassMember::PrivateProp(_)
-            | ClassMember::AutoAccessor(AutoAccessor {
-              key: Key::Private(_),
-              ..
-            })
+          &member,
+          ClassElement::PropertyDefinition(p) if p.key.is_private_identifier()
+        )
+        || matches!(
+          &member,
+          ClassElement::MethodDefinition(m) if m.key.is_private_identifier()
+        )
+        || matches!(
+          &member,
+          ClassElement::AccessorProperty(a) if a.key.is_private_identifier()
         );
 
-      let mut retain = !is_ts_private_computed_class_member(&member);
+      let mut retain = !is_ts_private_computed_class_element(&member);
       if retain {
         // do some extra checks to see whether it should be removed
-        if let ClassMember::Constructor(ctor) = &member {
-          if ctor.accessibility == Some(Accessibility::Private) {
-            if had_private_constructor {
-              retain = false;
-            } else if is_ambient || ctor.body.is_some() {
-              had_private_constructor = true;
-            } else {
-              retain = false;
+        if let ClassElement::MethodDefinition(method) = &member {
+          if method.kind == MethodDefinitionKind::Constructor {
+            if method.accessibility == Some(TSAccessibility::Private) {
+              if had_private_constructor {
+                retain = false;
+              } else if is_ambient || method.value.body.is_some() {
+                had_private_constructor = true;
+              } else {
+                retain = false;
+              }
             }
+          } else if method.accessibility == Some(TSAccessibility::Private) {
+            let key = property_key_to_string(&method.key);
+            retain = match key {
+              Some(key) => seen_ts_private_methods.insert(key),
+              None => false,
+            };
           }
-        } else if let ClassMember::Method(method) = &member
-          && method.accessibility == Some(Accessibility::Private)
-        {
-          let key = match &method.key {
-            PropName::Ident(i) => Some(i.sym.to_string()),
-            PropName::Str(s) => Some(s.value.to_string_lossy().to_string()),
-            PropName::Num(n) => Some(
-              n.raw
-                .as_ref()
-                .map(|r| r.to_string())
-                .unwrap_or_else(|| n.value.to_string()),
-            ),
-
-            PropName::Computed(_) => None,
-            PropName::BigInt(n) => Some(
-              n.raw
-                .as_ref()
-                .map(|r| r.to_string())
-                .unwrap_or_else(|| n.value.to_string()),
-            ),
-          };
-          retain = match key {
-            Some(key) => seen_ts_private_methods.insert(key),
-            None => false,
-          };
         }
       }
 
@@ -731,282 +845,129 @@ impl<'a> FastCheckTransformer<'a> {
       if retain {
         members.push(member);
       } else {
-        comments.remove_leading(member.start());
+        comments.remove_leading(member.span());
       }
     }
 
     if had_private {
+      // Insert a `#private!: unknown;` property definition
       insert_members.insert(
         0,
-        ClassMember::PrivateProp(PrivateProp {
-          span: DUMMY_SP,
-          key: PrivateName {
-            span: DUMMY_SP,
-            name: "private".into(),
-          },
-          ctxt: SyntaxContext::default(),
-          value: None,
-          type_ann: Some(Box::new(TsTypeAnn {
-            span: DUMMY_SP,
-            type_ann: Box::new(ts_keyword_type(
-              TsKeywordTypeKind::TsUnknownKeyword,
+        ClassElement::PropertyDefinition(OxcBox::new_in(
+          PropertyDefinition {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: SPAN,
+            r#type: PropertyDefinitionType::PropertyDefinition,
+            decorators: OxcVec::new_in(self.allocator),
+            key: PropertyKey::PrivateIdentifier(OxcBox::new_in(
+              PrivateIdentifier {
+                node_id: Cell::new(NodeId::DUMMY),
+                span: SPAN,
+                name: Ident::from(self.allocator.alloc_str("private")),
+              },
+              self.allocator,
             )),
-          })),
-          is_static: false,
-          decorators: Default::default(),
-          accessibility: Default::default(),
-          is_optional: false,
-          is_override: false,
-          readonly: false,
-          definite: true,
-        }),
-      )
+            value: None,
+            computed: false,
+            r#static: false,
+            declare: true,
+            r#override: false,
+            optional: false,
+            definite: true,
+            readonly: false,
+            type_annotation: Some(type_ann(
+              self.allocator,
+              ts_keyword_type(self.allocator, TSKeywordKind::Any),
+            )),
+            accessibility: None,
+          },
+          self.allocator,
+        )),
+      );
     }
 
-    n.body = insert_members.into_iter().chain(members).collect();
-    n.decorators.clear();
+    let mut final_body = OxcVec::with_capacity_in(
+      insert_members.len() + members.len(),
+      self.allocator,
+    );
+    for m in insert_members {
+      final_body.push(m);
+    }
+    for m in members {
+      final_body.push(m);
+    }
+    n.body.body = final_body;
+    n.decorators = OxcVec::new_in(self.allocator);
     Ok(())
   }
 
   fn transform_class_member(
     &mut self,
-    member: &mut ClassMember,
-    insert_members: &mut Vec<ClassMember>,
+    member: &mut ClassElement<'a>,
+    insert_members: &mut Vec<ClassElement<'a>>,
     is_ambient: bool,
   ) -> Result<bool, Vec<FastCheckDiagnostic>> {
     match member {
-      ClassMember::Constructor(n) => {
-        if let Some(body) = &mut n.body {
-          body.stmts.retain_mut(|stmt| match stmt {
-            Stmt::Expr(e) => match &mut *e.expr {
-              Expr::Call(c) => {
-                if !matches!(c.callee, Callee::Super(_)) {
-                  return false;
-                }
-                for arg in c.args.iter_mut() {
-                  arg.expr = if arg.spread.is_some() {
-                    paren_expr(array_as_never_array_expr())
-                  } else {
-                    obj_as_never_expr()
-                  };
-                }
-                true
-              }
-              _ => false,
+      ClassElement::MethodDefinition(n) => {
+        if n.kind == MethodDefinitionKind::Constructor {
+          return self.transform_constructor(
+            n.as_mut(),
+            insert_members,
+            is_ambient,
+          );
+        }
+
+        if n.accessibility == Some(TSAccessibility::Private) {
+          // Convert private method to private property definition
+          *member = ClassElement::PropertyDefinition(OxcBox::new_in(
+            PropertyDefinition {
+              node_id: Cell::new(NodeId::DUMMY),
+              span: SPAN,
+              r#type: PropertyDefinitionType::PropertyDefinition,
+              decorators: OxcVec::new_in(self.allocator),
+              key: n.key.clone_in(self.allocator),
+              value: None,
+              computed: n.computed,
+              r#static: n.r#static,
+              declare: true,
+              r#override: false,
+              optional: n.optional,
+              definite: false,
+              readonly: false,
+              type_annotation: Some(any_type_ann(self.allocator)),
+              accessibility: Some(TSAccessibility::Private),
             },
-            _ => false,
-          });
-        }
-
-        for param in &mut n.params {
-          match param {
-            ParamOrTsParamProp::Param(_) => {
-              // ignore
-            }
-            ParamOrTsParamProp::TsParamProp(prop) => {
-              let is_optional = match &prop.param {
-                TsParamPropParam::Ident(ident) => ident.optional,
-                TsParamPropParam::Assign(_) => false,
-              };
-              insert_members.push(ClassMember::ClassProp(ClassProp {
-                span: DUMMY_SP,
-                key: match &prop.param {
-                  TsParamPropParam::Ident(binding_ident) => {
-                    PropName::Ident(IdentName {
-                      span: binding_ident.span,
-                      sym: binding_ident.sym.clone(),
-                    })
-                  }
-                  TsParamPropParam::Assign(assign) => match &*assign.left {
-                    Pat::Ident(binding_ident) => PropName::Ident(IdentName {
-                      span: binding_ident.span,
-                      sym: binding_ident.sym.clone(),
-                    }),
-                    Pat::Array(_)
-                    | Pat::Rest(_)
-                    | Pat::Object(_)
-                    | Pat::Assign(_)
-                    | Pat::Invalid(_)
-                    | Pat::Expr(_) => {
-                      self.mark_diagnostic(
-                        FastCheckDiagnostic::UnsupportedDestructuring {
-                          range: self
-                            .source_range_to_range(assign.left.range()),
-                        },
-                      )?;
-                      return Ok(false);
-                    }
-                  },
-                },
-                value: None,
-                type_ann: if prop.accessibility == Some(Accessibility::Private)
-                {
-                  Some(any_type_ann())
-                } else {
-                  match &prop.param {
-                    TsParamPropParam::Ident(ident) => ident.type_ann.clone(),
-                    TsParamPropParam::Assign(assign) => {
-                      let explicit_type_ann = match &*assign.left {
-                        Pat::Ident(binding_ident) => {
-                          binding_ident.type_ann.clone()
-                        }
-                        _ => None,
-                      };
-                      explicit_type_ann.or_else(|| {
-                        self
-                          .maybe_infer_type_from_expr(
-                            &assign.right,
-                            match prop.readonly {
-                              true => DeclMutabilityKind::Const,
-                              false => DeclMutabilityKind::Mutable,
-                            },
-                          )
-                          .map(|type_ann| {
-                            Box::new(TsTypeAnn {
-                              span: DUMMY_SP,
-                              type_ann: Box::new(type_ann),
-                            })
-                          })
-                      })
-                    }
-                  }
-                },
-                is_static: false,
-                decorators: Vec::new(),
-                accessibility: match prop.accessibility {
-                  Some(Accessibility::Public) | None => None,
-                  Some(accessibility) => Some(accessibility),
-                },
-                is_abstract: false,
-                is_optional,
-                is_override: false,
-                readonly: prop.readonly,
-                declare: true,
-                definite: false,
-              }));
-              *param = ParamOrTsParamProp::Param(Param {
-                span: prop.span,
-                decorators: vec![],
-                pat: match prop.param.clone() {
-                  TsParamPropParam::Ident(ident) => Pat::Ident(ident),
-                  TsParamPropParam::Assign(pat) => Pat::Assign(pat),
-                },
-              });
-            }
-          }
-        }
-
-        if n.accessibility == Some(Accessibility::Private) {
-          n.params.clear();
+            self.allocator,
+          ));
           return Ok(true);
         }
-        let is_overload = self.public_ranges.is_impl_with_overloads(&n.range());
-        if is_overload {
-          for (i, param) in n.params.iter_mut().enumerate() {
-            if param.as_param().map(|p| p.pat.is_rest()).unwrap_or(false) {
-              *param = ParamOrTsParamProp::Param(Param {
-                span: DUMMY_SP,
-                decorators: Vec::new(),
-                pat: Pat::Rest(RestPat {
-                  span: DUMMY_SP,
-                  dot3_token: DUMMY_SP,
-                  type_ann: Some(any_type_ann()),
-                  arg: Box::new(Pat::Ident(BindingIdent {
-                    id: Ident {
-                      span: DUMMY_SP,
-                      ctxt: SyntaxContext::default(),
-                      sym: format!("param{}", i).into(),
-                      optional: false,
-                    },
-                    type_ann: None,
-                  })),
-                }),
-              });
-            } else {
-              *param = ParamOrTsParamProp::Param(Param {
-                span: DUMMY_SP,
-                decorators: Vec::new(),
-                pat: Pat::Ident(BindingIdent {
-                  id: Ident {
-                    span: DUMMY_SP,
-                    ctxt: SyntaxContext::default(),
-                    sym: format!("param{}", i).into(),
-                    optional: true,
-                  },
-                  type_ann: Some(any_type_ann()),
-                }),
-              });
-            }
-          }
-        }
-
-        let optional_start_index =
-          ParamsOptionalStartIndex::build(n.params.iter().map(|p| match p {
-            ParamOrTsParamProp::Param(p) => &p.pat,
-            // should have been converted to a param
-            ParamOrTsParamProp::TsParamProp(_) => unreachable!(),
-          }));
-        for (i, param) in n.params.iter_mut().enumerate() {
-          match param {
-            ParamOrTsParamProp::Param(param) => {
-              self.handle_param_pat(
-                &mut param.pat,
-                optional_start_index.is_optional_at_index(i),
-              )?;
-              param.decorators.clear();
-            }
-            ParamOrTsParamProp::TsParamProp(_) => {
-              // should have been converted to a param
-              unreachable!();
-            }
-          }
-        }
-
-        Ok(true)
-      }
-      ClassMember::Method(n) => {
-        if n.accessibility == Some(Accessibility::Private) {
-          *member = ClassMember::ClassProp(ClassProp {
-            span: DUMMY_SP,
-            key: n.key.clone(),
-            value: None,
-            type_ann: Some(any_type_ann()),
-            is_static: n.is_static,
-            decorators: Vec::new(),
-            accessibility: Some(Accessibility::Private),
-            is_abstract: n.is_abstract,
-            is_optional: n.is_optional,
-            is_override: false,
-            readonly: false,
-            declare: true,
-            definite: false,
-          });
-          return Ok(true);
-        }
-        let is_overload = self.public_ranges.is_impl_with_overloads(&n.range());
+        let is_overload = self.public_ranges.is_impl_with_overloads(&n.span);
+        let key_span = n.key.span();
+        let method_kind = n.kind;
         self.transform_fn(
-          &mut n.function,
-          Some(n.key.range()),
-          match n.kind {
-            MethodKind::Method => FunctionKind::DeclarationLike,
-            MethodKind::Getter => FunctionKind::Getter,
-            MethodKind::Setter => FunctionKind::Setter,
+          &mut n.value,
+          Some(key_span),
+          match method_kind {
+            MethodDefinitionKind::Method => FunctionKind::DeclarationLike,
+            MethodDefinitionKind::Get => FunctionKind::Getter,
+            MethodDefinitionKind::Set => FunctionKind::Setter,
+            MethodDefinitionKind::Constructor => unreachable!(),
           },
           is_overload,
           is_ambient,
         )?;
         Ok(true)
       }
-      ClassMember::ClassProp(n) => {
-        if n.accessibility == Some(Accessibility::Private) {
-          n.type_ann = Some(any_type_ann());
+      ClassElement::PropertyDefinition(n) => {
+        if n.accessibility == Some(TSAccessibility::Private) {
+          n.type_annotation = Some(any_type_ann(self.allocator));
           n.declare = true;
           n.definite = false;
-          n.is_override = false;
+          n.r#override = false;
           n.value = None;
           return Ok(true);
         }
-        if n.type_ann.is_none() {
+        if n.type_annotation.is_none() {
           let inferred_type = n.value.as_ref().and_then(|e| {
             self.maybe_infer_type_from_expr(
               e,
@@ -1018,24 +979,21 @@ impl<'a> FastCheckTransformer<'a> {
           });
           match inferred_type {
             Some(t) => {
-              n.type_ann = Some(Box::new(TsTypeAnn {
-                span: DUMMY_SP,
-                type_ann: Box::new(t),
-              }));
+              n.type_annotation = Some(type_ann(self.allocator, t));
               n.value = None;
             }
             None => {
+              let key_span = n.key.span();
               let is_value_leavable = match n.value.as_mut() {
-                Some(init) => self.maybe_transform_expr_if_leavable(
-                  init,
-                  Some(n.key.range()),
-                )?,
+                Some(init) => {
+                  self.maybe_transform_expr_if_leavable(init, Some(key_span))?
+                }
                 None => false,
               };
               if !is_value_leavable {
                 self.mark_diagnostic(
                   FastCheckDiagnostic::MissingExplicitType {
-                    range: self.source_range_to_range(n.key.range()),
+                    range: self.source_range_to_range(key_span),
                   },
                 )?;
               }
@@ -1046,77 +1004,299 @@ impl<'a> FastCheckTransformer<'a> {
         }
         n.declare = n.value.is_none();
         n.definite = false;
-        n.is_override = n.value.is_some() && n.is_override;
-        n.decorators.clear();
+        n.r#override = n.value.is_some() && n.r#override;
+        n.decorators = OxcVec::new_in(self.allocator);
         Ok(true)
       }
-      ClassMember::AutoAccessor(n) => {
-        let key = match &n.key {
-          Key::Private(_) => {
-            return Ok(false);
-          }
-          Key::Public(key) => key,
-        };
-        let type_ann = if n.accessibility == Some(Accessibility::Private) {
-          any_type_ann()
+      ClassElement::AccessorProperty(n) => {
+        if n.key.is_private_identifier() {
+          return Ok(false);
+        }
+        let type_annotation = if n.accessibility
+          == Some(TSAccessibility::Private)
+        {
+          any_type_ann(self.allocator)
         } else {
-          match n.type_ann.clone() {
-            Some(type_ann) => type_ann,
-            _ => {
+          match n.type_annotation.as_ref() {
+            Some(ta) => ta.clone_in(self.allocator),
+            None => {
               let inferred_type = n.value.as_ref().and_then(|e| {
                 self.maybe_infer_type_from_expr(e, DeclMutabilityKind::Mutable)
               });
               match inferred_type {
-                Some(t) => Box::new(TsTypeAnn {
-                  span: DUMMY_SP,
-                  type_ann: Box::new(t),
-                }),
+                Some(t) => type_ann(self.allocator, t),
                 None => {
+                  let key_span = n.key.span();
                   self.mark_diagnostic(
                     FastCheckDiagnostic::MissingExplicitType {
-                      range: self.source_range_to_range(n.key.range()),
+                      range: self.source_range_to_range(key_span),
                     },
                   )?;
-                  any_type_ann()
+                  any_type_ann(self.allocator)
                 }
               }
             }
           }
         };
-        *member = ClassMember::ClassProp(ClassProp {
-          span: n.span,
-          key: key.clone(),
-          value: None,
-          type_ann: Some(type_ann),
-          is_static: n.is_static,
-          decorators: Vec::new(),
-          accessibility: n.accessibility,
-          // todo(dsherret): ensure abstract auto-accessors work
-          // once this pr lands: https://github.com/swc-project/swc/pull/8736
-          is_abstract: false,
-          is_optional: false,
-          is_override: false,
-          readonly: false,
-          declare: true,
-          definite: false,
-        });
+        // Convert accessor to property definition
+        *member = ClassElement::PropertyDefinition(OxcBox::new_in(
+          PropertyDefinition {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: n.span,
+            r#type: PropertyDefinitionType::PropertyDefinition,
+            decorators: OxcVec::new_in(self.allocator),
+            key: n.key.clone_in(self.allocator),
+            value: None,
+            computed: n.computed,
+            r#static: n.r#static,
+            declare: true,
+            r#override: false,
+            optional: false,
+            definite: false,
+            readonly: false,
+            type_annotation: Some(type_annotation),
+            accessibility: n.accessibility,
+          },
+          self.allocator,
+        ));
         Ok(true)
       }
-      ClassMember::TsIndexSignature(_) => {
+      ClassElement::TSIndexSignature(_) => {
         // ok, as-is
         Ok(true)
       }
-      ClassMember::PrivateMethod(_)
-      | ClassMember::PrivateProp(_)
-      | ClassMember::Empty(_)
-      | ClassMember::StaticBlock(_) => Ok(false),
+      ClassElement::StaticBlock(_) => Ok(false),
     }
+  }
+
+  fn transform_constructor(
+    &mut self,
+    n: &mut MethodDefinition<'a>,
+    insert_members: &mut Vec<ClassElement<'a>>,
+    _is_ambient: bool,
+  ) -> Result<bool, Vec<FastCheckDiagnostic>> {
+    if let Some(body) = &mut n.value.body {
+      body.statements.retain_mut(|stmt| match stmt {
+        Statement::ExpressionStatement(e) => match &mut e.expression {
+          Expression::CallExpression(c) => {
+            if !matches!(&c.callee, Expression::Super(_)) {
+              return false;
+            }
+            for arg in c.arguments.iter_mut() {
+              match arg {
+                Argument::SpreadElement(spread) => {
+                  spread.argument = paren_expr(
+                    self.allocator,
+                    array_as_never_array_expr(self.allocator),
+                  );
+                }
+                _ => {
+                  *arg = Argument::from(obj_as_never_expr(self.allocator));
+                }
+              }
+            }
+            true
+          }
+          _ => false,
+        },
+        _ => false,
+      });
+    }
+
+    // Handle parameter properties (TSParamProp equivalent)
+    // In OXC, FormalParameter has an `accessibility` field for parameter properties
+    {
+      let params = &mut n.value.params;
+      for param in params.items.iter_mut() {
+        if param.accessibility.is_some() {
+          // This is a parameter property
+          let is_optional = param.optional;
+          let key = match &param.pattern {
+            BindingPattern::BindingIdentifier(ident) => {
+              PropertyKey::StaticIdentifier(OxcBox::new_in(
+                IdentifierName {
+                  node_id: Cell::new(NodeId::DUMMY),
+                  span: ident.span,
+                  name: ident.name,
+                },
+                self.allocator,
+              ))
+            }
+            BindingPattern::AssignmentPattern(assign) => match &assign.left {
+              BindingPattern::BindingIdentifier(ident) => {
+                PropertyKey::StaticIdentifier(OxcBox::new_in(
+                  IdentifierName {
+                    node_id: Cell::new(NodeId::DUMMY),
+                    span: ident.span,
+                    name: ident.name,
+                  },
+                  self.allocator,
+                ))
+              }
+              _ => {
+                let left_span = assign.left.span();
+                self.mark_diagnostic(
+                  FastCheckDiagnostic::UnsupportedDestructuring {
+                    range: self.source_range_to_range(left_span),
+                  },
+                )?;
+                return Ok(false);
+              }
+            },
+            _ => {
+              let pat_span = param.pattern.span();
+              self.mark_diagnostic(
+                FastCheckDiagnostic::UnsupportedDestructuring {
+                  range: self.source_range_to_range(pat_span),
+                },
+              )?;
+              return Ok(false);
+            }
+          };
+
+          let type_annotation =
+            if param.accessibility == Some(TSAccessibility::Private) {
+              Some(any_type_ann(self.allocator))
+            } else {
+              match &param.pattern {
+                BindingPattern::BindingIdentifier(_) => {
+                  param.type_annotation.clone_in(self.allocator)
+                }
+                BindingPattern::AssignmentPattern(assign) => {
+                  let explicit = param.type_annotation.clone_in(self.allocator);
+                  explicit.or_else(|| {
+                    self
+                      .maybe_infer_type_from_expr(
+                        &assign.right,
+                        match param.readonly {
+                          true => DeclMutabilityKind::Const,
+                          false => DeclMutabilityKind::Mutable,
+                        },
+                      )
+                      .map(|t| type_ann(self.allocator, t))
+                  })
+                }
+                _ => None,
+              }
+            };
+
+          insert_members.push(ClassElement::PropertyDefinition(
+            OxcBox::new_in(
+              PropertyDefinition {
+                node_id: Cell::new(NodeId::DUMMY),
+                span: SPAN,
+                r#type: PropertyDefinitionType::PropertyDefinition,
+                decorators: OxcVec::new_in(self.allocator),
+                key,
+                value: None,
+                computed: false,
+                r#static: false,
+                declare: true,
+                r#override: false,
+                optional: is_optional,
+                definite: false,
+                readonly: param.readonly,
+                type_annotation,
+                accessibility: match param.accessibility {
+                  Some(TSAccessibility::Public) => None,
+                  other => other,
+                },
+              },
+              self.allocator,
+            ),
+          ));
+
+          // Convert parameter property to regular parameter
+          param.accessibility = None;
+          param.readonly = false;
+          param.r#override = false;
+        }
+      }
+
+      if n.accessibility == Some(TSAccessibility::Private) {
+        n.value.params.as_mut().items = OxcVec::new_in(self.allocator);
+        n.value.params.as_mut().rest = None;
+        return Ok(true);
+      }
+
+      let is_overload = self.public_ranges.is_impl_with_overloads(&n.span);
+      if is_overload {
+        let params = n.value.params.as_mut();
+        let items_len = params.items.len();
+        let has_rest = params.rest.is_some();
+        let mut new_items = OxcVec::with_capacity_in(items_len, self.allocator);
+        for (i, _param) in params.items.iter().enumerate() {
+          new_items.push(FormalParameter {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: SPAN,
+            decorators: OxcVec::new_in(self.allocator),
+            pattern: BindingPattern::BindingIdentifier(OxcBox::new_in(
+              BindingIdentifier {
+                node_id: Cell::new(NodeId::DUMMY),
+                span: SPAN,
+                name: Ident::from(
+                  self.allocator.alloc_str(&format!("param{}", i)),
+                ),
+                symbol_id: Cell::new(None),
+              },
+              self.allocator,
+            )),
+            type_annotation: Some(any_type_ann(self.allocator)),
+            initializer: None,
+            optional: true,
+            accessibility: None,
+            readonly: false,
+            r#override: false,
+          });
+        }
+        params.items = new_items;
+        if has_rest {
+          let rest_idx = items_len;
+          params.rest = Some(OxcBox::new_in(
+            FormalParameterRest {
+              node_id: Cell::new(NodeId::DUMMY),
+              span: SPAN,
+              decorators: OxcVec::new_in(self.allocator),
+              rest: BindingRestElement {
+                node_id: Cell::new(NodeId::DUMMY),
+                span: SPAN,
+                argument: BindingPattern::BindingIdentifier(OxcBox::new_in(
+                  BindingIdentifier {
+                    node_id: Cell::new(NodeId::DUMMY),
+                    span: SPAN,
+                    name: Ident::from(
+                      self.allocator.alloc_str(&format!("param{}", rest_idx)),
+                    ),
+                    symbol_id: Cell::new(None),
+                  },
+                  self.allocator,
+                )),
+              },
+              type_annotation: Some(any_type_ann(self.allocator)),
+            },
+            self.allocator,
+          ));
+        }
+      }
+
+      let params = n.value.params.as_mut();
+      let optional_start_index = ParamsOptionalStartIndex::build(params);
+      for (i, param) in params.items.iter_mut().enumerate() {
+        self.handle_param_pattern(
+          param,
+          optional_start_index.is_optional_at_index(i),
+        )?;
+        param.decorators = OxcVec::new_in(self.allocator);
+      }
+    }
+
+    Ok(true)
   }
 
   fn transform_fn(
     &mut self,
-    n: &mut Function,
-    parent_id_range: Option<SourceRange>,
+    n: &mut Function<'a>,
+    parent_id_span: Option<Span>,
     function_kind: FunctionKind,
     is_overload: bool,
     is_ambient: bool,
@@ -1125,43 +1305,65 @@ impl<'a> FastCheckTransformer<'a> {
       return Ok(()); // no need to do anything
     }
     if is_overload {
-      for (i, param) in n.params.iter_mut().enumerate() {
-        if param.pat.is_rest() {
-          *param = Param {
-            span: DUMMY_SP,
-            decorators: Vec::new(),
-            pat: Pat::Rest(RestPat {
-              span: DUMMY_SP,
-              dot3_token: DUMMY_SP,
-              type_ann: Some(any_type_ann()),
-              arg: Box::new(Pat::Ident(BindingIdent {
-                id: Ident {
-                  span: DUMMY_SP,
-                  ctxt: SyntaxContext::default(),
-                  sym: format!("param{}", i).into(),
-                  optional: false,
-                },
-                type_ann: None,
-              })),
-            }),
-          };
-        } else {
-          *param = Param {
-            span: DUMMY_SP,
-            decorators: Vec::new(),
-            pat: Pat::Ident(BindingIdent {
-              id: Ident {
-                span: DUMMY_SP,
-                ctxt: SyntaxContext::default(),
-                sym: format!("param{}", i).into(),
-                optional: true,
+      {
+        let params = n.params.as_mut();
+        let items_len = params.items.len();
+        let has_rest = params.rest.is_some();
+        let mut new_items = OxcVec::with_capacity_in(items_len, self.allocator);
+        for (i, _param) in params.items.iter().enumerate() {
+          new_items.push(FormalParameter {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: SPAN,
+            decorators: OxcVec::new_in(self.allocator),
+            pattern: BindingPattern::BindingIdentifier(OxcBox::new_in(
+              BindingIdentifier {
+                node_id: Cell::new(NodeId::DUMMY),
+                span: SPAN,
+                name: Ident::from(
+                  self.allocator.alloc_str(&format!("param{}", i)),
+                ),
+                symbol_id: Cell::new(None),
               },
-              type_ann: Some(any_type_ann()),
-            }),
-          };
+              self.allocator,
+            )),
+            type_annotation: Some(any_type_ann(self.allocator)),
+            initializer: None,
+            optional: true,
+            accessibility: None,
+            readonly: false,
+            r#override: false,
+          });
+        }
+        params.items = new_items;
+        if has_rest {
+          let rest_idx = items_len;
+          params.rest = Some(OxcBox::new_in(
+            FormalParameterRest {
+              node_id: Cell::new(NodeId::DUMMY),
+              span: SPAN,
+              decorators: OxcVec::new_in(self.allocator),
+              rest: BindingRestElement {
+                node_id: Cell::new(NodeId::DUMMY),
+                span: SPAN,
+                argument: BindingPattern::BindingIdentifier(OxcBox::new_in(
+                  BindingIdentifier {
+                    node_id: Cell::new(NodeId::DUMMY),
+                    span: SPAN,
+                    name: Ident::from(
+                      self.allocator.alloc_str(&format!("param{}", rest_idx)),
+                    ),
+                    symbol_id: Cell::new(None),
+                  },
+                  self.allocator,
+                )),
+              },
+              type_annotation: Some(any_type_ann(self.allocator)),
+            },
+            self.allocator,
+          ));
         }
       }
-      n.return_type = Some(any_type_ann());
+      n.return_type = Some(any_type_ann(self.allocator));
     }
 
     let missing_return_type = match function_kind {
@@ -1177,133 +1379,171 @@ impl<'a> FastCheckTransformer<'a> {
     };
 
     if missing_return_type {
-      let range = parent_id_range.unwrap_or_else(|| n.range());
-      if n.is_generator {
+      let span = parent_id_span.unwrap_or(n.span);
+      if n.generator {
         self.mark_diagnostic(
           FastCheckDiagnostic::MissingExplicitReturnType {
-            range: self.source_range_to_range(range),
+            range: self.source_range_to_range(span),
             is_definitely_void_or_never: false,
-            is_async: n.is_async,
+            is_async: n.r#async,
           },
         )?;
       } else if let Some(body) = &mut n.body {
         self.transform_function_body_block_stmt(
-          range,
+          span,
           &mut n.return_type,
           body,
           function_kind,
-          n.is_async,
+          n.r#async,
         )?;
       }
     }
 
     if let Some(body) = &mut n.body {
-      body.stmts.clear();
+      body.statements.clear();
 
       // push a return stmt to suppress type errors, if the function is not a
       // void function
-      let return_expr = n
-        .return_type
-        .as_ref()
-        .and_then(|t| replacement_return_value(&t.type_ann));
+      let return_expr = n.return_type.as_ref().and_then(|t| {
+        replacement_return_value(self.allocator, &t.type_annotation)
+      });
       if let Some(return_expr) = return_expr {
-        body.stmts.push(Stmt::Return(ReturnStmt {
-          span: DUMMY_SP,
-          arg: Some(return_expr),
-        }));
+        body
+          .statements
+          .push(Statement::ReturnStatement(OxcBox::new_in(
+            ReturnStatement {
+              node_id: Cell::new(NodeId::DUMMY),
+              span: SPAN,
+              argument: Some(return_expr),
+            },
+            self.allocator,
+          )));
       }
     }
 
-    let optional_start_index =
-      ParamsOptionalStartIndex::build(n.params.iter().map(|p| &p.pat));
-    for (i, param) in n.params.iter_mut().enumerate() {
-      self.handle_param_pat(
-        &mut param.pat,
-        optional_start_index.is_optional_at_index(i),
-      )?;
-      param.decorators.clear();
+    {
+      let params = n.params.as_mut();
+      let optional_start_index = ParamsOptionalStartIndex::build(params);
+      for (i, param) in params.items.iter_mut().enumerate() {
+        self.handle_param_pattern(
+          param,
+          optional_start_index.is_optional_at_index(i),
+        )?;
+        param.decorators = OxcVec::new_in(self.allocator);
+      }
     }
 
-    n.is_async = false;
-    n.is_generator = false;
-    n.decorators.clear();
+    n.r#async = false;
+    n.generator = false;
 
     Ok(())
   }
 
   fn transform_arrow(
     &mut self,
-    n: &mut ArrowExpr,
-    parent_id_range: Option<SourceRange>,
+    n: &mut ArrowFunctionExpression<'a>,
+    parent_id_span: Option<Span>,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
-    let range = parent_id_range.unwrap_or_else(|| n.range());
+    let span = parent_id_span.unwrap_or(n.span);
 
     if n.return_type.is_none() {
       // arrow functions can not be generators, let's ignore
 
-      match &mut *n.body {
-        BlockStmtOrExpr::BlockStmt(body) => {
-          self.transform_function_body_block_stmt(
-            range,
-            &mut n.return_type,
-            body,
-            FunctionKind::ExpressionLike,
-            n.is_async,
-          )?;
-        }
-        BlockStmtOrExpr::Expr(expr) => {
-          let inferred_type =
-            self.maybe_infer_type_from_expr(expr, DeclMutabilityKind::Mutable);
+      if n.expression {
+        // Arrow with expression body
+        if let Some(expr_stmt) = n.body.statements.first_mut()
+          && let Statement::ExpressionStatement(expr_s) = expr_stmt
+        {
+          let inferred_type = self.maybe_infer_type_from_expr(
+            &expr_s.expression,
+            DeclMutabilityKind::Mutable,
+          );
           match inferred_type {
             Some(t) => {
-              let mut return_type = Box::new(t);
-              if n.is_async {
-                return_type = self.promise_wrap_type(return_type)
+              let mut return_type_inner = t;
+              if n.r#async {
+                return_type_inner =
+                  self.promise_wrap_type_owned(return_type_inner);
               }
-              n.return_type = Some(Box::new(TsTypeAnn {
-                span: DUMMY_SP,
-                type_ann: return_type,
-              }));
+              n.return_type = Some(type_ann(self.allocator, return_type_inner));
             }
             None => {
-              let is_expr_leavable =
-                self.maybe_transform_expr_if_leavable(expr, None)?;
+              let is_expr_leavable = self.maybe_transform_expr_if_leavable(
+                &mut expr_s.expression,
+                None,
+              )?;
               if !is_expr_leavable {
                 self.mark_diagnostic(
                   FastCheckDiagnostic::MissingExplicitReturnType {
-                    range: self.source_range_to_range(range),
+                    range: self.source_range_to_range(span),
                     is_definitely_void_or_never: false,
-                    is_async: n.is_async,
+                    is_async: n.r#async,
                   },
                 )?;
               }
             }
           }
         }
+      } else {
+        // Arrow with block body
+        self.transform_function_body_block_stmt(
+          span,
+          &mut n.return_type,
+          &mut n.body,
+          FunctionKind::ExpressionLike,
+          n.r#async,
+        )?;
       }
     }
 
     if let Some(t) = &n.return_type {
       // there is an explicit return type, so we can clear the body
-      let return_expr = replacement_return_value(&t.type_ann);
-      *n.body = return_expr
-        .map(|e| BlockStmtOrExpr::Expr(paren_expr(e)))
-        .unwrap_or_else(|| {
-          BlockStmtOrExpr::BlockStmt(BlockStmt {
-            span: DUMMY_SP,
-            ctxt: SyntaxContext::default(),
-            stmts: vec![],
-          })
-        });
+      let return_expr =
+        replacement_return_value(self.allocator, &t.type_annotation);
+      n.body.statements.clear();
+      if let Some(e) = return_expr {
+        if n.expression {
+          // Keep as expression
+          n.body.statements.push(Statement::ExpressionStatement(
+            OxcBox::new_in(
+              ExpressionStatement {
+                node_id: Cell::new(NodeId::DUMMY),
+                span: SPAN,
+                expression: paren_expr(self.allocator, e),
+              },
+              self.allocator,
+            ),
+          ));
+        } else {
+          n.body
+            .statements
+            .push(Statement::ReturnStatement(OxcBox::new_in(
+              ReturnStatement {
+                node_id: Cell::new(NodeId::DUMMY),
+                span: SPAN,
+                argument: Some(paren_expr(self.allocator, e)),
+              },
+              self.allocator,
+            )));
+          n.expression = false;
+        }
+      } else {
+        n.expression = false;
+      }
 
       // Only reset is_async if there is an explicit return type
-      n.is_async = false;
+      n.r#async = false;
     }
 
-    let optional_start_index = ParamsOptionalStartIndex::build(n.params.iter());
-    for (i, pat) in n.params.iter_mut().enumerate() {
-      self
-        .handle_param_pat(pat, optional_start_index.is_optional_at_index(i))?;
+    {
+      let params = n.params.as_mut();
+      let optional_start_index = ParamsOptionalStartIndex::build(params);
+      for (i, param) in params.items.iter_mut().enumerate() {
+        self.handle_param_pattern(
+          param,
+          optional_start_index.is_optional_at_index(i),
+        )?;
+      }
     }
 
     Ok(())
@@ -1311,9 +1551,9 @@ impl<'a> FastCheckTransformer<'a> {
 
   fn transform_function_body_block_stmt(
     &mut self,
-    range: SourceRange,
-    return_type: &mut Option<Box<TsTypeAnn>>,
-    body: &mut BlockStmt,
+    span: Span,
+    return_type: &mut Option<OxcBox<'a, TSTypeAnnotation<'a>>>,
+    body: &mut FunctionBody<'a>,
     function_kind: FunctionKind,
     is_async: bool,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
@@ -1323,15 +1563,15 @@ impl<'a> FastCheckTransformer<'a> {
       (ReturnStatementAnalysis::None, FunctionKind::DeclarationLike)
       | (ReturnStatementAnalysis::Void, FunctionKind::DeclarationLike)
       | (ReturnStatementAnalysis::Void, FunctionKind::ExpressionLike) => {
-        *return_type = Some(Box::new(TsTypeAnn {
-          span: DUMMY_SP,
-          type_ann: void_or_promise_void(is_async),
-        }));
+        *return_type = Some(type_ann(
+          self.allocator,
+          void_or_promise_void(self.allocator, is_async),
+        ));
       }
       (ReturnStatementAnalysis::None, FunctionKind::ExpressionLike) => {
         self.mark_diagnostic(
           FastCheckDiagnostic::MissingExplicitReturnType {
-            range: self.source_range_to_range(range),
+            range: self.source_range_to_range(span),
             is_definitely_void_or_never: true,
             is_async,
           },
@@ -1341,7 +1581,7 @@ impl<'a> FastCheckTransformer<'a> {
         // TODO: infer return type based on return type
         self.mark_diagnostic(
           FastCheckDiagnostic::MissingExplicitReturnType {
-            range: self.source_range_to_range(range),
+            range: self.source_range_to_range(span),
             is_definitely_void_or_never: false,
             is_async,
           },
@@ -1352,7 +1592,7 @@ impl<'a> FastCheckTransformer<'a> {
       | (ReturnStatementAnalysis::Multiple, _) => {
         self.mark_diagnostic(
           FastCheckDiagnostic::MissingExplicitReturnType {
-            range: self.source_range_to_range(range),
+            range: self.source_range_to_range(span),
             is_definitely_void_or_never: false,
             is_async,
           },
@@ -1363,224 +1603,380 @@ impl<'a> FastCheckTransformer<'a> {
     Ok(())
   }
 
-  fn handle_param_pat(
+  fn handle_param_pattern(
     &mut self,
-    pat: &mut Pat,
+    param: &mut FormalParameter<'a>,
     is_optional: bool,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
-    match pat {
-      Pat::Ident(ident) => {
-        if ident.type_ann.is_none() {
-          self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-            range: self.source_range_to_range(pat.range()),
-          })?;
-        }
-      }
-      Pat::Assign(assign) => match &mut *assign.left {
-        Pat::Ident(ident) => {
-          if ident.type_ann.is_none() {
+    match &param.pattern {
+      BindingPattern::BindingIdentifier(_ident) => {
+        if param.type_annotation.is_none() {
+          if let Some(initializer) = &param.initializer {
+            // Try to infer type from the default value (e.g. `param = 2` → `param?: number`)
             let inferred_type = self.maybe_infer_type_from_expr(
-              &assign.right,
+              initializer,
               DeclMutabilityKind::Mutable,
             );
             match inferred_type {
               Some(t) => {
-                ident.type_ann = Some(Box::new(TsTypeAnn {
-                  span: DUMMY_SP,
-                  type_ann: Box::new(t),
-                }));
+                let ta = type_ann(self.allocator, t);
                 if !is_optional {
-                  convert_optional_ident_to_nullable_type(ident);
+                  let inner_type = ta.type_annotation.clone_in(self.allocator);
+                  let union_type = TSType::TSUnionType(OxcBox::new_in(
+                    TSUnionType {
+                      node_id: Cell::new(NodeId::DUMMY),
+                      span: SPAN,
+                      types: {
+                        let mut types =
+                          OxcVec::with_capacity_in(2, self.allocator);
+                        types.push(inner_type);
+                        types.push(TSType::TSUndefinedKeyword(OxcBox::new_in(
+                          TSUndefinedKeyword {
+                            node_id: Cell::new(NodeId::DUMMY),
+                            span: SPAN,
+                          },
+                          self.allocator,
+                        )));
+                        types
+                      },
+                    },
+                    self.allocator,
+                  ));
+                  param.type_annotation =
+                    Some(type_ann(self.allocator, union_type));
+                  param.optional = false;
                 } else {
-                  ident.id.optional = true;
+                  param.type_annotation = Some(ta);
+                  param.optional = true;
                 }
-                *pat = Pat::Ident((*ident).clone());
+                param.initializer = None;
               }
               None => {
+                let pat_span = param.pattern.span();
                 let is_expr_leavable = self.maybe_transform_expr_if_leavable(
-                  &mut assign.right,
-                  Some(ident.range()),
+                  param.initializer.as_mut().unwrap(),
+                  Some(pat_span),
                 )?;
                 if !is_expr_leavable {
                   self.mark_diagnostic(
                     FastCheckDiagnostic::MissingExplicitType {
-                      range: self.source_range_to_range(ident.id.range()),
+                      range: self.source_range_to_range(pat_span),
                     },
                   )?;
                 }
               }
             }
           } else {
-            if !is_optional {
-              convert_optional_ident_to_nullable_type(ident);
-            } else {
-              ident.id.optional = true;
-            }
-            *pat = Pat::Ident((*ident).clone());
+            let pat_span = param.pattern.span();
+            self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
+              range: self.source_range_to_range(pat_span),
+            })?;
           }
         }
-        Pat::Array(p) => {
-          if p.type_ann.is_none() {
-            if !self
-              .maybe_transform_expr_if_leavable(&mut assign.right, None)?
-            {
-              self.mark_diagnostic(
-                FastCheckDiagnostic::MissingExplicitType {
-                  range: self.source_range_to_range(p.range()),
-                },
-              )?;
-            }
-          } else {
-            assign.right = array_as_never_expr();
-          }
-          p.elems.clear();
-        }
-        Pat::Object(p) => {
-          if p.type_ann.is_none() {
-            if !self
-              .maybe_transform_expr_if_leavable(&mut assign.right, None)?
-            {
-              self.mark_diagnostic(
-                FastCheckDiagnostic::MissingExplicitType {
-                  range: self.source_range_to_range(p.range()),
-                },
-              )?;
-            }
-          } else {
-            assign.right = obj_as_never_expr();
-          }
-          p.props.clear();
-        }
-        Pat::Assign(_) | Pat::Invalid(_) | Pat::Rest(_) | Pat::Expr(_) => {
-          self.mark_diagnostic(
-            FastCheckDiagnostic::UnsupportedDestructuring {
-              range: self.source_range_to_range(pat.range()),
-            },
-          )?;
-        }
-      },
-      Pat::Rest(p) => {
-        if p.type_ann.is_none() {
-          self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-            range: self.source_range_to_range(p.range()),
-          })?;
-        } else {
-          match &mut *p.arg {
-            Pat::Array(array_pat) => {
-              array_pat.elems.clear();
-            }
-            Pat::Object(object_pat) => {
-              object_pat.props.clear();
-            }
-            Pat::Rest(_) | Pat::Expr(_) | Pat::Assign(_) => {
-              // shouldn't happen, so just make it an empty object
-              p.arg = Box::new(Pat::Expr(empty_obj_lit_expr()));
-            }
-            Pat::Invalid(_) | Pat::Ident(_) => {}
-          };
-        }
       }
-      Pat::Array(p) => {
-        if p.type_ann.is_none() {
+      BindingPattern::AssignmentPattern(_) => {
+        self.handle_param_assignment_pattern(param, is_optional)?;
+      }
+      BindingPattern::ArrayPattern(_) => {
+        if param.type_annotation.is_none() {
+          let p_span = param.pattern.span();
           self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-            range: self.source_range_to_range(p.range()),
+            range: self.source_range_to_range(p_span),
           })?;
         }
-        p.elems.clear();
+        if let BindingPattern::ArrayPattern(p) = &mut param.pattern {
+          p.elements = OxcVec::new_in(self.allocator);
+        }
       }
-      Pat::Object(p) => {
-        if p.type_ann.is_none() {
+      BindingPattern::ObjectPattern(_) => {
+        if param.type_annotation.is_none() {
+          let p_span = param.pattern.span();
           self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-            range: self.source_range_to_range(p.range()),
+            range: self.source_range_to_range(p_span),
           })?;
         }
-        p.props.clear();
-      }
-      Pat::Invalid(_) | Pat::Expr(_) => {
-        self.mark_diagnostic(
-          FastCheckDiagnostic::UnsupportedDestructuring {
-            range: self.source_range_to_range(pat.range()),
-          },
-        )?;
+        if let BindingPattern::ObjectPattern(p) = &mut param.pattern {
+          p.properties = OxcVec::new_in(self.allocator);
+        }
       }
     }
     Ok(())
   }
 
+  fn handle_param_assignment_pattern(
+    &mut self,
+    param: &mut FormalParameter<'a>,
+    is_optional: bool,
+  ) -> Result<(), Vec<FastCheckDiagnostic>> {
+    // Determine the kind of the left side of the assignment pattern
+    let left_kind =
+      if let BindingPattern::AssignmentPattern(assign) = &param.pattern {
+        match &assign.left {
+          BindingPattern::BindingIdentifier(_) => 0u8,
+          BindingPattern::ArrayPattern(_) => 1u8,
+          BindingPattern::ObjectPattern(_) => 2u8,
+          _ => 3u8,
+        }
+      } else {
+        return Ok(());
+      };
+
+    let has_type_annotation = param.type_annotation.is_some();
+
+    match left_kind {
+      0 => {
+        // BindingIdentifier case
+        if !has_type_annotation {
+          // Try to infer type from the right side
+          let inferred_type =
+            if let BindingPattern::AssignmentPattern(assign) = &param.pattern {
+              self.maybe_infer_type_from_expr(
+                &assign.right,
+                DeclMutabilityKind::Mutable,
+              )
+            } else {
+              None
+            };
+          match inferred_type {
+            Some(t) => {
+              let ta = type_ann(self.allocator, t);
+              if !is_optional {
+                let inner_type = ta.type_annotation.clone_in(self.allocator);
+                let union_type = TSType::TSUnionType(OxcBox::new_in(
+                  TSUnionType {
+                    node_id: Cell::new(NodeId::DUMMY),
+                    span: SPAN,
+                    types: {
+                      let mut types =
+                        OxcVec::with_capacity_in(2, self.allocator);
+                      types.push(inner_type);
+                      types.push(TSType::TSUndefinedKeyword(OxcBox::new_in(
+                        TSUndefinedKeyword {
+                          node_id: Cell::new(NodeId::DUMMY),
+                          span: SPAN,
+                        },
+                        self.allocator,
+                      )));
+                      types
+                    },
+                  },
+                  self.allocator,
+                ));
+                param.type_annotation =
+                  Some(type_ann(self.allocator, union_type));
+                param.optional = false;
+              } else {
+                param.type_annotation = Some(ta);
+                param.optional = true;
+              }
+              // Convert to plain ident pattern
+              if let BindingPattern::AssignmentPattern(assign) = &param.pattern
+              {
+                let new_left = assign.left.clone_in(self.allocator);
+                param.pattern = new_left;
+              }
+            }
+            None => {
+              let ident_span =
+                if let BindingPattern::AssignmentPattern(assign) =
+                  &param.pattern
+                {
+                  if let BindingPattern::BindingIdentifier(ident) = &assign.left
+                  {
+                    ident.span
+                  } else {
+                    SPAN
+                  }
+                } else {
+                  SPAN
+                };
+              if let BindingPattern::AssignmentPattern(assign) =
+                &mut param.pattern
+              {
+                let is_expr_leavable = self.maybe_transform_expr_if_leavable(
+                  &mut assign.right,
+                  Some(ident_span),
+                )?;
+                if !is_expr_leavable {
+                  self.mark_diagnostic(
+                    FastCheckDiagnostic::MissingExplicitType {
+                      range: self.source_range_to_range(ident_span),
+                    },
+                  )?;
+                }
+              }
+            }
+          }
+        } else {
+          if !is_optional {
+            if let Some(ta) = param.type_annotation.take() {
+              let inner_type = ta.type_annotation.clone_in(self.allocator);
+              let union_type = TSType::TSUnionType(OxcBox::new_in(
+                TSUnionType {
+                  node_id: Cell::new(NodeId::DUMMY),
+                  span: SPAN,
+                  types: {
+                    let mut types = OxcVec::with_capacity_in(2, self.allocator);
+                    types.push(inner_type);
+                    types.push(TSType::TSUndefinedKeyword(OxcBox::new_in(
+                      TSUndefinedKeyword {
+                        node_id: Cell::new(NodeId::DUMMY),
+                        span: SPAN,
+                      },
+                      self.allocator,
+                    )));
+                    types
+                  },
+                },
+                self.allocator,
+              ));
+              param.type_annotation =
+                Some(type_ann(self.allocator, union_type));
+            }
+            param.optional = false;
+          } else {
+            param.optional = true;
+          }
+          if let BindingPattern::AssignmentPattern(assign) = &param.pattern {
+            let new_left = assign.left.clone_in(self.allocator);
+            param.pattern = new_left;
+          }
+        }
+      }
+      1 => {
+        // ArrayPattern case
+        if !has_type_annotation {
+          if let BindingPattern::AssignmentPattern(assign) = &mut param.pattern
+            && !self
+              .maybe_transform_expr_if_leavable(&mut assign.right, None)?
+          {
+            let p_span = assign.left.span();
+            self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
+              range: self.source_range_to_range(p_span),
+            })?;
+          }
+        } else if let BindingPattern::AssignmentPattern(assign) =
+          &mut param.pattern
+        {
+          assign.right = array_as_never_expr(self.allocator);
+        }
+        if let BindingPattern::AssignmentPattern(assign) = &mut param.pattern
+          && let BindingPattern::ArrayPattern(p) = &mut assign.left
+        {
+          p.elements = OxcVec::new_in(self.allocator);
+        }
+      }
+      2 => {
+        // ObjectPattern case
+        if !has_type_annotation {
+          if let BindingPattern::AssignmentPattern(assign) = &mut param.pattern
+            && !self
+              .maybe_transform_expr_if_leavable(&mut assign.right, None)?
+          {
+            let p_span = assign.left.span();
+            self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
+              range: self.source_range_to_range(p_span),
+            })?;
+          }
+        } else if let BindingPattern::AssignmentPattern(assign) =
+          &mut param.pattern
+        {
+          assign.right = obj_as_never_expr(self.allocator);
+        }
+        if let BindingPattern::AssignmentPattern(assign) = &mut param.pattern
+          && let BindingPattern::ObjectPattern(p) = &mut assign.left
+        {
+          p.properties = OxcVec::new_in(self.allocator);
+        }
+      }
+      _ => {
+        // AssignmentPattern or other unsupported
+        let pat_span = param.pattern.span();
+        self.mark_diagnostic(
+          FastCheckDiagnostic::UnsupportedDestructuring {
+            range: self.source_range_to_range(pat_span),
+          },
+        )?;
+      }
+    }
+
+    Ok(())
+  }
+
   fn transform_var(
     &mut self,
-    n: &mut VarDecl,
+    n: &mut VariableDeclaration<'a>,
     is_ambient: bool,
+    _public_span: Span,
   ) -> Result<TransformItemResult, Vec<FastCheckDiagnostic>> {
-    n.decls.retain(|n| self.public_ranges.contains(&n.range()));
+    n.declarations
+      .retain(|d| self.public_ranges.contains(&d.span));
 
     // don't need to do anything for ambient decls
     if !is_ambient {
-      for decl in &mut n.decls {
+      for decl in n.declarations.iter_mut() {
         self.transform_var_declarator(n.kind, decl)?;
       }
     }
 
-    Ok(TransformItemResult::from_retain(!n.decls.is_empty()))
+    Ok(TransformItemResult::from_retain(!n.declarations.is_empty()))
   }
 
   fn transform_var_declarator(
     &mut self,
-    decl_kind: VarDeclKind,
-    n: &mut VarDeclarator,
+    decl_kind: VariableDeclarationKind,
+    n: &mut VariableDeclarator<'a>,
   ) -> Result<(), Vec<FastCheckDiagnostic>> {
-    match &mut n.name {
-      Pat::Ident(ident) => {
-        if ident.type_ann.is_none() {
+    match &mut n.id {
+      BindingPattern::BindingIdentifier(ident) => {
+        if n.type_annotation.is_none() {
           let inferred_type = n.init.as_ref().and_then(|e| {
             self.maybe_infer_type_from_expr(
               e,
               match decl_kind {
-                VarDeclKind::Var | VarDeclKind::Let => {
+                VariableDeclarationKind::Var | VariableDeclarationKind::Let => {
                   DeclMutabilityKind::Mutable
                 }
-                VarDeclKind::Const => DeclMutabilityKind::Const,
+                VariableDeclarationKind::Const => DeclMutabilityKind::Const,
+                VariableDeclarationKind::Using
+                | VariableDeclarationKind::AwaitUsing => {
+                  DeclMutabilityKind::Mutable
+                }
               },
             )
           });
           match inferred_type {
             Some(t) => {
-              ident.type_ann = Some(Box::new(TsTypeAnn {
-                span: DUMMY_SP,
-                type_ann: Box::new(t),
-              }));
-              n.init = Some(obj_as_never_expr());
+              n.type_annotation = Some(type_ann(self.allocator, t));
+              n.init = Some(obj_as_never_expr(self.allocator));
             }
             None => {
+              let ident_span = ident.span;
               let is_init_leavable = match n.init.as_mut() {
-                Some(init) => self.maybe_transform_expr_if_leavable(
-                  init,
-                  Some(ident.id.range()),
-                )?,
+                Some(init) => self
+                  .maybe_transform_expr_if_leavable(init, Some(ident_span))?,
                 None => false,
               };
               if !is_init_leavable {
                 self.mark_diagnostic(
                   FastCheckDiagnostic::MissingExplicitType {
-                    range: self.source_range_to_range(ident.id.range()),
+                    range: self.source_range_to_range(ident_span),
                   },
                 )?;
               }
             }
           }
         } else {
-          n.init = Some(obj_as_never_expr());
+          n.init = Some(obj_as_never_expr(self.allocator));
         }
       }
-      Pat::Array(_)
-      | Pat::Rest(_)
-      | Pat::Object(_)
-      | Pat::Assign(_)
-      | Pat::Invalid(_)
-      | Pat::Expr(_) => {
+      BindingPattern::ArrayPattern(_)
+      | BindingPattern::ObjectPattern(_)
+      | BindingPattern::AssignmentPattern(_) => {
+        let name_span = n.id.span();
         self.mark_diagnostic(
           FastCheckDiagnostic::UnsupportedDestructuring {
-            range: self.source_range_to_range(n.name.range()),
+            range: self.source_range_to_range(name_span),
           },
         )?;
       }
@@ -1591,27 +1987,21 @@ impl<'a> FastCheckTransformer<'a> {
 
   fn transform_ts_module(
     &mut self,
-    n: &mut TsModuleDecl,
-    public_range: &SourceRange,
-    comments: &mut CommentsMut,
+    n: &mut TSModuleDeclaration<'a>,
+    public_span: &Span,
+    comments: &mut CommentsMut<'a>,
     is_ambient: bool,
   ) -> Result<TransformItemResult, Vec<FastCheckDiagnostic>> {
-    if n.global {
-      self.mark_diagnostic(FastCheckDiagnostic::UnsupportedGlobalModule {
-        range: self.source_range_to_range(n.range()),
-      })?;
-      return Ok(TransformItemResult::Remove);
-    }
-
     match &n.id {
-      TsModuleName::Ident(_) => {
+      TSModuleDeclarationName::Identifier(_) => {
         // ok
       }
-      TsModuleName::Str(_) => {
+      TSModuleDeclarationName::StringLiteral(_) => {
         // not ok
+        let id_span = n.id.span();
         self.mark_diagnostic(
           FastCheckDiagnostic::UnsupportedAmbientModule {
-            range: self.source_range_to_range(n.id.range()),
+            range: self.source_range_to_range(id_span),
           },
         )?;
         return Ok(TransformItemResult::Remove);
@@ -1619,26 +2009,12 @@ impl<'a> FastCheckTransformer<'a> {
     }
 
     let ts_module_block = match &mut n.body {
-      Some(body) => match body {
-        TsNamespaceBody::TsModuleBlock(block) => block,
-        TsNamespaceBody::TsNamespaceDecl(decl) => {
-          let mut body = &mut *decl.body;
-          loop {
-            match body {
-              TsNamespaceBody::TsModuleBlock(block) => {
-                break block;
-              }
-              TsNamespaceBody::TsNamespaceDecl(decl) => {
-                body = &mut decl.body;
-              }
-            }
-          }
-        }
-      },
+      Some(body) => get_innermost_module_block(body),
       None => {
+        let id_span = n.id.span();
         self.mark_diagnostic(
           FastCheckDiagnostic::UnsupportedAmbientModule {
-            range: self.source_range_to_range(n.id.range()),
+            range: self.source_range_to_range(id_span),
           },
         )?;
         return Ok(TransformItemResult::Remove);
@@ -1646,13 +2022,18 @@ impl<'a> FastCheckTransformer<'a> {
     };
 
     // allow the above diagnostics to error before checking for a public range
-    if !self.public_ranges.contains(public_range) {
+    if !self.public_ranges.contains(public_span) {
       return Ok(TransformItemResult::Remove);
     }
 
-    let body = std::mem::take(&mut ts_module_block.body);
-    ts_module_block.body =
-      self.transform_module_body(body, comments, is_ambient)?;
+    let body: Vec<Statement<'a>> = std::mem::replace(
+      &mut ts_module_block.body,
+      OxcVec::new_in(self.allocator),
+    )
+    .into_iter()
+    .collect();
+    let new_body = self.transform_module_body(body, comments, is_ambient)?;
+    ts_module_block.body = OxcVec::from_iter_in(new_body, self.allocator);
 
     Ok(TransformItemResult::Retain)
   }
@@ -1666,46 +2047,90 @@ impl<'a> FastCheckTransformer<'a> {
   // Otherwise TS will error when calling `it.skip()`
   fn transform_assign_expr(
     &mut self,
-    n: &mut AssignExpr,
+    n: &mut AssignmentExpression<'a>,
   ) -> Result<TransformItemResult, Vec<FastCheckDiagnostic>> {
-    if !self.public_ranges.contains(&n.range()) {
+    if !self.public_ranges.contains(&n.span) {
       return Ok(TransformItemResult::Remove);
     }
 
     // it will be an expando property at this point, but we still need n.right
     // to be mutable, so transform before getting the expando property
-    let right_range = n.right.range();
+    let right_span = n.right.span();
     let is_init_leavable =
-      self.maybe_transform_expr_if_leavable(&mut n.right, Some(right_range))?;
-    let Some(expando_prop) = ExpandoPropertyRef::maybe_new(n) else {
+      self.maybe_transform_expr_if_leavable(&mut n.right, Some(right_span))?;
+
+    // Check if this is an expando property (obj.prop = expr or obj["prop"] = expr)
+    let expando_info = self.get_expando_info(n);
+    let Some((obj_id, prop_name, prop_span)) = expando_info else {
       return Ok(TransformItemResult::Remove);
     };
-    let mem_expr = expando_prop.member_expr();
+
     if !is_init_leavable {
       self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-        range: self.source_range_to_range(mem_expr.range()),
+        range: self.source_range_to_range(prop_span),
       })?;
     } else {
-      let var_decls = self
-        .expando_namespaces
-        .entry(expando_prop.obj_ident().to_id())
-        .or_default();
-      var_decls.push(VarDeclarator {
-        span: DUMMY_SP,
-        name: Pat::Ident(BindingIdent {
-          // this property name is guaranteed to be a valid identifier
-          id: Ident::new(
-            expando_prop.prop_name().clone(),
-            expando_prop.prop_name_range().into(),
-            SyntaxContext::default(),
-          ),
-          type_ann: None,
-        }),
-        init: Some(n.right.clone()),
+      let id: Id = (obj_id.to_string(), 0);
+      let var_decls = self.expando_namespaces.entry(id).or_default();
+      var_decls.push(VariableDeclarator {
+        node_id: Cell::new(NodeId::DUMMY),
+        span: SPAN,
+        kind: VariableDeclarationKind::Var,
+        id: BindingPattern::BindingIdentifier(OxcBox::new_in(
+          BindingIdentifier {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: prop_span,
+            name: Ident::from(self.allocator.alloc_str(&prop_name)),
+            symbol_id: Cell::new(None),
+          },
+          self.allocator,
+        )),
+        type_annotation: None,
+        init: Some(n.right.clone_in(self.allocator)),
         definite: false,
       });
     }
     Ok(TransformItemResult::Remove)
+  }
+
+  /// Extract expando property info: (object_ident_name, property_name, property_span)
+  fn get_expando_info(
+    &self,
+    n: &AssignmentExpression<'a>,
+  ) -> Option<(String, String, Span)> {
+    if n.operator != AssignmentOperator::Assign {
+      return None;
+    }
+    match &n.left {
+      AssignmentTarget::StaticMemberExpression(member) => {
+        let obj_name = match &member.object {
+          Expression::Identifier(ident) => ident.name.to_string(),
+          _ => return None,
+        };
+        let prop_name = member.property.name.to_string();
+        if !is_valid_js_ident(&prop_name) {
+          return None;
+        }
+        Some((obj_name, prop_name, member.property.span))
+      }
+      AssignmentTarget::ComputedMemberExpression(member) => {
+        let obj_name = match &member.object {
+          Expression::Identifier(ident) => ident.name.to_string(),
+          _ => return None,
+        };
+        match &member.expression {
+          Expression::StringLiteral(s) => {
+            let prop_name = s.value.to_string();
+            if !is_valid_js_ident(&prop_name) {
+              return None;
+            }
+            Some((obj_name, prop_name, s.span))
+          }
+          _ => None,
+        }
+      }
+      _ => None,
+    }
   }
 
   fn mark_diagnostic(
@@ -1720,33 +2145,40 @@ impl<'a> FastCheckTransformer<'a> {
     }
   }
 
-  fn source_range_to_range(
-    &self,
-    range: SourceRange,
-  ) -> FastCheckDiagnosticRange {
+  fn source_range_to_range(&self, span: Span) -> FastCheckDiagnosticRange {
     FastCheckDiagnosticRange {
       specifier: self.specifier.clone(),
-      text_info: self.parsed_source.text_info_lazy().clone(),
-      range,
+      text_info: self.text_info.clone(),
+      range: span,
     }
   }
 
   fn maybe_transform_expr_if_leavable(
     &mut self,
-    expr: &mut Expr,
-    parent_id_range: Option<SourceRange>,
+    expr: &mut Expression<'a>,
+    parent_id_span: Option<Span>,
   ) -> Result<bool, Vec<FastCheckDiagnostic>> {
-    let mut recurse =
-      |expr: &mut Expr| self.maybe_transform_expr_if_leavable(expr, None);
+    let mut recurse = |expr: &mut Expression<'a>| {
+      self.maybe_transform_expr_if_leavable(expr, None)
+    };
 
     let is_leavable = match expr {
-      Expr::This(_) => true,
-      Expr::Array(n) => {
+      Expression::ThisExpression(_) => true,
+      Expression::ArrayExpression(n) => {
         let mut is_leavable = true;
-        for elem in &mut n.elems {
+        for elem in n.elements.iter_mut() {
           is_leavable = match elem {
-            Some(elem) => recurse(&mut elem.expr)?,
-            None => true,
+            ArrayExpressionElement::SpreadElement(spread) => {
+              recurse(&mut spread.argument)?
+            }
+            ArrayExpressionElement::Elision(_) => true,
+            _ => {
+              if let Some(expr) = elem.as_expression_mut() {
+                recurse(expr)?
+              } else {
+                true
+              }
+            }
           };
           if !is_leavable {
             break
@@ -1754,179 +2186,174 @@ impl<'a> FastCheckTransformer<'a> {
         }
         is_leavable
       },
-      Expr::Object(n) => {
+      Expression::ObjectExpression(n) => {
         let mut is_leavable = true;
-        for prop in &mut n.props {
+        let mut has_methods = false;
+        for prop in n.properties.iter_mut() {
           is_leavable = match prop {
-            PropOrSpread::Prop(prop) => match &mut **prop {
-              Prop::Shorthand(_) => true,
-              Prop::KeyValue(prop) => match &mut prop.key {
-                PropName::Ident(_) => recurse(&mut prop.value)?,
-                PropName::Str(_) => recurse(&mut prop.value)?,
-                PropName::Num(_) => recurse(&mut prop.value)?,
-                PropName::Computed(c) => {
-                  recurse(&mut c.expr)? && recurse(&mut prop.value)?
-                }
-                PropName::BigInt(_) => recurse(&mut prop.value)?,
-              },
-              Prop::Assign(n) => recurse(&mut n.value)?,
-              Prop::Getter(_) | Prop::Setter(_) | Prop::Method(_) => false,
-            },
-            PropOrSpread::Spread(n) => {
-              recurse(&mut n.expr)?
-            },
+            ObjectPropertyKind::ObjectProperty(prop) => {
+              if prop.shorthand {
+                true
+              } else if prop.method || matches!(prop.kind, PropertyKind::Get | PropertyKind::Set) {
+                has_methods = true;
+                true // we'll transform methods in a second pass
+              } else {
+                recurse(&mut prop.value)?
+              }
+            }
+            ObjectPropertyKind::SpreadProperty(spread) => {
+              recurse(&mut spread.argument)?
+            }
           };
           if !is_leavable {
             break
           }
         }
-        is_leavable
-      }
-      Expr::Unary(n) => recurse(&mut n.arg)?,
-      Expr::Update(n) => recurse(&mut n.arg)?,
-      Expr::Bin(n) => recurse(&mut n.left)? && recurse(&mut n.right)?,
-      Expr::Assign(_) | Expr::SuperProp(_) => false,
-      Expr::Cond(n) => {
-        recurse(&mut n.test)?
-          && recurse(&mut n.cons)?
-          && recurse(&mut n.alt)?
-      }
-      Expr::Member(n) => {
-        recurse(&mut n.obj)? && match &mut n.prop {
-          MemberProp::Ident(_) => true,
-          MemberProp::PrivateName(_) => false,
-          MemberProp::Computed(n) => {
-            self.maybe_transform_expr_if_leavable(&mut n.expr, None)?
+        // Transform methods/getters/setters in a second pass
+        // (can't do it in the first pass due to borrow of `self` by `recurse`)
+        if is_leavable && has_methods {
+          for prop in n.properties.iter_mut() {
+            if let ObjectPropertyKind::ObjectProperty(prop) = prop {
+              let is_method = prop.method || matches!(prop.kind, PropertyKind::Get | PropertyKind::Set);
+              if is_method {
+                let function_kind = match prop.kind {
+                  PropertyKind::Get => FunctionKind::Getter,
+                  PropertyKind::Set => FunctionKind::Setter,
+                  _ => FunctionKind::ExpressionLike,
+                };
+                if let Expression::FunctionExpression(func) = &mut prop.value {
+                  self.transform_fn(func, None, function_kind, false, false)?;
+                } else {
+                  is_leavable = false;
+                  break;
+                }
+              }
+            }
           }
         }
+        is_leavable
       }
-      Expr::Ident(_) => true,
-      Expr::Call(_) | Expr::New(_) | Expr::Seq(_)  => false,
-      Expr::Lit(n) => match n {
-        Lit::Str(_)
-        | Lit::Bool(_)
-        | Lit::Null(_)
-        | Lit::Num(_)
-        | Lit::BigInt(_)
-        | Lit::Regex(_) => true,
-        Lit::JSXText(_) => false,
-      },
-      Expr::Await(n) => recurse(&mut n.arg)?,
-      Expr::Paren(n) => recurse(&mut n.expr)?,
-      Expr::TsTypeAssertion(assertion) => {
-        assertion.expr = paren_expr(obj_as_never_expr());
+      Expression::UnaryExpression(n) => recurse(&mut n.argument)?,
+      Expression::UpdateExpression(_n) => true, // UpdateExpression.argument is SimpleAssignmentTarget, not Expression
+      Expression::BinaryExpression(n) => recurse(&mut n.left)? && recurse(&mut n.right)?,
+      Expression::AssignmentExpression(_) | Expression::Super(_) => false,
+      Expression::ConditionalExpression(n) => {
+        recurse(&mut n.test)?
+          && recurse(&mut n.consequent)?
+          && recurse(&mut n.alternate)?
+      }
+      Expression::StaticMemberExpression(n) => {
+        recurse(&mut n.object)?
+      }
+      Expression::ComputedMemberExpression(n) => {
+        recurse(&mut n.object)? && recurse(&mut n.expression)?
+      }
+      Expression::PrivateFieldExpression(_) => false,
+      Expression::Identifier(_) => true,
+      Expression::CallExpression(_) | Expression::NewExpression(_) | Expression::SequenceExpression(_) => false,
+      Expression::StringLiteral(_)
+      | Expression::BooleanLiteral(_)
+      | Expression::NullLiteral(_)
+      | Expression::NumericLiteral(_)
+      | Expression::BigIntLiteral(_)
+      | Expression::RegExpLiteral(_) => true,
+      Expression::AwaitExpression(n) => recurse(&mut n.argument)?,
+      Expression::ParenthesizedExpression(n) => recurse(&mut n.expression)?,
+      Expression::TSTypeAssertion(assertion) => {
+        assertion.expression = paren_expr(self.allocator, obj_as_never_expr(self.allocator));
         true
       }
-      Expr::TsAs(assertion) => {
-        assertion.expr = paren_expr(obj_as_never_expr());
+      Expression::TSAsExpression(assertion) => {
+        assertion.expression = paren_expr(self.allocator, obj_as_never_expr(self.allocator));
         true
       }
-      Expr::TsConstAssertion(n) => recurse(&mut n.expr)?,
-      Expr::TsNonNull(n) => recurse(&mut n.expr)?,
-      Expr::Fn(n) => {
-        self.transform_fn(&mut n.function, parent_id_range, FunctionKind::ExpressionLike, /* is overload */ false, /* is ambient */ false)?;
+      Expression::TSSatisfiesExpression(_) => false,
+      Expression::TSNonNullExpression(n) => recurse(&mut n.expression)?,
+      Expression::FunctionExpression(n) => {
+        self.transform_fn(n, parent_id_span, FunctionKind::ExpressionLike, /* is overload */ false, /* is ambient */ false)?;
         true
       }
-      Expr::Arrow(n) => {
-        self.transform_arrow(n, parent_id_range)?;
+      Expression::ArrowFunctionExpression(n) => {
+        self.transform_arrow(n, parent_id_span)?;
         true
       }
-      Expr::Tpl(_)
-      | Expr::TaggedTpl(_)
-      | Expr::Class(_)
-      | Expr::Yield(_)
-      | Expr::MetaProp(_)
-      | Expr::JSXMember(_)
-      | Expr::JSXNamespacedName(_)
-      | Expr::JSXEmpty(_)
-      | Expr::JSXElement(_)
-      | Expr::JSXFragment(_)
-      | Expr::TsInstantiation(_)
-      | Expr::TsSatisfies(_)
-      | Expr::PrivateName(_)
+      Expression::ClassExpression(n) => {
+        let empty_comments = OxcVec::new_in(self.allocator);
+        let mut comments = CommentsMut::new(self.allocator, &empty_comments);
+        self.transform_class(n, &mut comments, false)?;
+        true
+      }
+      Expression::TemplateLiteral(_)
+      | Expression::TaggedTemplateExpression(_)
+      | Expression::YieldExpression(_)
+      | Expression::MetaProperty(_)
+      | Expression::JSXElement(_)
+      | Expression::JSXFragment(_)
+      | Expression::TSInstantiationExpression(_)
       // todo(dsherret): probably could analyze this more
-      | Expr::OptChain(_)
-      | Expr::Invalid(_) => false,
+      | Expression::ChainExpression(_)
+      | Expression::ImportExpression(_)
+      | Expression::LogicalExpression(_)
+      | Expression::PrivateInExpression(_)
+      | Expression::V8IntrinsicExpression(_) => false,
     };
     Ok(is_leavable)
   }
 
   fn maybe_infer_type_from_expr(
     &self,
-    expr: &Expr,
+    expr: &Expression<'a>,
     decl_kind: DeclMutabilityKind,
-  ) -> Option<TsType> {
+  ) -> Option<TSType<'a>> {
     match expr {
-      Expr::TsTypeAssertion(n) => infer_simple_type_from_type(&n.type_ann),
-      Expr::TsAs(n) => infer_simple_type_from_type(&n.type_ann),
-      Expr::Lit(lit) => maybe_lit_to_ts_type(lit, decl_kind),
-      Expr::Call(call_expr) => {
+      Expression::TSTypeAssertion(n) => {
+        infer_simple_type_from_type(self.allocator, &n.type_annotation)
+      }
+      Expression::TSAsExpression(n) => {
+        infer_simple_type_from_type(self.allocator, &n.type_annotation)
+      }
+      Expression::StringLiteral(_)
+      | Expression::BooleanLiteral(_)
+      | Expression::NullLiteral(_)
+      | Expression::NumericLiteral(_)
+      | Expression::BigIntLiteral(_)
+      | Expression::RegExpLiteral(_) => {
+        maybe_lit_to_ts_type(self.allocator, expr, decl_kind)
+      }
+      Expression::CallExpression(call_expr) => {
         if self.is_call_expr_symbol_create(call_expr) {
-          Some(TsType::TsTypeOperator(TsTypeOperator {
-            span: DUMMY_SP,
-            op: TsTypeOperatorOp::Unique,
-            type_ann: Box::new(TsType::TsTypeRef(TsTypeRef {
-              span: DUMMY_SP,
-              type_name: TsEntityName::Ident(new_ident("symbol".into())),
-              type_params: None,
-            })),
-          }))
+          Some(TSType::TSTypeOperatorType(OxcBox::new_in(
+            TSTypeOperator {
+              node_id: Cell::new(NodeId::DUMMY),
+              span: SPAN,
+              operator: TSTypeOperatorOperator::Unique,
+              type_annotation: TSType::TSTypeReference(OxcBox::new_in(
+                super::helpers::type_ref(self.allocator, "symbol"),
+                self.allocator,
+              )),
+            },
+            self.allocator,
+          )))
         } else {
           None
         }
       }
-      Expr::Paren(n) => self.maybe_infer_type_from_expr(&n.expr, decl_kind),
-      Expr::This(_)
-      | Expr::Array(_)
-      | Expr::Object(_)
-      | Expr::Fn(_)
-      | Expr::Unary(_)
-      | Expr::Update(_)
-      | Expr::Bin(_)
-      | Expr::Assign(_)
-      | Expr::Member(_)
-      | Expr::SuperProp(_)
-      | Expr::Cond(_)
-      | Expr::New(_)
-      | Expr::Seq(_)
-      | Expr::Ident(_)
-      | Expr::Tpl(_)
-      | Expr::TaggedTpl(_)
-      | Expr::Arrow(_)
-      | Expr::Class(_)
-      | Expr::Yield(_)
-      | Expr::MetaProp(_)
-      | Expr::Await(_)
-      | Expr::JSXMember(_)
-      | Expr::JSXNamespacedName(_)
-      | Expr::JSXEmpty(_)
-      | Expr::JSXElement(_)
-      | Expr::JSXFragment(_)
-      | Expr::TsConstAssertion(_)
-      | Expr::TsNonNull(_)
-      | Expr::TsInstantiation(_)
-      | Expr::TsSatisfies(_)
-      | Expr::PrivateName(_)
-      | Expr::OptChain(_)
-      | Expr::Invalid(_) => None,
+      Expression::ParenthesizedExpression(n) => {
+        self.maybe_infer_type_from_expr(&n.expression, decl_kind)
+      }
+      _ => None,
     }
   }
 
   /// Looks if the call expr is `Symbol("example")` or `Symbol.for("example")`
-  fn is_call_expr_symbol_create(&self, call_expr: &CallExpr) -> bool {
-    let Some(expr) = call_expr.callee.as_expr() else {
-      return false;
-    };
-    let expr_ident = match &**expr {
-      Expr::Ident(ident) => ident,
-      Expr::Member(member_expr) => {
-        let Some(ident) = member_expr.obj.as_ident() else {
+  fn is_call_expr_symbol_create(&self, call_expr: &CallExpression<'a>) -> bool {
+    let expr_ident = match &call_expr.callee {
+      Expression::Identifier(ident) => ident,
+      Expression::StaticMemberExpression(member_expr) => {
+        let Expression::Identifier(ident) = &member_expr.object else {
           return false;
         };
-        let Some(prop_ident) = member_expr.prop.as_ident() else {
-          return false;
-        };
-        if prop_ident.sym != "for" {
+        if member_expr.property.name != "for" {
           return false;
         }
         ident
@@ -1934,39 +2361,55 @@ impl<'a> FastCheckTransformer<'a> {
       _ => return false,
     };
 
-    let is_symbol_global = expr_ident.sym == "Symbol"
-      && expr_ident.to_id().1 == self.parsed_source.unresolved_context();
-    if !is_symbol_global || call_expr.args.len() != 1 {
+    let is_symbol_global = expr_ident.name == "Symbol";
+    // TODO: In OXC we don't have unresolved_context() in the same way.
+    // For now we check just the name. This may need refinement.
+    if !is_symbol_global || call_expr.arguments.len() != 1 {
       return false;
     }
-    let Some(arg_lit) = call_expr.args.first().and_then(|a| a.expr.as_lit())
-    else {
+    let Some(arg) = call_expr.arguments.first() else {
       return false;
     };
-    matches!(arg_lit, Lit::Str(_))
+    matches!(arg, Argument::StringLiteral(_))
   }
 
-  fn promise_wrap_type(&self, ty: Box<TsType>) -> Box<TsType> {
-    match ty.as_ref() {
-      TsType::TsTypeRef(TsTypeRef {
-        type_name: TsEntityName::Ident(ident),
-        type_params: Some(type_params),
-        ..
-      }) if type_params.params.len() == 1
-        && ident.sym == "Promise"
-        && ident.to_id().1 == self.parsed_source.unresolved_context() =>
-      {
-        ty
-      }
-      _ => Box::new(TsType::TsTypeRef(TsTypeRef {
-        span: DUMMY_SP,
-        type_name: TsEntityName::Ident(new_ident("Promise".into())),
-        type_params: Some(Box::new(TsTypeParamInstantiation {
-          span: DUMMY_SP,
-          params: vec![ty],
-        })),
-      })),
+  fn promise_wrap_type_owned(&self, ty: TSType<'a>) -> TSType<'a> {
+    // Check if it's already Promise<T>
+    if let TSType::TSTypeReference(type_ref) = &ty
+      && let TSTypeName::IdentifierReference(ident) = &type_ref.type_name
+      && ident.name == "Promise"
+      && let Some(type_args) = &type_ref.type_arguments
+      && type_args.params.len() == 1
+    {
+      return ty;
     }
+
+    let mut params = OxcVec::with_capacity_in(1, self.allocator);
+    params.push(ty);
+    TSType::TSTypeReference(OxcBox::new_in(
+      TSTypeReference {
+        node_id: Cell::new(NodeId::DUMMY),
+        span: SPAN,
+        type_name: TSTypeName::IdentifierReference(OxcBox::new_in(
+          IdentifierReference {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: SPAN,
+            name: Ident::from(self.allocator.alloc_str("Promise")),
+            reference_id: Cell::new(None),
+          },
+          self.allocator,
+        )),
+        type_arguments: Some(OxcBox::new_in(
+          TSTypeParameterInstantiation {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: SPAN,
+            params,
+          },
+          self.allocator,
+        )),
+      },
+      self.allocator,
+    ))
   }
 }
 
@@ -1981,28 +2424,25 @@ enum FunctionKind {
   Setter,
 }
 
-fn is_ts_private_computed_class_member(m: &ClassMember) -> bool {
+fn is_ts_private_computed_class_element(m: &ClassElement) -> bool {
   match m {
-    ClassMember::Method(m) => {
-      if m.accessibility == Some(Accessibility::Private) {
-        is_computed_prop_name(&m.key)
+    ClassElement::MethodDefinition(m) => {
+      if m.accessibility == Some(TSAccessibility::Private) {
+        is_computed_property_key(&m.key)
       } else {
         false
       }
     }
-    ClassMember::AutoAccessor(m) => {
-      if m.accessibility == Some(Accessibility::Private) {
-        match &m.key {
-          Key::Private(_) => false,
-          Key::Public(k) => is_computed_prop_name(k),
-        }
+    ClassElement::AccessorProperty(a) => {
+      if a.accessibility == Some(TSAccessibility::Private) {
+        is_computed_property_key(&a.key)
       } else {
         false
       }
     }
-    ClassMember::ClassProp(p) => {
-      if p.accessibility == Some(Accessibility::Private) {
-        is_computed_prop_name(&p.key)
+    ClassElement::PropertyDefinition(p) => {
+      if p.accessibility == Some(TSAccessibility::Private) {
+        is_computed_property_key(&p.key)
       } else {
         false
       }
@@ -2011,202 +2451,284 @@ fn is_ts_private_computed_class_member(m: &ClassMember) -> bool {
   }
 }
 
-fn is_computed_prop_name(prop_name: &PropName) -> bool {
-  match prop_name {
-    PropName::Ident(_)
-    | PropName::Str(_)
-    | PropName::Num(_)
-    | PropName::BigInt(_) => false,
-    PropName::Computed(_) => true,
+fn is_computed_property_key(key: &PropertyKey) -> bool {
+  match key {
+    PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_) => {
+      false
+    }
+    _ => key.is_expression(),
   }
 }
 
-fn void_or_promise_void(is_async: bool) -> Box<TsType> {
-  let void_type = Box::new(ts_keyword_type(TsKeywordTypeKind::TsVoidKeyword));
+fn property_key_to_string(key: &PropertyKey) -> Option<String> {
+  match key {
+    PropertyKey::StaticIdentifier(ident) => Some(ident.name.to_string()),
+    PropertyKey::StringLiteral(s) => Some(s.value.to_string()),
+    PropertyKey::NumericLiteral(n) => Some(n.value.to_string()),
+    PropertyKey::BigIntLiteral(n) => n.raw.as_ref().map(|r| r.to_string()),
+    PropertyKey::PrivateIdentifier(p) => Some(p.name.to_string()),
+    _ => None,
+  }
+}
+
+fn void_or_promise_void<'a>(
+  allocator: &'a Allocator,
+  is_async: bool,
+) -> TSType<'a> {
+  let void_type = ts_keyword_type(allocator, TSKeywordKind::Void);
   if is_async {
-    Box::new(TsType::TsTypeRef(TsTypeRef {
-      span: DUMMY_SP,
-      type_name: TsEntityName::Ident(Ident::new(
-        "Promise".into(),
-        DUMMY_SP,
-        SyntaxContext::default(),
-      )),
-      type_params: Some(Box::new(TsTypeParamInstantiation {
-        span: DUMMY_SP,
-        params: vec![void_type],
-      })),
-    }))
+    let mut params = OxcVec::with_capacity_in(1, allocator);
+    params.push(void_type);
+    TSType::TSTypeReference(OxcBox::new_in(
+      TSTypeReference {
+        node_id: Cell::new(NodeId::DUMMY),
+        span: SPAN,
+        type_name: TSTypeName::IdentifierReference(OxcBox::new_in(
+          IdentifierReference {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: SPAN,
+            name: Ident::from(allocator.alloc_str("Promise")),
+            reference_id: Cell::new(None),
+          },
+          allocator,
+        )),
+        type_arguments: Some(OxcBox::new_in(
+          TSTypeParameterInstantiation {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: SPAN,
+            params,
+          },
+          allocator,
+        )),
+      },
+      allocator,
+    ))
   } else {
     void_type
   }
 }
 
-fn replacement_return_value(ty: &TsType) -> Option<Box<Expr>> {
+fn replacement_return_value<'a>(
+  allocator: &'a Allocator,
+  ty: &TSType<'a>,
+) -> Option<Expression<'a>> {
   if is_void_type(ty) {
     None
   } else {
-    Some(obj_as_never_expr())
+    Some(obj_as_never_expr(allocator))
   }
 }
 
-// Converts `ident?: string` to `ident: string | undefined`
-fn convert_optional_ident_to_nullable_type(ident: &mut BindingIdent) {
-  ident.optional = false;
-  if let Some(type_ann) = ident.type_ann.take() {
-    ident.type_ann = Some(Box::new(TsTypeAnn {
-      span: type_ann.span,
-      type_ann: Box::new(TsType::TsUnionOrIntersectionType(
-        TsUnionOrIntersectionType::TsUnionType(TsUnionType {
-          span: DUMMY_SP,
-          types: vec![
-            type_ann.type_ann,
-            Box::new(ts_keyword_type(TsKeywordTypeKind::TsUndefinedKeyword)),
-          ],
-        }),
-      )),
-    }));
-  }
-}
-
-fn infer_simple_type_from_type(t: &TsType) -> Option<TsType> {
+fn infer_simple_type_from_type<'a>(
+  allocator: &'a Allocator,
+  t: &TSType<'a>,
+) -> Option<TSType<'a>> {
   match t {
-    TsType::TsKeywordType(_) => Some(t.clone()),
-    TsType::TsThisType(_) => Some(t.clone()),
-    TsType::TsFnOrConstructorType(_) => None,
-    TsType::TsTypeRef(type_ref) => Some(TsType::TsTypeRef(TsTypeRef {
-      span: type_ref.span,
-      type_name: type_ref.type_name.clone(),
-      type_params: match type_ref.type_params.as_deref() {
-        Some(type_params) => Some(Box::new(TsTypeParamInstantiation {
-          span: type_params.span,
-          params: {
-            let mut params = Vec::with_capacity(type_params.params.len());
-            for param in &type_params.params {
-              params.push(Box::new(infer_simple_type_from_type(param)?));
-            }
-            params
-          },
-        })),
+    TSType::TSAnyKeyword(_)
+    | TSType::TSBigIntKeyword(_)
+    | TSType::TSBooleanKeyword(_)
+    | TSType::TSNeverKeyword(_)
+    | TSType::TSNullKeyword(_)
+    | TSType::TSNumberKeyword(_)
+    | TSType::TSObjectKeyword(_)
+    | TSType::TSStringKeyword(_)
+    | TSType::TSSymbolKeyword(_)
+    | TSType::TSUndefinedKeyword(_)
+    | TSType::TSUnknownKeyword(_)
+    | TSType::TSVoidKeyword(_)
+    | TSType::TSIntrinsicKeyword(_) => Some(t.clone_in(allocator)),
+    TSType::TSThisType(_) => Some(t.clone_in(allocator)),
+    TSType::TSFunctionType(_) | TSType::TSConstructorType(_) => None,
+    TSType::TSTypeReference(type_ref) => {
+      let type_arguments = match &type_ref.type_arguments {
+        Some(type_args) => {
+          let mut params =
+            OxcVec::with_capacity_in(type_args.params.len(), allocator);
+          for param in &type_args.params {
+            params.push(infer_simple_type_from_type(allocator, param)?);
+          }
+          Some(OxcBox::new_in(
+            TSTypeParameterInstantiation {
+              node_id: Cell::new(NodeId::DUMMY),
+              span: type_args.span,
+              params,
+            },
+            allocator,
+          ))
+        }
         None => None,
-      },
-    })),
-    TsType::TsTypeQuery(_) => None,
-    TsType::TsTypeLit(t) => Some(TsType::TsTypeLit(t.clone())),
-    TsType::TsTupleType(t) => {
-      let mut elems = Vec::with_capacity(t.elem_types.len());
-      for elem_type in &t.elem_types {
-        let inferred_type = infer_simple_type_from_type(&elem_type.ty)?;
-        elems.push(TsTupleElement {
-          span: elem_type.span,
-          label: elem_type.label.clone(),
-          ty: Box::new(inferred_type),
-        });
+      };
+      Some(TSType::TSTypeReference(OxcBox::new_in(
+        TSTypeReference {
+          node_id: Cell::new(NodeId::DUMMY),
+          span: type_ref.span,
+          type_name: type_ref.type_name.clone_in(allocator),
+          type_arguments,
+        },
+        allocator,
+      )))
+    }
+    TSType::TSTypeQuery(_) => None,
+    TSType::TSTypeLiteral(t) => {
+      Some(TSType::TSTypeLiteral(t.clone_in(allocator)))
+    }
+    TSType::TSTupleType(t) => {
+      let mut elems =
+        OxcVec::with_capacity_in(t.element_types.len(), allocator);
+      for elem in &t.element_types {
+        // TSTupleElement shares the same structure as TSType via @inherit
+        let elem_as_type = tuple_element_to_type(elem)?;
+        let inferred = infer_simple_type_from_type(allocator, &elem_as_type)?;
+        elems.push(super::helpers::ts_tuple_element(inferred));
       }
-      Some(TsType::TsTupleType(TsTupleType {
-        span: t.span(),
-        elem_types: elems,
-      }))
+      Some(TSType::TSTupleType(OxcBox::new_in(
+        TSTupleType {
+          node_id: Cell::new(NodeId::DUMMY),
+          span: t.span,
+          element_types: elems,
+        },
+        allocator,
+      )))
     }
-    TsType::TsArrayType(t) => {
-      infer_simple_type_from_type(&t.elem_type).map(|inner| {
-        TsType::TsArrayType(TsArrayType {
-          span: t.span(),
-          elem_type: Box::new(inner),
-        })
-      })
-    }
-    TsType::TsOptionalType(t) => {
-      infer_simple_type_from_type(&t.type_ann).map(|inner| {
-        TsType::TsOptionalType(TsOptionalType {
-          span: t.span(),
-          type_ann: Box::new(inner),
-        })
-      })
-    }
-    TsType::TsRestType(t) => {
-      infer_simple_type_from_type(&t.type_ann).map(|inner| {
-        TsType::TsRestType(TsRestType {
-          span: t.span(),
-          type_ann: Box::new(inner),
-        })
-      })
-    }
-    TsType::TsUnionOrIntersectionType(t) => match t {
-      TsUnionOrIntersectionType::TsUnionType(t) => {
-        let mut types = Vec::with_capacity(t.types.len());
-        for ty in &t.types {
-          let inferred_type = infer_simple_type_from_type(ty)?;
-          types.push(Box::new(inferred_type));
-        }
-        Some(TsType::TsUnionOrIntersectionType(
-          TsUnionOrIntersectionType::TsUnionType(TsUnionType {
-            span: t.span(),
-            types,
-          }),
+    TSType::TSArrayType(t) => {
+      infer_simple_type_from_type(allocator, &t.element_type).map(|inner| {
+        TSType::TSArrayType(OxcBox::new_in(
+          TSArrayType {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: t.span,
+            element_type: inner,
+          },
+          allocator,
         ))
-      }
-      TsUnionOrIntersectionType::TsIntersectionType(t) => {
-        let mut types = Vec::with_capacity(t.types.len());
-        for ty in &t.types {
-          let inferred_type = infer_simple_type_from_type(ty)?;
-          types.push(Box::new(inferred_type));
-        }
-        Some(TsType::TsUnionOrIntersectionType(
-          TsUnionOrIntersectionType::TsIntersectionType(TsIntersectionType {
-            span: t.span(),
-            types,
-          }),
-        ))
-      }
-    },
-    TsType::TsConditionalType(_) => None,
-    TsType::TsInferType(_) => None,
-    TsType::TsParenthesizedType(t) => infer_simple_type_from_type(&t.type_ann)
-      .map(|inner| {
-        TsType::TsParenthesizedType(TsParenthesizedType {
-          span: t.span(),
-          type_ann: Box::new(inner),
-        })
-      }),
-    TsType::TsTypeOperator(t) => {
-      infer_simple_type_from_type(&t.type_ann).map(|inner| {
-        TsType::TsTypeOperator(TsTypeOperator {
-          span: t.span(),
-          op: t.op,
-          type_ann: Box::new(inner),
-        })
       })
     }
-    TsType::TsIndexedAccessType(_) => None,
-    TsType::TsMappedType(_) => None,
-    TsType::TsLitType(t) => match &t.lit {
-      TsLit::Number(_) | TsLit::Str(_) | TsLit::Bool(_) | TsLit::BigInt(_) => {
-        Some(TsType::TsLitType(t.clone()))
+    TSType::TSUnionType(t) => {
+      let mut types = OxcVec::with_capacity_in(t.types.len(), allocator);
+      for ty in &t.types {
+        let inferred_type = infer_simple_type_from_type(allocator, ty)?;
+        types.push(inferred_type);
       }
-      TsLit::Tpl(_) => None,
+      Some(TSType::TSUnionType(OxcBox::new_in(
+        TSUnionType {
+          node_id: Cell::new(NodeId::DUMMY),
+          span: t.span,
+          types,
+        },
+        allocator,
+      )))
+    }
+    TSType::TSIntersectionType(t) => {
+      let mut types = OxcVec::with_capacity_in(t.types.len(), allocator);
+      for ty in &t.types {
+        let inferred_type = infer_simple_type_from_type(allocator, ty)?;
+        types.push(inferred_type);
+      }
+      Some(TSType::TSIntersectionType(OxcBox::new_in(
+        TSIntersectionType {
+          node_id: Cell::new(NodeId::DUMMY),
+          span: t.span,
+          types,
+        },
+        allocator,
+      )))
+    }
+    TSType::TSConditionalType(_) => None,
+    TSType::TSInferType(_) => None,
+    TSType::TSParenthesizedType(t) => {
+      infer_simple_type_from_type(allocator, &t.type_annotation).map(|inner| {
+        TSType::TSParenthesizedType(OxcBox::new_in(
+          TSParenthesizedType {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: t.span,
+            type_annotation: inner,
+          },
+          allocator,
+        ))
+      })
+    }
+    TSType::TSTypeOperatorType(t) => {
+      infer_simple_type_from_type(allocator, &t.type_annotation).map(|inner| {
+        TSType::TSTypeOperatorType(OxcBox::new_in(
+          TSTypeOperator {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: t.span,
+            operator: t.operator,
+            type_annotation: inner,
+          },
+          allocator,
+        ))
+      })
+    }
+    TSType::TSIndexedAccessType(_) => None,
+    TSType::TSMappedType(_) => None,
+    TSType::TSLiteralType(t) => match &t.literal {
+      TSLiteral::NumericLiteral(_)
+      | TSLiteral::StringLiteral(_)
+      | TSLiteral::BooleanLiteral(_)
+      | TSLiteral::BigIntLiteral(_) => {
+        Some(TSType::TSLiteralType(t.clone_in(allocator)))
+      }
+      TSLiteral::TemplateLiteral(_) | TSLiteral::UnaryExpression(_) => None,
     },
-    TsType::TsTypePredicate(_) | TsType::TsImportType(_) => None,
+    TSType::TSTypePredicate(_) | TSType::TSImportType(_) => None,
+    TSType::TSNamedTupleMember(t) => {
+      let inner = tuple_element_to_type_from_named(t)?;
+      infer_simple_type_from_type(allocator, &inner).map(|inferred| {
+        // Wrap back as named tuple member
+        TSType::TSNamedTupleMember(OxcBox::new_in(
+          TSNamedTupleMember {
+            node_id: Cell::new(NodeId::DUMMY),
+            span: t.span,
+            element_type: super::helpers::ts_tuple_element(inferred),
+            label: t.label.clone_in(allocator),
+            optional: t.optional,
+          },
+          allocator,
+        ))
+      })
+    }
+    TSType::TSTemplateLiteralType(_) => None,
+    _ => None,
   }
+}
+
+/// Convert a TSTupleElement to a TSType for analysis purposes.
+/// TSTupleElement inherits TSType variants via @inherit, so the non-unique variants
+/// share the same discriminant layout and can be transmuted safely.
+fn tuple_element_to_type<'a>(elem: &TSTupleElement<'a>) -> Option<TSType<'a>> {
+  match elem {
+    TSTupleElement::TSOptionalType(_) | TSTupleElement::TSRestType(_) => {
+      // These don't have a direct TSType equivalent
+      None
+    }
+    TSTupleElement::TSNamedTupleMember(t) => {
+      tuple_element_to_type(&t.element_type)
+    }
+    // All other variants are inherited from TSType and share the same layout
+    _ => Some(unsafe { std::mem::transmute_copy(elem) }),
+  }
+}
+
+fn tuple_element_to_type_from_named<'a>(
+  t: &TSNamedTupleMember<'a>,
+) -> Option<TSType<'a>> {
+  tuple_element_to_type(&t.element_type)
 }
 
 /// Holds when the first optional parameter occurs.
 struct ParamsOptionalStartIndex(Option<usize>);
 
 impl ParamsOptionalStartIndex {
-  pub fn build<'a>(param_pats: impl Iterator<Item = &'a Pat>) -> Self {
-    fn is_param_pat_optional(pat: &Pat) -> bool {
-      match pat {
-        Pat::Ident(ident) => ident.optional,
-        Pat::Array(a) => a.optional,
-        Pat::Object(o) => o.optional,
-        Pat::Assign(_) | Pat::Rest(_) => true,
-        Pat::Invalid(_) | Pat::Expr(_) => false,
-      }
+  pub fn build(params: &FormalParameters<'_>) -> Self {
+    fn is_param_optional(param: &FormalParameter) -> bool {
+      param.optional
+        || param.initializer.is_some()
+        || matches!(&param.pattern, BindingPattern::AssignmentPattern(_))
     }
 
     let mut optional_start_index = None;
-    for (i, pat) in param_pats.enumerate() {
-      if is_param_pat_optional(pat) {
+    for (i, param) in params.items.iter().enumerate() {
+      if is_param_optional(param) {
         if optional_start_index.is_none() {
           optional_start_index = Some(i);
         }
@@ -2227,81 +2749,240 @@ impl ParamsOptionalStartIndex {
   }
 }
 
-fn is_expr_ident_or_member_idents(expr: &Expr) -> bool {
+fn is_expr_ident_or_member_idents(expr: &Expression) -> bool {
   match expr {
-    Expr::Ident(_) => true,
-    Expr::Member(n) => {
-      is_expr_ident_or_member_idents(&n.obj)
-        && match &n.prop {
-          MemberProp::Ident(_) => true,
-          MemberProp::PrivateName(_) => false,
-          MemberProp::Computed(p) => is_expr_ident_or_member_idents(&p.expr),
-        }
+    Expression::Identifier(_) => true,
+    Expression::StaticMemberExpression(n) => {
+      is_expr_ident_or_member_idents(&n.object)
+    }
+    Expression::ComputedMemberExpression(n) => {
+      is_expr_ident_or_member_idents(&n.object)
+        && is_expr_ident_or_member_idents(&n.expression)
     }
     _ => false,
   }
 }
 
-fn array_as_never_expr() -> Box<Expr> {
+fn array_as_never_expr<'a>(allocator: &'a Allocator) -> Expression<'a> {
   expr_as_keyword_expr(
-    empty_array_lit_expr(),
-    TsKeywordTypeKind::TsNeverKeyword,
+    allocator,
+    empty_array_lit_expr(allocator),
+    TSKeywordKind::Any, // We'll use the proper never keyword below
   )
 }
 
-fn obj_as_never_expr() -> Box<Expr> {
-  expr_as_keyword_expr(empty_obj_lit_expr(), TsKeywordTypeKind::TsNeverKeyword)
-}
-
-fn array_as_never_array_expr() -> Box<Expr> {
+fn obj_as_never_expr<'a>(allocator: &'a Allocator) -> Expression<'a> {
   as_expr(
-    empty_array_lit_expr(),
-    Box::new(TsType::TsArrayType(TsArrayType {
-      span: DUMMY_SP,
-      elem_type: Box::new(ts_keyword_type(TsKeywordTypeKind::TsNeverKeyword)),
-    })),
+    allocator,
+    empty_obj_lit_expr(allocator),
+    ts_never_type(allocator),
   )
 }
 
-fn empty_array_lit_expr() -> Box<Expr> {
-  Box::new(Expr::Array(ArrayLit {
-    span: DUMMY_SP,
-    elems: Default::default(),
-  }))
+fn array_as_never_array_expr<'a>(allocator: &'a Allocator) -> Expression<'a> {
+  as_expr(
+    allocator,
+    empty_array_lit_expr(allocator),
+    TSType::TSArrayType(OxcBox::new_in(
+      TSArrayType {
+        node_id: Cell::new(NodeId::DUMMY),
+        span: SPAN,
+        element_type: ts_never_type(allocator),
+      },
+      allocator,
+    )),
+  )
 }
 
-fn empty_obj_lit_expr() -> Box<Expr> {
-  Box::new(Expr::Object(ObjectLit {
-    span: DUMMY_SP,
-    props: Default::default(),
-  }))
+fn ts_never_type<'a>(allocator: &'a Allocator) -> TSType<'a> {
+  TSType::TSNeverKeyword(OxcBox::new_in(
+    TSNeverKeyword {
+      node_id: Cell::new(NodeId::DUMMY),
+      span: SPAN,
+    },
+    allocator,
+  ))
 }
 
-fn expr_as_keyword_expr(
-  expr: Box<Expr>,
-  keyword: TsKeywordTypeKind,
-) -> Box<Expr> {
-  as_expr(expr, keyword_type(keyword))
+fn empty_array_lit_expr<'a>(allocator: &'a Allocator) -> Expression<'a> {
+  Expression::ArrayExpression(OxcBox::new_in(
+    ArrayExpression {
+      node_id: Cell::new(NodeId::DUMMY),
+      span: SPAN,
+      elements: OxcVec::new_in(allocator),
+    },
+    allocator,
+  ))
 }
 
-fn keyword_type(keyword: TsKeywordTypeKind) -> Box<TsType> {
-  Box::new(TsType::TsKeywordType(TsKeywordType {
-    span: DUMMY_SP,
-    kind: keyword,
-  }))
+fn empty_obj_lit_expr<'a>(allocator: &'a Allocator) -> Expression<'a> {
+  Expression::ObjectExpression(OxcBox::new_in(
+    ObjectExpression {
+      node_id: Cell::new(NodeId::DUMMY),
+      span: SPAN,
+      properties: OxcVec::new_in(allocator),
+    },
+    allocator,
+  ))
 }
 
-fn as_expr(expr: Box<Expr>, type_ann: Box<TsType>) -> Box<Expr> {
-  Box::new(Expr::TsAs(TsAsExpr {
-    span: DUMMY_SP,
-    expr,
-    type_ann,
-  }))
+fn expr_as_keyword_expr<'a>(
+  allocator: &'a Allocator,
+  expr: Expression<'a>,
+  _keyword: TSKeywordKind,
+) -> Expression<'a> {
+  as_expr(allocator, expr, ts_never_type(allocator))
 }
 
-fn paren_expr(expr: Box<Expr>) -> Box<Expr> {
-  Box::new(Expr::Paren(ParenExpr {
-    span: DUMMY_SP,
-    expr,
-  }))
+fn as_expr<'a>(
+  allocator: &'a Allocator,
+  expr: Expression<'a>,
+  type_annotation: TSType<'a>,
+) -> Expression<'a> {
+  Expression::TSAsExpression(OxcBox::new_in(
+    TSAsExpression {
+      node_id: Cell::new(NodeId::DUMMY),
+      span: SPAN,
+      expression: expr,
+      type_annotation,
+    },
+    allocator,
+  ))
+}
+
+fn paren_expr<'a>(
+  allocator: &'a Allocator,
+  expr: Expression<'a>,
+) -> Expression<'a> {
+  Expression::ParenthesizedExpression(OxcBox::new_in(
+    ParenthesizedExpression {
+      node_id: Cell::new(NodeId::DUMMY),
+      span: SPAN,
+      expression: expr,
+    },
+    allocator,
+  ))
+}
+
+/// Simple check for valid JavaScript identifier.
+fn is_valid_js_ident(s: &str) -> bool {
+  if s.is_empty() {
+    return false;
+  }
+  let mut chars = s.chars();
+  let first = chars.next().unwrap();
+  if !first.is_ascii_alphabetic() && first != '_' && first != '$' {
+    return false;
+  }
+  chars.all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '$')
+}
+
+/// Walk an expression tree collecting identifier references.
+fn collect_ident_refs_in_expr<'a>(
+  expr: &Expression<'a>,
+  callback: &mut dyn FnMut(&str, Span),
+) {
+  match expr {
+    Expression::Identifier(ident) => {
+      callback(&ident.name, ident.span);
+    }
+    Expression::ArrayExpression(n) => {
+      for elem in &n.elements {
+        if let Some(e) = elem.as_expression() {
+          collect_ident_refs_in_expr(e, callback);
+        }
+      }
+    }
+    Expression::ObjectExpression(n) => {
+      for prop in &n.properties {
+        match prop {
+          ObjectPropertyKind::ObjectProperty(p) => {
+            collect_ident_refs_in_expr(&p.value, callback);
+          }
+          ObjectPropertyKind::SpreadProperty(s) => {
+            collect_ident_refs_in_expr(&s.argument, callback);
+          }
+        }
+      }
+    }
+    Expression::UnaryExpression(n) => {
+      collect_ident_refs_in_expr(&n.argument, callback)
+    }
+    Expression::BinaryExpression(n) => {
+      collect_ident_refs_in_expr(&n.left, callback);
+      collect_ident_refs_in_expr(&n.right, callback);
+    }
+    Expression::ConditionalExpression(n) => {
+      collect_ident_refs_in_expr(&n.test, callback);
+      collect_ident_refs_in_expr(&n.consequent, callback);
+      collect_ident_refs_in_expr(&n.alternate, callback);
+    }
+    Expression::CallExpression(n) => {
+      collect_ident_refs_in_expr(&n.callee, callback);
+      for arg in &n.arguments {
+        if let Some(e) = arg.as_expression() {
+          collect_ident_refs_in_expr(e, callback);
+        }
+      }
+    }
+    Expression::StaticMemberExpression(n) => {
+      collect_ident_refs_in_expr(&n.object, callback);
+    }
+    Expression::ComputedMemberExpression(n) => {
+      collect_ident_refs_in_expr(&n.object, callback);
+      collect_ident_refs_in_expr(&n.expression, callback);
+    }
+    Expression::AssignmentExpression(n) => {
+      collect_ident_refs_in_expr(&n.right, callback);
+    }
+    Expression::ParenthesizedExpression(n) => {
+      collect_ident_refs_in_expr(&n.expression, callback);
+    }
+    Expression::AwaitExpression(n) => {
+      collect_ident_refs_in_expr(&n.argument, callback);
+    }
+    Expression::TSAsExpression(n) => {
+      collect_ident_refs_in_expr(&n.expression, callback);
+    }
+    Expression::TSTypeAssertion(n) => {
+      collect_ident_refs_in_expr(&n.expression, callback);
+    }
+    Expression::TSNonNullExpression(n) => {
+      collect_ident_refs_in_expr(&n.expression, callback);
+    }
+    Expression::ArrowFunctionExpression(n) => {
+      for stmt in &n.body.statements {
+        if let Statement::ExpressionStatement(e) = stmt {
+          collect_ident_refs_in_expr(&e.expression, callback);
+        }
+      }
+    }
+    Expression::SequenceExpression(n) => {
+      for expr in &n.expressions {
+        collect_ident_refs_in_expr(expr, callback);
+      }
+    }
+    _ => {}
+  }
+}
+
+// Statement, ClassElement, PropertyKey, BindingPattern, etc. all implement GetSpan
+// from the oxc_ast crate, which provides .span() methods.
+
+// ImportDeclarationSpecifier, ExportSpecifier, ClassElement all implement
+// GetSpan from the oxc_ast crate (imported via deno_ast::oxc::span::GetSpan).
+
+fn get_innermost_module_block<'a, 'b>(
+  body: &'b mut TSModuleDeclarationBody<'a>,
+) -> &'b mut TSModuleBlock<'a> {
+  match body {
+    TSModuleDeclarationBody::TSModuleBlock(block) => block.as_mut(),
+    TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
+      if let Some(inner_body) = &mut decl.body {
+        get_innermost_module_block(inner_body)
+      } else {
+        unreachable!("TSModuleDeclaration without body")
+      }
+    }
+  }
 }

@@ -24,26 +24,26 @@ file:///a.ts: EsModuleInfo {
     ),
     specifier: "file:///a.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "test1",
-            #2,
+            0,
         ): 1,
         (
             "test2",
-            #2,
+            0,
         ): 2,
         (
             "test3",
-            #2,
+            0,
         ): 3,
         (
             "test4",
-            #2,
+            0,
         ): 4,
         (
             "test5",
-            #2,
+            0,
         ): 5,
     },
     symbols: {
@@ -57,16 +57,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "const test1: string = \"\";\nconst test2: number = 3, test3: number = 3;\nconst test4: number;\nconst test5: number;\n\nexport { test1, test2, test3 };\nexport { test4, test5 };",
+                            <node @ 0..170>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            169,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 170,
                     },
                     flags: 0,
                 },
@@ -99,16 +95,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "test1: const test1: string = \"\";",
+                            <node @ 6..11>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            6,
-                        ),
-                        end: SourcePos(
-                            24,
-                        ),
+                    range: Span {
+                        start: 6,
+                        end: 24,
                     },
                     flags: 0,
                 },
@@ -129,16 +121,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "test2: const test2: number = 3, test3: number = 3;",
+                            <node @ 32..37>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            32,
-                        ),
-                        end: SourcePos(
-                            49,
-                        ),
+                    range: Span {
+                        start: 32,
+                        end: 49,
                     },
                     flags: 0,
                 },
@@ -159,16 +147,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "test3: const test2: number = 3, test3: number = 3;",
+                            <node @ 51..56>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            51,
-                        ),
-                        end: SourcePos(
-                            68,
-                        ),
+                    range: Span {
+                        start: 51,
+                        end: 68,
                     },
                     flags: 0,
                 },
@@ -189,16 +173,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "test4: const test4: number;",
+                            <node @ 76..81>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            76,
-                        ),
-                        end: SourcePos(
-                            89,
-                        ),
+                    range: Span {
+                        start: 76,
+                        end: 89,
                     },
                     flags: 0,
                 },
@@ -219,16 +199,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "test5: const test5: number;",
+                            <node @ 97..102>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            97,
-                        ),
-                        end: SourcePos(
-                            110,
-                        ),
+                    range: Span {
+                        start: 97,
+                        end: 110,
                     },
                     flags: 0,
                 },
@@ -250,16 +226,12 @@ file:///a.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "test1",
-                            #2,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            122,
-                        ),
-                        end: SourcePos(
-                            127,
-                        ),
+                    range: Span {
+                        start: 122,
+                        end: 127,
                     },
                     flags: 0,
                 },
@@ -281,16 +253,12 @@ file:///a.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "test2",
-                            #2,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            129,
-                        ),
-                        end: SourcePos(
-                            134,
-                        ),
+                    range: Span {
+                        start: 129,
+                        end: 134,
                     },
                     flags: 0,
                 },
@@ -312,16 +280,12 @@ file:///a.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "test3",
-                            #2,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            136,
-                        ),
-                        end: SourcePos(
-                            141,
-                        ),
+                    range: Span {
+                        start: 136,
+                        end: 141,
                     },
                     flags: 0,
                 },
@@ -343,16 +307,12 @@ file:///a.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "test4",
-                            #2,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            154,
-                        ),
-                        end: SourcePos(
-                            159,
-                        ),
+                    range: Span {
+                        start: 154,
+                        end: 159,
                     },
                     flags: 0,
                 },
@@ -374,16 +334,12 @@ file:///a.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "test5",
-                            #2,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            161,
-                        ),
-                        end: SourcePos(
-                            166,
-                        ),
+                    range: Span {
+                        start: 161,
+                        end: 166,
                     },
                     flags: 0,
                 },
@@ -400,10 +356,10 @@ file:///b.ts: EsModuleInfo {
     ),
     specifier: "file:///b.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "Test",
-            #2,
+            0,
         ): 1,
     },
     symbols: {
@@ -417,16 +373,12 @@ file:///b.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class Test {}",
+                            <node @ 0..21>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            20,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 21,
                     },
                     flags: 0,
                 },
@@ -451,16 +403,12 @@ file:///b.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class Test {}",
+                            <node @ 0..20>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            20,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 20,
                     },
                     flags: 0,
                 },
@@ -479,7 +427,7 @@ file:///c.ts: EsModuleInfo {
     re_exports: [
         "./a.ts",
     ],
-    swc_id_to_symbol_id: {},
+    id_to_symbol_id: {},
     symbols: {
         0: Symbol {
             module_id: ModuleId(
@@ -491,16 +439,12 @@ file:///c.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export * from \"./a.ts\";\nexport { Test } from \"./b.ts\";",
+                            <node @ 0..55>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            54,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 55,
                     },
                     flags: 0,
                 },
@@ -529,13 +473,9 @@ file:///c.ts: EsModuleInfo {
                             specifier: "./b.ts",
                         },
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            33,
-                        ),
-                        end: SourcePos(
-                            37,
-                        ),
+                    range: Span {
+                        start: 33,
+                        end: 37,
                     },
                     flags: 0,
                 },
@@ -552,7 +492,7 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {},
+    id_to_symbol_id: {},
     symbols: {
         0: Symbol {
             module_id: ModuleId(
@@ -564,16 +504,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export { Test, test1 } from \"./c.ts\";",
+                            <node @ 0..38>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            37,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 38,
                     },
                     flags: 0,
                 },
@@ -603,13 +539,9 @@ file:///mod.ts: EsModuleInfo {
                             specifier: "./c.ts",
                         },
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            9,
-                        ),
-                        end: SourcePos(
-                            13,
-                        ),
+                    range: Span {
+                        start: 9,
+                        end: 13,
                     },
                     flags: 0,
                 },
@@ -636,13 +568,9 @@ file:///mod.ts: EsModuleInfo {
                             specifier: "./c.ts",
                         },
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            15,
-                        ),
-                        end: SourcePos(
-                            20,
-                        ),
+                    range: Span {
+                        start: 15,
+                        end: 20,
                     },
                     flags: 0,
                 },

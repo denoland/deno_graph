@@ -131,7 +131,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export function test2(): number {
     return {} as never;
   }
-  /** Some Doc **/ export function test3(param: number): number {
+  /** Some Doc **/
+  export function test3(param: number): number {
     return {} as never;
   }
   export function test4(param?: number): number {
@@ -140,7 +141,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export function test5<T extends PublicOther>(param?: number): T {
     return {} as never;
   }
-  export function test6<T = PublicOther>(param?: number): T {
+  export function test6<T = PublicOther>(param: number = 2): T {
     return {} as never;
   }
   export function test7(param?: number): number;
@@ -162,32 +163,28 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export function test10(...params: string[]): string[] {
     return {} as never;
   }
-  export function test11(options = {
-    copy: true
-  }): void {}
-  export interface GlobOptions {
-  }
-  export function test12({}: GlobOptions = {} as never): void {}
-  export function test13([]: number[] = [] as never): void {}
+  // should support leaving this expr as-is
+  export function test11(options = { copy: true }): void {}
+  export interface GlobOptions {}
+  export function test12({}: GlobOptions = {}): void {}
+  export function test13([]: number[] = [1, 2]): void {}
   export function test14(): never {
     return {} as never;
   }
   export function test15(): Generator<number> {
     return {} as never;
   }
-  class PublicOther {
-  }
-  class PublicOther2 {
-  }
-  class PublicDeclareFunc {
-  }
+  class PublicOther {}
+  class PublicOther2 {}
+  class PublicDeclareFunc {}
   export declare function declareFunc(param: number): number;
   export declare function declareFunc(param: string): string;
   export declare function declareFunc(param: PublicDeclareFunc): string;
   --- DTS ---
   export declare function test1(): void;
   export declare function test2(): number;
-  /** Some Doc **/ export declare function test3(param: number): number;
+  /** Some Doc **/
+  export declare function test3(param: number): number;
   export declare function test4(param?: number): number;
   export declare function test5<T extends PublicOther>(param?: number): T;
   export declare function test6<T = PublicOther>(param?: number): T;
@@ -199,21 +196,18 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export default function test9(param: number): number;
   export default function test9(param: string): string;
   export declare function test10(...params: string[]): string[];
+  // should support leaving this expr as-is
   export declare function test11(options?: {
     copy: boolean;
   }): void;
-  export interface GlobOptions {
-  }
+  export interface GlobOptions {}
   export declare function test12({}?: GlobOptions): void;
   export declare function test13([]?: number[]): void;
   export declare function test14(): never;
   export declare function test15(): Generator<number>;
-  declare class PublicOther {
-  }
-  declare class PublicOther2 {
-  }
-  declare class PublicDeclareFunc {
-  }
+  declare class PublicOther {}
+  declare class PublicOther2 {}
+  declare class PublicDeclareFunc {}
   export declare function declareFunc(param: number): number;
   export declare function declareFunc(param: string): string;
   export declare function declareFunc(param: PublicDeclareFunc): string;

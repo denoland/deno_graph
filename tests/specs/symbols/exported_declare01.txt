@@ -19,30 +19,30 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "foo",
-            #2,
+            0,
         ): 1,
         (
             "Test",
-            #2,
+            0,
         ): 2,
         (
             "test",
-            #4,
+            0,
         ): 3,
         (
             "Other",
-            #2,
+            0,
         ): 5,
         (
             "MyClass",
-            #2,
+            0,
         ): 6,
         (
             "inner",
-            #2,
+            0,
         ): 9,
     },
     symbols: {
@@ -56,16 +56,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "declare function foo(): void;\ndeclare namespace Test {\n  function test(): void;\n  export { test };\n}\nclass Other {}\ndeclare class MyClass {\n  method(): void;\n  prop: Other;\n}\nimport inner = Test.test;\nexport { foo as bar, inner as baz, MyClass };",
+                            <node @ 0..247>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            246,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 247,
                     },
                     flags: 0,
                 },
@@ -95,16 +91,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "declare function foo(): void;",
+                            <node @ 0..29>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            29,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 29,
                     },
                     flags: 0,
                 },
@@ -125,16 +117,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "declare namespace Test {\n  function test(): void;\n  export { test };\n}",
+                            <node @ 30..100>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            30,
-                        ),
-                        end: SourcePos(
-                            100,
-                        ),
+                    range: Span {
+                        start: 30,
+                        end: 100,
                     },
                     flags: 0,
                 },
@@ -159,16 +147,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "function test(): void;",
+                            <node @ 57..79>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            57,
-                        ),
-                        end: SourcePos(
-                            79,
-                        ),
+                    range: Span {
+                        start: 57,
+                        end: 79,
                     },
                     flags: 0,
                 },
@@ -190,16 +174,12 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "test",
-                            #4,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            91,
-                        ),
-                        end: SourcePos(
-                            95,
-                        ),
+                    range: Span {
+                        start: 91,
+                        end: 95,
                     },
                     flags: 0,
                 },
@@ -220,16 +200,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class Other {}",
+                            <node @ 101..115>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            101,
-                        ),
-                        end: SourcePos(
-                            115,
-                        ),
+                    range: Span {
+                        start: 101,
+                        end: 115,
                     },
                     flags: 0,
                 },
@@ -250,16 +226,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "declare class MyClass {\n  method(): void;\n  prop: Other;\n}",
+                            <node @ 116..174>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            116,
-                        ),
-                        end: SourcePos(
-                            174,
-                        ),
+                    range: Span {
+                        start: 116,
+                        end: 174,
                     },
                     flags: 0,
                 },
@@ -283,16 +255,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "method(): void;",
+                            <node @ 142..157>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            142,
-                        ),
-                        end: SourcePos(
-                            157,
-                        ),
+                    range: Span {
+                        start: 142,
+                        end: 157,
                     },
                     flags: 0,
                 },
@@ -313,16 +281,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "prop: Other;",
+                            <node @ 160..172>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            160,
-                        ),
-                        end: SourcePos(
-                            172,
-                        ),
+                    range: Span {
+                        start: 160,
+                        end: 172,
                     },
                     flags: 0,
                 },
@@ -344,19 +308,15 @@ file:///mod.ts: EsModuleInfo {
                     kind: QualifiedTarget(
                         (
                             "Test",
-                            #2,
+                            0,
                         ),
                         [
                             "test",
                         ],
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            175,
-                        ),
-                        end: SourcePos(
-                            200,
-                        ),
+                    range: Span {
+                        start: 175,
+                        end: 200,
                     },
                     flags: 0,
                 },
@@ -378,16 +338,12 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "foo",
-                            #2,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            210,
-                        ),
-                        end: SourcePos(
-                            220,
-                        ),
+                    range: Span {
+                        start: 210,
+                        end: 220,
                     },
                     flags: 0,
                 },
@@ -409,16 +365,12 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "inner",
-                            #2,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            222,
-                        ),
-                        end: SourcePos(
-                            234,
-                        ),
+                    range: Span {
+                        start: 222,
+                        end: 234,
                     },
                     flags: 0,
                 },
@@ -440,16 +392,12 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "MyClass",
-                            #2,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            236,
-                        ),
-                        end: SourcePos(
-                            243,
-                        ),
+                    range: Span {
+                        start: 236,
+                        end: 243,
                     },
                     flags: 0,
                 },
@@ -461,10 +409,10 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-8:160..172 [Id(("Other", #2))]
+8:160..172 [Id(("Other", 0))]
 
 == symbol deps (types only) ==
-8:160..172 [Id(("Other", #2))]
+8:160..172 [Id(("Other", 0))]
 
 == export definitions ==
 [bar]: file:///mod.ts:0..29

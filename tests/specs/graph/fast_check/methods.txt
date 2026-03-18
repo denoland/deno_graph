@@ -117,7 +117,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     test5<T extends PublicOther>(param?: number): T {
       return {} as never;
     }
-    test6<T = PublicOther>(param?: number): T {
+    test6<T = PublicOther>(param: number = 2): T {
       return {} as never;
     }
     test7(param?: number): number;
@@ -132,15 +132,14 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     }
   }
   export class Test2 {
-    #private!: unknown;
+    declare #private!: any;
     public method1(): void {}
     protected method2(): void {}
     declare private tsPrivateMethod: any;
+    #privateMethod(): void {}
   }
-  class PublicOther {
-  }
-  class PublicOther2 {
-  }
+  class PublicOther {}
+  class PublicOther2 {}
   --- DTS ---
   export declare class Test {
     test1(): void;
@@ -159,7 +158,5 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     protected method2(): void;
     private tsPrivateMethod: any;
   }
-  declare class PublicOther {
-  }
-  declare class PublicOther2 {
-  }
+  declare class PublicOther {}
+  declare class PublicOther2 {}

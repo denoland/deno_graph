@@ -53,82 +53,82 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "Test",
-            #2,
+            0,
         ): 2,
         (
             "Test1",
-            #3,
+            0,
         ): 3,
         (
             "Test2",
-            #3,
+            0,
         ): 4,
         (
             "Test3",
-            #3,
+            0,
         ): 5,
         (
             "Test4",
-            #3,
+            0,
         ): 6,
         (
             "Test5",
-            #3,
+            0,
         ): 7,
         (
             "Test6",
-            #3,
+            0,
         ): 8,
         (
             "Test7",
-            #3,
+            0,
         ): 9,
         (
             "Test8",
-            #3,
+            0,
         ): 10,
         (
             "Nested",
-            #5,
+            0,
         ): 11,
         (
             "NonAmbient",
-            #2,
+            0,
         ): 12,
         (
             "NotExported1",
-            #6,
+            0,
         ): 13,
         (
             "Exported2",
-            #6,
+            0,
         ): 14,
         (
             "NonExported2",
-            #6,
+            0,
         ): 15,
         (
             "NonExported3",
-            #6,
+            0,
         ): 16,
         (
             "NonExported4",
-            #6,
+            0,
         ): 17,
         (
             "NonExported5",
-            #6,
+            0,
         ): 18,
         (
             "NonExported6",
-            #6,
+            0,
         ): 19,
         (
             "NonExported7",
-            #6,
+            0,
         ): 20,
     },
     symbols: {
@@ -142,16 +142,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export type { Interface } from \"./other.d.ts\";\n\nexport declare namespace Test {\n  // These are considered \"exports\" according to the ts compiler regardless\n  // of whether they have an \"export\" keyword or not.\n  interface Test1 {}\n  export interface Test2 {}\n  class Test3 {}\n  function Test4();\n  var Test5: string;\n  type Test6 = string;\n  enum Test7 {}\n  namespace Test8 {\n    interface Nested {}\n  }\n}\n\nexport namespace NonAmbient {\n  // since this is not ambient, it will only have the exports specified\n  interface NotExported1 {}\n  export interface Exported2 {}\n  class NonExported2 {}\n  function NonExported3();\n  var NonExported4: string;\n  type NonExported5 = string;\n  enum NonExported6 {}\n  namespace NonExported7 {}\n}",
+                            <node @ 0..731>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            730,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 731,
                     },
                     flags: 0,
                 },
@@ -185,13 +181,9 @@ file:///mod.ts: EsModuleInfo {
                             specifier: "./other.d.ts",
                         },
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            14,
-                        ),
-                        end: SourcePos(
-                            23,
-                        ),
+                    range: Span {
+                        start: 14,
+                        end: 23,
                     },
                     flags: 0,
                 },
@@ -212,16 +204,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export declare namespace Test {\n  // These are considered \"exports\" according to the ts compiler regardless\n  // of whether they have an \"export\" keyword or not.\n  interface Test1 {}\n  export interface Test2 {}\n  class Test3 {}\n  function Test4();\n  var Test5: string;\n  type Test6 = string;\n  enum Test7 {}\n  namespace Test8 {\n    interface Nested {}\n  }\n}",
+                            <node @ 48..405>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            48,
-                        ),
-                        end: SourcePos(
-                            405,
-                        ),
+                    range: Span {
+                        start: 48,
+                        end: 405,
                     },
                     flags: 0,
                 },
@@ -260,16 +248,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface Test1 {}",
+                            <node @ 212..230>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            212,
-                        ),
-                        end: SourcePos(
-                            230,
-                        ),
+                    range: Span {
+                        start: 212,
+                        end: 230,
                     },
                     flags: 0,
                 },
@@ -290,16 +274,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export interface Test2 {}",
+                            <node @ 233..258>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            233,
-                        ),
-                        end: SourcePos(
-                            258,
-                        ),
+                    range: Span {
+                        start: 233,
+                        end: 258,
                     },
                     flags: 0,
                 },
@@ -320,16 +300,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class Test3 {}",
+                            <node @ 261..275>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            261,
-                        ),
-                        end: SourcePos(
-                            275,
-                        ),
+                    range: Span {
+                        start: 261,
+                        end: 275,
                     },
                     flags: 0,
                 },
@@ -350,16 +326,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "function Test4();",
+                            <node @ 278..295>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            278,
-                        ),
-                        end: SourcePos(
-                            295,
-                        ),
+                    range: Span {
+                        start: 278,
+                        end: 295,
                     },
                     flags: 0,
                 },
@@ -380,16 +352,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "Test5: var Test5: string;",
+                            <node @ 302..307>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            302,
-                        ),
-                        end: SourcePos(
-                            315,
-                        ),
+                    range: Span {
+                        start: 302,
+                        end: 315,
                     },
                     flags: 0,
                 },
@@ -410,16 +378,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "type Test6 = string;",
+                            <node @ 319..339>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            319,
-                        ),
-                        end: SourcePos(
-                            339,
-                        ),
+                    range: Span {
+                        start: 319,
+                        end: 339,
                     },
                     flags: 0,
                 },
@@ -440,16 +404,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "enum Test7 {}",
+                            <node @ 342..355>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            342,
-                        ),
-                        end: SourcePos(
-                            355,
-                        ),
+                    range: Span {
+                        start: 342,
+                        end: 355,
                     },
                     flags: 0,
                 },
@@ -470,16 +430,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "namespace Test8 {\n    interface Nested {}\n  }",
+                            <node @ 358..403>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            358,
-                        ),
-                        end: SourcePos(
-                            403,
-                        ),
+                    range: Span {
+                        start: 358,
+                        end: 403,
                     },
                     flags: 0,
                 },
@@ -504,16 +460,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface Nested {}",
+                            <node @ 380..399>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            380,
-                        ),
-                        end: SourcePos(
-                            399,
-                        ),
+                    range: Span {
+                        start: 380,
+                        end: 399,
                     },
                     flags: 0,
                 },
@@ -534,16 +486,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export namespace NonAmbient {\n  // since this is not ambient, it will only have the exports specified\n  interface NotExported1 {}\n  export interface Exported2 {}\n  class NonExported2 {}\n  function NonExported3();\n  var NonExported4: string;\n  type NonExported5 = string;\n  enum NonExported6 {}\n  namespace NonExported7 {}\n}",
+                            <node @ 407..730>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            407,
-                        ),
-                        end: SourcePos(
-                            730,
-                        ),
+                    range: Span {
+                        start: 407,
+                        end: 730,
                     },
                     flags: 0,
                 },
@@ -575,16 +523,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface NotExported1 {}",
+                            <node @ 511..536>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            511,
-                        ),
-                        end: SourcePos(
-                            536,
-                        ),
+                    range: Span {
+                        start: 511,
+                        end: 536,
                     },
                     flags: 0,
                 },
@@ -605,16 +549,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export interface Exported2 {}",
+                            <node @ 539..568>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            539,
-                        ),
-                        end: SourcePos(
-                            568,
-                        ),
+                    range: Span {
+                        start: 539,
+                        end: 568,
                     },
                     flags: 0,
                 },
@@ -635,16 +575,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class NonExported2 {}",
+                            <node @ 571..592>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            571,
-                        ),
-                        end: SourcePos(
-                            592,
-                        ),
+                    range: Span {
+                        start: 571,
+                        end: 592,
                     },
                     flags: 0,
                 },
@@ -665,16 +601,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "function NonExported3();",
+                            <node @ 595..619>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            595,
-                        ),
-                        end: SourcePos(
-                            619,
-                        ),
+                    range: Span {
+                        start: 595,
+                        end: 619,
                     },
                     flags: 0,
                 },
@@ -695,16 +627,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "NonExported4: var NonExported4: string;",
+                            <node @ 626..638>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            626,
-                        ),
-                        end: SourcePos(
-                            646,
-                        ),
+                    range: Span {
+                        start: 626,
+                        end: 646,
                     },
                     flags: 0,
                 },
@@ -725,16 +653,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "type NonExported5 = string;",
+                            <node @ 650..677>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            650,
-                        ),
-                        end: SourcePos(
-                            677,
-                        ),
+                    range: Span {
+                        start: 650,
+                        end: 677,
                     },
                     flags: 0,
                 },
@@ -755,16 +679,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "enum NonExported6 {}",
+                            <node @ 680..700>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            680,
-                        ),
-                        end: SourcePos(
-                            700,
-                        ),
+                    range: Span {
+                        start: 680,
+                        end: 700,
                     },
                     flags: 0,
                 },
@@ -785,16 +705,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "namespace NonExported7 {}",
+                            <node @ 703..728>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            703,
-                        ),
-                        end: SourcePos(
-                            728,
-                        ),
+                    range: Span {
+                        start: 703,
+                        end: 728,
                     },
                     flags: 0,
                 },
@@ -811,46 +727,46 @@ file:///other.d.ts: EsModuleInfo {
     ),
     specifier: "file:///other.d.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "Interface",
-            #2,
+            0,
         ): 1,
         (
             "Inner",
-            #2,
+            0,
         ): 3,
         (
             "Other1",
-            #3,
+            0,
         ): 4,
         (
             "Other2",
-            #3,
+            0,
         ): 5,
         (
             "Other3",
-            #3,
+            0,
         ): 6,
         (
             "Other4",
-            #3,
+            0,
         ): 7,
         (
             "Other5",
-            #3,
+            0,
         ): 8,
         (
             "Other6",
-            #3,
+            0,
         ): 9,
         (
             "Other7",
-            #3,
+            0,
         ): 10,
         (
             "Other8",
-            #3,
+            0,
         ): 11,
     },
     symbols: {
@@ -864,16 +780,12 @@ file:///other.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export interface Interface {\n    prop: Inner.Other1;\n}\n\n// this is not an export of the module because it's not exported\nnamespace Inner {\n  // These are considered an export of Inner because it's ambient (due to being in a declaration file)\n  interface Other1 {}\n  export interface Other2 {}\n  class Other3 {}\n  function Other4();\n  var Other5: string;\n  type Other6 = string;\n  enum Other7 {}\n  namespace Other8 {}\n}",
+                            <node @ 0..419>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            418,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 419,
                     },
                     flags: 0,
                 },
@@ -899,16 +811,12 @@ file:///other.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export interface Interface {\n    prop: Inner.Other1;\n}",
+                            <node @ 0..54>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            54,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 54,
                     },
                     flags: 0,
                 },
@@ -931,16 +839,12 @@ file:///other.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "prop: Inner.Other1;",
+                            <node @ 33..52>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            33,
-                        ),
-                        end: SourcePos(
-                            52,
-                        ),
+                    range: Span {
+                        start: 33,
+                        end: 52,
                     },
                     flags: 0,
                 },
@@ -961,16 +865,12 @@ file:///other.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "namespace Inner {\n  // These are considered an export of Inner because it's ambient (due to being in a declaration file)\n  interface Other1 {}\n  export interface Other2 {}\n  class Other3 {}\n  function Other4();\n  var Other5: string;\n  type Other6 = string;\n  enum Other7 {}\n  namespace Other8 {}\n}",
+                            <node @ 121..418>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            121,
-                        ),
-                        end: SourcePos(
-                            418,
-                        ),
+                    range: Span {
+                        start: 121,
+                        end: 418,
                     },
                     flags: 0,
                 },
@@ -1009,16 +909,12 @@ file:///other.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface Other1 {}",
+                            <node @ 244..263>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            244,
-                        ),
-                        end: SourcePos(
-                            263,
-                        ),
+                    range: Span {
+                        start: 244,
+                        end: 263,
                     },
                     flags: 0,
                 },
@@ -1039,16 +935,12 @@ file:///other.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export interface Other2 {}",
+                            <node @ 266..292>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            266,
-                        ),
-                        end: SourcePos(
-                            292,
-                        ),
+                    range: Span {
+                        start: 266,
+                        end: 292,
                     },
                     flags: 0,
                 },
@@ -1069,16 +961,12 @@ file:///other.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class Other3 {}",
+                            <node @ 295..310>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            295,
-                        ),
-                        end: SourcePos(
-                            310,
-                        ),
+                    range: Span {
+                        start: 295,
+                        end: 310,
                     },
                     flags: 0,
                 },
@@ -1099,16 +987,12 @@ file:///other.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "function Other4();",
+                            <node @ 313..331>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            313,
-                        ),
-                        end: SourcePos(
-                            331,
-                        ),
+                    range: Span {
+                        start: 313,
+                        end: 331,
                     },
                     flags: 0,
                 },
@@ -1129,16 +1013,12 @@ file:///other.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "Other5: var Other5: string;",
+                            <node @ 338..344>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            338,
-                        ),
-                        end: SourcePos(
-                            352,
-                        ),
+                    range: Span {
+                        start: 338,
+                        end: 352,
                     },
                     flags: 0,
                 },
@@ -1159,16 +1039,12 @@ file:///other.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "type Other6 = string;",
+                            <node @ 356..377>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            356,
-                        ),
-                        end: SourcePos(
-                            377,
-                        ),
+                    range: Span {
+                        start: 356,
+                        end: 377,
                     },
                     flags: 0,
                 },
@@ -1189,16 +1065,12 @@ file:///other.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "enum Other7 {}",
+                            <node @ 380..394>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            380,
-                        ),
-                        end: SourcePos(
-                            394,
-                        ),
+                    range: Span {
+                        start: 380,
+                        end: 394,
                     },
                     flags: 0,
                 },
@@ -1219,16 +1091,12 @@ file:///other.d.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "namespace Other8 {}",
+                            <node @ 397..416>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            397,
-                        ),
-                        end: SourcePos(
-                            416,
-                        ),
+                    range: Span {
+                        start: 397,
+                        end: 416,
                     },
                     flags: 0,
                 },
@@ -1240,10 +1108,10 @@ file:///other.d.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-2:33..52 [QualifiedId(("Inner", #2), ["Other1"])]
+2:33..52 [QualifiedId(("Inner", 0), ["Other1"])]
 
 == symbol deps (types only) ==
-2:33..52 [QualifiedId(("Inner", #2), ["Other1"])]
+2:33..52 [QualifiedId(("Inner", 0), ["Other1"])]
 
 == export definitions ==
 [Interface]: file:///other.d.ts:0..54

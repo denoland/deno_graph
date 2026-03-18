@@ -17,14 +17,14 @@ file:///a.ts: EsModuleInfo {
     ),
     specifier: "file:///a.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "Test",
-            #2,
+            0,
         ): 1,
         (
             "test",
-            #2,
+            0,
         ): 3,
     },
     symbols: {
@@ -38,16 +38,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export interface Test {\n  prop: string;\n}\n\n// should be public because import types will include the default exports\nexport default function test() {\n}",
+                            <node @ 0..152>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            151,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 152,
                     },
                     flags: 0,
                 },
@@ -74,16 +70,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export interface Test {\n  prop: string;\n}",
+                            <node @ 0..41>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            41,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 41,
                     },
                     flags: 0,
                 },
@@ -106,16 +98,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "prop: string;",
+                            <node @ 26..39>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            26,
-                        ),
-                        end: SourcePos(
-                            39,
-                        ),
+                    range: Span {
+                        start: 26,
+                        end: 39,
                     },
                     flags: 0,
                 },
@@ -136,16 +124,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export default function test() {\n}",
+                            <node @ 117..151>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            117,
-                        ),
-                        end: SourcePos(
-                            151,
-                        ),
+                    range: Span {
+                        start: 117,
+                        end: 151,
                     },
                     flags: 0,
                 },
@@ -162,10 +146,10 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "Test",
-            #2,
+            0,
         ): 1,
     },
     symbols: {
@@ -179,16 +163,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export type Test = typeof import(\"./a.ts\");",
+                            <node @ 0..44>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            43,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 44,
                     },
                     flags: 0,
                 },
@@ -213,16 +193,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export type Test = typeof import(\"./a.ts\");",
+                            <node @ 0..43>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            43,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 43,
                     },
                     flags: 0,
                 },

@@ -84,26 +84,22 @@ import 'jsr:@scope/a'
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export class Object {
-    constructor(values: {
-    }, {}: {
+    constructor(values: {}, {}: {
       a?: A;
       b?: B;
-    } = {} as never){}
-    method(values: {
-    }, {}: {
+    } = {}) {}
+    method(values: {}, {}: {
       a?: A;
       b?: B;
-    } = {} as never, value?: number): void {}
+    } = {}, value?: number): void {}
   }
   --- DTS ---
   export declare class Object {
-    constructor(values: {
-    }, {}?: {
+    constructor(values: {}, {}?: {
       a?: A;
       b?: B;
     });
-    method(values: {
-    }, {}?: {
+    method(values: {}, {}?: {
       a?: A;
       b?: B;
     }, value?: number): void;

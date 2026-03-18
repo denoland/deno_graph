@@ -16,23 +16,19 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "RootNs",
-            #2,
+            0,
         ): 1,
         (
             "NestedNs",
-            #3,
+            0,
         ): 2,
         (
             "Foo",
-            #4,
+            0,
         ): 3,
-        (
-            "Foo",
-            #3,
-        ): 4,
     },
     symbols: {
         0: Symbol {
@@ -45,16 +41,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export namespace RootNs {\n  export namespace NestedNs {\n    export enum Foo {\n    }\n  }\n\n  export enum Foo {\n  }\n}",
+                            <node @ 0..115>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            114,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 115,
                     },
                     flags: 0,
                 },
@@ -79,16 +71,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export namespace RootNs {\n  export namespace NestedNs {\n    export enum Foo {\n    }\n  }\n\n  export enum Foo {\n  }\n}",
+                            <node @ 0..114>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            114,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 114,
                     },
                     flags: 0,
                 },
@@ -115,16 +103,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export namespace NestedNs {\n    export enum Foo {\n    }\n  }",
+                            <node @ 28..87>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            28,
-                        ),
-                        end: SourcePos(
-                            87,
-                        ),
+                    range: Span {
+                        start: 28,
+                        end: 87,
                     },
                     flags: 0,
                 },
@@ -149,16 +133,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export enum Foo {\n    }",
+                            <node @ 60..83>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            60,
-                        ),
-                        end: SourcePos(
-                            83,
-                        ),
+                    range: Span {
+                        start: 60,
+                        end: 83,
                     },
                     flags: 0,
                 },
@@ -179,16 +159,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export enum Foo {\n  }",
+                            <node @ 91..112>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            91,
-                        ),
-                        end: SourcePos(
-                            112,
-                        ),
+                    range: Span {
+                        start: 91,
+                        end: 112,
                     },
                     flags: 0,
                 },

@@ -27,7 +27,7 @@ all-features = true
 [features]
 default = ["fast_check", "ecosystem_test"]
 fast_check = ["symbols", "deno_ast/transpiling", "twox-hash"]
-symbols = ["swc", "deno_ast/transforms", "deno_ast/utils"]
+symbols = ["swc", "deno_ast/transforms"]
 swc = ["deno_ast", "deno_ast/visit"]
 ecosystem_test = []
 
@@ -47,10 +47,16 @@ boxed_error = "0.2.3"
 capacity_builder = "0.5.0"
 chrono = { version = "0.4.42", default-features = false, features = ["serde"] }
 data-url = "0.3.0"
-# this is optional in order to support using parsers other than swc
-deno_ast = { version = "0.53.0", features = ["emit"], optional = true }
+# this is optional in order to support using parsers other than oxc
+deno_ast = { features = [
+  "emit",
+], optional = true, git = "https://github.com/nathanwhit/deno_ast", branch = "oxc-port" }
 deno_error.workspace = true
-deno_media_type = { version = "0.4.0", features = ["decoding", "data_url", "module_specifier"] }
+deno_media_type = { version = "0.4.0", features = [
+  "decoding",
+  "data_url",
+  "module_specifier",
+] }
 deno_path_util = "0.6.4"
 deno_semver = "0.9.0"
 deno_unsync.workspace = true
@@ -79,7 +85,11 @@ deno_terminal = "0.2.0"
 env_logger = "0.11.3"
 file_test_runner = "0.7.0"
 pretty_assertions = "1.0.0"
-reqwest = { version = "0.12.4", default-features = false, features = ["http2", "charset", "rustls-tls-webpki-roots"] }
+reqwest = { version = "0.12.4", default-features = false, features = [
+  "http2",
+  "charset",
+  "rustls-tls-webpki-roots",
+] }
 sys_traits = { workspace = true, features = ["memory"] }
 tempfile = "3.4.0"
 tokio = { version = "1.10.1", features = ["macros", "rt-multi-thread", "sync"] }

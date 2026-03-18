@@ -126,26 +126,19 @@ impl Position {
   }
 
   #[cfg(feature = "swc")]
-  pub fn from_source_pos(
-    pos: deno_ast::SourcePos,
+  pub fn from_byte_pos(
+    byte_pos: usize,
     text_info: &deno_ast::SourceTextInfo,
   ) -> Self {
-    let line_and_column_index = text_info.line_and_column_index(pos);
+    let line_index = text_info.line_index(byte_pos);
+    let line_start = text_info.line_start(line_index);
+    let column_index = text_info.text_str()[line_start..byte_pos]
+      .encode_utf16()
+      .count();
     Self {
-      line: line_and_column_index.line_index,
-      character: line_and_column_index.column_index,
+      line: line_index,
+      character: column_index,
     }
-  }
-
-  #[cfg(feature = "swc")]
-  pub fn as_source_pos(
-    &self,
-    text_info: &deno_ast::SourceTextInfo,
-  ) -> deno_ast::SourcePos {
-    text_info.loc_to_source_pos(deno_ast::LineAndColumnIndex {
-      line_index: self.line,
-      column_index: self.character,
-    })
   }
 }
 
@@ -171,25 +164,14 @@ impl PositionRange {
   }
 
   #[cfg(feature = "swc")]
-  pub fn from_source_range(
-    range: deno_ast::SourceRange,
+  pub fn from_span(
+    span: deno_ast::oxc::span::Span,
     text_info: &deno_ast::SourceTextInfo,
   ) -> Self {
     Self {
-      start: Position::from_source_pos(range.start, text_info),
-      end: Position::from_source_pos(range.end, text_info),
+      start: Position::from_byte_pos(span.start as usize, text_info),
+      end: Position::from_byte_pos(span.end as usize, text_info),
     }
-  }
-
-  #[cfg(feature = "swc")]
-  pub fn as_source_range(
-    &self,
-    text_info: &deno_ast::SourceTextInfo,
-  ) -> deno_ast::SourceRange {
-    deno_ast::SourceRange::new(
-      self.start.as_source_pos(text_info),
-      self.end.as_source_pos(text_info),
-    )
   }
 }
 
@@ -876,8 +858,9 @@ pub struct ResolutionResolved {
   pub range: Range,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum Resolution {
+  #[default]
   None,
   Ok(Box<ResolutionResolved>),
   Err(Box<ResolutionError>),
@@ -959,12 +942,6 @@ impl Resolution {
     } else {
       None
     }
-  }
-}
-
-impl Default for Resolution {
-  fn default() -> Self {
-    Self::None
   }
 }
 
@@ -2301,9 +2278,11 @@ impl ModuleGraph {
     }
 
     let default_es_parser = crate::ast::CapturingModuleAnalyzer::default();
+    let allocator = deno_ast::oxc::allocator::Allocator::default();
     let root_symbol = crate::symbols::RootSymbol::new(
       self,
       options.es_parser.unwrap_or(&default_es_parser),
+      &allocator,
     );
 
     let modules = crate::fast_check::build_fast_check_type_graph(
@@ -4302,9 +4281,10 @@ fn analyze_dynamic_arg_template_parts(
 }
 
 /// The kind of module graph.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum GraphKind {
   /// All types of dependencies should be analyzed and included in the graph.
+  #[default]
   All,
   /// Only code dependencies should be analyzed and included in the graph. This
   /// is useful when transpiling and running code, but not caring about type
@@ -4319,12 +4299,6 @@ pub enum GraphKind {
   /// still be loaded into the graph, but further code only dependencies will
   /// not be followed.
   TypesOnly,
-}
-
-impl Default for GraphKind {
-  fn default() -> Self {
-    Self::All
-  }
 }
 
 impl GraphKind {
@@ -6916,9 +6890,6 @@ where
 mod tests {
   use crate::analysis::ImportAttribute;
   use crate::packages::JsrPackageInfoVersion;
-  use deno_ast::EmitOptions;
-  use deno_ast::SourceMap;
-  use deno_ast::emit;
   use pretty_assertions::assert_eq;
   use serde_json::json;
 
@@ -8313,8 +8284,6 @@ mod tests {
   #[cfg(feature = "fast_check")]
   #[tokio::test]
   async fn fast_check_dts() {
-    use deno_ast::EmittedSourceText;
-
     let mut exports = IndexMap::new();
     exports.insert(".".to_string(), "./foo.ts".to_string());
 
@@ -8361,23 +8330,8 @@ mod tests {
       unreachable!();
     };
     let dts = fsm.dts.unwrap();
-    let source_map = SourceMap::single(
-      module.specifier.clone(),
-      module.source.text.to_string(),
-    );
-    let EmittedSourceText { text, .. } = emit(
-      (&dts.program).into(),
-      &dts.comments.as_single_threaded(),
-      &source_map,
-      &EmitOptions {
-        remove_comments: false,
-        source_map: deno_ast::SourceMapOption::None,
-        ..Default::default()
-      },
-    )
-    .unwrap();
     assert_eq!(
-      text.trim(),
+      dts.program_text.trim(),
       "export declare function add(a: number, b: number): number;"
     );
     assert!(dts.diagnostics.is_empty());
@@ -8386,8 +8340,6 @@ mod tests {
   #[cfg(feature = "fast_check")]
   #[tokio::test]
   async fn fast_check_external() {
-    use deno_ast::EmittedSourceText;
-
     let mut exports = IndexMap::new();
     exports.insert(".".to_string(), "./foo.ts".to_string());
 
@@ -8449,22 +8401,10 @@ mod tests {
         unreachable!();
       };
       let dts = fsm.dts.unwrap();
-      let source_map = SourceMap::single(
-        module.specifier().clone(),
-        module.source().unwrap().to_string(),
+      assert_eq!(
+        dts.program_text.trim(),
+        "export * from \"jsr:@package/foo\";"
       );
-      let EmittedSourceText { text, .. } = emit(
-        (&dts.program).into(),
-        &dts.comments.as_single_threaded(),
-        &source_map,
-        &EmitOptions {
-          remove_comments: false,
-          source_map: deno_ast::SourceMapOption::None,
-          ..Default::default()
-        },
-      )
-      .unwrap();
-      assert_eq!(text.trim(), "export * from 'jsr:@package/foo';");
       assert!(dts.diagnostics.is_empty());
     }
 

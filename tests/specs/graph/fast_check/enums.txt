@@ -114,10 +114,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     Value1 = new Public1().test,
     Value2 = new Public2().asdf * value + NonExportedEnum.Value
   }
-  class Public1 {
-  }
-  class Public2 {
-  }
+  class Public1 {}
+  class Public2 {}
   enum NonExportedEnum {
     Value
   }
@@ -150,10 +148,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     Value1,
     Value2
   }
-  declare class Public1 {
-  }
-  declare class Public2 {
-  }
+  declare class Public1 {}
+  declare class Public2 {}
   declare enum NonExportedEnum {
     Value
   }

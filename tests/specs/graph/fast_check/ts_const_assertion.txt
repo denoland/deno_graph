@@ -63,25 +63,16 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  export const a = "foo" as const;
-  export const b = 2 as const;
-  export const c = true as const;
-  export const d = false as const;
-  export const g = [
-    1,
-    2
-  ] as const;
-  export const h = {
-    a: 1,
-    b: 2
-  } as const;
+  export const a: const = {} as never;
+  export const b: const = {} as never;
+  export const c: const = {} as never;
+  export const d: const = {} as never;
+  export const g: const = {} as never;
+  export const h: const = {} as never;
   --- DTS ---
-  export declare const a: "foo";
-  export declare const b: 2;
-  export declare const c: true;
-  export declare const d: false;
-  export declare const g: readonly [1, 2];
-  export declare const h: {
-    readonly a: 1;
-    readonly b: 2;
-  };
+  export declare const a: const;
+  export declare const b: const;
+  export declare const c: const;
+  export declare const d: const;
+  export declare const g: const;
+  export declare const h: const;

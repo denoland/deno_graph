@@ -28,54 +28,54 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "test",
-            #2,
+            0,
         ): 1,
         (
             "TypeParam",
-            #2,
+            0,
         ): 2,
         (
             "Param",
-            #2,
+            0,
         ): 3,
         (
             "Return",
-            #2,
+            0,
         ): 4,
         (
             "Default",
-            #2,
+            0,
         ): 5,
         (
             "overloaded",
-            #2,
+            0,
         ): 6,
         (
             "OverloadTypeParam",
-            #2,
+            0,
         ): 7,
         (
             "OverloadParam",
-            #2,
+            0,
         ): 8,
         (
             "OverloadReturn",
-            #2,
+            0,
         ): 9,
         (
             "PrivateTypeParam",
-            #2,
+            0,
         ): 10,
         (
             "PrivateParam",
-            #2,
+            0,
         ): 11,
         (
             "PrivateReturn",
-            #2,
+            0,
         ): 12,
     },
     symbols: {
@@ -89,16 +89,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export function test<T extends TypeParam = Default>(param: Param): Return {\n}\n\nclass TypeParam {}\nclass Param {}\nclass Return {}\nclass Default {}\n\n// the top two overloads should appear in the results\nexport function overloaded<T extends OverloadTypeParam>(param: OverloadParam): OverloadReturn;\nexport function overloaded(): string;\nexport function overloaded<T extends PrivateTypeParam>(param: PrivateParam): PrivateReturn {\n}\n\nclass OverloadTypeParam {}\nclass OverloadParam {}\nclass OverloadReturn {}\n\nclass PrivateTypeParam {}\nclass PrivateParam {}\nclass PrivateReturn {}",
+                            <node @ 0..576>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            575,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 576,
                     },
                     flags: 0,
                 },
@@ -135,16 +131,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export function test<T extends TypeParam = Default>(param: Param): Return {\n}",
+                            <node @ 0..77>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            77,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 77,
                     },
                     flags: 0,
                 },
@@ -165,16 +157,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class TypeParam {}",
+                            <node @ 79..97>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            79,
-                        ),
-                        end: SourcePos(
-                            97,
-                        ),
+                    range: Span {
+                        start: 79,
+                        end: 97,
                     },
                     flags: 0,
                 },
@@ -195,16 +183,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class Param {}",
+                            <node @ 98..112>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            98,
-                        ),
-                        end: SourcePos(
-                            112,
-                        ),
+                    range: Span {
+                        start: 98,
+                        end: 112,
                     },
                     flags: 0,
                 },
@@ -225,16 +209,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class Return {}",
+                            <node @ 113..128>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            113,
-                        ),
-                        end: SourcePos(
-                            128,
-                        ),
+                    range: Span {
+                        start: 113,
+                        end: 128,
                     },
                     flags: 0,
                 },
@@ -255,16 +235,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class Default {}",
+                            <node @ 129..145>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            129,
-                        ),
-                        end: SourcePos(
-                            145,
-                        ),
+                    range: Span {
+                        start: 129,
+                        end: 145,
                     },
                     flags: 0,
                 },
@@ -285,48 +261,36 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export function overloaded<T extends OverloadTypeParam>(param: OverloadParam): OverloadReturn;",
+                            <node @ 201..295>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            201,
-                        ),
-                        end: SourcePos(
-                            295,
-                        ),
+                    range: Span {
+                        start: 201,
+                        end: 295,
                     },
                     flags: 0,
                 },
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export function overloaded(): string;",
+                            <node @ 296..333>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            296,
-                        ),
-                        end: SourcePos(
-                            333,
-                        ),
+                    range: Span {
+                        start: 296,
+                        end: 333,
                     },
                     flags: 0,
                 },
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export function overloaded<T extends PrivateTypeParam>(param: PrivateParam): PrivateReturn {\n}",
+                            <node @ 334..428>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            334,
-                        ),
-                        end: SourcePos(
-                            428,
-                        ),
+                    range: Span {
+                        start: 334,
+                        end: 428,
                     },
                     flags: 1,
                 },
@@ -347,16 +311,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class OverloadTypeParam {}",
+                            <node @ 430..456>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            430,
-                        ),
-                        end: SourcePos(
-                            456,
-                        ),
+                    range: Span {
+                        start: 430,
+                        end: 456,
                     },
                     flags: 0,
                 },
@@ -377,16 +337,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class OverloadParam {}",
+                            <node @ 457..479>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            457,
-                        ),
-                        end: SourcePos(
-                            479,
-                        ),
+                    range: Span {
+                        start: 457,
+                        end: 479,
                     },
                     flags: 0,
                 },
@@ -407,16 +363,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class OverloadReturn {}",
+                            <node @ 480..503>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            480,
-                        ),
-                        end: SourcePos(
-                            503,
-                        ),
+                    range: Span {
+                        start: 480,
+                        end: 503,
                     },
                     flags: 0,
                 },
@@ -437,16 +389,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class PrivateTypeParam {}",
+                            <node @ 505..530>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            505,
-                        ),
-                        end: SourcePos(
-                            530,
-                        ),
+                    range: Span {
+                        start: 505,
+                        end: 530,
                     },
                     flags: 0,
                 },
@@ -467,16 +415,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class PrivateParam {}",
+                            <node @ 531..552>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            531,
-                        ),
-                        end: SourcePos(
-                            552,
-                        ),
+                    range: Span {
+                        start: 531,
+                        end: 552,
                     },
                     flags: 0,
                 },
@@ -497,16 +441,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class PrivateReturn {}",
+                            <node @ 553..575>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            553,
-                        ),
-                        end: SourcePos(
-                            575,
-                        ),
+                    range: Span {
+                        start: 553,
+                        end: 575,
                     },
                     flags: 0,
                 },
@@ -518,14 +458,14 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-1:0..77 [Id(("TypeParam", #2)), Id(("Default", #2)), Id(("Param", #2)), Id(("Return", #2))]
-6:201..295 [Id(("OverloadTypeParam", #2)), Id(("OverloadParam", #2)), Id(("OverloadReturn", #2))]
-6:334..428 [Id(("PrivateTypeParam", #2)), Id(("PrivateParam", #2)), Id(("PrivateReturn", #2))]
+1:0..77 [Id(("TypeParam", 0)), Id(("Default", 0)), Id(("Param", 0)), Id(("Return", 0))]
+6:201..295 [Id(("OverloadTypeParam", 0)), Id(("OverloadParam", 0)), Id(("OverloadReturn", 0))]
+6:334..428 [Id(("PrivateTypeParam", 0)), Id(("PrivateParam", 0)), Id(("PrivateReturn", 0))]
 
 == symbol deps (types only) ==
-1:0..77 [Id(("TypeParam", #2)), Id(("Default", #2)), Id(("Param", #2)), Id(("Return", #2))]
-6:201..295 [Id(("OverloadTypeParam", #2)), Id(("OverloadParam", #2)), Id(("OverloadReturn", #2))]
-6:334..428 [Id(("PrivateTypeParam", #2)), Id(("PrivateParam", #2)), Id(("PrivateReturn", #2))]
+1:0..77 [Id(("TypeParam", 0)), Id(("Default", 0)), Id(("Param", 0)), Id(("Return", 0))]
+6:201..295 [Id(("OverloadTypeParam", 0)), Id(("OverloadParam", 0)), Id(("OverloadReturn", 0))]
+6:334..428 [Id(("PrivateTypeParam", 0)), Id(("PrivateParam", 0)), Id(("PrivateReturn", 0))]
 
 == export definitions ==
 [test]: file:///mod.ts:0..77

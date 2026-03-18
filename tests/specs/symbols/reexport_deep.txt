@@ -24,7 +24,7 @@ file:///a.ts: EsModuleInfo {
     re_exports: [
         "./b.ts",
     ],
-    swc_id_to_symbol_id: {},
+    id_to_symbol_id: {},
     symbols: {
         0: Symbol {
             module_id: ModuleId(
@@ -36,16 +36,12 @@ file:///a.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export * from \"./b.ts\";",
+                            <node @ 0..24>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            23,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 24,
                     },
                     flags: 0,
                 },
@@ -64,7 +60,7 @@ file:///b.ts: EsModuleInfo {
     re_exports: [
         "./c.ts",
     ],
-    swc_id_to_symbol_id: {},
+    id_to_symbol_id: {},
     symbols: {
         0: Symbol {
             module_id: ModuleId(
@@ -76,16 +72,12 @@ file:///b.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export * from \"./c.ts\";",
+                            <node @ 0..24>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            23,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 24,
                     },
                     flags: 0,
                 },
@@ -102,14 +94,14 @@ file:///c.ts: EsModuleInfo {
     ),
     specifier: "file:///c.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "MessageEntity",
-            #2,
+            0,
         ): 1,
         (
             "TextLinkMessageEntity",
-            #3,
+            0,
         ): 2,
     },
     symbols: {
@@ -123,16 +115,12 @@ file:///c.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export declare namespace MessageEntity {\n  export interface TextLinkMessageEntity {\n    type: \"text_link\";\n  }\n}",
+                            <node @ 0..113>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            112,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 113,
                     },
                     flags: 0,
                 },
@@ -157,16 +145,12 @@ file:///c.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export declare namespace MessageEntity {\n  export interface TextLinkMessageEntity {\n    type: \"text_link\";\n  }\n}",
+                            <node @ 0..112>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            112,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 112,
                     },
                     flags: 0,
                 },
@@ -191,16 +175,12 @@ file:///c.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export interface TextLinkMessageEntity {\n    type: \"text_link\";\n  }",
+                            <node @ 43..110>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            43,
-                        ),
-                        end: SourcePos(
-                            110,
-                        ),
+                    range: Span {
+                        start: 43,
+                        end: 110,
                     },
                     flags: 0,
                 },
@@ -223,16 +203,12 @@ file:///c.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "type: \"text_link\";",
+                            <node @ 88..106>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            88,
-                        ),
-                        end: SourcePos(
-                            106,
-                        ),
+                    range: Span {
+                        start: 88,
+                        end: 106,
                     },
                     flags: 0,
                 },
@@ -249,14 +225,14 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "MessageEntity",
-            #2,
+            0,
         ): 1,
         (
             "UrlMessageEntity",
-            #2,
+            0,
         ): 2,
     },
     symbols: {
@@ -270,16 +246,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "import type { MessageEntity } from \"./a.ts\";\nexport type UrlMessageEntity = MessageEntity.TextLinkMessageEntity;",
+                            <node @ 0..113>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            112,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 113,
                     },
                     flags: 0,
                 },
@@ -310,13 +282,9 @@ file:///mod.ts: EsModuleInfo {
                             specifier: "./a.ts",
                         },
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            14,
-                        ),
-                        end: SourcePos(
-                            27,
-                        ),
+                    range: Span {
+                        start: 14,
+                        end: 27,
                     },
                     flags: 0,
                 },
@@ -337,16 +305,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export type UrlMessageEntity = MessageEntity.TextLinkMessageEntity;",
+                            <node @ 45..112>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            45,
-                        ),
-                        end: SourcePos(
-                            112,
-                        ),
+                    range: Span {
+                        start: 45,
+                        end: 112,
                     },
                     flags: 0,
                 },
@@ -358,10 +322,10 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-2:45..112 [QualifiedId(("MessageEntity", #2), ["TextLinkMessageEntity"])]
+2:45..112 [QualifiedId(("MessageEntity", 0), ["TextLinkMessageEntity"])]
 
 == symbol deps (types only) ==
-2:45..112 [QualifiedId(("MessageEntity", #2), ["TextLinkMessageEntity"])]
+2:45..112 [QualifiedId(("MessageEntity", 0), ["TextLinkMessageEntity"])]
 
 == export definitions ==
 [UrlMessageEntity]: file:///mod.ts:45..112

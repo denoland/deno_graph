@@ -1,18 +1,10 @@
 use std::collections::HashMap;
 
-use deno_ast::MultiThreadedComments;
-use deno_ast::ProgramRef;
-use deno_ast::SourcePos;
-use deno_ast::SourceRange;
-use deno_ast::SourceRangedForSpanned;
-use deno_ast::swc::ast;
-use deno_ast::swc::ast::Callee;
-use deno_ast::swc::ast::Expr;
-use deno_ast::swc::ast::ImportPhase;
-use deno_ast::swc::atoms::Atom;
-use deno_ast::swc::common::comments::CommentKind;
-use deno_ast::swc::ecma_visit::Visit;
-use deno_ast::swc::ecma_visit::VisitWith;
+use deno_ast::oxc::ast::ast::*;
+use deno_ast::oxc::ast_visit::Visit;
+use deno_ast::oxc::ast_visit::walk;
+use deno_ast::oxc::span::GetSpan;
+use deno_ast::oxc::span::Span;
 
 use crate::analysis::DynamicDependencyKind;
 use crate::analysis::ImportAttribute;
@@ -20,25 +12,31 @@ use crate::analysis::ImportAttributes;
 use crate::analysis::StaticDependencyKind;
 
 pub fn analyze_program_dependencies(
-  program: ProgramRef,
-  comments: &MultiThreadedComments,
+  program: &Program<'_>,
+  source_text: &str,
 ) -> Vec<DependencyDescriptor> {
   let mut v = DependencyCollector {
-    comments,
+    comments: &program.comments,
+    source_text,
     items: vec![],
   };
-  match program {
-    ProgramRef::Module(n) => n.visit_with(&mut v),
-    ProgramRef::Script(n) => n.visit_with(&mut v),
-  }
+  v.visit_program(program);
   v.items
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct DependencyComment {
-  pub kind: CommentKind,
-  pub range: SourceRange,
-  pub text: Atom,
+  pub kind: DependencyCommentKind,
+  pub span: Span,
+  /// The byte offset where the comment content starts (after `//` or `/*`).
+  pub content_start: u32,
+  pub text: String,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DependencyCommentKind {
+  Line,
+  Block,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -54,11 +52,11 @@ pub struct StaticDependencyDescriptor {
   /// further processing of supported pragma that impact the dependency.
   pub leading_comments: Vec<DependencyComment>,
   /// The range of the import/export statement.
-  pub range: SourceRange,
+  pub span: Span,
   /// The text specifier associated with the import/export statement.
-  pub specifier: Atom,
+  pub specifier: String,
   /// The range of the specifier.
-  pub specifier_range: SourceRange,
+  pub specifier_span: Span,
   /// Import attributes for this dependency.
   pub import_attributes: ImportAttributes,
   /// If this is an import for side effects only (ex. `import './load.js';`)
@@ -79,11 +77,11 @@ pub struct DynamicDependencyDescriptor {
   /// further processing of supported pragma that impact the dependency.
   pub leading_comments: Vec<DependencyComment>,
   /// The range of the import/export statement.
-  pub range: SourceRange,
+  pub span: Span,
   /// The argument associated with the dynamic import
   pub argument: DynamicArgument,
   /// The range of the specifier.
-  pub argument_range: SourceRange,
+  pub argument_span: Span,
   /// Import attributes for this dependency.
   pub import_attributes: ImportAttributes,
 }
@@ -96,7 +94,7 @@ impl From<DynamicDependencyDescriptor> for DependencyDescriptor {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum DynamicArgument {
-  String(Atom),
+  String(String),
   Template(Vec<DynamicTemplatePart>),
   /// An expression that could not be analyzed.
   Expr,
@@ -104,74 +102,117 @@ pub enum DynamicArgument {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum DynamicTemplatePart {
-  String(Atom),
+  String(String),
   /// An expression that could not be analyzed.
   Expr,
 }
 
-struct DependencyCollector<'a> {
-  comments: &'a MultiThreadedComments,
+struct DependencyCollector<'a, 'b> {
+  comments: &'b deno_ast::oxc::allocator::Vec<'a, Comment>,
+  source_text: &'b str,
   pub items: Vec<DependencyDescriptor>,
 }
 
-impl DependencyCollector<'_> {
-  fn get_leading_comments(&self, start: SourcePos) -> Vec<DependencyComment> {
-    match self.comments.get_leading(start) {
-      Some(leading) => leading
-        .iter()
-        .map(|c| DependencyComment {
-          kind: c.kind,
-          range: c.range(),
-          text: c.text.clone(),
-        })
-        .collect(),
-      None => Vec::new(),
-    }
+impl<'a, 'b> DependencyCollector<'a, 'b> {
+  fn get_leading_comments(&self, span_start: u32) -> Vec<DependencyComment> {
+    self
+      .comments
+      .iter()
+      .filter(|c| c.is_leading() && c.attached_to == span_start)
+      .map(|c| {
+        let content_span = c.content_span();
+        let text = self.source_text
+          [content_span.start as usize..content_span.end as usize]
+          .to_string();
+        DependencyComment {
+          kind: if c.is_line() {
+            DependencyCommentKind::Line
+          } else {
+            DependencyCommentKind::Block
+          },
+          span: c.span,
+          content_start: content_span.start,
+          text,
+        }
+      })
+      .collect()
   }
 
-  fn is_require(&self, callee: &Callee) -> bool {
-    match callee {
-      Callee::Expr(expr) => match &**expr {
-        // assume any ident named `require` is a require call
-        // even if it's not using the global or the result of
-        // calling `createRequire`.
-        Expr::Ident(ident) => ident.sym == "require",
-        _ => false,
-      },
-      _ => false,
-    }
+  fn is_require(&self, callee: &Expression<'a>) -> bool {
+    matches!(callee, Expression::Identifier(ident) if ident.name == "require")
   }
 }
 
-impl Visit for DependencyCollector<'_> {
-  fn visit_import_decl(&mut self, node: &ast::ImportDecl) {
-    let leading_comments = self.get_leading_comments(node.start());
-    let kind = match (node.type_only, node.phase) {
-      (true, _) => StaticDependencyKind::ImportType,
-      (false, ImportPhase::Evaluation) => StaticDependencyKind::Import,
-      (false, ImportPhase::Source) => StaticDependencyKind::ImportSource,
-      (false, ImportPhase::Defer) => return,
+impl<'a, 'b> Visit<'a> for DependencyCollector<'a, 'b> {
+  fn visit_import_declaration(&mut self, node: &ImportDeclaration<'a>) {
+    let leading_comments = self.get_leading_comments(node.span.start);
+    let kind = if node.import_kind == ImportOrExportKind::Type {
+      StaticDependencyKind::ImportType
+    } else if node.phase == Some(ImportPhase::Source) {
+      StaticDependencyKind::ImportSource
+    } else if node.phase == Some(ImportPhase::Defer) {
+      return;
+    } else {
+      StaticDependencyKind::Import
     };
+    let is_side_effect = node
+      .specifiers
+      .as_ref()
+      .map(|s| s.is_empty())
+      .unwrap_or(true);
     self.items.push(
       StaticDependencyDescriptor {
         kind,
         leading_comments,
-        range: node.range(),
-        specifier: node.src.value.to_atom_lossy().into_owned(),
-        specifier_range: node.src.range(),
-        import_attributes: parse_import_attributes(node.with.as_deref()),
-        is_side_effect: node.specifiers.is_empty(),
+        span: node.span,
+        specifier: node.source.value.to_string(),
+        specifier_span: node.source.span,
+        import_attributes: parse_import_attributes(
+          node.with_clause.as_ref().map(|b| b.as_ref()),
+        ),
+        is_side_effect,
       }
       .into(),
     );
   }
 
-  fn visit_named_export(&mut self, node: &ast::NamedExport) {
-    let Some(src) = &node.src else {
+  fn visit_export_named_declaration(
+    &mut self,
+    node: &ExportNamedDeclaration<'a>,
+  ) {
+    let Some(src) = &node.source else {
+      // Check for `export import X = require("...")` pattern
+      if let Some(Declaration::TSImportEqualsDeclaration(import_eq)) =
+        &node.declaration
+        && let TSModuleReference::ExternalModuleReference(module) =
+          &import_eq.module_reference
+      {
+        let leading_comments = self.get_leading_comments(node.span.start);
+        let expr = &module.expression;
+        let kind = if import_eq.import_kind == ImportOrExportKind::Type {
+          StaticDependencyKind::ImportType
+        } else {
+          StaticDependencyKind::ExportEquals
+        };
+        self.items.push(
+          StaticDependencyDescriptor {
+            kind,
+            leading_comments,
+            span: node.span,
+            specifier: expr.value.to_string(),
+            specifier_span: expr.span,
+            import_attributes: Default::default(),
+            is_side_effect: false,
+          }
+          .into(),
+        );
+        return;
+      }
+      walk::walk_export_named_declaration(self, node);
       return;
     };
-    let leading_comments = self.get_leading_comments(node.start());
-    let kind = if node.type_only {
+    let leading_comments = self.get_leading_comments(node.span.start);
+    let kind = if node.export_kind == ImportOrExportKind::Type {
       StaticDependencyKind::ExportType
     } else {
       StaticDependencyKind::Export
@@ -180,19 +221,21 @@ impl Visit for DependencyCollector<'_> {
       StaticDependencyDescriptor {
         kind,
         leading_comments,
-        range: node.range(),
-        specifier: src.value.to_atom_lossy().into_owned(),
-        specifier_range: src.range(),
-        import_attributes: parse_import_attributes(node.with.as_deref()),
+        span: node.span,
+        specifier: src.value.to_string(),
+        specifier_span: src.span,
+        import_attributes: parse_import_attributes(
+          node.with_clause.as_ref().map(|b| b.as_ref()),
+        ),
         is_side_effect: false,
       }
       .into(),
     );
   }
 
-  fn visit_export_all(&mut self, node: &ast::ExportAll) {
-    let leading_comments = self.get_leading_comments(node.start());
-    let kind = if node.type_only {
+  fn visit_export_all_declaration(&mut self, node: &ExportAllDeclaration<'a>) {
+    let leading_comments = self.get_leading_comments(node.span.start);
+    let kind = if node.export_kind == ImportOrExportKind::Type {
       StaticDependencyKind::ExportType
     } else {
       StaticDependencyKind::Export
@@ -201,111 +244,92 @@ impl Visit for DependencyCollector<'_> {
       StaticDependencyDescriptor {
         kind,
         leading_comments,
-        range: node.range(),
-        specifier: node.src.value.to_atom_lossy().into_owned(),
-        specifier_range: node.src.range(),
-        import_attributes: parse_import_attributes(node.with.as_deref()),
+        span: node.span,
+        specifier: node.source.value.to_string(),
+        specifier_span: node.source.span,
+        import_attributes: parse_import_attributes(
+          node.with_clause.as_ref().map(|b| b.as_ref()),
+        ),
         is_side_effect: false,
       }
       .into(),
     );
   }
 
-  fn visit_ts_import_type(&mut self, node: &ast::TsImportType) {
-    let leading_comments = self.get_leading_comments(node.start());
+  fn visit_ts_import_type(&mut self, node: &TSImportType<'a>) {
+    let leading_comments = self.get_leading_comments(node.span.start);
     self.items.push(
       StaticDependencyDescriptor {
         kind: StaticDependencyKind::ImportType,
         leading_comments,
-        range: node.range(),
-        specifier: node.arg.value.to_atom_lossy().into_owned(),
-        specifier_range: node.arg.range(),
+        span: node.span,
+        specifier: node.source.value.to_string(),
+        specifier_span: node.source.span,
         import_attributes: node
-          .attributes
+          .options
           .as_ref()
-          .map(|a| parse_import_attributes_from_object_lit(&a.with))
+          .map(|opts| parse_ts_import_type_options(opts))
           .unwrap_or_default(),
         is_side_effect: false,
       }
       .into(),
     );
-    node.visit_children_with(self);
+    walk::walk_ts_import_type(self, node);
   }
 
-  fn visit_module_items(&mut self, items: &[ast::ModuleItem]) {
-    items.visit_children_with(self);
-  }
+  fn visit_import_expression(&mut self, node: &ImportExpression<'a>) {
+    walk::walk_import_expression(self, node);
 
-  fn visit_stmts(&mut self, items: &[ast::Stmt]) {
-    items.visit_children_with(self)
-  }
-
-  fn visit_call_expr(&mut self, node: &ast::CallExpr) {
-    node.visit_children_with(self);
-
-    let kind = match &node.callee {
-      Callee::Import(import) => match import.phase {
-        ImportPhase::Evaluation => DynamicDependencyKind::Import,
-        ImportPhase::Source => DynamicDependencyKind::ImportSource,
-        ImportPhase::Defer => return,
-      },
-      _ if self.is_require(&node.callee) => DynamicDependencyKind::Require,
-      _ => return,
-    };
-    let Some(arg) = node.args.first() else {
-      return;
-    };
-
-    let argument = match &*arg.expr {
-      Expr::Lit(ast::Lit::Str(specifier)) => {
-        DynamicArgument::String(specifier.value.to_atom_lossy().into_owned())
+    let (argument, argument_span) = match &node.source {
+      Expression::StringLiteral(s) => {
+        (DynamicArgument::String(s.value.to_string()), s.span)
       }
-      Expr::Tpl(tpl) => {
-        if tpl.quasis.len() == 1 && tpl.exprs.is_empty() {
-          DynamicArgument::String(
-            tpl.quasis[0]
-              .cooked
-              .as_ref()
-              .unwrap()
-              .to_atom_lossy()
-              .into_owned(),
-          )
+      Expression::TemplateLiteral(tpl) => {
+        if tpl.quasis.len() == 1 && tpl.expressions.is_empty() {
+          let cooked = tpl.quasis[0]
+            .value
+            .cooked
+            .as_ref()
+            .map(|s| s.to_string())
+            .unwrap_or_default();
+          (DynamicArgument::String(cooked), tpl.span)
         } else {
           let mut parts =
-            Vec::with_capacity(tpl.quasis.len() + tpl.exprs.len());
+            Vec::with_capacity(tpl.quasis.len() + tpl.expressions.len());
           for i in 0..tpl.quasis.len() {
-            let cooked = tpl.quasis[i].cooked.as_ref().unwrap();
+            let cooked = tpl.quasis[i]
+              .value
+              .cooked
+              .as_ref()
+              .map(|s| s.to_string())
+              .unwrap_or_default();
             if !cooked.is_empty() {
-              parts.push(DynamicTemplatePart::String(
-                cooked.to_atom_lossy().into_owned(),
-              ));
+              parts.push(DynamicTemplatePart::String(cooked));
             }
-            if tpl.exprs.get(i).is_some() {
+            if tpl.expressions.get(i).is_some() {
               parts.push(DynamicTemplatePart::Expr);
             }
           }
-          DynamicArgument::Template(parts)
+          (DynamicArgument::Template(parts), tpl.span)
         }
       }
-      Expr::Bin(bin) => {
+      Expression::BinaryExpression(bin) => {
         let mut parts = Vec::with_capacity(2);
 
         fn visit_bin(
           parts: &mut Vec<DynamicTemplatePart>,
-          bin: &ast::BinExpr,
+          bin: &BinaryExpression<'_>,
         ) -> Result<(), ()> {
-          if bin.op != ast::BinaryOp::Add {
+          if bin.operator != BinaryOperator::Addition {
             return Err(());
           }
 
-          match &*bin.left {
-            Expr::Bin(left) => {
+          match &bin.left {
+            Expression::BinaryExpression(left) => {
               visit_bin(parts, left)?;
             }
-            Expr::Lit(ast::Lit::Str(str)) => {
-              parts.push(DynamicTemplatePart::String(
-                str.value.to_atom_lossy().into_owned(),
-              ));
+            Expression::StringLiteral(s) => {
+              parts.push(DynamicTemplatePart::String(s.value.to_string()));
             }
             _ => {
               if parts.is_empty() {
@@ -315,10 +339,8 @@ impl Visit for DependencyCollector<'_> {
             }
           };
 
-          if let Expr::Lit(ast::Lit::Str(str)) = &*bin.right {
-            parts.push(DynamicTemplatePart::String(
-              str.value.to_atom_lossy().into_owned(),
-            ));
+          if let Expression::StringLiteral(s) = &bin.right {
+            parts.push(DynamicTemplatePart::String(s.value.to_string()));
           } else {
             parts.push(DynamicTemplatePart::Expr);
           }
@@ -327,40 +349,85 @@ impl Visit for DependencyCollector<'_> {
         }
 
         if visit_bin(&mut parts, bin).is_ok() {
-          DynamicArgument::Template(parts)
+          (DynamicArgument::Template(parts), node.source.span())
         } else {
-          DynamicArgument::Expr
+          (DynamicArgument::Expr, node.source.span())
         }
       }
-      _ => DynamicArgument::Expr,
+      other => (DynamicArgument::Expr, other.span()),
     };
-    let dynamic_import_attributes =
-      parse_dynamic_import_attributes(node.args.get(1));
-    let leading_comments = self.get_leading_comments(node.start());
+
+    let import_attributes = match &node.options {
+      Some(expr) => parse_dynamic_import_attributes_from_expr(expr),
+      None => ImportAttributes::None,
+    };
+
+    let kind = if node.phase == Some(ImportPhase::Source) {
+      DynamicDependencyKind::ImportSource
+    } else {
+      DynamicDependencyKind::Import
+    };
+
+    let leading_comments = self.get_leading_comments(node.span.start);
     self.items.push(
       DynamicDependencyDescriptor {
         kind,
         leading_comments,
-        range: node.range(),
+        span: node.span,
         argument,
-        argument_range: arg.range(),
-        import_attributes: dynamic_import_attributes,
+        argument_span,
+        import_attributes,
       }
       .into(),
     );
   }
 
-  fn visit_ts_import_equals_decl(&mut self, node: &ast::TsImportEqualsDecl) {
-    use ast::TsModuleRef;
+  fn visit_call_expression(&mut self, node: &CallExpression<'a>) {
+    walk::walk_call_expression(self, node);
 
-    if let TsModuleRef::TsExternalModuleRef(module) = &node.module_ref {
-      let leading_comments = self.get_leading_comments(node.start());
-      let expr = &module.expr;
+    if !self.is_require(&node.callee) {
+      return;
+    }
+    let Some(arg) = node.arguments.first() else {
+      return;
+    };
+    if arg.is_spread() {
+      return;
+    }
+    let arg_expr = &arg;
 
-      let kind = if node.is_type_only {
+    let (argument, argument_span) = match arg_expr.as_expression().unwrap() {
+      Expression::StringLiteral(s) => {
+        (DynamicArgument::String(s.value.to_string()), s.span)
+      }
+      other => (DynamicArgument::Expr, other.span()),
+    };
+    let leading_comments = self.get_leading_comments(node.span.start);
+    self.items.push(
+      DynamicDependencyDescriptor {
+        kind: DynamicDependencyKind::Require,
+        leading_comments,
+        span: node.span,
+        argument,
+        argument_span,
+        import_attributes: Default::default(),
+      }
+      .into(),
+    );
+  }
+
+  fn visit_ts_import_equals_declaration(
+    &mut self,
+    node: &TSImportEqualsDeclaration<'a>,
+  ) {
+    if let TSModuleReference::ExternalModuleReference(module) =
+      &node.module_reference
+    {
+      let leading_comments = self.get_leading_comments(node.span.start);
+      let expr = &module.expression;
+
+      let kind = if node.import_kind == ImportOrExportKind::Type {
         StaticDependencyKind::ImportType
-      } else if node.is_export {
-        StaticDependencyKind::ExportEquals
       } else {
         StaticDependencyKind::ImportEquals
       };
@@ -369,9 +436,9 @@ impl Visit for DependencyCollector<'_> {
         StaticDependencyDescriptor {
           kind,
           leading_comments,
-          range: node.range(),
-          specifier: expr.value.to_atom_lossy().into_owned(),
-          specifier_range: expr.range(),
+          span: node.span,
+          specifier: expr.value.to_string(),
+          specifier_span: expr.span,
           import_attributes: Default::default(),
           is_side_effect: false,
         }
@@ -380,22 +447,22 @@ impl Visit for DependencyCollector<'_> {
     }
   }
 
-  fn visit_ts_module_decl(&mut self, node: &ast::TsModuleDecl) {
-    if let Some(id_str) = node.id.as_str() {
-      let value_str = id_str.value.to_string_lossy();
+  fn visit_ts_module_declaration(&mut self, node: &TSModuleDeclaration<'a>) {
+    if let TSModuleDeclarationName::StringLiteral(id_str) = &node.id {
+      let value_str = id_str.value.as_str();
       if !value_str.contains('*')
         || value_str.starts_with("./")
         || value_str.starts_with("../")
         || value_str.starts_with('/')
       {
-        let leading_comments = self.get_leading_comments(node.start());
+        let leading_comments = self.get_leading_comments(node.span.start);
         self.items.push(
           StaticDependencyDescriptor {
             kind: StaticDependencyKind::MaybeTsModuleAugmentation,
             leading_comments,
-            range: id_str.range(),
-            specifier: id_str.value.to_atom_lossy().into_owned(),
-            specifier_range: id_str.range(),
+            span: id_str.span,
+            specifier: id_str.value.to_string(),
+            specifier_span: id_str.span,
             import_attributes: Default::default(),
             is_side_effect: false,
           }
@@ -403,90 +470,101 @@ impl Visit for DependencyCollector<'_> {
         );
       }
     }
-    node.visit_children_with(self);
+    walk::walk_ts_module_declaration(self, node);
   }
 }
 
-/// Parses import attributes into a hashmap. According to proposal the values
-/// can only be strings (https://github.com/tc39/proposal-import-attributes#should-more-than-just-strings-be-supported-as-attribute-values)
-/// and thus non-string values are skipped.
+/// Parses import attributes from a WithClause.
 fn parse_import_attributes(
-  maybe_attrs: Option<&ast::ObjectLit>,
+  maybe_with: Option<&WithClause<'_>>,
 ) -> ImportAttributes {
-  let Some(attrs) = maybe_attrs else {
+  let Some(with) = maybe_with else {
     return ImportAttributes::None;
   };
   let mut import_attributes = HashMap::new();
-  for prop in attrs.props.iter() {
-    if let ast::PropOrSpread::Prop(prop) = prop
-      && let ast::Prop::KeyValue(key_value) = &**prop
-    {
-      let maybe_key = match &key_value.key {
-        ast::PropName::Str(key) => key.value.as_atom(),
-        ast::PropName::Ident(ident) => Some(&ident.sym),
-        _ => None,
-      };
-
-      if let Some(key) = maybe_key
-        && let ast::Expr::Lit(ast::Lit::Str(str_)) = &*key_value.value
-        && let Some(value_str) = str_.value.as_str()
-      {
-        import_attributes.insert(
-          key.to_string(),
-          ImportAttribute::Known(value_str.to_string()),
-        );
-      }
-    }
+  for attr in &with.with_entries {
+    let key = match &attr.key {
+      ImportAttributeKey::Identifier(ident) => ident.name.to_string(),
+      ImportAttributeKey::StringLiteral(s) => s.value.to_string(),
+    };
+    let value_str = attr.value.value.as_str();
+    import_attributes
+      .insert(key, ImportAttribute::Known(value_str.to_string()));
   }
   ImportAttributes::Known(import_attributes)
 }
 
-/// Parses import attributes from the second arg of a dynamic import.
-fn parse_dynamic_import_attributes(
-  arg: Option<&ast::ExprOrSpread>,
+/// Parses import attributes from a TSImportType options object.
+/// The options object has the shape `{ with: { key: value, ... } }`.
+fn parse_ts_import_type_options(
+  object_lit: &ObjectExpression<'_>,
 ) -> ImportAttributes {
-  let arg = match arg {
-    Some(arg) => arg,
-    None => return ImportAttributes::None,
-  };
+  let mut attributes_map = HashMap::new();
+  let mut had_with_key = false;
 
-  if arg.spread.is_some() {
-    return ImportAttributes::Unknown;
+  for prop in object_lit.properties.iter() {
+    let ObjectPropertyKind::ObjectProperty(prop) = prop else {
+      return ImportAttributes::Unknown;
+    };
+    if prop.kind != PropertyKind::Init || prop.computed {
+      return ImportAttributes::Unknown;
+    }
+    let key = match &prop.key {
+      PropertyKey::StringLiteral(s) => s.value.to_string(),
+      PropertyKey::StaticIdentifier(ident) => ident.name.to_string(),
+      _ => return ImportAttributes::Unknown,
+    };
+    if key == "with" || key == "assert" && !had_with_key {
+      had_with_key = key == "with";
+      let Expression::ObjectExpression(attrs_lit) = &prop.value else {
+        return ImportAttributes::Unknown;
+      };
+      match parse_import_attributes_from_object_expr(attrs_lit) {
+        ImportAttributes::Known(hash_map) => {
+          attributes_map = hash_map;
+        }
+        value => return value,
+      }
+    }
   }
 
-  let object_lit = match &*arg.expr {
-    ast::Expr::Object(object_lit) => object_lit,
-    _ => return ImportAttributes::Unknown,
+  if had_with_key || !attributes_map.is_empty() {
+    ImportAttributes::Known(attributes_map)
+  } else {
+    ImportAttributes::None
+  }
+}
+
+/// Parses import attributes from the options expression of a dynamic import.
+fn parse_dynamic_import_attributes_from_expr(
+  expr: &Expression<'_>,
+) -> ImportAttributes {
+  let Expression::ObjectExpression(object_lit) = expr else {
+    return ImportAttributes::Unknown;
   };
   let mut attributes_map = HashMap::new();
   let mut had_attributes_key = false;
   let mut had_with_key = false;
 
-  for prop in object_lit.props.iter() {
-    let prop = match prop {
-      ast::PropOrSpread::Prop(prop) => prop,
-      _ => return ImportAttributes::Unknown,
+  for prop in object_lit.properties.iter() {
+    let ObjectPropertyKind::ObjectProperty(prop) = prop else {
+      return ImportAttributes::Unknown;
     };
-    let key_value = match &**prop {
-      ast::Prop::KeyValue(key_value) => key_value,
-      _ => return ImportAttributes::Unknown,
-    };
-    let key = match &key_value.key {
-      ast::PropName::Str(key) => match key.value.as_atom() {
-        Some(key) => key,
-        None => return ImportAttributes::Unknown,
-      },
-      ast::PropName::Ident(ident) => &ident.sym,
+    if prop.kind != PropertyKind::Init || prop.computed {
+      return ImportAttributes::Unknown;
+    }
+    let key = match &prop.key {
+      PropertyKey::StringLiteral(s) => s.value.to_string(),
+      PropertyKey::StaticIdentifier(ident) => ident.name.to_string(),
       _ => return ImportAttributes::Unknown,
     };
     if key == "with" || key == "assert" && !had_with_key {
       had_attributes_key = true;
       had_with_key = key == "with";
-      let attributes_lit = match &*key_value.value {
-        ast::Expr::Object(lit) => lit,
-        _ => return ImportAttributes::Unknown,
+      let Expression::ObjectExpression(attrs_lit) = &prop.value else {
+        return ImportAttributes::Unknown;
       };
-      match parse_import_attributes_from_object_lit(attributes_lit) {
+      match parse_import_attributes_from_object_expr(attrs_lit) {
         ImportAttributes::Known(hash_map) => {
           attributes_map = hash_map;
         }
@@ -502,41 +580,28 @@ fn parse_dynamic_import_attributes(
   }
 }
 
-fn parse_import_attributes_from_object_lit(
-  attributes_lit: &ast::ObjectLit,
+fn parse_import_attributes_from_object_expr(
+  attributes_lit: &ObjectExpression<'_>,
 ) -> ImportAttributes {
-  let mut attributes_map = HashMap::with_capacity(attributes_lit.props.len());
+  let mut attributes_map =
+    HashMap::with_capacity(attributes_lit.properties.len());
 
-  for prop in attributes_lit.props.iter() {
-    let prop = match prop {
-      ast::PropOrSpread::Prop(prop) => prop,
+  for prop in attributes_lit.properties.iter() {
+    let ObjectPropertyKind::ObjectProperty(prop) = prop else {
+      return ImportAttributes::Unknown;
+    };
+    if prop.kind != PropertyKind::Init || prop.computed {
+      return ImportAttributes::Unknown;
+    }
+    let key = match &prop.key {
+      PropertyKey::StringLiteral(s) => s.value.to_string(),
+      PropertyKey::StaticIdentifier(ident) => ident.name.to_string(),
       _ => return ImportAttributes::Unknown,
     };
-    let key_value = match &**prop {
-      ast::Prop::KeyValue(key_value) => key_value,
-      _ => return ImportAttributes::Unknown,
-    };
-    let key = match &key_value.key {
-      ast::PropName::Str(key) => match key.value.as_atom() {
-        Some(key) => key,
-        None => return ImportAttributes::Unknown,
-      },
-      ast::PropName::Ident(ident) => &ident.sym,
-      _ => return ImportAttributes::Unknown,
-    };
-    if let ast::Expr::Lit(value_lit) = &*key_value.value {
-      attributes_map.insert(
-        key.to_string(),
-        if let ast::Lit::Str(str_) = value_lit
-          && let Some(value) = str_.value.as_str()
-        {
-          ImportAttribute::Known(value.to_string())
-        } else {
-          ImportAttribute::Unknown
-        },
-      );
+    if let Expression::StringLiteral(s) = &prop.value {
+      attributes_map.insert(key, ImportAttribute::Known(s.value.to_string()));
     } else {
-      attributes_map.insert(key.to_string(), ImportAttribute::Unknown);
+      attributes_map.insert(key, ImportAttribute::Unknown);
     }
   }
   ImportAttributes::Known(attributes_map)
@@ -544,34 +609,33 @@ fn parse_import_attributes_from_object_lit(
 
 #[cfg(test)]
 mod tests {
-  use crate::ModuleSpecifier;
-  use deno_ast::SourcePos;
-  use deno_ast::SourceRange;
-  use deno_ast::SourceRangedForSpanned;
-  use deno_ast::swc::atoms::Atom;
-  use deno_ast::swc::common::comments::CommentKind;
+  use deno_ast::oxc::span::Span;
 
   use pretty_assertions::assert_eq;
 
+  use crate::ModuleSpecifier;
+
   use super::*;
 
-  fn helper(
-    specifier: &str,
-    source: &str,
-  ) -> (SourcePos, Vec<DependencyDescriptor>) {
-    let source = deno_ast::parse_module(deno_ast::ParseParams {
-      specifier: ModuleSpecifier::parse(specifier).unwrap(),
-      text: source.into(),
-      media_type: crate::MediaType::Tsx,
-      capture_tokens: false,
-      scope_analysis: false,
-      maybe_syntax: None,
-    })
-    .unwrap();
-    (
-      source.program_ref().start(),
-      analyze_program_dependencies(source.program_ref(), source.comments()),
+  fn span(start: u32, end: u32) -> Span {
+    Span::new(start, end)
+  }
+
+  fn helper(specifier: &str, source: &str) -> Vec<DependencyDescriptor> {
+    let allocator = deno_ast::oxc::allocator::Allocator::default();
+    let source = deno_ast::parse_module(
+      &allocator,
+      deno_ast::ParseParams {
+        specifier: ModuleSpecifier::parse(specifier).unwrap(),
+        text: source.into(),
+        media_type: crate::MediaType::Tsx,
+        capture_tokens: false,
+        scope_analysis: false,
+        maybe_source_type: None,
+      },
     )
+    .unwrap();
+    analyze_program_dependencies(source.program(), source.text())
   }
 
   #[test]
@@ -609,16 +673,16 @@ try {
     // pass
 }
       "#;
-    let (start_pos, dependencies) = helper("file:///test.ts", source);
+    let dependencies = helper("file:///test.ts", source);
     assert_eq!(
       dependencies,
       vec![
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos, start_pos + 33),
-          specifier: Atom::from("./test.ts"),
-          specifier_range: SourceRange::new(start_pos + 21, start_pos + 32),
+          span: span(0, 33),
+          specifier: "./test.ts".to_string(),
+          specifier_span: span(21, 32),
           import_attributes: Default::default(),
           is_side_effect: false,
         }
@@ -626,13 +690,14 @@ try {
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::ImportType,
           leading_comments: vec![DependencyComment {
-            kind: CommentKind::Block,
-            text: r#"* JSDoc "#.into(),
-            range: SourceRange::new(start_pos + 34, start_pos + 46),
+            kind: DependencyCommentKind::Block,
+            text: r#"* JSDoc "#.to_string(),
+            span: span(34, 46),
+            content_start: 36,
           }],
-          range: SourceRange::new(start_pos + 47, start_pos + 85),
-          specifier: Atom::from("./foo.d.ts"),
-          specifier_range: SourceRange::new(start_pos + 72, start_pos + 84),
+          span: span(47, 85),
+          specifier: "./foo.d.ts".to_string(),
+          specifier_span: span(72, 84),
           import_attributes: Default::default(),
           is_side_effect: false,
         }
@@ -640,13 +705,14 @@ try {
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::Export,
           leading_comments: vec![DependencyComment {
-            kind: CommentKind::Line,
-            text: r#"/ <reference foo="bar" />"#.into(),
-            range: SourceRange::new(start_pos + 86, start_pos + 113),
+            kind: DependencyCommentKind::Line,
+            text: r#"/ <reference foo="bar" />"#.to_string(),
+            span: span(86, 113),
+            content_start: 88,
           }],
-          range: SourceRange::new(start_pos + 114, start_pos + 148),
-          specifier: Atom::from("./buzz.ts"),
-          specifier_range: SourceRange::new(start_pos + 136, start_pos + 147),
+          span: span(114, 148),
+          specifier: "./buzz.ts".to_string(),
+          specifier_span: span(136, 147),
           import_attributes: Default::default(),
           is_side_effect: false,
         }
@@ -655,28 +721,30 @@ try {
           kind: StaticDependencyKind::ExportType,
           leading_comments: vec![
             DependencyComment {
-              kind: CommentKind::Line,
-              text: r#" @some-pragma"#.into(),
-              range: SourceRange::new(start_pos + 149, start_pos + 164),
+              kind: DependencyCommentKind::Line,
+              text: r#" @some-pragma"#.to_string(),
+              span: span(149, 164),
+              content_start: 151,
             },
             DependencyComment {
-              kind: CommentKind::Block,
-              text: "*\n * Foo\n ".into(),
-              range: SourceRange::new(start_pos + 165, start_pos + 179),
+              kind: DependencyCommentKind::Block,
+              text: "*\n * Foo\n ".to_string(),
+              span: span(165, 179),
+              content_start: 167,
             }
           ],
-          range: SourceRange::new(start_pos + 180, start_pos + 220),
-          specifier: Atom::from("./fizz.d.ts"),
-          specifier_range: SourceRange::new(start_pos + 206, start_pos + 219),
+          span: span(180, 220),
+          specifier: "./fizz.d.ts".to_string(),
+          specifier_span: span(206, 219),
           import_attributes: Default::default(),
           is_side_effect: false,
         }
         .into(),
         DynamicDependencyDescriptor {
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 238, start_pos + 253),
-          argument: DynamicArgument::String(Atom::from("path")),
-          argument_range: SourceRange::new(start_pos + 246, start_pos + 252),
+          span: span(238, 253),
+          argument: DynamicArgument::String("path".to_string()),
+          argument_span: span(246, 252),
           import_attributes: Default::default(),
           kind: DynamicDependencyKind::Require,
         }
@@ -684,36 +752,36 @@ try {
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 272, start_pos + 291),
-          argument: DynamicArgument::String(Atom::from("./foo1.ts")),
-          argument_range: SourceRange::new(start_pos + 279, start_pos + 290),
+          span: span(272, 291),
+          argument: DynamicArgument::String("./foo1.ts".to_string()),
+          argument_span: span(279, 290),
           import_attributes: Default::default(),
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 321, start_pos + 339),
-          argument: DynamicArgument::String(Atom::from("./foo.ts")),
-          argument_range: SourceRange::new(start_pos + 328, start_pos + 338),
+          span: span(321, 339),
+          argument: DynamicArgument::String("./foo.ts".to_string()),
+          argument_span: span(328, 338),
           import_attributes: Default::default(),
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Require,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 391, start_pos + 414),
-          argument: DynamicArgument::String(Atom::from("some_package")),
-          argument_range: SourceRange::new(start_pos + 399, start_pos + 413),
+          span: span(391, 414),
+          argument: DynamicArgument::String("some_package".to_string()),
+          argument_span: span(399, 413),
           import_attributes: Default::default(),
         }
         .into(),
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::ImportEquals,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 444, start_pos + 486),
-          specifier: Atom::from("some_package_foo"),
-          specifier_range: SourceRange::new(start_pos + 466, start_pos + 484),
+          span: span(444, 486),
+          specifier: "some_package_foo".to_string(),
+          specifier_span: span(466, 484),
           import_attributes: Default::default(),
           is_side_effect: false,
         }
@@ -721,9 +789,9 @@ try {
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::ImportType,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 487, start_pos + 542),
-          specifier: Atom::from("some_package_foo_type"),
-          specifier_range: SourceRange::new(start_pos + 517, start_pos + 540),
+          span: span(487, 542),
+          specifier: "some_package_foo_type".to_string(),
+          specifier_span: span(517, 540),
           import_attributes: Default::default(),
           is_side_effect: false,
         }
@@ -731,9 +799,9 @@ try {
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::ExportEquals,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 543, start_pos + 592),
-          specifier: Atom::from("some_package_bar"),
-          specifier_range: SourceRange::new(start_pos + 572, start_pos + 590),
+          span: span(543, 592),
+          specifier: "some_package_bar".to_string(),
+          specifier_span: span(572, 590),
           import_attributes: Default::default(),
           is_side_effect: false,
         }
@@ -761,7 +829,7 @@ const d8 = await import("./d8.json", { with: { type: bar } });
 const d9 = await import("./d9.json", { with: { type: "json", ...bar } });
 const d10 = await import("./d10.json", { with: { type: "json", ["type"]: "bad" } });
       "#;
-    let (start_pos, dependencies) = helper("file:///test.ts", source);
+    let dependencies = helper("file:///test.ts", source);
     let expected_attributes1 = ImportAttributes::Known({
       let mut map = HashMap::new();
       map.insert(
@@ -792,9 +860,9 @@ const d10 = await import("./d10.json", { with: { type: "json", ["type"]: "bad" }
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos, start_pos + 63),
-          specifier: Atom::from("./test.ts"),
-          specifier_range: SourceRange::new(start_pos + 21, start_pos + 32),
+          span: span(0, 63),
+          specifier: "./test.ts".to_string(),
+          specifier_span: span(21, 32),
           import_attributes: expected_attributes1.clone(),
           is_side_effect: false,
         }
@@ -802,9 +870,9 @@ const d10 = await import("./d10.json", { with: { type: "json", ["type"]: "bad" }
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::Export,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 64, start_pos + 120),
-          specifier: Atom::from("./test.ts"),
-          specifier_range: SourceRange::new(start_pos + 78, start_pos + 89),
+          span: span(64, 120),
+          specifier: "./test.ts".to_string(),
+          specifier_span: span(78, 89),
           import_attributes: expected_attributes1,
           is_side_effect: false,
         }
@@ -812,9 +880,9 @@ const d10 = await import("./d10.json", { with: { type: "json", ["type"]: "bad" }
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::Export,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 121, start_pos + 179),
-          specifier: Atom::from("./test.json"),
-          specifier_range: SourceRange::new(start_pos + 141, start_pos + 154),
+          span: span(121, 179),
+          specifier: "./test.json".to_string(),
+          specifier_span: span(141, 154),
           import_attributes: expected_attributes2.clone(),
           is_side_effect: false,
         }
@@ -822,9 +890,9 @@ const d10 = await import("./d10.json", { with: { type: "json", ["type"]: "bad" }
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 180, start_pos + 231),
-          specifier: Atom::from("./foo.json"),
-          specifier_range: SourceRange::new(start_pos + 196, start_pos + 208),
+          span: span(180, 231),
+          specifier: "./foo.json".to_string(),
+          specifier_span: span(196, 208),
           import_attributes: expected_attributes2,
           is_side_effect: false,
         }
@@ -832,90 +900,90 @@ const d10 = await import("./d10.json", { with: { type: "json", ["type"]: "bad" }
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 251, start_pos + 302),
-          argument: DynamicArgument::String(Atom::from("./fizz.json")),
-          argument_range: SourceRange::new(start_pos + 258, start_pos + 271),
+          span: span(251, 302),
+          argument: DynamicArgument::String("./fizz.json".to_string()),
+          argument_span: span(258, 271),
           import_attributes: dynamic_expected_attributes2.clone(),
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 323, start_pos + 374),
-          argument: DynamicArgument::String(Atom::from("./buzz.json")),
-          argument_range: SourceRange::new(start_pos + 330, start_pos + 343),
+          span: span(323, 374),
+          argument: DynamicArgument::String("./buzz.json".to_string()),
+          argument_span: span(330, 343),
           import_attributes: dynamic_expected_attributes2,
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 393, start_pos + 412),
-          argument: DynamicArgument::String(Atom::from("./d1.json")),
-          argument_range: SourceRange::new(start_pos + 400, start_pos + 411),
+          span: span(393, 412),
+          argument: DynamicArgument::String("./d1.json".to_string()),
+          argument_span: span(400, 411),
           import_attributes: Default::default(),
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 431, start_pos + 454),
-          argument: DynamicArgument::String(Atom::from("./d2.json")),
-          argument_range: SourceRange::new(start_pos + 438, start_pos + 449),
+          span: span(431, 454),
+          argument: DynamicArgument::String("./d2.json".to_string()),
+          argument_span: span(438, 449),
           import_attributes: Default::default(),
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 473, start_pos + 497),
-          argument: DynamicArgument::String(Atom::from("./d3.json")),
-          argument_range: SourceRange::new(start_pos + 480, start_pos + 491),
+          span: span(473, 497),
+          argument: DynamicArgument::String("./d3.json".to_string()),
+          argument_span: span(480, 491),
           import_attributes: ImportAttributes::Unknown,
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 516, start_pos + 549),
-          argument: DynamicArgument::String(Atom::from("./d4.json")),
-          argument_range: SourceRange::new(start_pos + 523, start_pos + 534),
+          span: span(516, 549),
+          argument: DynamicArgument::String("./d4.json".to_string()),
+          argument_span: span(523, 534),
           import_attributes: ImportAttributes::Known(HashMap::new()),
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 568, start_pos + 602),
-          argument: DynamicArgument::String(Atom::from("./d5.json")),
-          argument_range: SourceRange::new(start_pos + 575, start_pos + 586),
+          span: span(568, 602),
+          argument: DynamicArgument::String("./d5.json".to_string()),
+          argument_span: span(575, 586),
           import_attributes: ImportAttributes::Unknown,
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 621, start_pos + 662),
-          argument: DynamicArgument::String(Atom::from("./d6.json")),
-          argument_range: SourceRange::new(start_pos + 628, start_pos + 639),
+          span: span(621, 662),
+          argument: DynamicArgument::String("./d6.json".to_string()),
+          argument_span: span(628, 639),
           import_attributes: ImportAttributes::Unknown,
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 681, start_pos + 733),
-          argument: DynamicArgument::String(Atom::from("./d7.json")),
-          argument_range: SourceRange::new(start_pos + 688, start_pos + 699),
+          span: span(681, 733),
+          argument: DynamicArgument::String("./d7.json".to_string()),
+          argument_span: span(688, 699),
           import_attributes: ImportAttributes::Unknown,
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 752, start_pos + 796),
-          argument: DynamicArgument::String(Atom::from("./d8.json")),
-          argument_range: SourceRange::new(start_pos + 759, start_pos + 770),
+          span: span(752, 796),
+          argument: DynamicArgument::String("./d8.json".to_string()),
+          argument_span: span(759, 770),
           import_attributes: ImportAttributes::Known({
             let mut map = HashMap::new();
             map.insert("type".to_string(), ImportAttribute::Unknown);
@@ -926,18 +994,18 @@ const d10 = await import("./d10.json", { with: { type: "json", ["type"]: "bad" }
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 815, start_pos + 870),
-          argument: DynamicArgument::String(Atom::from("./d9.json")),
-          argument_range: SourceRange::new(start_pos + 822, start_pos + 833),
+          span: span(815, 870),
+          argument: DynamicArgument::String("./d9.json".to_string()),
+          argument_span: span(822, 833),
           import_attributes: ImportAttributes::Unknown,
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 890, start_pos + 955),
-          argument: DynamicArgument::String(Atom::from("./d10.json")),
-          argument_range: SourceRange::new(start_pos + 897, start_pos + 909),
+          span: span(890, 955),
+          argument: DynamicArgument::String("./d10.json".to_string()),
+          argument_span: span(897, 909),
           import_attributes: ImportAttributes::Unknown,
         }
         .into(),
@@ -960,141 +1028,141 @@ const d10 = await import(value + ".ts");
 const d11 = await import("./foo/" - value);
 const d12 = await import(expr);
 "#;
-    let (start_pos, dependencies) = helper("file:///test.ts", source);
+    let dependencies = helper("file:///test.ts", source);
     assert_eq!(
       dependencies,
       vec![
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 17, start_pos + 36),
-          argument: DynamicArgument::String(Atom::from("./d1.json")),
-          argument_range: SourceRange::new(start_pos + 24, start_pos + 35),
+          span: span(17, 36),
+          argument: DynamicArgument::String("./d1.json".to_string()),
+          argument_span: span(24, 35),
           import_attributes: ImportAttributes::None,
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 55, start_pos + 73),
+          span: span(55, 73),
           argument: DynamicArgument::Template(vec![DynamicTemplatePart::Expr]),
-          argument_range: SourceRange::new(start_pos + 62, start_pos + 72),
+          argument_span: span(62, 72),
           import_attributes: ImportAttributes::None,
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 92, start_pos + 117),
+          span: span(92, 117),
           argument: DynamicArgument::Template(vec![
-            DynamicTemplatePart::String(Atom::from("./test/")),
+            DynamicTemplatePart::String("./test/".to_string()),
             DynamicTemplatePart::Expr,
           ]),
-          argument_range: SourceRange::new(start_pos + 99, start_pos + 116),
+          argument_span: span(99, 116),
           import_attributes: ImportAttributes::None,
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 136, start_pos + 159),
+          span: span(136, 159),
           argument: DynamicArgument::Template(vec![
             DynamicTemplatePart::Expr,
-            DynamicTemplatePart::String(Atom::from("/test")),
+            DynamicTemplatePart::String("/test".to_string()),
           ]),
-          argument_range: SourceRange::new(start_pos + 143, start_pos + 158),
+          argument_span: span(143, 158),
           import_attributes: ImportAttributes::None,
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 178, start_pos + 205),
+          span: span(178, 205),
           argument: DynamicArgument::Template(vec![
             DynamicTemplatePart::Expr,
             DynamicTemplatePart::Expr,
           ]),
-          argument_range: SourceRange::new(start_pos + 185, start_pos + 204),
+          argument_span: span(185, 204),
           import_attributes: ImportAttributes::None,
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 224, start_pos + 257),
+          span: span(224, 257),
           argument: DynamicArgument::Template(vec![
             DynamicTemplatePart::Expr,
-            DynamicTemplatePart::String(Atom::from("/test/")),
+            DynamicTemplatePart::String("/test/".to_string()),
             DynamicTemplatePart::Expr,
           ]),
-          argument_range: SourceRange::new(start_pos + 231, start_pos + 256),
+          argument_span: span(231, 256),
           import_attributes: ImportAttributes::None,
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 276, start_pos + 312),
+          span: span(276, 312),
           argument: DynamicArgument::Template(vec![
-            DynamicTemplatePart::String(Atom::from("./")),
+            DynamicTemplatePart::String("./".to_string()),
             DynamicTemplatePart::Expr,
-            DynamicTemplatePart::String(Atom::from("/test/")),
+            DynamicTemplatePart::String("/test/".to_string()),
             DynamicTemplatePart::Expr,
-            DynamicTemplatePart::String(Atom::from("/")),
+            DynamicTemplatePart::String("/".to_string()),
           ]),
-          argument_range: SourceRange::new(start_pos + 283, start_pos + 311),
+          argument_span: span(283, 311),
           import_attributes: ImportAttributes::None,
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 331, start_pos + 355),
+          span: span(331, 355),
           argument: DynamicArgument::Template(vec![
-            DynamicTemplatePart::String(Atom::from("./foo/")),
+            DynamicTemplatePart::String("./foo/".to_string()),
             DynamicTemplatePart::Expr,
           ]),
-          argument_range: SourceRange::new(start_pos + 338, start_pos + 354),
+          argument_span: span(338, 354),
           import_attributes: ImportAttributes::None,
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 374, start_pos + 406),
+          span: span(374, 406),
           argument: DynamicArgument::Template(vec![
-            DynamicTemplatePart::String(Atom::from("./foo/")),
+            DynamicTemplatePart::String("./foo/".to_string()),
             DynamicTemplatePart::Expr,
-            DynamicTemplatePart::String(Atom::from(".ts")),
+            DynamicTemplatePart::String(".ts".to_string()),
           ]),
-          argument_range: SourceRange::new(start_pos + 381, start_pos + 405),
+          argument_span: span(381, 405),
           import_attributes: ImportAttributes::None,
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 426, start_pos + 447),
+          span: span(426, 447),
           argument: DynamicArgument::Expr,
-          argument_range: SourceRange::new(start_pos + 433, start_pos + 446),
+          argument_span: span(433, 446),
           import_attributes: ImportAttributes::None,
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 467, start_pos + 491),
+          span: span(467, 491),
           argument: DynamicArgument::Expr,
-          argument_range: SourceRange::new(start_pos + 474, start_pos + 490),
+          argument_span: span(474, 490),
           import_attributes: ImportAttributes::None,
         }
         .into(),
         DynamicDependencyDescriptor {
           kind: DynamicDependencyKind::Import,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 511, start_pos + 523),
+          span: span(511, 523),
           argument: DynamicArgument::Expr,
-          argument_range: SourceRange::new(start_pos + 518, start_pos + 522),
+          argument_span: span(518, 522),
           import_attributes: ImportAttributes::None,
         }
         .into(),
@@ -1109,16 +1177,16 @@ export declare const SomeValue: typeof Core & import("./a.d.ts").Constructor<{
     paginate: import("./b.d.ts").PaginateInterface;
 } & import("./c.d.ts", { with: { "resolution-mode": "import" } }).RestEndpointMethods>;
 "#;
-    let (start_pos, dependencies) = helper("file:///test.ts", source);
+    let dependencies = helper("file:///test.ts", source);
     assert_eq!(
       dependencies,
       vec![
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::ImportType,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 46, start_pos + 217),
-          specifier: Atom::from("./a.d.ts"),
-          specifier_range: SourceRange::new(start_pos + 53, start_pos + 63),
+          span: span(47, 218),
+          specifier: "./a.d.ts".to_string(),
+          specifier_span: span(54, 64),
           import_attributes: ImportAttributes::None,
           is_side_effect: false,
         }
@@ -1126,9 +1194,9 @@ export declare const SomeValue: typeof Core & import("./a.d.ts").Constructor<{
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::ImportType,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 93, start_pos + 129),
-          specifier: Atom::from("./b.d.ts"),
-          specifier_range: SourceRange::new(start_pos + 100, start_pos + 110),
+          span: span(94, 130),
+          specifier: "./b.d.ts".to_string(),
+          specifier_span: span(101, 111),
           import_attributes: ImportAttributes::None,
           is_side_effect: false,
         }
@@ -1136,9 +1204,9 @@ export declare const SomeValue: typeof Core & import("./a.d.ts").Constructor<{
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::ImportType,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 135, start_pos + 216),
-          specifier: Atom::from("./c.d.ts"),
-          specifier_range: SourceRange::new(start_pos + 142, start_pos + 152),
+          span: span(136, 217),
+          specifier: "./c.d.ts".to_string(),
+          specifier_span: span(143, 153),
           import_attributes: ImportAttributes::Known(HashMap::from([(
             "resolution-mode".to_string(),
             ImportAttribute::Known("import".to_string())
@@ -1160,16 +1228,16 @@ export declare const SomeValue: typeof Core & import("./a.d.ts").Constructor<{
       // @some-pragma
       declare module "foo" {}
     "#;
-    let (start_pos, dependencies) = helper("file:///test.ts", source);
+    let dependencies = helper("file:///test.ts", source);
     assert_eq!(
       dependencies,
       vec![
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::MaybeTsModuleAugmentation,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 47, start_pos + 56),
-          specifier: Atom::from("./*.css"),
-          specifier_range: SourceRange::new(start_pos + 47, start_pos + 56),
+          span: span(54, 63),
+          specifier: "./*.css".to_string(),
+          specifier_span: span(54, 63),
           import_attributes: Default::default(),
           is_side_effect: false,
         }
@@ -1177,9 +1245,9 @@ export declare const SomeValue: typeof Core & import("./a.d.ts").Constructor<{
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::MaybeTsModuleAugmentation,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 99, start_pos + 109),
-          specifier: Atom::from("../*.css"),
-          specifier_range: SourceRange::new(start_pos + 99, start_pos + 109),
+          span: span(106, 116),
+          specifier: "../*.css".to_string(),
+          specifier_span: span(106, 116),
           import_attributes: Default::default(),
           is_side_effect: false,
         }
@@ -1187,9 +1255,9 @@ export declare const SomeValue: typeof Core & import("./a.d.ts").Constructor<{
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::MaybeTsModuleAugmentation,
           leading_comments: Vec::new(),
-          range: SourceRange::new(start_pos + 152, start_pos + 160),
-          specifier: Atom::from("/*.css"),
-          specifier_range: SourceRange::new(start_pos + 152, start_pos + 160),
+          span: span(159, 167),
+          specifier: "/*.css".to_string(),
+          specifier_span: span(159, 167),
           import_attributes: Default::default(),
           is_side_effect: false,
         }
@@ -1197,13 +1265,14 @@ export declare const SomeValue: typeof Core & import("./a.d.ts").Constructor<{
         StaticDependencyDescriptor {
           kind: StaticDependencyKind::MaybeTsModuleAugmentation,
           leading_comments: vec![DependencyComment {
-            kind: CommentKind::Line,
-            text: r#" @some-pragma"#.into(),
-            range: SourceRange::new(start_pos + 188, start_pos + 203),
+            kind: DependencyCommentKind::Line,
+            text: r#" @some-pragma"#.to_string(),
+            span: span(195, 210),
+            content_start: 197,
           },],
-          range: SourceRange::new(start_pos + 225, start_pos + 230),
-          specifier: Atom::from("foo"),
-          specifier_range: SourceRange::new(start_pos + 225, start_pos + 230),
+          span: span(232, 237),
+          specifier: "foo".to_string(),
+          specifier_span: span(232, 237),
           import_attributes: Default::default(),
           is_side_effect: false,
         }

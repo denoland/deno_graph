@@ -3,7 +3,7 @@
 use std::collections::HashSet;
 use std::collections::VecDeque;
 
-use deno_ast::SourceRange;
+use deno_ast::oxc::span::Span;
 use indexmap::IndexMap;
 
 use crate::ModuleGraph;
@@ -33,7 +33,7 @@ impl<'a> DefinitionOrUnresolved<'a> {
     }
   }
 
-  pub fn symbol(&self) -> Option<&'a Symbol> {
+  pub fn symbol(&self) -> Option<&'a Symbol<'a>> {
     match self {
       DefinitionOrUnresolved::Definition(def) => Some(def.symbol),
       DefinitionOrUnresolved::Unresolved(_) => None,
@@ -51,30 +51,29 @@ pub enum DefinitionKind<'a> {
 pub struct Definition<'a> {
   pub kind: DefinitionKind<'a>,
   pub module: ModuleInfoRef<'a>,
-  pub symbol: &'a Symbol,
-  pub symbol_decl: &'a SymbolDecl,
+  pub symbol: &'a Symbol<'a>,
+  pub symbol_decl: &'a SymbolDecl<'a>,
 }
 
 impl Definition<'_> {
-  pub fn range(&self) -> &SourceRange {
+  pub fn range(&self) -> &Span {
     &self.symbol_decl.range
   }
 
   pub fn byte_range(&self) -> std::ops::Range<usize> {
-    self
-      .range()
-      .as_byte_range(self.module.text_info().range().start)
+    let range = self.range();
+    range.start as usize..range.end as usize
   }
 
   pub fn text(&self) -> &str {
-    self.module.text_info().range_text(self.range())
+    self.module.text_info().span_text(*self.range())
   }
 }
 
 #[derive(Debug, Clone)]
 pub enum DefinitionUnresolvedKind {
-  /// Could not resolve the swc Id.
-  Id(deno_ast::swc::ast::Id),
+  /// Could not resolve the Id.
+  Id(super::helpers::Id),
   /// Could not resolve the specifier relative to this module via deno_graph.
   Specifier(String),
   /// Could not resolve the part on the symbol.
@@ -92,8 +91,8 @@ pub struct DefinitionUnresolved<'a> {
 #[derive(Debug, Clone)]
 pub struct DefinitionPathLink<'a> {
   pub module: ModuleInfoRef<'a>,
-  pub symbol: &'a Symbol,
-  pub symbol_decl: &'a SymbolDecl,
+  pub symbol: &'a Symbol<'a>,
+  pub symbol_decl: &'a SymbolDecl<'a>,
   pub parts: Vec<String>,
   pub next: Vec<DefinitionPathNode<'a>>,
 }
@@ -105,7 +104,7 @@ pub enum DefinitionPathNodeResolved<'a> {
 }
 
 impl<'a> DefinitionPathNodeResolved<'a> {
-  pub fn symbol(&self) -> Option<&'a Symbol> {
+  pub fn symbol(&self) -> Option<&'a Symbol<'a>> {
     match self {
       Self::Link(link) => Some(link.symbol),
       Self::Definition(def) => Some(def.symbol),
@@ -197,7 +196,7 @@ impl<'a> DefinitionPathNode<'a> {
 pub fn find_definition_paths<'a>(
   module_graph: &'a ModuleGraph,
   module: ModuleInfoRef<'a>,
-  symbol: &'a Symbol,
+  symbol: &'a Symbol<'a>,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<DefinitionPathNode<'a>> {
   find_definition_paths_internal(
@@ -212,7 +211,7 @@ pub fn find_definition_paths<'a>(
 fn find_definition_paths_internal<'a>(
   module_graph: &'a ModuleGraph,
   module: ModuleInfoRef<'a>,
-  symbol: &'a Symbol,
+  symbol: &'a Symbol<'a>,
   visited_symbols: &mut HashSet<UniqueSymbolId>,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<DefinitionPathNode<'a>> {
@@ -482,7 +481,7 @@ pub fn resolve_symbol_dep<'a>(
 fn go_to_id_and_parts_definition_paths<'a>(
   module_graph: &'a ModuleGraph,
   module: ModuleInfoRef<'a>,
-  target_id: &deno_ast::swc::ast::Id,
+  target_id: &super::helpers::Id,
   parts: &[String],
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<DefinitionPathNode<'a>> {
@@ -553,7 +552,7 @@ fn resolve_qualified_export_name_internal<'a>(
 pub fn resolve_qualified_name<'a>(
   graph: &'a ModuleGraph,
   module: ModuleInfoRef<'a>,
-  symbol: &'a Symbol,
+  symbol: &'a Symbol<'a>,
   parts: &[String],
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
 ) -> Vec<DefinitionPathNode<'a>> {
@@ -570,7 +569,7 @@ pub fn resolve_qualified_name<'a>(
 fn resolve_qualified_name_internal<'a>(
   graph: &'a ModuleGraph,
   module: ModuleInfoRef<'a>,
-  symbol: &'a Symbol,
+  symbol: &'a Symbol<'a>,
   parts: &[String],
   visited_symbols: &mut HashSet<UniqueSymbolId>,
   specifier_to_module: &impl Fn(&ModuleSpecifier) -> Option<ModuleInfoRef<'a>>,
@@ -739,7 +738,7 @@ pub struct ResolvedExport<'a> {
 }
 
 impl<'a> ResolvedExport<'a> {
-  pub fn symbol(&self) -> &'a Symbol {
+  pub fn symbol(&self) -> &'a Symbol<'a> {
     self.module.symbol(self.symbol_id).unwrap()
   }
 }

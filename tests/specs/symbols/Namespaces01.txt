@@ -20,31 +20,23 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "Namespace1",
-            #2,
+            0,
         ): 1,
         (
             "test",
-            #3,
+            0,
         ): 2,
         (
             "Inner",
-            #5,
+            0,
         ): 3,
         (
             "test2",
-            #5,
+            0,
         ): 4,
-        (
-            "test",
-            #2,
-        ): 5,
-        (
-            "test2",
-            #2,
-        ): 6,
     },
     symbols: {
         0: Symbol {
@@ -57,16 +49,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export namespace Namespace1 {\n  export function test() {\n  }\n}\nexport namespace Namespace1.Inner {\n  export function test2() {\n  }\n}\n\nimport test = Namespace1.test;\nimport test2 = Namespace1.Inner.test2;\n\nexport { test, test2 };",
+                            <node @ 0..229>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            228,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 229,
                     },
                     flags: 0,
                 },
@@ -76,8 +64,8 @@ file:///mod.ts: EsModuleInfo {
             },
             exports: {
                 "Namespace1": 1,
-                "test": 7,
-                "test2": 8,
+                "test": 5,
+                "test2": 6,
             },
             members: {},
         },
@@ -93,32 +81,24 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export namespace Namespace1 {\n  export function test() {\n  }\n}",
+                            <node @ 0..62>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            62,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 62,
                     },
                     flags: 0,
                 },
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export namespace Namespace1.Inner {\n  export function test2() {\n  }\n}",
+                            <node @ 63..132>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            63,
-                        ),
-                        end: SourcePos(
-                            132,
-                        ),
+                    range: Span {
+                        start: 63,
+                        end: 132,
                     },
                     flags: 0,
                 },
@@ -145,16 +125,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export function test() {\n  }",
+                            <node @ 32..60>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            32,
-                        ),
-                        end: SourcePos(
-                            60,
-                        ),
+                    range: Span {
+                        start: 32,
+                        end: 60,
                     },
                     flags: 0,
                 },
@@ -175,16 +151,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "namespace Namespace1.Inner {\n  export function test2() {\n  }\n}",
+                            <node @ 91..132>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            91,
-                        ),
-                        end: SourcePos(
-                            132,
-                        ),
+                    range: Span {
+                        start: 91,
+                        end: 132,
                     },
                     flags: 0,
                 },
@@ -209,16 +181,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export function test2() {\n  }",
+                            <node @ 101..130>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            101,
-                        ),
-                        end: SourcePos(
-                            130,
-                        ),
+                    range: Span {
+                        start: 101,
+                        end: 130,
                     },
                     flags: 0,
                 },
@@ -237,22 +205,15 @@ file:///mod.ts: EsModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    kind: QualifiedTarget(
+                    kind: Target(
                         (
-                            "Namespace1",
-                            #2,
-                        ),
-                        [
                             "test",
-                        ],
+                            0,
+                        ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            134,
-                        ),
-                        end: SourcePos(
-                            164,
-                        ),
+                    range: Span {
+                        start: 214,
+                        end: 218,
                     },
                     flags: 0,
                 },
@@ -271,85 +232,15 @@ file:///mod.ts: EsModuleInfo {
             ),
             decls: [
                 SymbolDecl {
-                    kind: QualifiedTarget(
-                        (
-                            "Namespace1",
-                            #2,
-                        ),
-                        [
-                            "Inner",
-                            "test2",
-                        ],
-                    ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            165,
-                        ),
-                        end: SourcePos(
-                            203,
-                        ),
-                    },
-                    flags: 0,
-                },
-            ],
-            child_ids: {},
-            exports: {},
-            members: {},
-        },
-        7: Symbol {
-            module_id: ModuleId(
-                0,
-            ),
-            symbol_id: 7,
-            parent_id: Some(
-                0,
-            ),
-            decls: [
-                SymbolDecl {
-                    kind: Target(
-                        (
-                            "test",
-                            #2,
-                        ),
-                    ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            214,
-                        ),
-                        end: SourcePos(
-                            218,
-                        ),
-                    },
-                    flags: 0,
-                },
-            ],
-            child_ids: {},
-            exports: {},
-            members: {},
-        },
-        8: Symbol {
-            module_id: ModuleId(
-                0,
-            ),
-            symbol_id: 8,
-            parent_id: Some(
-                0,
-            ),
-            decls: [
-                SymbolDecl {
                     kind: Target(
                         (
                             "test2",
-                            #2,
+                            0,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            220,
-                        ),
-                        end: SourcePos(
-                            225,
-                        ),
+                    range: Span {
+                        start: 220,
+                        end: 225,
                     },
                     flags: 0,
                 },

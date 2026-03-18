@@ -132,73 +132,72 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  /** A */ export class ClassBasic {
-    /** B */ constructor(prop: string, other?: number){}
+  /** A */
+  export class ClassBasic {
+    /** B */
+    constructor(prop: string, other?: number) {}
   }
   export class ClassPrivateCtor {
-    private constructor(){}
+    private constructor() {}
   }
   export class ClassPrivateCtorWithOverloads {
-    private constructor(){}
+    private constructor() {}
   }
   export declare class ClassDeclarePrivateCtor {
     private constructor(prop: string, other: Private1);
   }
   export class ClassProtectedCtor {
-    protected constructor(prop: string, other?: number){}
+    protected constructor(prop: string, other?: number) {}
   }
   export class ClassProtectedCtorWithOverloads {
     protected constructor(prop: Public1);
-    protected constructor(param0?: any){}
+    protected constructor(param0?: any) {}
   }
   export class ClassCtorWithOverloads {
     constructor(prop: Public1);
-    constructor(param0?: any){}
+    constructor(param0?: any) {}
   }
   export class ClassPrivateCtorPublicParamProp {
     declare param1: Public2;
     declare private param2: any;
-    private constructor(){}
+    private constructor() {}
   }
   export class ClassCtorPublicParamProp {
     declare param1: Public3;
     declare private param2: any;
     declare private param3: any;
-    constructor(param1: Public3, param2: Public4, param3?: Public5){}
+    constructor(param1: Public3, param2: Public4, param3: Public5 = new Public5()) {}
   }
   export class ClassCtorPublicParamPropInit {
     declare param1: Public3;
-    constructor(param1?: Public3){}
+    constructor(param1: Public3 = new Private1()) {}
   }
   export class ClassCtorPublicParamPropOptional {
     declare param1?: string;
-    constructor(param1?: string){}
+    constructor(param1?: string) {}
   }
   export declare class AmbientClassCtor {
     constructor(public param: string, private value: number);
     constructor(public param: string);
   }
-  class Public1 {
-  }
-  class Public2 {
-  }
-  class Public3 {
-  }
-  class Public4 {
-  }
-  class Public5 {
-  }
+  class Public1 {}
+  class Public2 {}
+  class Public3 {}
+  class Public4 {}
+  class Public5 {}
   export class Base {
-    protected constructor(prop: string){}
+    protected constructor(prop: string) {}
   }
   export class Child extends Base {
-    private constructor(){
+    private constructor() {
       super({} as never);
     }
   }
   --- DTS ---
-  /** A */ export declare class ClassBasic {
-    /** B */ constructor(prop: string, other?: number);
+  /** A */
+  export declare class ClassBasic {
+    /** B */
+    constructor(prop: string, other?: number);
   }
   export declare class ClassPrivateCtor {
     private constructor();
@@ -241,16 +240,11 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     constructor(public param: string, private value: number);
     constructor(public param: string);
   }
-  declare class Public1 {
-  }
-  declare class Public2 {
-  }
-  declare class Public3 {
-  }
-  declare class Public4 {
-  }
-  declare class Public5 {
-  }
+  declare class Public1 {}
+  declare class Public2 {}
+  declare class Public3 {}
+  declare class Public4 {}
+  declare class Public5 {}
   export declare class Base {
     protected constructor(prop: string);
   }

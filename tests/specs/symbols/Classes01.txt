@@ -66,79 +66,79 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "A",
-            #2,
+            0,
         ): 1,
         (
             "C",
-            #2,
+            0,
         ): 4,
         (
             "BBase",
-            #2,
+            0,
         ): 5,
         (
             "IBase",
-            #2,
+            0,
         ): 6,
         (
             "B",
-            #2,
+            0,
         ): 7,
         (
             "PropValue",
-            #2,
-        ): 14,
-        (
-            "ReturnValue",
-            #2,
-        ): 15,
-        (
-            "Param",
-            #2,
+            0,
         ): 16,
         (
-            "PrivateParam",
-            #2,
+            "ReturnValue",
+            0,
         ): 17,
         (
-            "PrivateReturn",
-            #2,
+            "Param",
+            0,
         ): 18,
         (
-            "PrivateProp",
-            #2,
+            "PrivateParam",
+            0,
         ): 19,
         (
-            "CtorProp",
-            #2,
+            "PrivateReturn",
+            0,
         ): 20,
         (
-            "OverloadParam",
-            #2,
+            "PrivateProp",
+            0,
         ): 21,
         (
-            "OverloadReturn",
-            #2,
+            "CtorProp",
+            0,
         ): 22,
         (
-            "PrivateImplementationParam",
-            #2,
+            "OverloadParam",
+            0,
         ): 23,
         (
-            "PrivateImplementationReturn",
-            #2,
+            "OverloadReturn",
+            0,
         ): 24,
         (
-            "ClassWithStatic",
-            #2,
+            "PrivateImplementationParam",
+            0,
         ): 25,
         (
-            "ClassWithIndexSignatures",
-            #2,
+            "PrivateImplementationReturn",
+            0,
+        ): 26,
+        (
+            "ClassWithStatic",
+            0,
         ): 27,
+        (
+            "ClassWithIndexSignatures",
+            0,
+        ): 29,
     },
     symbols: {
         0: Symbol {
@@ -151,16 +151,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class A {\n  b: B;\n  constructor(c: C) {\n  }\n}\n\ninterface C {}\n\nclass BBase {\n\n}\n\ninterface IBase {\n}\n\nclass B extends BBase implements IBase {\n  private constructor(prop: CtorProp) {}\n  prop: PropValue;\n  method(): ReturnValue {\n  }\n\n  method2(other: Param): void {\n  }\n\n  private asdf(private: PrivateParam): PrivateReturn {\n  }\n\n  private prop: PrivateProp;\n\n  methodOverload(param: OverloadParam): OverloadReturn;\n  methodOverload(param: PrivateImplementationParam): PrivateImplementationReturn {\n  }\n\n  #private: PrivateProp;\n  #privateMethod(private: PrivateParam): PrivateReturn {\n  }\n}\n\nclass PropValue {}\nclass ReturnValue {}\nclass Param {}\nclass PrivateParam {}\nclass PrivateReturn {}\nclass PrivateProp {}\nclass CtorProp {}\nclass OverloadParam {}\nclass OverloadReturn {}\nclass PrivateImplementationParam {}\nclass PrivateImplementationReturn {}\n\nclass ClassWithStatic {\n  static prop: string;\n}\n\nclass ClassWithIndexSignatures {\n  static [value: string]: number;\n  [value: number]: string;\n  [value: string]: number;\n}",
+                            <node @ 0..1034>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            1033,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 1034,
                     },
                     flags: 0,
                 },
@@ -171,8 +167,6 @@ file:///mod.ts: EsModuleInfo {
                 5,
                 6,
                 7,
-                14,
-                15,
                 16,
                 17,
                 18,
@@ -183,7 +177,9 @@ file:///mod.ts: EsModuleInfo {
                 23,
                 24,
                 25,
+                26,
                 27,
+                29,
             },
             exports: {
                 "A": 1,
@@ -202,16 +198,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export class A {\n  b: B;\n  constructor(c: C) {\n  }\n}",
+                            <node @ 0..52>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            52,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 52,
                     },
                     flags: 0,
                 },
@@ -238,16 +230,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "b: B;",
+                            <node @ 19..24>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            19,
-                        ),
-                        end: SourcePos(
-                            24,
-                        ),
+                    range: Span {
+                        start: 19,
+                        end: 24,
                     },
                     flags: 0,
                 },
@@ -268,16 +256,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "constructor(c: C) {\n  }",
+                            <node @ 27..50>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            27,
-                        ),
-                        end: SourcePos(
-                            50,
-                        ),
+                    range: Span {
+                        start: 27,
+                        end: 50,
                     },
                     flags: 0,
                 },
@@ -298,16 +282,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface C {}",
+                            <node @ 54..68>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            54,
-                        ),
-                        end: SourcePos(
-                            68,
-                        ),
+                    range: Span {
+                        start: 54,
+                        end: 68,
                     },
                     flags: 0,
                 },
@@ -328,16 +308,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class BBase {\n\n}",
+                            <node @ 70..86>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            70,
-                        ),
-                        end: SourcePos(
-                            86,
-                        ),
+                    range: Span {
+                        start: 70,
+                        end: 86,
                     },
                     flags: 0,
                 },
@@ -358,16 +334,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "interface IBase {\n}",
+                            <node @ 88..107>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            88,
-                        ),
-                        end: SourcePos(
-                            107,
-                        ),
+                    range: Span {
+                        start: 88,
+                        end: 107,
                     },
                     flags: 0,
                 },
@@ -388,16 +360,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class B extends BBase implements IBase {\n  private constructor(prop: CtorProp) {}\n  prop: PropValue;\n  method(): ReturnValue {\n  }\n\n  method2(other: Param): void {\n  }\n\n  private asdf(private: PrivateParam): PrivateReturn {\n  }\n\n  private prop: PrivateProp;\n\n  methodOverload(param: OverloadParam): OverloadReturn;\n  methodOverload(param: PrivateImplementationParam): PrivateImplementationReturn {\n  }\n\n  #private: PrivateProp;\n  #privateMethod(private: PrivateParam): PrivateReturn {\n  }\n}",
+                            <node @ 109..599>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            109,
-                        ),
-                        end: SourcePos(
-                            599,
-                        ),
+                    range: Span {
+                        start: 109,
+                        end: 599,
                     },
                     flags: 0,
                 },
@@ -414,6 +382,8 @@ file:///mod.ts: EsModuleInfo {
                 11,
                 12,
                 13,
+                14,
+                15,
             },
         },
         8: Symbol {
@@ -428,16 +398,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "private constructor(prop: CtorProp) {}",
+                            <node @ 152..190>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            152,
-                        ),
-                        end: SourcePos(
-                            190,
-                        ),
+                    range: Span {
+                        start: 152,
+                        end: 190,
                     },
                     flags: 0,
                 },
@@ -458,32 +424,24 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "prop: PropValue;",
+                            <node @ 193..209>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            193,
-                        ),
-                        end: SourcePos(
-                            209,
-                        ),
+                    range: Span {
+                        start: 193,
+                        end: 209,
                     },
                     flags: 0,
                 },
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "private prop: PrivateProp;",
+                            <node @ 340..366>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            340,
-                        ),
-                        end: SourcePos(
-                            366,
-                        ),
+                    range: Span {
+                        start: 340,
+                        end: 366,
                     },
                     flags: 0,
                 },
@@ -504,16 +462,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "method(): ReturnValue {\n  }",
+                            <node @ 212..239>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            212,
-                        ),
-                        end: SourcePos(
-                            239,
-                        ),
+                    range: Span {
+                        start: 212,
+                        end: 239,
                     },
                     flags: 0,
                 },
@@ -534,16 +488,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "method2(other: Param): void {\n  }",
+                            <node @ 243..276>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            243,
-                        ),
-                        end: SourcePos(
-                            276,
-                        ),
+                    range: Span {
+                        start: 243,
+                        end: 276,
                     },
                     flags: 0,
                 },
@@ -564,16 +514,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "private asdf(private: PrivateParam): PrivateReturn {\n  }",
+                            <node @ 280..336>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            280,
-                        ),
-                        end: SourcePos(
-                            336,
-                        ),
+                    range: Span {
+                        start: 280,
+                        end: 336,
                     },
                     flags: 0,
                 },
@@ -594,32 +540,24 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "methodOverload(param: OverloadParam): OverloadReturn;",
+                            <node @ 370..423>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            370,
-                        ),
-                        end: SourcePos(
-                            423,
-                        ),
+                    range: Span {
+                        start: 370,
+                        end: 423,
                     },
                     flags: 0,
                 },
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "methodOverload(param: PrivateImplementationParam): PrivateImplementationReturn {\n  }",
+                            <node @ 426..510>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            426,
-                        ),
-                        end: SourcePos(
-                            510,
-                        ),
+                    range: Span {
+                        start: 426,
+                        end: 510,
                     },
                     flags: 1,
                 },
@@ -634,22 +572,18 @@ file:///mod.ts: EsModuleInfo {
             ),
             symbol_id: 14,
             parent_id: Some(
-                0,
+                7,
             ),
             decls: [
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class PropValue {}",
+                            <node @ 514..536>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            601,
-                        ),
-                        end: SourcePos(
-                            619,
-                        ),
+                    range: Span {
+                        start: 514,
+                        end: 536,
                     },
                     flags: 0,
                 },
@@ -664,22 +598,18 @@ file:///mod.ts: EsModuleInfo {
             ),
             symbol_id: 15,
             parent_id: Some(
-                0,
+                7,
             ),
             decls: [
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class ReturnValue {}",
+                            <node @ 539..597>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            620,
-                        ),
-                        end: SourcePos(
-                            640,
-                        ),
+                    range: Span {
+                        start: 539,
+                        end: 597,
                     },
                     flags: 0,
                 },
@@ -700,16 +630,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class Param {}",
+                            <node @ 601..619>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            641,
-                        ),
-                        end: SourcePos(
-                            655,
-                        ),
+                    range: Span {
+                        start: 601,
+                        end: 619,
                     },
                     flags: 0,
                 },
@@ -730,16 +656,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class PrivateParam {}",
+                            <node @ 620..640>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            656,
-                        ),
-                        end: SourcePos(
-                            677,
-                        ),
+                    range: Span {
+                        start: 620,
+                        end: 640,
                     },
                     flags: 0,
                 },
@@ -760,16 +682,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class PrivateReturn {}",
+                            <node @ 641..655>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            678,
-                        ),
-                        end: SourcePos(
-                            700,
-                        ),
+                    range: Span {
+                        start: 641,
+                        end: 655,
                     },
                     flags: 0,
                 },
@@ -790,16 +708,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class PrivateProp {}",
+                            <node @ 656..677>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            701,
-                        ),
-                        end: SourcePos(
-                            721,
-                        ),
+                    range: Span {
+                        start: 656,
+                        end: 677,
                     },
                     flags: 0,
                 },
@@ -820,16 +734,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class CtorProp {}",
+                            <node @ 678..700>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            722,
-                        ),
-                        end: SourcePos(
-                            739,
-                        ),
+                    range: Span {
+                        start: 678,
+                        end: 700,
                     },
                     flags: 0,
                 },
@@ -850,16 +760,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class OverloadParam {}",
+                            <node @ 701..721>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            740,
-                        ),
-                        end: SourcePos(
-                            762,
-                        ),
+                    range: Span {
+                        start: 701,
+                        end: 721,
                     },
                     flags: 0,
                 },
@@ -880,16 +786,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class OverloadReturn {}",
+                            <node @ 722..739>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            763,
-                        ),
-                        end: SourcePos(
-                            786,
-                        ),
+                    range: Span {
+                        start: 722,
+                        end: 739,
                     },
                     flags: 0,
                 },
@@ -910,16 +812,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class PrivateImplementationParam {}",
+                            <node @ 740..762>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            787,
-                        ),
-                        end: SourcePos(
-                            822,
-                        ),
+                    range: Span {
+                        start: 740,
+                        end: 762,
                     },
                     flags: 0,
                 },
@@ -940,16 +838,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class PrivateImplementationReturn {}",
+                            <node @ 763..786>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            823,
-                        ),
-                        end: SourcePos(
-                            859,
-                        ),
+                    range: Span {
+                        start: 763,
+                        end: 786,
                     },
                     flags: 0,
                 },
@@ -970,26 +864,18 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class ClassWithStatic {\n  static prop: string;\n}",
+                            <node @ 787..822>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            861,
-                        ),
-                        end: SourcePos(
-                            909,
-                        ),
+                    range: Span {
+                        start: 787,
+                        end: 822,
                     },
                     flags: 0,
                 },
             ],
-            child_ids: {
-                26,
-            },
-            exports: {
-                "prop": 26,
-            },
+            child_ids: {},
+            exports: {},
             members: {},
         },
         26: Symbol {
@@ -998,22 +884,18 @@ file:///mod.ts: EsModuleInfo {
             ),
             symbol_id: 26,
             parent_id: Some(
-                25,
+                0,
             ),
             decls: [
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "static prop: string;",
+                            <node @ 823..859>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            887,
-                        ),
-                        end: SourcePos(
-                            907,
-                        ),
+                    range: Span {
+                        start: 823,
+                        end: 859,
                     },
                     flags: 0,
                 },
@@ -1034,16 +916,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "class ClassWithIndexSignatures {\n  static [value: string]: number;\n  [value: number]: string;\n  [value: string]: number;\n}",
+                            <node @ 861..909>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            911,
-                        ),
-                        end: SourcePos(
-                            1033,
-                        ),
+                    range: Span {
+                        start: 861,
+                        end: 909,
                     },
                     flags: 0,
                 },
@@ -1052,11 +930,9 @@ file:///mod.ts: EsModuleInfo {
                 28,
             },
             exports: {
-                "%%dg_index%%": 28,
+                "prop": 28,
             },
-            members: {
-                29,
-            },
+            members: {},
         },
         28: Symbol {
             module_id: ModuleId(
@@ -1070,16 +946,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "static [value: string]: number;",
+                            <node @ 887..907>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            946,
-                        ),
-                        end: SourcePos(
-                            977,
-                        ),
+                    range: Span {
+                        start: 887,
+                        end: 907,
                     },
                     flags: 0,
                 },
@@ -1094,38 +966,70 @@ file:///mod.ts: EsModuleInfo {
             ),
             symbol_id: 29,
             parent_id: Some(
-                27,
+                0,
             ),
             decls: [
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "[value: number]: string;",
+                            <node @ 911..1033>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            980,
+                    range: Span {
+                        start: 911,
+                        end: 1033,
+                    },
+                    flags: 0,
+                },
+            ],
+            child_ids: {},
+            exports: {},
+            members: {
+                30,
+            },
+        },
+        30: Symbol {
+            module_id: ModuleId(
+                0,
+            ),
+            symbol_id: 30,
+            parent_id: Some(
+                29,
+            ),
+            decls: [
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            <node @ 946..977>,
                         ),
-                        end: SourcePos(
-                            1004,
-                        ),
+                    ),
+                    range: Span {
+                        start: 946,
+                        end: 977,
                     },
                     flags: 0,
                 },
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "[value: string]: number;",
+                            <node @ 980..1004>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            1007,
+                    range: Span {
+                        start: 980,
+                        end: 1004,
+                    },
+                    flags: 0,
+                },
+                SymbolDecl {
+                    kind: Definition(
+                        SymbolNode(
+                            <node @ 1007..1031>,
                         ),
-                        end: SourcePos(
-                            1031,
-                        ),
+                    ),
+                    range: Span {
+                        start: 1007,
+                        end: 1031,
                     },
                     flags: 0,
                 },
@@ -1137,30 +1041,34 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-2:19..24 [Id(("B", #2))]
-3:27..50 [Id(("C", #2))]
-7:109..599 [Id(("BBase", #2)), Id(("IBase", #2))]
-8:152..190 [Id(("CtorProp", #2))]
-9:193..209 [Id(("PropValue", #2))]
-9:340..366 [Id(("PrivateProp", #2))]
-10:212..239 [Id(("ReturnValue", #2))]
-11:243..276 [Id(("Param", #2))]
-12:280..336 [Id(("PrivateParam", #2)), Id(("PrivateReturn", #2))]
-13:370..423 [Id(("OverloadParam", #2)), Id(("OverloadReturn", #2))]
-13:426..510 [Id(("PrivateImplementationParam", #2)), Id(("PrivateImplementationReturn", #2))]
+2:19..24 [Id(("B", 0))]
+3:27..50 [Id(("C", 0))]
+7:109..599 [Id(("BBase", 0)), Id(("IBase", 0))]
+8:152..190 [Id(("CtorProp", 0))]
+9:193..209 [Id(("PropValue", 0))]
+9:340..366 [Id(("PrivateProp", 0))]
+10:212..239 [Id(("ReturnValue", 0))]
+11:243..276 [Id(("Param", 0))]
+12:280..336 [Id(("PrivateParam", 0)), Id(("PrivateReturn", 0))]
+13:370..423 [Id(("OverloadParam", 0)), Id(("OverloadReturn", 0))]
+13:426..510 [Id(("PrivateImplementationParam", 0)), Id(("PrivateImplementationReturn", 0))]
+14:514..536 [Id(("PrivateProp", 0))]
+15:539..597 [Id(("PrivateParam", 0)), Id(("PrivateReturn", 0))]
 
 == symbol deps (types only) ==
-2:19..24 [Id(("B", #2))]
-3:27..50 [Id(("C", #2))]
-7:109..599 [Id(("BBase", #2)), Id(("IBase", #2))]
-8:152..190 [Id(("CtorProp", #2))]
-9:193..209 [Id(("PropValue", #2))]
-9:340..366 [Id(("PrivateProp", #2))]
-10:212..239 [Id(("ReturnValue", #2))]
-11:243..276 [Id(("Param", #2))]
-12:280..336 [Id(("PrivateParam", #2)), Id(("PrivateReturn", #2))]
-13:370..423 [Id(("OverloadParam", #2)), Id(("OverloadReturn", #2))]
-13:426..510 [Id(("PrivateImplementationParam", #2)), Id(("PrivateImplementationReturn", #2))]
+2:19..24 [Id(("B", 0))]
+3:27..50 [Id(("C", 0))]
+7:109..599 [Id(("BBase", 0)), Id(("IBase", 0))]
+8:152..190 [Id(("CtorProp", 0))]
+9:193..209 [Id(("PropValue", 0))]
+9:340..366 [Id(("PrivateProp", 0))]
+10:212..239 [Id(("ReturnValue", 0))]
+11:243..276 [Id(("Param", 0))]
+12:280..336 [Id(("PrivateParam", 0)), Id(("PrivateReturn", 0))]
+13:370..423 [Id(("OverloadParam", 0)), Id(("OverloadReturn", 0))]
+13:426..510 [Id(("PrivateImplementationParam", 0)), Id(("PrivateImplementationReturn", 0))]
+14:514..536 [Id(("PrivateProp", 0))]
+15:539..597 [Id(("PrivateParam", 0)), Id(("PrivateReturn", 0))]
 
 == export definitions ==
 [A]: file:///mod.ts:0..52
