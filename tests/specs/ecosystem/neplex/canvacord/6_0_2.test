@@ -472,18 +472,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /src/template/Builder.tsx:45:7
-   | 
-45 | const FluentEmojiBase = (s: string) => `https://cdn.jsdelivr.net/gh/shuding/fluentui-emoji-unicode/assets/${s}.svg`;
-   |       ^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   | 
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
 error[missing-explicit-type]: missing explicit type in the public API
   --> /src/template/Builder.tsx:47:14
    | 
@@ -1132,18 +1120,6 @@ error[missing-explicit-type]: missing explicit type in the public API
 
   info: all symbols in the public API must have an explicit type
   docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
- --> /src/assets/AssetsFactory.ts:8:7
-  | 
-8 | const prepareURL = (path: string) => `${BASE_URL}/${path}`;
-  |       ^^^^^^^^^^ this function is missing an explicit return type
-  | 
-  = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
 error[missing-explicit-type]: missing explicit type in the public API

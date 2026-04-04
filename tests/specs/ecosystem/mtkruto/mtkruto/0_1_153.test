@@ -161,30 +161,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-type]: missing explicit type in the public API
-  --> /client/4_client.ts:41:14
-   | 
-41 | export const handleMigrationError = Symbol();
-   |              ^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
-   | 
-   = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-type]: missing explicit type in the public API
-   --> /client/4_client.ts:161:14
-    | 
-161 | export const restartAuth = Symbol();
-    |              ^^^^^^^^^^^ this symbol is missing an explicit type
-    | 
-    = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-type]: missing explicit type in the public API
    --> /client/4_client.ts:416:3
     | 
 416 |   api = new Proxy({} as unknown as Api, {
@@ -44944,42 +44920,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
-error[missing-explicit-type]: missing explicit type in the public API
-  --> /tl/1_tl_object.ts:56:14
-   | 
-56 | export const serialize = Symbol();
-   |              ^^^^^^^^^ this symbol is missing an explicit type
-   | 
-   = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-type]: missing explicit type in the public API
-  --> /tl/1_tl_object.ts:58:14
-   | 
-58 | export const as = Symbol();
-   |              ^^ this symbol is missing an explicit type
-   | 
-   = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-type]: missing explicit type in the public API
-  --> /tl/1_tl_object.ts:60:14
-   | 
-60 | export const name = Symbol();
-   |              ^^^^ this symbol is missing an explicit type
-   | 
-   = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
 error[missing-explicit-return-type]: missing explicit return type in the public API
   --> /tl/1_tl_object.ts:62:17
    | 
@@ -45497,36 +45437,12 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
- --> /storage/0_storage.ts:8:8
-  | 
-8 |     P: (string: string) => `session.${string}`,
-  |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-  | 
-  = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
  --> /storage/0_storage.ts:9:17
   | 
 9 |     serverSalt: () => [K.session.P("serverSalt")],
   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
   | 
   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /storage/0_storage.ts:12:8
-   | 
-12 |     P: (string: string) => `auth.${string}`,
-   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   | 
-   = hint: add an explicit return type to the function
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
@@ -45561,18 +45477,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 15 |     accountType: () => [K.auth.P("accountType")],
    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   | 
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /storage/0_storage.ts:18:8
-   | 
-18 |     P: (string: string) => `updates.${string}`,
-   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
    | 
    = hint: add an explicit return type to the function
 
@@ -45633,18 +45537,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 23 |     channelPts: (channelId: bigint) => [K.updates.P("channelPts"), channelId],
    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   | 
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /storage/0_storage.ts:26:8
-   | 
-26 |     P: (string: string) => `cache.${string}`,
-   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
    | 
    = hint: add an explicit return type to the function
 
@@ -45797,18 +45689,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /storage/0_storage.ts:41:8
-   | 
-41 |     P: (string: string) => `messages.${string}`,
-   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   | 
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
   --> /storage/0_storage.ts:42:15
    | 
 42 |     messages: (chatId: number) => [K.messages.P("messages"), chatId],
@@ -45849,18 +45729,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
    | 
 45 |     messageRef: (messageId: number) => [...K.messages.allMessageRefs(), messageId],
    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
-   | 
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /storage/0_storage.ts:48:8
-   | 
-48 |     P: (string: string) => `chatlists.${string}`,
-   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
    | 
    = hint: add an explicit return type to the function
 
