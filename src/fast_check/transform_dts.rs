@@ -470,6 +470,13 @@ impl<'a> FastCheckDtsTransformer<'a> {
           }),
         ))
       }
+      Expr::Tpl(_) => {
+        // Untagged template literals always produce strings.
+        Some(TsType::TsKeywordType(TsKeywordType {
+          kind: TsKeywordTypeKind::TsStringKeyword,
+          span: DUMMY_SP,
+        }))
+      }
       // Since fast check requires explicit type annotations these
       // can be dropped as they are not part of an export declaration
       Expr::This(_)
@@ -484,7 +491,6 @@ impl<'a> FastCheckDtsTransformer<'a> {
       | Expr::New(_)
       | Expr::Seq(_)
       | Expr::Ident(_)
-      | Expr::Tpl(_)
       | Expr::TaggedTpl(_)
       | Expr::Class(_)
       | Expr::Yield(_)
