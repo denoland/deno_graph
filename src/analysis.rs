@@ -98,6 +98,7 @@ impl ImportAttributes {
 pub enum DynamicDependencyKind {
   #[default]
   Import,
+  ImportDefer,
   ImportSource,
   Require,
 }
@@ -106,6 +107,7 @@ pub enum DynamicDependencyKind {
 #[serde(rename_all = "camelCase")]
 pub enum StaticDependencyKind {
   Import,
+  ImportDefer,
   ImportSource,
   ImportType,
   ImportEquals,
