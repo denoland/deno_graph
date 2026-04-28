@@ -57,7 +57,7 @@ deno_unsync.workspace = true
 futures = "0.3.26"
 indexmap = { version = "2", features = ["serde"] }
 log = "0.4.20"
-monch = "0.5.0"
+monch = "0.6.0"
 once_cell = "1.16.0"
 parking_lot = "0.12.0"
 regex = "1.10.2"
