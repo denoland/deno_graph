@@ -724,7 +724,7 @@ Deno.test({
         );
       },
       Error,
-      "The module's source code could not be parsed",
+      "at file:///a/test.js:",
     );
   },
 });

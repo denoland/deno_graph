@@ -566,10 +566,9 @@ impl fmt::Display for ModuleErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Self::Load { err, .. } => err.fmt(f),
-      Self::Parse { diagnostic, .. } => write!(
-        f,
-        "The module's source code could not be parsed: {diagnostic}"
-      ),
+      Self::Parse { diagnostic, .. } => {
+        write!(f, "{diagnostic}")
+      }
       Self::WasmParse { specifier, err, .. } => write!(
         f,
         "The Wasm module could not be parsed: {err}\n  Specifier: {specifier}"
