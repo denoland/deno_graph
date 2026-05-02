@@ -1,0 +1,93 @@
+# https://jsr.io/@scope/a/meta.json
+{"versions": { "1.0.0": {} } }
+
+# https://jsr.io/@scope/a/1.0.0_meta.json
+{ "exports": { ".": "./mod.ts" } }
+
+# https://jsr.io/@scope/a/1.0.0/mod.ts
+export interface Type<T> {
+  __brand: T;
+}
+
+export function makeType<T>(): Type<T> {
+  return {} as Type<T>;
+}
+
+export function fn(): void {}
+
+export declare namespace fn {
+  export var type: Type<string>;
+}
+
+fn.type = makeType();
+
+# mod.ts
+import 'jsr:@scope/a'
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a",
+          "code": {
+            "specifier": "jsr:@scope/a",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 21
+              }
+            }
+          }
+        }
+      ],
+      "size": 22,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 231,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a": "https://jsr.io/@scope/a/1.0.0/mod.ts"
+  },
+  "packages": {
+    "@scope/a@*": "@scope/a@1.0.0"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
+  {}
+  export interface Type<T> {
+    __brand: T;
+  }
+  export function makeType<T>(): Type<T> {
+    return {} as never;
+  }
+  export function fn(): void {}
+  export declare namespace fn {
+    export var type: Type<string>;
+  }
+  --- DTS ---
+  export interface Type<T> {
+    __brand: T;
+  }
+  export declare function makeType<T>(): Type<T>;
+  export declare function fn(): void;
+  export declare namespace fn {
+    export var type: Type<string>;
+  }

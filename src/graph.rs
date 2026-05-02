@@ -3891,6 +3891,7 @@ fn fill_module_dependencies(
           }
           StaticDependencyKind::ImportSource => ImportKind::EsSource,
           StaticDependencyKind::Import
+          | StaticDependencyKind::ImportDefer
           | StaticDependencyKind::ImportEquals
           | StaticDependencyKind::Export
           | StaticDependencyKind::ExportEquals => ImportKind::Es,
@@ -3903,6 +3904,7 @@ fn fill_module_dependencies(
           range: desc.specifier_range,
           resolution_mode: match desc.kind {
             StaticDependencyKind::Import
+            | StaticDependencyKind::ImportDefer
             | StaticDependencyKind::ImportSource
             | StaticDependencyKind::Export
             | StaticDependencyKind::ImportType
@@ -3969,6 +3971,7 @@ fn fill_module_dependencies(
           range: desc.argument_range,
           resolution_mode: match desc.kind {
             DynamicDependencyKind::Import
+            | DynamicDependencyKind::ImportDefer
             | DynamicDependencyKind::ImportSource => {
               if media_type.is_declaration() {
                 None
@@ -3985,7 +3988,8 @@ fn fill_module_dependencies(
             .map(|specifier| Import {
               specifier,
               kind: match desc.kind {
-                DynamicDependencyKind::Import => ImportKind::Es,
+                DynamicDependencyKind::Import
+                | DynamicDependencyKind::ImportDefer => ImportKind::Es,
                 DynamicDependencyKind::ImportSource => ImportKind::EsSource,
                 DynamicDependencyKind::Require => ImportKind::Require,
               },

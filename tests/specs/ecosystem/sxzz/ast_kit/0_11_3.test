@@ -1,18 +1,28 @@
 sxzz/ast-kit/0.11.3
 -- deno.lock --
 {}
+
 ===
 
-== FAST CHECK EMIT FAILED ==
-error[missing-explicit-type]: missing explicit type in the public API
- --> /src/utils.ts:5:14
-  | 
-5 | export const TS_NODE_TYPES = [
-  |              ^^^^^^^^^^^^^ this symbol is missing an explicit type
-  | 
-  = hint: add an explicit type annotation to the symbol
+== FAST CHECK EMIT PASSED ==
 
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
+== TYPE CHECK FAILED ==
+-- stdout --
 
+-- stderr --
+TS2344 [ERROR]: Type 'T' does not satisfy the constraint 'File | Expression'.
+  Type 'T' is not assignable to type 'YieldExpression'.
+export type ParseResult<T> = _ParseResult<T> & {
+                                          ^
+    at file://<tmpdir>/src/parse.ts:3:43
+
+TS2208 [ERROR]:     This type parameter might need an `extends t.YieldExpression` constraint.
+    export type ParseResult<T> = _ParseResult<T> & {
+                            ^
+        at file://<tmpdir>/src/parse.ts:3:25TS2208 [ERROR]:     This type parameter might need an `extends t.File | t.Expression` constraint.
+    export type ParseResult<T> = _ParseResult<T> & {
+                            ^
+        at file://<tmpdir>/src/parse.ts:3:25
+
+error: Type checking failed.
 
