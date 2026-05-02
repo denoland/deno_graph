@@ -71,11 +71,6 @@ TS2304 [ERROR]: Cannot find name 'Element'.
                                                                                   ~~~~~~~
     at file://<tmpdir>/src/dom/is-scrollable.ts:5:83
 
-TS2304 [ERROR]: Cannot find name 'DOMRectReadOnly'.
-export interface DOMRectState extends Pick<DOMRectReadOnly, 'width' | 'height' | 'x' | 'y' | 'top' | 'left' | 'bottom' | 'right'> {
-                                           ~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/react/use-bounding-client-rect.ts:2:44
-
 TS2304 [ERROR]: Cannot find name 'Element'.
  */ export function useBoundingClientRect<T extends Element>(ref: RefObject<T>, extraDeps?: DependencyList): DOMRectState {
                                                     ~~~~~~~
@@ -86,7 +81,7 @@ TS2304 [ERROR]: Cannot find name 'HTMLElement'.
                                                   ~~~~~~~~~~~
     at file://<tmpdir>/src/react/use-drag-and-drop.ts:22:51
 
-Found 10 errors.
+Found 9 errors.
 
 error: Type checking failed.
 
