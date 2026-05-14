@@ -13,12 +13,12 @@ lightbery/dynamic-cli/1.0.4
 -- stdout --
 
 -- stderr --
-TS2580 [ERROR]: Cannot find name 'Buffer'.
+TS2591 [ERROR]: Cannot find name 'Buffer'.
   public simulateInput(data: Buffer): void {}
                              ~~~~~~
     at file://<tmpdir>/DynamicCLI.ts:45:30
 
-TS2580 [ERROR]: Cannot find name 'Buffer'.
+TS2591 [ERROR]: Cannot find name 'Buffer'.
   public listen(name: 'input', callback: (key?: Buffer) => any): void;
                                                 ~~~~~~
     at file://<tmpdir>/DynamicCLI.ts:54:49
