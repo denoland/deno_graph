@@ -127,13 +127,24 @@ fn wasm_module_deps_to_dts(wasm_deps: &wasm_dep_analyzer::WasmDeps) -> String {
                   .append(value_type_to_ts_type(*param, TypePosition::Input));
               }
               builder.append("): ");
-              builder.append(
-                signature
-                  .returns
-                  .first()
-                  .map(|t| value_type_to_ts_type(*t, TypePosition::Output))
-                  .unwrap_or("void"),
-              );
+              match signature.returns.as_slice() {
+                [] => builder.append("void"),
+                [single] => builder
+                  .append(value_type_to_ts_type(*single, TypePosition::Output)),
+                multiple => {
+                  builder.append('[');
+                  for (i, ret) in multiple.iter().enumerate() {
+                    if i > 0 {
+                      builder.append(", ");
+                    }
+                    builder.append(value_type_to_ts_type(
+                      *ret,
+                      TypePosition::Output,
+                    ));
+                  }
+                  builder.append(']');
+                }
+              }
               builder.append(";\n");
             }
             Err(_) => add_var("unknown"),
@@ -265,6 +276,16 @@ mod test {
           index: 9,
           export_type: wasm_dep_analyzer::ExportType::Unknown,
         },
+        Export {
+          name: "add_and_sub",
+          index: 10,
+          export_type: wasm_dep_analyzer::ExportType::Function(Ok(
+            FunctionSignature {
+              params: vec![ValueType::I32, ValueType::I32],
+              returns: vec![ValueType::I32, ValueType::I32],
+            },
+          )),
+        },
       ],
     });
     assert_eq!(
@@ -284,6 +305,7 @@ declare const __deno_wasm_export_8__: unknown;
 export { __deno_wasm_export_8__ as \"name9--\" };
 declare const __deno_wasm_export_9__: unknown;
 export { __deno_wasm_export_9__ as \"default\" };
+export declare function add_and_sub(arg0: number, arg1: number): [number, number];
 "
     );
   }
