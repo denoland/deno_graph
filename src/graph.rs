@@ -8388,6 +8388,63 @@ mod tests {
 
   #[cfg(feature = "fast_check")]
   #[tokio::test]
+  async fn fast_check_strips_private_declare_field_decorators() {
+    let mut exports = IndexMap::new();
+    exports.insert(".".to_string(), "./foo.ts".to_string());
+
+    let workspace_members = vec![WorkspaceMember {
+      base: Url::parse("file:///").unwrap(),
+      exports: exports.clone(),
+      name: "@foo/bar".into(),
+      version: Some(Version::parse_standard("1.0.0").unwrap()),
+    }];
+    let mut test_loader = MemoryLoader::default();
+    test_loader.add_source_with_text(
+      "file:///foo.ts",
+      r#"
+function Inject(_token: string) {
+  return () => {};
+}
+
+export class Auth {
+  @Inject("jwt")
+  private readonly options?: { issuer: string };
+}
+"#,
+    );
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///foo.ts").unwrap()],
+        Vec::new(),
+        &test_loader,
+        BuildOptions {
+          ..Default::default()
+        },
+      )
+      .await;
+    graph.build_fast_check_type_graph(BuildFastCheckTypeGraphOptions {
+      fast_check_cache: None,
+      fast_check_dts: false,
+      workspace_fast_check: WorkspaceFastCheckOption::Enabled(
+        &workspace_members,
+      ),
+      ..Default::default()
+    });
+    graph.valid().unwrap();
+    let module = graph.get(&Url::parse("file:///foo.ts").unwrap()).unwrap();
+    let module = module.js().unwrap();
+    let FastCheckTypeModuleSlot::Module(fsm) =
+      module.fast_check.clone().unwrap()
+    else {
+      unreachable!();
+    };
+    assert!(!fsm.source.contains("@Inject"));
+    assert!(fsm.source.contains("declare private readonly options?: any;"));
+  }
+
+  #[cfg(feature = "fast_check")]
+  #[tokio::test]
   async fn fast_check_external() {
     use deno_ast::EmittedSourceText;
 

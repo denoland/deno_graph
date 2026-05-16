@@ -1004,6 +1004,7 @@ impl<'a> FastCheckTransformer<'a> {
           n.definite = false;
           n.is_override = false;
           n.value = None;
+          n.decorators.clear();
           return Ok(true);
         }
         if n.type_ann.is_none() {
