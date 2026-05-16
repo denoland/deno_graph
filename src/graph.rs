@@ -8440,7 +8440,11 @@ export class Auth {
       unreachable!();
     };
     assert!(!fsm.source.contains("@Inject"));
-    assert!(fsm.source.contains("declare private readonly options?: any;"));
+    assert!(
+      fsm
+        .source
+        .contains("declare private readonly options?: any;")
+    );
   }
 
   #[cfg(feature = "fast_check")]
