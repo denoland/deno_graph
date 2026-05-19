@@ -312,7 +312,6 @@ pub async fn js_create_graph(
         is_dynamic: false,
         skip_dynamic_deps: false,
         unstable_bytes_imports: true,
-        unstable_text_imports: true,
         unstable_css_imports: true,
         unstable_config_imports: true,
         prefer_cached_jsr_versions: false,

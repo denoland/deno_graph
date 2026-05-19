@@ -31,8 +31,8 @@ asdf
       "error": "The import attribute type of \"bytes\" is unsupported.\n  Specifier: file:///b.ts"
     },
     {
-      "specifier": "file:///c.txt",
-      "error": "The import attribute type of \"text\" is unsupported.\n  Specifier: file:///c.txt"
+      "kind": "external",
+      "specifier": "file:///c.txt"
     },
     {
       "kind": "esm",

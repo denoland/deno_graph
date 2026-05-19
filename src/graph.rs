@@ -1693,8 +1693,6 @@ pub struct BuildOptions<'a> {
   pub skip_dynamic_deps: bool,
   /// Support unstable bytes imports.
   pub unstable_bytes_imports: bool,
-  /// Support unstable text imports.
-  pub unstable_text_imports: bool,
   /// Support unstable css imports.
   pub unstable_css_imports: bool,
   /// Permit the `yaml`/`toml`/`json5`/`jsonc` import attribute types. deno_graph
@@ -1729,7 +1727,6 @@ impl Default for BuildOptions<'_> {
       is_dynamic: false,
       skip_dynamic_deps: false,
       unstable_bytes_imports: false,
-      unstable_text_imports: false,
       unstable_css_imports: false,
       unstable_config_imports: false,
       executor: Default::default(),
@@ -4635,7 +4632,6 @@ struct Builder<'a, 'graph> {
   skip_dynamic_deps: bool,
   was_dynamic_root: bool,
   unstable_bytes_imports: bool,
-  unstable_text_imports: bool,
   unstable_css_imports: bool,
   unstable_config_imports: bool,
   file_system: &'a FileSystem,
@@ -4672,7 +4668,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       skip_dynamic_deps: options.skip_dynamic_deps,
       was_dynamic_root: options.is_dynamic,
       unstable_bytes_imports: options.unstable_bytes_imports,
-      unstable_text_imports: options.unstable_text_imports,
       unstable_css_imports: options.unstable_css_imports,
       unstable_config_imports: options.unstable_config_imports,
       file_system: options.file_system,
@@ -5539,10 +5534,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         );
         return;
       }
+
       if let Some(attribute) = &options.maybe_attribute_type {
         let is_allowed = match attribute.kind.as_str() {
           "bytes" => self.unstable_bytes_imports,
-          "text" => self.unstable_text_imports,
+          "text" => true,
           "css" => self.unstable_css_imports,
           _ => false,
         };

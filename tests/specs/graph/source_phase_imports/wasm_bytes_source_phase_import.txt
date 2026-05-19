@@ -1,4 +1,4 @@
-~~ {"unstableBytesImports":true,"unstableTextImports":true} ~~
+~~ {"unstableBytesImports":true} ~~
 # mod.ts
 import source module from "./math.wasm" with { type: "bytes" };
 
