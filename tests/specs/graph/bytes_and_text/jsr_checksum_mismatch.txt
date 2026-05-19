@@ -1,4 +1,4 @@
-~~ {"unstableBytesImports":true,"unstableTextImports":true} ~~
+~~ {"unstableBytesImports":true} ~~
 # https://jsr.io/@scope/a/meta.json
 {
   "versions": {

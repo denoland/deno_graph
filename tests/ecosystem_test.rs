@@ -297,7 +297,6 @@ async fn test_version(
         is_dynamic: false,
         skip_dynamic_deps: false,
         unstable_bytes_imports: false,
-        unstable_text_imports: false,
         module_analyzer: &module_analyzer,
         module_info_cacher: Default::default(),
         file_system: &NullFileSystem,
