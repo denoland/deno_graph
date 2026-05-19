@@ -5343,7 +5343,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         return;
       }
 
-
       if let Some(attribute) = &options.maybe_attribute_type {
         let is_allowed = match attribute.kind.as_str() {
           "bytes" => self.unstable_bytes_imports,
