@@ -613,14 +613,25 @@ pub struct MemoryLoader {
   cache_info: HashMap<ModuleSpecifier, CacheInfo>,
 }
 
+/// A source entry used by [`MemoryLoader`].
+///
+/// `S` is used for specifier and header strings. `C` is used for module
+/// content, and may be either text or bytes.
 pub enum Source<S, C> {
+  /// Module source text or bytes for a resolved specifier.
   Module {
+    /// The final specifier of the loaded module.
     specifier: S,
+    /// Optional response headers associated with the module.
     maybe_headers: Option<Vec<(S, S)>>,
+    /// The module contents.
     content: C,
   },
+  /// A redirect response pointing at another specifier.
   Redirect(S),
+  /// A source that should be treated as external.
   External(S),
+  /// A loader error for the requested source.
   Err(Arc<dyn JsErrorClass>),
 }
 
@@ -657,9 +668,18 @@ impl<S: AsRef<str>, C: AsRef<[u8]>> Source<S, C> {
   }
 }
 
+/// In-memory sources passed to [`MemoryLoader::new`].
+///
+/// Each tuple maps a requested specifier to the [`Source`] returned by the
+/// loader. The requested specifier is the lookup key, while `Source::Module`
+/// can contain the final specifier after any redirect-like behavior.
 pub type MemoryLoaderSources<S, C> = Vec<(S, Source<S, C>)>;
 
 impl MemoryLoader {
+  /// Creates a new loader from in-memory source and cache metadata.
+  ///
+  /// `sources` maps requested specifiers to loader responses. `cache_info`
+  /// maps specifiers to metadata returned from [`Loader::get_cache_info`].
   pub fn new<S: AsRef<str>, C: AsRef<[u8]>>(
     sources: MemoryLoaderSources<S, C>,
     cache_info: Vec<(S, CacheInfo)>,
