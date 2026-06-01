@@ -69,6 +69,8 @@ thiserror.workspace = true
 twox-hash = { version = "1.6.3", optional = true }
 url = { version = "2.5.4", features = ["serde"] }
 wasm_dep_analyzer = "0.4.0"
+wit-component = "0.244.0"
+wit-parser = "0.244.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 deno_unsync = { workspace = true, features = ["tokio"] }

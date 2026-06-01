@@ -81,6 +81,7 @@ use sys_traits::FileType;
 use sys_traits::FsDirEntry;
 use thiserror::Error;
 use url::Url;
+use wasm::WasmDtsError;
 use wasm::wasm_module_to_dts;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
@@ -450,7 +451,7 @@ pub enum ModuleErrorKind {
     /// the file should be reloaded.
     mtime: Option<SystemTime>,
     #[inherit]
-    err: wasm_dep_analyzer::ParseError,
+    err: WasmDtsError,
   },
   #[class(type)]
   UnsupportedMediaType {
