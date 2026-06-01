@@ -226,8 +226,8 @@ file:///mod.ts: EsModuleInfo {
                         ),
                     ),
                     range: Span {
-                        start: 46,
-                        end: 47,
+                        start: 31,
+                        end: 48,
                     },
                     flags: 0,
                 },

@@ -2513,10 +2513,15 @@ impl<'a> SymbolFiller<'a> {
     match &default_decl.declaration {
       ExportDefaultDeclarationKind::Identifier(ident) => {
         // note: don't associate identifier exports with the swc id because
-        // we don't want the SymbolDeclKind appearing with the definition symbols
+        // we don't want the SymbolDeclKind appearing with the definition symbols.
+        // Use the full statement span (not just the identifier) so the
+        // `export default <ident>` statement is retained in the output.
         self.builder.ensure_default_export_symbol(
           module_symbol,
-          SymbolDecl::new(SymbolDeclKind::Target(ident.to_id()), ident.span),
+          SymbolDecl::new(
+            SymbolDeclKind::Target(ident.to_id()),
+            default_decl.span,
+          ),
         );
       }
       _expr => {
