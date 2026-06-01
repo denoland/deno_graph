@@ -84,7 +84,6 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   class PublicOther {}
   class PublicOther2 {}
-  class PrivateOther2 {}
   --- DTS ---
   export declare class Test {
     prop1: PublicOther;
@@ -95,4 +94,3 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   declare class PublicOther {}
   declare class PublicOther2 {}
-  declare class PrivateOther2 {}

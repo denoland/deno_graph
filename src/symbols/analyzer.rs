@@ -938,9 +938,11 @@ impl<'a> SymbolNodeRef<'a> {
       }
       SymbolNodeRef::ClassMethod(n) => {
         n.accessibility == Some(TSAccessibility::Private)
+          || n.key.is_private_identifier()
       }
       SymbolNodeRef::ClassProp(n) => {
         n.accessibility == Some(TSAccessibility::Private)
+          || n.key.is_private_identifier()
       }
       SymbolNodeRef::ClassParamProp(n) => {
         n.accessibility == Some(TSAccessibility::Private)
