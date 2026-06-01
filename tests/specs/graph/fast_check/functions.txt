@@ -141,7 +141,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export function test5<T extends PublicOther>(param?: number): T {
     return {} as never;
   }
-  export function test6<T = PublicOther>(param: number = 2): T {
+  export function test6<T = PublicOther>(param?: number): T {
     return {} as never;
   }
   export function test7(param?: number): number;

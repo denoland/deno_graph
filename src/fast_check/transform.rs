@@ -1684,6 +1684,37 @@ impl<'a> FastCheckTransformer<'a> {
               range: self.source_range_to_range(pat_span),
             })?;
           }
+        } else if param.initializer.is_some() {
+          // Typed parameter with a default value (e.g. `p: T = expr`). The
+          // default is runtime-only, so drop it. If the parameter can be
+          // trailing-optional, mark it optional; otherwise widen its type to
+          // include `undefined`.
+          param.initializer = None;
+          if is_optional {
+            param.optional = true;
+          } else if let Some(ta) = param.type_annotation.take() {
+            let inner_type = ta.type_annotation.clone_in(self.allocator);
+            let union_type = TSType::TSUnionType(OxcBox::new_in(
+              TSUnionType {
+                node_id: Cell::new(NodeId::DUMMY),
+                span: SPAN,
+                types: {
+                  let mut types = OxcVec::with_capacity_in(2, self.allocator);
+                  types.push(inner_type);
+                  types.push(TSType::TSUndefinedKeyword(OxcBox::new_in(
+                    TSUndefinedKeyword {
+                      node_id: Cell::new(NodeId::DUMMY),
+                      span: SPAN,
+                    },
+                    self.allocator,
+                  )));
+                  types
+                },
+              },
+              self.allocator,
+            ));
+            param.type_annotation = Some(type_ann(self.allocator, union_type));
+          }
         }
       }
       BindingPattern::AssignmentPattern(_) => {
