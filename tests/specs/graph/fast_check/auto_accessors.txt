@@ -82,7 +82,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     declare private static private_static_unanalyzable: any;
   }
   export class PrivateAccessor {
-    declare #private!: any;
+    #private!: unknown;
   }
   --- DTS ---
   export declare class AutoAccessor {

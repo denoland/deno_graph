@@ -132,11 +132,10 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     }
   }
   export class Test2 {
-    declare #private!: any;
+    #private!: unknown;
     public method1(): void {}
     protected method2(): void {}
     declare private tsPrivateMethod: any;
-    #privateMethod(): void {}
   }
   class PublicOther {}
   class PublicOther2 {}

@@ -35,6 +35,13 @@ pub fn ts_keyword_type<'a>(
       },
       allocator,
     )),
+    TSKeywordKind::Unknown => TSType::TSUnknownKeyword(Box::new_in(
+      TSUnknownKeyword {
+        node_id: Cell::new(NodeId::DUMMY),
+        span: SPAN,
+      },
+      allocator,
+    )),
     TSKeywordKind::Boolean => TSType::TSBooleanKeyword(Box::new_in(
       TSBooleanKeyword {
         node_id: Cell::new(NodeId::DUMMY),
@@ -84,6 +91,7 @@ pub fn ts_keyword_type<'a>(
 /// since OXC doesn't have a unified TsKeywordTypeKind.
 pub enum TSKeywordKind {
   Any,
+  Unknown,
   Boolean,
   Number,
   String,

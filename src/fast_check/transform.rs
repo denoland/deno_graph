@@ -870,14 +870,15 @@ impl<'a> FastCheckTransformer<'a> {
             value: None,
             computed: false,
             r#static: false,
-            declare: true,
+            // `declare` is not allowed on a `#`-private member (TS18019).
+            declare: false,
             r#override: false,
             optional: false,
             definite: true,
             readonly: false,
             type_annotation: Some(type_ann(
               self.allocator,
-              ts_keyword_type(self.allocator, TSKeywordKind::Any),
+              ts_keyword_type(self.allocator, TSKeywordKind::Unknown),
             )),
             accessibility: None,
           },
@@ -915,6 +916,12 @@ impl<'a> FastCheckTransformer<'a> {
             insert_members,
             is_ambient,
           );
+        }
+
+        if n.key.is_private_identifier() {
+          // `#`-private members are not part of the public API; they're
+          // collapsed into a single `#private` declaration, so drop this one.
+          return Ok(false);
         }
 
         if n.accessibility == Some(TSAccessibility::Private) {
@@ -959,6 +966,11 @@ impl<'a> FastCheckTransformer<'a> {
         Ok(true)
       }
       ClassElement::PropertyDefinition(n) => {
+        if n.key.is_private_identifier() {
+          // `#`-private members are not part of the public API; they're
+          // collapsed into a single `#private` declaration, so drop this one.
+          return Ok(false);
+        }
         if n.accessibility == Some(TSAccessibility::Private) {
           n.type_annotation = Some(any_type_ann(self.allocator));
           n.declare = true;
