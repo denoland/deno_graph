@@ -770,9 +770,10 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
         // Find constructor params
         let ctor_params = body.body.iter().find_map(|m| {
           if let ClassElement::MethodDefinition(method) = m
-            && method.kind == MethodDefinitionKind::Constructor {
-              return Some(method.value.params.clone_in(self.allocator));
-            }
+            && method.kind == MethodDefinitionKind::Constructor
+          {
+            return Some(method.value.params.clone_in(self.allocator));
+          }
           None
         });
 
