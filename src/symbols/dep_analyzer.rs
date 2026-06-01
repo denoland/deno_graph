@@ -152,6 +152,11 @@ impl DepsFiller {
         for param in &n.value.params.items {
           self.fill_formal_parameter(param);
         }
+        if let Some(rest) = &n.value.params.rest
+          && let Some(type_ann) = &rest.type_annotation
+        {
+          self.visit_ts_type_annotation(type_ann);
+        }
       }
       SymbolNodeRef::ExpandoProperty(n) => {
         if self.mode.visit_exprs() {
@@ -215,6 +220,11 @@ impl DepsFiller {
     }
     for param in &n.value.params.items {
       self.fill_formal_parameter(param);
+    }
+    if let Some(rest) = &n.value.params.rest
+      && let Some(type_ann) = &rest.type_annotation
+    {
+      self.visit_ts_type_annotation(type_ann);
     }
     if let Some(return_type) = &n.value.return_type {
       self.visit_ts_type_annotation(return_type);
@@ -422,8 +432,11 @@ impl<'a> Visit<'a> for DepsFiller {
 
   fn visit_variable_declarator(&mut self, n: &VariableDeclarator<'a>) {
     self.visit_binding_pattern(&n.id);
-    if n.type_annotation.is_none()
-      && !binding_pattern_has_type_ann(&n.id)
+    if let Some(type_ann) = &n.type_annotation {
+      // The explicit type annotation is kept in the output, so its
+      // referenced types (e.g. imported types) are dependencies.
+      self.visit_ts_type_annotation(type_ann);
+    } else if !binding_pattern_has_type_ann(&n.id)
       && let Some(init) = &n.init
     {
       let visited_type_assertion = self.visit_type_if_type_assertion(init);
@@ -592,6 +605,11 @@ impl DepsFiller {
     }
     for param in &n.params.items {
       self.fill_formal_parameter(param);
+    }
+    if let Some(rest) = &n.params.rest
+      && let Some(type_ann) = &rest.type_annotation
+    {
+      self.visit_ts_type_annotation(type_ann);
     }
     if let Some(return_type) = &n.return_type {
       self.visit_ts_type_annotation(return_type);

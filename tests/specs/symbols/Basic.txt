@@ -573,6 +573,14 @@ file:///mod.ts: EsModuleInfo {
         },
     },
 }
+== symbol deps (types and exprs) ==
+4:48..69 [Id(("A", 0))]
+5:78..85 [Id(("B", 0))]
+
+== symbol deps (types only) ==
+4:48..69 [Id(("A", 0))]
+5:78..85 [Id(("B", 0))]
+
 == export definitions ==
 [ExportA]: file:///mod.ts:48..69
   ExportA: typeof A = A
