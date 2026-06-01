@@ -67,7 +67,6 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  // this will fail because Symbol is local
   function Symbol(): void {}
   const key: unique symbol = {} as never;
   const key2: unique symbol = {} as never;
@@ -76,7 +75,6 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     declare [key2]: string;
   }
   --- DTS ---
-  // this will fail because Symbol is local
   declare function Symbol(): void;
   declare const key: unique symbol;
   declare const key2: unique symbol;

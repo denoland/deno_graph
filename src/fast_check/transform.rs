@@ -18,6 +18,7 @@ use deno_ast::oxc::allocator::Box as OxcBox;
 use deno_ast::oxc::allocator::CloneIn;
 use deno_ast::oxc::allocator::Vec as OxcVec;
 use deno_ast::oxc::ast::Comment;
+use deno_ast::oxc::ast::CommentKind;
 use deno_ast::oxc::ast::ast::*;
 use deno_ast::oxc::span::Atom;
 use deno_ast::oxc::span::GetSpan;
@@ -56,11 +57,30 @@ pub struct CommentsMut<'a> {
 }
 
 impl<'a> CommentsMut<'a> {
-  pub fn new(allocator: &'a Allocator, comments: &[Comment]) -> Self {
+  pub fn new(
+    allocator: &'a Allocator,
+    comments: &[Comment],
+    source_text: &str,
+  ) -> Self {
     let mut filtered = OxcVec::new_in(allocator);
     for c in comments {
-      // keep all comments (line, single-line block, multi-line block)
-      filtered.push(c.clone_in(allocator));
+      // Match the swc-based deno_graph: only keep JSDoc block comments and
+      // `@ts-*` line comments. Everything else (notably `@deno-types`
+      // pragmas) is dropped, otherwise it leaks into the fast check output
+      // and can change how the emitted module resolves types (e.g. pulling
+      // in a second `@types/react` instance and breaking assignability).
+      let content_span = c.content_span();
+      let text =
+        &source_text[content_span.start as usize..content_span.end as usize];
+      let keep = match c.kind {
+        CommentKind::Line => text.trim_start().starts_with("@ts-"),
+        CommentKind::SingleLineBlock | CommentKind::MultiLineBlock => {
+          text.starts_with('*')
+        }
+      };
+      if keep {
+        filtered.push(c.clone_in(allocator));
+      }
     }
     Self { comments: filtered }
   }
@@ -246,7 +266,11 @@ impl<'a> FastCheckTransformer<'a> {
   pub fn transform(&mut self) -> Result<Program<'a>, Vec<FastCheckDiagnostic>> {
     let is_ambient = self.media_type.is_declaration();
     let mut program = self.es_module_info.program().clone_in(self.allocator);
-    let mut comments = CommentsMut::new(self.allocator, &program.comments);
+    let mut comments = CommentsMut::new(
+      self.allocator,
+      &program.comments,
+      self.es_module_info.source_text(),
+    );
 
     let body =
       std::mem::replace(&mut program.body, OxcVec::new_in(self.allocator));
@@ -2361,7 +2385,8 @@ impl<'a> FastCheckTransformer<'a> {
       }
       Expression::ClassExpression(n) => {
         let empty_comments = OxcVec::new_in(self.allocator);
-        let mut comments = CommentsMut::new(self.allocator, &empty_comments);
+        let mut comments =
+          CommentsMut::new(self.allocator, &empty_comments, "");
         self.transform_class(n, &mut comments, false)?;
         true
       }

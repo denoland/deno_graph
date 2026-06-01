@@ -71,7 +71,6 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export class WithTsPrivate extends Base {
     declare private regular: any;
     declare private definiteShouldGoAway: any;
-    // though private override doesn't make much sense
     declare private withOverride: any;
   }
   --- DTS ---
@@ -79,6 +78,5 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export declare class WithTsPrivate extends Base {
     private regular: any;
     private definiteShouldGoAway: any;
-    // though private override doesn't make much sense
     private withOverride: any;
   }

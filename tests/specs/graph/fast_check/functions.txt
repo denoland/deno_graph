@@ -163,7 +163,6 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export function test10(...params: string[]): string[] {
     return {} as never;
   }
-  // should support leaving this expr as-is
   export function test11(options = { copy: true }): void {}
   export interface GlobOptions {}
   export function test12({}: GlobOptions = {}): void {}
@@ -196,7 +195,6 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export default function test9(param: number): number;
   export default function test9(param: string): string;
   export declare function test10(...params: string[]): string[];
-  // should support leaving this expr as-is
   export declare function test11(options?: {
     copy: boolean;
   }): void;
