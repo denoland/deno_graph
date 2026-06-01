@@ -303,6 +303,11 @@ impl<'a> Visit<'a> for DepsFiller {
     for param in &n.params.items {
       self.fill_formal_parameter(param);
     }
+    if let Some(rest) = &n.params.rest
+      && let Some(type_ann) = &rest.type_annotation
+    {
+      self.visit_ts_type_annotation(type_ann);
+    }
     if let Some(type_ann) = &n.return_type {
       self.visit_ts_type_annotation(type_ann);
     }
@@ -317,6 +322,11 @@ impl<'a> Visit<'a> for DepsFiller {
     }
     for param in &n.params.items {
       self.fill_formal_parameter(param);
+    }
+    if let Some(rest) = &n.params.rest
+      && let Some(type_ann) = &rest.type_annotation
+    {
+      self.visit_ts_type_annotation(type_ann);
     }
     if let Some(type_ann) = &n.return_type {
       self.visit_ts_type_annotation(type_ann);
@@ -355,6 +365,11 @@ impl<'a> Visit<'a> for DepsFiller {
         }
         for param in &n.params.items {
           self.fill_formal_parameter(param);
+        }
+        if let Some(rest) = &n.params.rest
+          && let Some(type_ann) = &rest.type_annotation
+        {
+          self.visit_ts_type_annotation(type_ann);
         }
         if let Some(type_ann) = &n.return_type {
           self.visit_ts_type_annotation(type_ann);
@@ -403,6 +418,11 @@ impl<'a> Visit<'a> for DepsFiller {
     }
     for param in &n.params.items {
       self.fill_formal_parameter(param);
+    }
+    if let Some(rest) = &n.params.rest
+      && let Some(type_ann) = &rest.type_annotation
+    {
+      self.visit_ts_type_annotation(type_ann);
     }
     if let Some(return_type) = &n.return_type {
       self.visit_ts_type_annotation(return_type);
