@@ -90,9 +90,84 @@ impl<'a> CommentsMut<'a> {
     self.comments.retain(|c| c.attached_to != span.start);
   }
 
+  /// Re-anchor `@ts-ignore` / `@ts-expect-error` line comments that sit in an
+  /// interior position (e.g. inside a function's parameter list) to the start
+  /// of their enclosing top-level statement.
+  ///
+  /// `oxc_codegen` only emits comments at statement/declaration boundaries, so
+  /// an error-suppression directive written mid-signature would otherwise be
+  /// dropped and the error it was suppressing would resurface. The fast check
+  /// emit collapses signatures onto a single line, so hoisting the directive to
+  /// a leading comment of the statement still suppresses the same error.
+  pub fn reanchor_interior_ts_directives(
+    &mut self,
+    body: &[Statement<'a>],
+    body_spans: &[Span],
+    source_text: &str,
+  ) {
+    for c in self.comments.iter_mut() {
+      if c.kind != CommentKind::Line {
+        continue;
+      }
+      let content_span = c.content_span();
+      let text = source_text
+        [content_span.start as usize..content_span.end as usize]
+        .trim_start();
+      if !text.starts_with("@ts-ignore")
+        && !text.starts_with("@ts-expect-error")
+      {
+        continue;
+      }
+      // Directives inside a function/method body are left alone: fast check
+      // replaces the body, so the error they suppressed is gone and codegen
+      // (which can't find the removed body position) already drops them.
+      // Hoisting them would turn them into unused-directive errors (TS2578).
+      if body_spans
+        .iter()
+        .any(|b| c.span.start >= b.start && c.span.end <= b.end)
+      {
+        continue;
+      }
+      // Re-anchor signature-interior directives (e.g. inside a parameter
+      // list) to the enclosing top-level statement so codegen emits them
+      // just before that statement. The emitted signature is collapsed onto
+      // a single line, so the directive still suppresses the same error.
+      for stmt in body {
+        let span = stmt.span();
+        if c.span.start > span.start && c.span.end <= span.end {
+          c.attached_to = span.start;
+          break;
+        }
+      }
+    }
+  }
+
   pub fn into_comments(self) -> OxcVec<'a, Comment> {
     self.comments
   }
+}
+
+/// Collects the spans of every function/method body in the program. Used to
+/// detect `@ts-*` directives that live inside a body (which fast check strips).
+fn collect_function_body_spans(program: &Program<'_>) -> Vec<Span> {
+  use deno_ast::oxc::ast::ast::FunctionBody;
+  use deno_ast::oxc::ast_visit::Visit;
+  use deno_ast::oxc::ast_visit::walk;
+
+  struct BodySpanCollector {
+    spans: Vec<Span>,
+  }
+
+  impl<'a> Visit<'a> for BodySpanCollector {
+    fn visit_function_body(&mut self, body: &FunctionBody<'a>) {
+      self.spans.push(body.span);
+      walk::walk_function_body(self, body);
+    }
+  }
+
+  let mut collector = BodySpanCollector { spans: Vec::new() };
+  collector.visit_program(program);
+  collector.spans
 }
 
 #[derive(Debug, Clone)]
@@ -278,6 +353,12 @@ impl<'a> FastCheckTransformer<'a> {
     let new_body =
       self.transform_module_body(body_vec, &mut comments, is_ambient)?;
     program.body = OxcVec::from_iter_in(new_body, self.allocator);
+    let body_spans = collect_function_body_spans(self.es_module_info.program());
+    comments.reanchor_interior_ts_directives(
+      &program.body,
+      &body_spans,
+      self.es_module_info.source_text(),
+    );
     program.comments = comments.into_comments();
     Ok(program)
   }
