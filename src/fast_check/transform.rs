@@ -1691,10 +1691,19 @@ impl<'a> FastCheckTransformer<'a> {
       }
       BindingPattern::ArrayPattern(_) => {
         if param.type_annotation.is_none() {
-          let p_span = param.pattern.span();
-          self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-            range: self.source_range_to_range(p_span),
-          })?;
+          // A destructured param with a leavable default (e.g. `[a] = []`)
+          // doesn't require an explicit type, matching the assignment-pattern
+          // handling. OXC stores the default in `initializer`.
+          let is_init_leavable = match param.initializer.as_mut() {
+            Some(init) => self.maybe_transform_expr_if_leavable(init, None)?,
+            None => false,
+          };
+          if !is_init_leavable {
+            let p_span = param.pattern.span();
+            self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
+              range: self.source_range_to_range(p_span),
+            })?;
+          }
         }
         if let BindingPattern::ArrayPattern(p) = &mut param.pattern {
           p.elements = OxcVec::new_in(self.allocator);
@@ -1702,10 +1711,19 @@ impl<'a> FastCheckTransformer<'a> {
       }
       BindingPattern::ObjectPattern(_) => {
         if param.type_annotation.is_none() {
-          let p_span = param.pattern.span();
-          self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-            range: self.source_range_to_range(p_span),
-          })?;
+          // A destructured param with a leavable default (e.g. `{a} = {}`)
+          // doesn't require an explicit type, matching the assignment-pattern
+          // handling. OXC stores the default in `initializer`.
+          let is_init_leavable = match param.initializer.as_mut() {
+            Some(init) => self.maybe_transform_expr_if_leavable(init, None)?,
+            None => false,
+          };
+          if !is_init_leavable {
+            let p_span = param.pattern.span();
+            self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
+              range: self.source_range_to_range(p_span),
+            })?;
+          }
         }
         if let BindingPattern::ObjectPattern(p) = &mut param.pattern {
           p.properties = OxcVec::new_in(self.allocator);
@@ -2260,6 +2278,9 @@ impl<'a> FastCheckTransformer<'a> {
       Expression::UnaryExpression(n) => recurse(&mut n.argument)?,
       Expression::UpdateExpression(_n) => true, // UpdateExpression.argument is SimpleAssignmentTarget, not Expression
       Expression::BinaryExpression(n) => recurse(&mut n.left)? && recurse(&mut n.right)?,
+      // SWC models `||`/`&&`/`??` as binary expressions; they are leavable
+      // when both operands are.
+      Expression::LogicalExpression(n) => recurse(&mut n.left)? && recurse(&mut n.right)?,
       Expression::AssignmentExpression(_) | Expression::Super(_) => false,
       Expression::ConditionalExpression(n) => {
         recurse(&mut n.test)?
@@ -2333,7 +2354,6 @@ impl<'a> FastCheckTransformer<'a> {
       // todo(dsherret): probably could analyze this more
       | Expression::ChainExpression(_)
       | Expression::ImportExpression(_)
-      | Expression::LogicalExpression(_)
       | Expression::PrivateInExpression(_)
       | Expression::V8IntrinsicExpression(_) => false,
     };
