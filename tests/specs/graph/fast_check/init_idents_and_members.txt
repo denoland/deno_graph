@@ -149,8 +149,16 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
       at https://jsr.io/@scope/a/1.0.0/mod.ts@176
 Fast check https://jsr.io/@scope/b/1.0.0/mod.ts:
   {}
+  class BaseHandler {}
+  namespace Test {
+    export class A {}
+  }
   export function test(a = BaseHandler, C = Test.A): void {}
   --- DTS ---
+  declare class BaseHandler {}
+  declare namespace Test {
+    export class A {}
+  }
   export declare function test(a?: any, C?: any): void;
   --- DTS Diagnostics ---
   unable to infer type, falling back to any type

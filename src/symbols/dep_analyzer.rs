@@ -258,7 +258,15 @@ impl DepsFiller {
         self.visit_type_if_type_assertion(initializer);
       }
     } else {
-      // Regular parameter without type annotation - check pattern
+      // Regular parameter without a type annotation. A leavable default value
+      // is kept in the output, so its references are dependencies.
+      if let Some(initializer) = &param.initializer {
+        let visited_type_assertion =
+          self.visit_type_if_type_assertion(initializer);
+        if !visited_type_assertion && self.mode.visit_exprs() {
+          self.visit_expression(initializer);
+        }
+      }
       // (e.g., AssignmentPattern might have a type assertion on the right)
       self.visit_binding_pattern(&param.pattern);
     }
