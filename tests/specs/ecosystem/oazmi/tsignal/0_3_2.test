@@ -112,42 +112,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
-error[missing-explicit-type]: missing explicit type in the public API
- --> /src/funcdefs.ts:9:14
-  | 
-9 | export const default_equality = (<T>(v1: T, v2: T) => (v1 === v2)) satisfies EqualityFn<any>
-  |              ^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
-  | 
-  = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-type]: missing explicit type in the public API
-  --> /src/funcdefs.ts:13:14
-   | 
-13 | export const falsey_equality = (<T>(v1: T, v2: T) => false) satisfies EqualityFn<any>
-   |              ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
-   | 
-   = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /src/funcdefs.ts:17:14
-   | 
-17 | export const parseEquality = <T>(equals: EqualityCheck<T>) => (equals === false ? falsey_equality : (equals ?? default_equality)) satisfies EqualityFn<any>
-   |              ^^^^^^^^^^^^^ this function is missing an explicit return type
-   | 
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
 error[missing-explicit-return-type]: missing explicit return type in the public API
   --> /src/funcdefs.ts:82:60
    | 

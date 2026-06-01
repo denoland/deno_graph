@@ -5,12 +5,21 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-export const a = "foo" as const
-export const b = 2 as const
-export const c = true as const
-export const d = false as const
-export const g = [1, 2] as const
-export const h = { a: 1, b: 2 } as const
+export interface Type<T> {
+  __brand: T;
+}
+
+export function makeType<T>(): Type<T> {
+  return {} as Type<T>;
+}
+
+export function fn(): void {}
+
+export declare namespace fn {
+  export var type: Type<string>;
+}
+
+fn.type = makeType();
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -48,7 +57,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 197,
+      "size": 231,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -63,22 +72,22 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  export const a = "foo" as const;
-  export const b = 2 as const;
-  export const c = true as const;
-  export const d = false as const;
-  export const g = [1, 2] as const;
-  export const h = {
-    a: 1,
-    b: 2
-  } as const;
+  export interface Type<T> {
+    __brand: T;
+  }
+  export function makeType<T>(): Type<T> {
+    return {} as never;
+  }
+  export function fn(): void {}
+  export declare namespace fn {
+    export var type: Type<string>;
+  }
   --- DTS ---
-  export declare const a: "foo";
-  export declare const b: 2;
-  export declare const c: true;
-  export declare const d: false;
-  export declare const g: readonly [1, 2];
-  export declare const h: {
-    readonly a: 1;
-    readonly b: 2;
-  };
+  export interface Type<T> {
+    __brand: T;
+  }
+  export declare function makeType<T>(): Type<T>;
+  export declare function fn(): void;
+  export declare namespace fn {
+    export var type: Type<string>;
+  }

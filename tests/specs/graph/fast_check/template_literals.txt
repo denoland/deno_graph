@@ -5,12 +5,9 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-export const a = "foo" as const
-export const b = 2 as const
-export const c = true as const
-export const d = false as const
-export const g = [1, 2] as const
-export const h = { a: 1, b: 2 } as const
+export const a = `hello world`;
+export const b = `hello ${1 + 2} world`;
+export let c = `hello`;
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -48,7 +45,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 197,
+      "size": 97,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -63,22 +60,10 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  export const a = "foo" as const;
-  export const b = 2 as const;
-  export const c = true as const;
-  export const d = false as const;
-  export const g = [1, 2] as const;
-  export const h = {
-    a: 1,
-    b: 2
-  } as const;
+  export const a: string = {} as never;
+  export const b: string = {} as never;
+  export let c: string = {} as never;
   --- DTS ---
-  export declare const a: "foo";
-  export declare const b: 2;
-  export declare const c: true;
-  export declare const d: false;
-  export declare const g: readonly [1, 2];
-  export declare const h: {
-    readonly a: 1;
-    readonly b: 2;
-  };
+  export declare const a: string;
+  export declare const b: string;
+  export declare let c: string;

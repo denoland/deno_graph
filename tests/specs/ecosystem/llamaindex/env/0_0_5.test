@@ -13,12 +13,12 @@ llamaindex/env/0.0.5
 -- stdout --
 
 -- stderr --
-TS2580 [ERROR]: Cannot find name 'Buffer'.
+TS2591 [ERROR]: Cannot find name 'Buffer'.
    */ readRawFile(path: string): Promise<Buffer>;
                                          ~~~~~~
     at file://<tmpdir>/src/type.ts:10:42
 
-TS2580 [ERROR]: Cannot find name 'Buffer'.
+TS2591 [ERROR]: Cannot find name 'Buffer'.
   readRawFile(path: string): Promise<Buffer> {
                                      ~~~~~~
     at file://<tmpdir>/src/type.ts:47:38

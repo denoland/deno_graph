@@ -151,7 +151,7 @@ impl<'a, 'b> Visit<'a> for DependencyCollector<'a, 'b> {
     } else if node.phase == Some(ImportPhase::Source) {
       StaticDependencyKind::ImportSource
     } else if node.phase == Some(ImportPhase::Defer) {
-      return;
+      StaticDependencyKind::ImportDefer
     } else {
       StaticDependencyKind::Import
     };
@@ -364,6 +364,8 @@ impl<'a, 'b> Visit<'a> for DependencyCollector<'a, 'b> {
 
     let kind = if node.phase == Some(ImportPhase::Source) {
       DynamicDependencyKind::ImportSource
+    } else if node.phase == Some(ImportPhase::Defer) {
+      DynamicDependencyKind::ImportDefer
     } else {
       DynamicDependencyKind::Import
     };

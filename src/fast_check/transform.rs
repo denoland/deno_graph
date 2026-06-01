@@ -2066,9 +2066,21 @@ impl<'a> FastCheckTransformer<'a> {
     };
 
     if !is_init_leavable {
-      self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-        range: self.source_range_to_range(prop_span),
-      })?;
+      // If the property is already declared in an existing namespace
+      // (e.g. `declare namespace fn { export var prop: T; }`), then
+      // we can safely skip this assignment without error since the
+      // namespace already provides the type information.
+      let swc_id = (obj_id.clone(), 0);
+      let already_declared = self
+        .es_module_info
+        .symbol_from_swc(&swc_id)
+        .map(|symbol| symbol.export(&prop_name).is_some())
+        .unwrap_or(false);
+      if !already_declared {
+        self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
+          range: self.source_range_to_range(prop_span),
+        })?;
+      }
     } else {
       let id: Id = (obj_id.to_string(), 0);
       let var_decls = self.expando_namespaces.entry(id).or_default();
@@ -2264,10 +2276,16 @@ impl<'a> FastCheckTransformer<'a> {
         true
       }
       Expression::TSAsExpression(assertion) => {
-        assertion.expression = paren_expr(self.allocator, obj_as_never_expr(self.allocator));
-        true
+        if is_ts_const_type(&assertion.type_annotation) {
+          // `as const` preserves the (literal) value, so recurse like a const
+          // assertion instead of replacing it with `{} as never`.
+          recurse(&mut assertion.expression)?
+        } else {
+          assertion.expression = paren_expr(self.allocator, obj_as_never_expr(self.allocator));
+          true
+        }
       }
-      Expression::TSSatisfiesExpression(_) => false,
+      Expression::TSSatisfiesExpression(n) => recurse(&mut n.expression)?,
       Expression::TSNonNullExpression(n) => recurse(&mut n.expression)?,
       Expression::FunctionExpression(n) => {
         self.transform_fn(n, parent_id_span, FunctionKind::ExpressionLike, /* is overload */ false, /* is ambient */ false)?;
@@ -2283,8 +2301,18 @@ impl<'a> FastCheckTransformer<'a> {
         self.transform_class(n, &mut comments, false)?;
         true
       }
-      Expression::TemplateLiteral(_)
-      | Expression::TaggedTemplateExpression(_)
+      Expression::TemplateLiteral(n) => {
+        // Untagged template literals always produce strings and are leavable.
+        let mut is_leavable = true;
+        for expr in n.expressions.iter_mut() {
+          is_leavable = recurse(expr)?;
+          if !is_leavable {
+            break;
+          }
+        }
+        is_leavable
+      }
+      Expression::TaggedTemplateExpression(_)
       | Expression::YieldExpression(_)
       | Expression::MetaProperty(_)
       | Expression::JSXElement(_)
@@ -2310,7 +2338,13 @@ impl<'a> FastCheckTransformer<'a> {
         infer_simple_type_from_type(self.allocator, &n.type_annotation)
       }
       Expression::TSAsExpression(n) => {
-        infer_simple_type_from_type(self.allocator, &n.type_annotation)
+        if is_ts_const_type(&n.type_annotation) {
+          // `as const` doesn't name a real type; leave the (literal) value in
+          // place so its type is preserved by the expression itself.
+          None
+        } else {
+          infer_simple_type_from_type(self.allocator, &n.type_annotation)
+        }
       }
       Expression::StringLiteral(_)
       | Expression::BooleanLiteral(_)
@@ -2338,6 +2372,13 @@ impl<'a> FastCheckTransformer<'a> {
           None
         }
       }
+      Expression::TemplateLiteral(_) => {
+        // Untagged template literals always produce strings.
+        Some(ts_keyword_type(self.allocator, TSKeywordKind::String))
+      }
+      Expression::TSSatisfiesExpression(n) => {
+        self.maybe_infer_type_from_expr(&n.expression, decl_kind)
+      }
       Expression::ParenthesizedExpression(n) => {
         self.maybe_infer_type_from_expr(&n.expression, decl_kind)
       }
@@ -2364,7 +2405,15 @@ impl<'a> FastCheckTransformer<'a> {
     let is_symbol_global = expr_ident.name == "Symbol";
     // TODO: In OXC we don't have unresolved_context() in the same way.
     // For now we check just the name. This may need refinement.
-    if !is_symbol_global || call_expr.arguments.len() != 1 {
+    if !is_symbol_global {
+      return false;
+    }
+    // Symbol() with no args is valid
+    if call_expr.arguments.is_empty() {
+      return true;
+    }
+    // Symbol("description") with a single string arg is valid
+    if call_expr.arguments.len() != 1 {
       return false;
     }
     let Some(arg) = call_expr.arguments.first() else {
@@ -2517,6 +2566,16 @@ fn replacement_return_value<'a>(
   } else {
     Some(obj_as_never_expr(allocator))
   }
+}
+
+/// Check if a TSType is the `const` type reference used in `as const`.
+fn is_ts_const_type(ty: &TSType) -> bool {
+  if let TSType::TSTypeReference(type_ref) = ty
+    && let TSTypeName::IdentifierReference(ident) = &type_ref.type_name
+  {
+    return ident.name.as_str() == "const";
+  }
+  false
 }
 
 fn infer_simple_type_from_type<'a>(

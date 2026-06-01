@@ -7,16 +7,6 @@ type/is/0.1.0
 
 ===
 
-== FAST CHECK EMIT FAILED ==
-error[missing-explicit-type]: missing explicit type in the public API
-  --> /identifier.ts:79:1
-   | 
-79 | isIdentifier.reservedWords = new Set(
-   | ^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
-   | 
-   = hint: add an explicit type annotation to the symbol
+== FAST CHECK EMIT PASSED ==
 
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
+== TYPE CHECK PASSED ==

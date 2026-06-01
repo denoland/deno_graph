@@ -665,6 +665,10 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
           self.allocator,
         )))
       }
+      Expression::TemplateLiteral(_) => {
+        // Untagged template literals always produce strings.
+        Some(ts_keyword_type(self.allocator, TSKeywordKind::String))
+      }
       // Since fast check requires explicit type annotations these
       // can be dropped as they are not part of an export declaration
       Expression::ThisExpression(_)
@@ -677,7 +681,6 @@ impl<'a, 'b> FastCheckDtsTransformer<'a, 'b> {
       | Expression::NewExpression(_)
       | Expression::SequenceExpression(_)
       | Expression::Identifier(_)
-      | Expression::TemplateLiteral(_)
       | Expression::TaggedTemplateExpression(_) => None,
       Expression::ClassExpression(class_expr) => {
         // Convert class expression to a type representing the class constructor.

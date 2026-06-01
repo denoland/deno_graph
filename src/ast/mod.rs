@@ -634,7 +634,9 @@ fn parse_jsdoc_import_decl(input: &str) -> monch::ParseResult<'_, JsDocImport> {
   fn skip_named_imports(input: &str) -> monch::ParseResult<'_, ()> {
     // { ... }
     let (input, _) = ch('{')(input)?;
-    let (input, _) = monch::take_while(|c| c != '}')(input)?;
+    // `}` is ASCII so a byte-level scan is safe even with multibyte chars in
+    // the body, and skips UTF-8 decoding on every character.
+    let (input, _) = monch::take_while_byte(|b| b != b'}')(input)?;
     let (input, _) = ch('}')(input)?;
     Ok((input, ()))
   }
@@ -739,7 +741,7 @@ fn parse_jsdoc_dynamic_import(
     maybe(parse_second_param_obj_with_leading_comma)(input)?;
   let (input, _) = skip_whitespace(input)?;
   let (input, _) = ch(')')(input)?;
-  let (input, _) = take_while(|c| c != '}')(input)?;
+  let (input, _) = take_while_byte(|b| b != b'}')(input)?;
   let (input, _) = ch('}')(input)?;
 
   Ok((
@@ -806,7 +808,10 @@ fn parse_ident(input: &str) -> monch::ParseResult<'_, &str> {
 fn parse_quote(input: &str) -> monch::ParseResult<'_, &str> {
   use monch::*;
   let (input, open_char) = or(ch('"'), ch('\''))(input)?;
-  let (input, text) = take_while(|c| c != open_char)(input)?;
+  // both quote chars are ASCII so a byte-level scan halts on a valid char
+  // boundary even when the body contains multibyte UTF-8.
+  let open_byte = open_char as u8;
+  let (input, text) = take_while_byte(|b| b != open_byte)(input)?;
   let (input, _) = ch(open_char)(input)?;
   Ok((input, text))
 }

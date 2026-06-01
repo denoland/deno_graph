@@ -548,10 +548,9 @@ impl fmt::Display for ModuleErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Self::Load { err, .. } => err.fmt(f),
-      Self::Parse { diagnostic, .. } => write!(
-        f,
-        "The module's source code could not be parsed: {diagnostic}"
-      ),
+      Self::Parse { diagnostic, .. } => {
+        write!(f, "{diagnostic}")
+      }
       Self::WasmParse { specifier, err, .. } => write!(
         f,
         "The Wasm module could not be parsed: {err}\n  Specifier: {specifier}"
@@ -3871,6 +3870,7 @@ fn fill_module_dependencies(
           }
           StaticDependencyKind::ImportSource => ImportKind::EsSource,
           StaticDependencyKind::Import
+          | StaticDependencyKind::ImportDefer
           | StaticDependencyKind::ImportEquals
           | StaticDependencyKind::Export
           | StaticDependencyKind::ExportEquals => ImportKind::Es,
@@ -3883,6 +3883,7 @@ fn fill_module_dependencies(
           range: desc.specifier_range,
           resolution_mode: match desc.kind {
             StaticDependencyKind::Import
+            | StaticDependencyKind::ImportDefer
             | StaticDependencyKind::ImportSource
             | StaticDependencyKind::Export
             | StaticDependencyKind::ImportType
@@ -3949,6 +3950,7 @@ fn fill_module_dependencies(
           range: desc.argument_range,
           resolution_mode: match desc.kind {
             DynamicDependencyKind::Import
+            | DynamicDependencyKind::ImportDefer
             | DynamicDependencyKind::ImportSource => {
               if media_type.is_declaration() {
                 None
@@ -3965,7 +3967,8 @@ fn fill_module_dependencies(
             .map(|specifier| Import {
               specifier,
               kind: match desc.kind {
-                DynamicDependencyKind::Import => ImportKind::Es,
+                DynamicDependencyKind::Import
+                | DynamicDependencyKind::ImportDefer => ImportKind::Es,
                 DynamicDependencyKind::ImportSource => ImportKind::EsSource,
                 DynamicDependencyKind::Require => ImportKind::Require,
               },

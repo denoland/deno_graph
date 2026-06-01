@@ -4,42 +4,6 @@ b-fuze/deno-dom/0.1.43
 ===
 
 == FAST CHECK EMIT FAILED ==
-error[missing-explicit-type]: missing explicit type in the public API
-  --> /src/dom/html-collection.ts:15:14
-   | 
-15 | export const HTMLCollectionMutatorSym = Symbol();
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
-   | 
-   = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-type]: missing explicit type in the public API
-  --> /src/dom/node-list.ts:16:14
-   | 
-16 | export const nodeListMutatorSym = Symbol();
-   |              ^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
-   | 
-   = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-type]: missing explicit type in the public API
- --> /src/constructor-lock.ts:5:14
-  | 
-5 | export const CTOR_KEY = Symbol();
-  |              ^^^^^^^^ this symbol is missing an explicit type
-  | 
-  = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
 error[missing-explicit-return-type]: missing explicit return type in the public API
   --> /src/dom/document.ts:85:7
    | 
@@ -232,30 +196,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
-error[missing-explicit-type]: missing explicit type in the public API
-   --> /src/dom/element.ts:210:7
-    | 
-210 | const setNamedNodeMapOwnerElementSym = Symbol();
-    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
-    | 
-    = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-type]: missing explicit type in the public API
-   --> /src/dom/element.ts:211:7
-    | 
-211 | const setAttrValueSym = Symbol();
-    |       ^^^^^^^^^^^^^^^ this symbol is missing an explicit type
-    | 
-    = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
 error[missing-explicit-return-type]: missing explicit return type in the public API
    --> /src/dom/element.ts:275:7
     | 
@@ -302,66 +242,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-type]: missing explicit type in the public API
-   --> /src/dom/element.ts:319:7
-    | 
-319 | const setNamedNodeMapValueSym = Symbol();
-    |       ^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
-    | 
-    = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-type]: missing explicit type in the public API
-   --> /src/dom/element.ts:320:7
-    | 
-320 | const getNamedNodeMapValueSym = Symbol();
-    |       ^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
-    | 
-    = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-type]: missing explicit type in the public API
-   --> /src/dom/element.ts:321:7
-    | 
-321 | const getNamedNodeMapAttrNamesSym = Symbol();
-    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
-    | 
-    = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-type]: missing explicit type in the public API
-   --> /src/dom/element.ts:322:7
-    | 
-322 | const getNamedNodeMapAttrNodeSym = Symbol();
-    |       ^^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
-    | 
-    = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-type]: missing explicit type in the public API
-   --> /src/dom/element.ts:323:7
-    | 
-323 | const removeNamedNodeMapAttrSym = Symbol();
-    |       ^^^^^^^^^^^^^^^^^^^^^^^^^ this symbol is missing an explicit type
-    | 
-    = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API

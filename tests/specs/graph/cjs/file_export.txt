@@ -11,10 +11,8 @@ export class Test {}
   ],
   "modules": [
     {
-      "kind": "esm",
-      "size": 21,
-      "mediaType": "Cjs",
-      "specifier": "file:///file.cjs"
+      "specifier": "file:///file.cjs",
+      "error": "SyntaxError: 'import', and 'export' cannot be used outside of module code\n  |\n1 | export class Test {}\n  | ~~~~~~~~~~~~~~~~~~~~\n    at file:///file.cjs:1:1"
     },
     {
       "kind": "esm",
