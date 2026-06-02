@@ -4,11 +4,88 @@ taisan11/nodelessbuildplugin/0.1.1
 ===
 
 == FAST CHECK EMIT FAILED ==
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /nodelessBuildPlugin.ts:6:10
+   | 
+ 6 |     setup(build) {
+   |          ^^^^^^^^^
+   | 
+ 7 |       const alias = nodeless.alias;
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+ 8 |       const re = new RegExp(`^(${Object.keys(alias).join('|')})$`); // this should be escaped
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+ 9 |   
+   | ^^
+   | 
+10 |       const require = createRequire(import.meta.url);
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+11 |       const aliasAbsolute = Object.fromEntries(
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+12 |         Object.entries(alias).map(([key, value]) => [
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+13 |           key,
+   | ^^^^^^^^^^^^^^
+   | 
+14 |           require.resolve(value).replace(/\.cjs$/, '.mjs').replace(/\\/g, '/'),
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+15 |         ])
+   | ^^^^^^^^^^
+   | 
+16 |       );
+   | ^^^^^^^^
+   | 
+17 |   
+   | ^^
+   | 
+18 |       build.onResolve(
+   | ^^^^^^^^^^^^^^^^^^^^^^
+   | 
+19 |         {
+   | ^^^^^^^^^
+   | 
+20 |           filter: re,
+   | ^^^^^^^^^^^^^^^^^^^^^
+   | 
+21 |         },
+   | ^^^^^^^^^^
+   | 
+22 |         (args) => {
+   | ^^^^^^^^^^^^^^^^^^^
+   | 
+23 |           const result = aliasAbsolute[args.path];
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+24 |           return result ? { path: result } : undefined;
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+25 |         }
+   | ^^^^^^^^^
+   | 
+26 |       );
+   | ^^^^^^^^
+   | 
+27 |     },
+   | ^^^^^ this function is missing an explicit return type
+   | 
+   = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
 error[missing-explicit-type]: missing explicit type in the public API
- --> /nodelessBuildPlugin.ts:4:14
+ --> /nodelessBuildPlugin.ts:6:11
   | 
-4 | export const nodelessPlugin = {
-  |              ^^^^^^^^^^^^^^ this symbol is missing an explicit type
+6 |     setup(build) {
+  |           ^^^^^ this symbol is missing an explicit type
   | 
   = hint: add an explicit type annotation to the symbol
 

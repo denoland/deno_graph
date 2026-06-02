@@ -4,11 +4,31 @@ yu/bar/0.0.1
 ===
 
 == FAST CHECK EMIT FAILED ==
-error[missing-explicit-type]: missing explicit type in the public API
-  --> /packages/bar/index.ts:11:14
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /packages/bar/index.ts:12:11
    | 
-11 | export const barObject =  {
-   |              ^^^^^^^^^ this symbol is missing an explicit type
+12 |   install (options) {
+   |           ^^^^^^^^^^^
+   | 
+13 |     console.log('bar installed!', options, this, new Bar())
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+14 |   }
+   | ^^^ this function is missing an explicit return type
+   | 
+   = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+  --> /packages/bar/index.ts:12:12
+   | 
+12 |   install (options) {
+   |            ^^^^^^^ this symbol is missing an explicit type
    | 
    = hint: add an explicit type annotation to the symbol
 

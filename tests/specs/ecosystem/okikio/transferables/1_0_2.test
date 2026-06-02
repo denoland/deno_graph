@@ -14,28 +14,28 @@ okikio/transferables/1.0.2
 
 -- stderr --
 TS7017 [ERROR]: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
- */ export const AudioData = globalThis.AudioData;
-                                        ~~~~~~~~~
-    at file://<tmpdir>/src/mod.ts:19:41
+export const AudioData = globalThis.AudioData;
+                                    ~~~~~~~~~
+    at file://<tmpdir>/src/mod.ts:21:37
 
 TS7017 [ERROR]: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
- */ export const VideoFrame = globalThis.VideoFrame;
-                                         ~~~~~~~~~~
-    at file://<tmpdir>/src/mod.ts:39:42
+export const VideoFrame = globalThis.VideoFrame;
+                                     ~~~~~~~~~~
+    at file://<tmpdir>/src/mod.ts:43:38
 
 TS7017 [ERROR]: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
- */ export const RTCDataChannel = globalThis.RTCDataChannel;
-                                             ~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/mod.ts:60:46
+export const RTCDataChannel = globalThis.RTCDataChannel;
+                                         ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/mod.ts:66:42
 
 TS2749 [ERROR]: 'AudioData' refers to a value, but is being used as a type here. Did you mean 'typeof AudioData'?
-    at file://<tmpdir>/src/mod.ts:136:134
+    at file://<tmpdir>/src/mod.ts:149:130
 
 TS2749 [ERROR]: 'VideoFrame' refers to a value, but is being used as a type here. Did you mean 'typeof VideoFrame'?
-    at file://<tmpdir>/src/mod.ts:136:160
+    at file://<tmpdir>/src/mod.ts:149:156
 
 TS2749 [ERROR]: 'RTCDataChannel' refers to a value, but is being used as a type here. Did you mean 'typeof RTCDataChannel'?
-    at file://<tmpdir>/src/mod.ts:136:191
+    at file://<tmpdir>/src/mod.ts:149:187
 
 Found 6 errors.
 

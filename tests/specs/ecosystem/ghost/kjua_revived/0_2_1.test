@@ -29,14 +29,14 @@ TS2304 [ERROR]: Cannot find name 'HTMLImageElement'.
     at file://<tmpdir>/src/kjua.ts:10:5
 
 TS2304 [ERROR]: Cannot find name 'HTMLImageElement'.
-	 */ image?: string | HTMLImageElement;
-	                     ~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/lib/options.ts:7:23
+  image?: string | HTMLImageElement;
+                   ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/lib/options.ts:9:20
 
 TS2304 [ERROR]: Cannot find name 'HTMLImageElement'.
-	 */ image?: HTMLImageElement;
-	            ~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/lib/options.ts:84:14
+  image?: HTMLImageElement;
+          ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/lib/options.ts:106:11
 
 Found 5 errors.
 

@@ -26,27 +26,27 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
 TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
   read_packet(reader: Deno.Reader): AsyncIterable<Uint8Array> {
                            ~~~~~~
-    at file://<tmpdir>/transport/codec/abridged.ts:22:28
+    at file://<tmpdir>/transport/codec/abridged.ts:23:28
 
 TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
   read_packet(reader: Deno.Reader): AsyncIterable<Uint8Array> {
                            ~~~~~~
-    at file://<tmpdir>/transport/codec/full.ts:20:28
+    at file://<tmpdir>/transport/codec/full.ts:21:28
 
 TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
   read_packet(reader: Deno.Reader): AsyncIterable<Uint8Array> {
                            ~~~~~~
-    at file://<tmpdir>/transport/codec/intermediate.ts:17:28
+    at file://<tmpdir>/transport/codec/intermediate.ts:18:28
 
 TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
   read_packet(reader: Deno.Reader): AsyncIterable<Uint8Array> {
                            ~~~~~~
-    at file://<tmpdir>/transport/codec/obfuscated.ts:19:28
+    at file://<tmpdir>/transport/codec/obfuscated.ts:20:28
 
 TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
   read_packet(reader: Deno.Reader): AsyncIterable<Uint8Array> {
                            ~~~~~~
-    at file://<tmpdir>/transport/codec/padded.ts:18:28
+    at file://<tmpdir>/transport/codec/padded.ts:19:28
 
 TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
 class WebSocketWrapper implements Deno.Reader {

@@ -46,12 +46,12 @@ TS2304 [ERROR]: Cannot find name 'DocumentFragment'.
 TS2304 [ERROR]: Cannot find name 'DocumentFragment'.
   readonly templateContent: DocumentFragment;
                             ~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/types/index.ts:37:29
+    at file://<tmpdir>/src/types/index.ts:38:29
 
 TS2304 [ERROR]: Cannot find name 'DocumentFragment'.
   readonly clonedNode: DocumentFragment;
                        ~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/types/index.ts:38:24
+    at file://<tmpdir>/src/types/index.ts:39:24
 
 Found 8 errors.
 

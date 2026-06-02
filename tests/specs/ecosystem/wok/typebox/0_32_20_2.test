@@ -5,10 +5,10 @@ wok/typebox/0.32.20+2
 
 == FAST CHECK EMIT FAILED ==
 error[missing-explicit-return-type]: missing explicit return type in the public API
-   --> /src/errors/errors.ts:196:10
+   --> /src/errors/errors.ts:196:11
     | 
 196 |   public [Symbol.iterator]() {
-    |          ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    |           ^^^^^^^^^^^^^^^ this function is missing an explicit return type
     | 
     = hint: add an explicit return type to the function
 

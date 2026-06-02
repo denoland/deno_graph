@@ -16,12 +16,12 @@ gnome/errors/0.0.0
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
   set stack(value: string | undefined) {}
       ~~~~~
-    at file://<tmpdir>/mod.ts:80:7
+    at file://<tmpdir>/mod.ts:94:7
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'SystemError'.
-     */ toObject(): ErrorProps & {
-        ~~~~~~~~
-    at file://<tmpdir>/mod.ts:140:9
+  toObject(): ErrorProps & {
+  ~~~~~~~~
+    at file://<tmpdir>/mod.ts:165:3
 
 Found 2 errors.
 

@@ -69,10 +69,10 @@ http/fns/0.7.0
 
 -- stderr --
 TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
-    at file://<tmpdir>/lib/hosting/init_deploy.ts:4:222
+    at file://<tmpdir>/lib/hosting/init_deploy.ts:5:218
 
 TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
-    at file://<tmpdir>/lib/hosting/init_localhost.ts:4:233
+    at file://<tmpdir>/lib/hosting/init_localhost.ts:5:229
 
 Found 2 errors.
 

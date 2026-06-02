@@ -27,7 +27,7 @@ denosaurs/log/0.0.13
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'ReadableStream<Log>'.
   cancel(reason?: any): Promise<void> {
   ~~~~~~
-    at file://<tmpdir>/mod.ts:105:3
+    at file://<tmpdir>/mod.ts:118:3
 
 error: Type checking failed.
 

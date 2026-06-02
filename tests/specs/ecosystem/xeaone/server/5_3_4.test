@@ -46,7 +46,7 @@ import Plugin from "./plugin.ts";
 TS1192 [ERROR]: Module '"file://<tmpdir>/src/plugin.ts"' has no default export.
 import Plugin from "./plugin.ts";
        ~~~~~~
-    at file://<tmpdir>/src/forwarded.ts:4:8
+    at file://<tmpdir>/src/forwarded.ts:5:8
 
 TS1192 [ERROR]: Module '"file://<tmpdir>/src/handle.ts"' has no default export.
 import Handle from "./handle.ts";

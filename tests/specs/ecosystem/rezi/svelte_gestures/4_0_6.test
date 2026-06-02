@@ -54,25 +54,25 @@ TS2304 [ERROR]: Cannot find name 'HTMLElement'.
 TS2304 [ERROR]: Cannot find name 'PointerEvent'.
 export type PointerEventCallback<T> = ((activeEvents: PointerEvent[], event: PointerEvent) => T) | null;
                                                       ~~~~~~~~~~~~
-    at file://<tmpdir>/src/shared.ts:24:55
+    at file://<tmpdir>/src/shared.ts:27:55
 
 TS2304 [ERROR]: Cannot find name 'PointerEvent'.
 export type PointerEventCallback<T> = ((activeEvents: PointerEvent[], event: PointerEvent) => T) | null;
                                                                              ~~~~~~~~~~~~
-    at file://<tmpdir>/src/shared.ts:24:78
+    at file://<tmpdir>/src/shared.ts:27:78
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
 export function getCenterOfTwoPoints(node: HTMLElement, activeEvents: PointerEvent[]): Coord {
                                            ~~~~~~~~~~~
-    at file://<tmpdir>/src/shared.ts:30:44
+    at file://<tmpdir>/src/shared.ts:33:44
 
 TS2304 [ERROR]: Cannot find name 'PointerEvent'.
 export function getCenterOfTwoPoints(node: HTMLElement, activeEvents: PointerEvent[]): Coord {
                                                                       ~~~~~~~~~~~~
-    at file://<tmpdir>/src/shared.ts:30:71
+    at file://<tmpdir>/src/shared.ts:33:71
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
-    at file://<tmpdir>/src/shared.ts:33:63
+    at file://<tmpdir>/src/shared.ts:36:63
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
     at file://<tmpdir>/src/swipe.ts:7:86

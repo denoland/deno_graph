@@ -14,9 +14,9 @@ ns/ha/0.1.0
 
 -- stderr --
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
-   */ target?: HTMLElement;
-               ~~~~~~~~~~~
-    at file://<tmpdir>/mod.ts:10:16
+  target?: HTMLElement;
+           ~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:10:12
 
 error: Type checking failed.
 

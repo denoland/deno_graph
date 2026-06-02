@@ -24,16 +24,16 @@ TS2416 [ERROR]: Property 'flatMap' in type 'Ok<T>' is not assignable to the same
                 Types of property 'isErr' are incompatible.
                   Type '() => false' is not assignable to type '<UError extends any>() => this is Err<UError>'.
                     Signature '(): false' must be a type predicate.
-  /** {@link Result.flatMap} */ flatMap<U, UError>(fn: (value: T) => Result<U, UError>): Result<U, UError> {
-                                ~~~~~~~
-    at file://<tmpdir>/result.ts:555:33
+  flatMap<
+  ~~~~~~~
+    at file://<tmpdir>/result.ts:712:3
 
 TS2416 [ERROR]: Property 'isErr' in type 'Ok<T>' is not assignable to the same property in base type 'Result<T, never>'.
   Type '() => false' is not assignable to type '<UError extends never>() => this is Err<UError>'.
     Signature '(): false' must be a type predicate.
-  /** {@link Result.isErr} */ isErr(): false {
-                              ~~~~~
-    at file://<tmpdir>/result.ts:564:31
+  isErr(): false {
+  ~~~~~
+    at file://<tmpdir>/result.ts:727:3
 
 TS2416 [ERROR]: Property 'map' in type 'Ok<T>' is not assignable to the same property in base type 'Result<T, never>'.
   Type '<U>(fn: (value: T) => U) => Ok<U>' is not assignable to type '<U>(fn: (value: T) => U) => Result<U, never>'.
@@ -49,9 +49,9 @@ TS2416 [ERROR]: Property 'map' in type 'Ok<T>' is not assignable to the same pro
                       Types of property 'isErr' are incompatible.
                         Type '() => false' is not assignable to type '<UError extends any>() => this is Err<UError>'.
                           Signature '(): false' must be a type predicate.
-  /** {@link Result.map} */ map<U>(fn: (value: T) => U): Ok<U> {
-                            ~~~
-    at file://<tmpdir>/result.ts:570:29
+  map<U>(fn: (value: T) => U): Ok<U> {
+  ~~~
+    at file://<tmpdir>/result.ts:735:3
 
 TS2416 [ERROR]: Property 'mapErr' in type 'Ok<T>' is not assignable to the same property in base type 'Result<T, never>'.
   Type '<U>(_fn: (value: never) => U) => this' is not assignable to type '<UError>(fn: (value: never) => UError) => Result<T, UError>'.
@@ -68,9 +68,9 @@ TS2416 [ERROR]: Property 'mapErr' in type 'Ok<T>' is not assignable to the same 
                         Types of property 'isErr' are incompatible.
                           Type '() => false' is not assignable to type '<UError extends any>() => this is Err<UError>'.
                             Signature '(): false' must be a type predicate.
-  /** {@link Result.mapErr} */ mapErr<U>(_fn: (value: never) => U): this {
-                               ~~~~~~
-    at file://<tmpdir>/result.ts:573:32
+  mapErr<U>(_fn: (value: never) => U): this {
+  ~~~~~~
+    at file://<tmpdir>/result.ts:739:3
 
 TS2416 [ERROR]: Property 'flatMap' in type 'Err<TError>' is not assignable to the same property in base type 'Result<never, TError>'.
   Types of parameters '_fn' and 'fn' are incompatible.
@@ -83,16 +83,16 @@ TS2416 [ERROR]: Property 'flatMap' in type 'Err<TError>' is not assignable to th
                 Types of property 'isErr' are incompatible.
                   Type '() => false' is not assignable to type '<UError extends any>() => this is Err<UError>'.
                     Signature '(): false' must be a type predicate.
-  /** {@link Result.flatMap} */ flatMap<U, UError>(_fn: (value: never) => Result<U, UError>): this {
-                                ~~~~~~~
-    at file://<tmpdir>/result.ts:607:33
+  flatMap<
+  ~~~~~~~
+    at file://<tmpdir>/result.ts:788:3
 
 TS2416 [ERROR]: Property 'isOk' in type 'Err<TError>' is not assignable to the same property in base type 'Result<never, TError>'.
   Type '() => false' is not assignable to type '<U extends never>() => this is Ok<U>'.
     Signature '(): false' must be a type predicate.
-  /** {@link Result.isOk} */ isOk(): false {
-                             ~~~~
-    at file://<tmpdir>/result.ts:619:30
+  isOk(): false {
+  ~~~~
+    at file://<tmpdir>/result.ts:807:3
 
 TS2416 [ERROR]: Property 'map' in type 'Err<TError>' is not assignable to the same property in base type 'Result<never, TError>'.
   Type '<U>(_fn: (value: never) => U) => this' is not assignable to type '<U>(fn: (value: never) => U) => Result<U, TError>'.
@@ -109,9 +109,9 @@ TS2416 [ERROR]: Property 'map' in type 'Err<TError>' is not assignable to the sa
                         Types of property 'isErr' are incompatible.
                           Type '() => false' is not assignable to type '<UError extends any>() => this is Err<UError>'.
                             Signature '(): false' must be a type predicate.
-  /** {@link Result.map} */ map<U>(_fn: (value: never) => U): this {
-                            ~~~
-    at file://<tmpdir>/result.ts:622:29
+  map<U>(_fn: (value: never) => U): this {
+  ~~~
+    at file://<tmpdir>/result.ts:811:3
 
 TS2416 [ERROR]: Property 'mapErr' in type 'Err<TError>' is not assignable to the same property in base type 'Result<never, TError>'.
   Type '<U>(fn: (value: TError) => U) => Err<U>' is not assignable to type '<UError>(fn: (value: TError) => UError) => Result<never, UError>'.
@@ -127,9 +127,9 @@ TS2416 [ERROR]: Property 'mapErr' in type 'Err<TError>' is not assignable to the
                       Types of property 'isErr' are incompatible.
                         Type '() => false' is not assignable to type '<UError extends any>() => this is Err<UError>'.
                           Signature '(): false' must be a type predicate.
-  /** {@link Result.mapErr} */ mapErr<U>(fn: (value: TError) => U): Err<U> {
-                               ~~~~~~
-    at file://<tmpdir>/result.ts:625:32
+  mapErr<U>(fn: (value: TError) => U): Err<U> {
+  ~~~~~~
+    at file://<tmpdir>/result.ts:815:3
 
 Found 8 errors.
 

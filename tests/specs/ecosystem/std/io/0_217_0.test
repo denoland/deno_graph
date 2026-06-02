@@ -14,14 +14,14 @@ std/io/0.217.0
 
 -- stderr --
 TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Seeker'.
- */ export function readRange(r: Reader & Deno.Seeker, range: ByteRange): Promise<Uint8Array> {
-                                               ~~~~~~
-    at file://<tmpdir>/read_range.ts:24:48
+export function readRange(r: Reader & Deno.Seeker, range: ByteRange): Promise<Uint8Array> {
+                                           ~~~~~~
+    at file://<tmpdir>/read_range.ts:28:44
 
 TS2694 [ERROR]: Namespace 'Deno' has no exported member 'SeekerSync'.
- */ export function readRangeSync(r: ReaderSync & Deno.SeekerSync, range: ByteRange): Uint8Array {
-                                                       ~~~~~~~~~~
-    at file://<tmpdir>/read_range.ts:43:56
+export function readRangeSync(r: ReaderSync & Deno.SeekerSync, range: ByteRange): Uint8Array {
+                                                   ~~~~~~~~~~
+    at file://<tmpdir>/read_range.ts:48:52
 
 Found 2 errors.
 
