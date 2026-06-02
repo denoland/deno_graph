@@ -1692,8 +1692,6 @@ pub struct BuildOptions<'a> {
   pub skip_dynamic_deps: bool,
   /// Support unstable bytes imports.
   pub unstable_bytes_imports: bool,
-  /// Support unstable text imports.
-  pub unstable_text_imports: bool,
   pub executor: &'a dyn Executor,
   pub locker: Option<&'a mut dyn Locker>,
   pub file_system: &'a FileSystem,
@@ -1717,7 +1715,6 @@ impl Default for BuildOptions<'_> {
       is_dynamic: false,
       skip_dynamic_deps: false,
       unstable_bytes_imports: false,
-      unstable_text_imports: false,
       executor: Default::default(),
       locker: None,
       file_system: &NullFileSystem,
@@ -4557,7 +4554,6 @@ struct Builder<'a, 'graph> {
   skip_dynamic_deps: bool,
   was_dynamic_root: bool,
   unstable_bytes_imports: bool,
-  unstable_text_imports: bool,
   file_system: &'a FileSystem,
   jsr_url_provider: &'a dyn JsrUrlProvider,
   jsr_version_resolver: Cow<'a, JsrVersionResolver>,
@@ -4591,7 +4587,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       skip_dynamic_deps: options.skip_dynamic_deps,
       was_dynamic_root: options.is_dynamic,
       unstable_bytes_imports: options.unstable_bytes_imports,
-      unstable_text_imports: options.unstable_text_imports,
       file_system: options.file_system,
       jsr_url_provider: options.jsr_url_provider,
       jsr_version_resolver: options.jsr_version_resolver,
@@ -5347,10 +5342,11 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         );
         return;
       }
+
       if let Some(attribute) = &options.maybe_attribute_type {
         let is_allowed = match attribute.kind.as_str() {
           "bytes" => self.unstable_bytes_imports,
-          "text" => self.unstable_text_imports,
+          "text" => true,
           _ => false,
         };
         if !is_allowed {
