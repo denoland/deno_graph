@@ -56,7 +56,7 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "other",
-            0,
+            1,
         ): 1,
     },
     symbols: {

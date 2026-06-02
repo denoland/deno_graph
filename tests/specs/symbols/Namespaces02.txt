@@ -19,16 +19,20 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "RootNs",
-            0,
+            1,
         ): 1,
         (
             "NestedNs",
-            0,
+            2,
         ): 2,
         (
             "Foo",
-            0,
+            3,
         ): 3,
+        (
+            "Foo",
+            4,
+        ): 4,
     },
     symbols: {
         0: Symbol {

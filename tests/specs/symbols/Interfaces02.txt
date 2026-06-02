@@ -36,11 +36,11 @@ file:///a.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "A1",
-            0,
+            1,
         ): 1,
         (
             "Prop2",
-            0,
+            2,
         ): 4,
     },
     symbols: {
@@ -205,7 +205,7 @@ file:///a.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "A1",
-                            0,
+                            1,
                         ),
                     ),
                     range: Span {
@@ -222,10 +222,10 @@ file:///a.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-3:51..64 [Id(("Prop2", 0))]
+3:51..64 [Id(("Prop2", 2))]
 
 == symbol deps (types only) ==
-3:51..64 [Id(("Prop2", 0))]
+3:51..64 [Id(("Prop2", 2))]
 
 file:///mod.ts: EsModuleInfo {
     module_id: ModuleId(
@@ -238,15 +238,15 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "Test",
-            0,
+            1,
         ): 1,
         (
             "Prop1",
-            0,
+            2,
         ): 4,
         (
             "Prop2",
-            0,
+            3,
         ): 5,
     },
     symbols: {
@@ -438,7 +438,7 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "Test",
-                            0,
+                            1,
                         ),
                     ),
                     range: Span {
@@ -455,12 +455,12 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-2:42..55 [Id(("Prop1", 0))]
-3:77..90 [Id(("Prop2", 0))]
+2:42..55 [Id(("Prop1", 2))]
+3:77..90 [Id(("Prop2", 3))]
 
 == symbol deps (types only) ==
-2:42..55 [Id(("Prop1", 0))]
-3:77..90 [Id(("Prop2", 0))]
+2:42..55 [Id(("Prop1", 2))]
+3:77..90 [Id(("Prop2", 3))]
 
 == export definitions ==
 [Test]: file:///mod.ts:23..57

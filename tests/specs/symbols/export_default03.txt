@@ -22,7 +22,7 @@ file:///a.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "Test",
-            0,
+            1,
         ): 1,
     },
     symbols: {
@@ -94,7 +94,7 @@ file:///a.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "Test",
-                            0,
+                            1,
                         ),
                     ),
                     range: Span {
@@ -119,11 +119,11 @@ file:///b.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "B",
-            0,
+            1,
         ): 1,
         (
             "B1",
-            0,
+            2,
         ): 2,
     },
     symbols: {
@@ -220,7 +220,7 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "Test",
-            0,
+            1,
         ): 2,
     },
     symbols: {

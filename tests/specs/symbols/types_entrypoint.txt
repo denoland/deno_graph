@@ -20,7 +20,7 @@ file:///mod.d.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "MyInterface",
-            0,
+            1,
         ): 1,
     },
     symbols: {
@@ -117,7 +117,7 @@ file:///mod.js: EsModuleInfo {
     id_to_symbol_id: {
         (
             "MyInterface",
-            0,
+            1,
         ): 1,
     },
     symbols: {

@@ -56,79 +56,79 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "Test",
-            0,
+            1,
         ): 2,
         (
             "Test1",
-            0,
+            2,
         ): 3,
         (
             "Test2",
-            0,
+            3,
         ): 4,
         (
             "Test3",
-            0,
+            4,
         ): 5,
         (
             "Test4",
-            0,
+            5,
         ): 6,
         (
             "Test5",
-            0,
+            6,
         ): 7,
         (
             "Test6",
-            0,
+            7,
         ): 8,
         (
             "Test7",
-            0,
+            8,
         ): 9,
         (
             "Test8",
-            0,
+            9,
         ): 10,
         (
             "Nested",
-            0,
+            10,
         ): 11,
         (
             "NonAmbient",
-            0,
+            11,
         ): 12,
         (
             "NotExported1",
-            0,
+            12,
         ): 13,
         (
             "Exported2",
-            0,
+            13,
         ): 14,
         (
             "NonExported2",
-            0,
+            14,
         ): 15,
         (
             "NonExported3",
-            0,
+            15,
         ): 16,
         (
             "NonExported4",
-            0,
+            16,
         ): 17,
         (
             "NonExported5",
-            0,
+            17,
         ): 18,
         (
             "NonExported6",
-            0,
+            18,
         ): 19,
         (
             "NonExported7",
-            0,
+            19,
         ): 20,
     },
     symbols: {
@@ -730,43 +730,43 @@ file:///other.d.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "Interface",
-            0,
+            1,
         ): 1,
         (
             "Inner",
-            0,
+            2,
         ): 3,
         (
             "Other1",
-            0,
+            3,
         ): 4,
         (
             "Other2",
-            0,
+            4,
         ): 5,
         (
             "Other3",
-            0,
+            5,
         ): 6,
         (
             "Other4",
-            0,
+            6,
         ): 7,
         (
             "Other5",
-            0,
+            7,
         ): 8,
         (
             "Other6",
-            0,
+            8,
         ): 9,
         (
             "Other7",
-            0,
+            9,
         ): 10,
         (
             "Other8",
-            0,
+            10,
         ): 11,
     },
     symbols: {
@@ -1108,10 +1108,10 @@ file:///other.d.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-2:33..52 [QualifiedId(("Inner", 0), ["Other1"])]
+2:33..52 [QualifiedId(("Inner", 2), ["Other1"])]
 
 == symbol deps (types only) ==
-2:33..52 [QualifiedId(("Inner", 0), ["Other1"])]
+2:33..52 [QualifiedId(("Inner", 2), ["Other1"])]
 
 == export definitions ==
 [Interface]: file:///other.d.ts:0..54

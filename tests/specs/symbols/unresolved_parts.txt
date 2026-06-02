@@ -25,27 +25,27 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "other",
-            0,
+            1,
         ): 1,
         (
             "Test",
-            0,
+            2,
         ): 2,
         (
             "test",
-            0,
+            3,
         ): 3,
         (
             "Resolved",
-            0,
+            4,
         ): 4,
         (
             "Unresolved",
-            0,
+            5,
         ): 5,
         (
             "NonExistent2",
-            0,
+            6,
         ): 7,
     },
     symbols: {
@@ -284,7 +284,7 @@ file:///other.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "Other",
-            0,
+            1,
         ): 1,
     },
     symbols: {

@@ -97,11 +97,11 @@ file:///c.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "MessageEntity",
-            0,
+            1,
         ): 1,
         (
             "TextLinkMessageEntity",
-            0,
+            2,
         ): 2,
     },
     symbols: {
@@ -228,11 +228,11 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "MessageEntity",
-            0,
+            1,
         ): 1,
         (
             "UrlMessageEntity",
-            0,
+            2,
         ): 2,
     },
     symbols: {
@@ -322,10 +322,10 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-2:45..112 [QualifiedId(("MessageEntity", 0), ["TextLinkMessageEntity"])]
+2:45..112 [QualifiedId(("MessageEntity", 1), ["TextLinkMessageEntity"])]
 
 == symbol deps (types only) ==
-2:45..112 [QualifiedId(("MessageEntity", 0), ["TextLinkMessageEntity"])]
+2:45..112 [QualifiedId(("MessageEntity", 1), ["TextLinkMessageEntity"])]
 
 == export definitions ==
 [UrlMessageEntity]: file:///mod.ts:45..112

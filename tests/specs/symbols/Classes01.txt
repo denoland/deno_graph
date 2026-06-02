@@ -69,75 +69,75 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "A",
-            0,
+            1,
         ): 1,
         (
             "C",
-            0,
+            3,
         ): 4,
         (
             "BBase",
-            0,
+            4,
         ): 5,
         (
             "IBase",
-            0,
+            5,
         ): 6,
         (
             "B",
-            0,
+            6,
         ): 7,
         (
             "PropValue",
-            0,
+            13,
         ): 16,
         (
             "ReturnValue",
-            0,
+            14,
         ): 17,
         (
             "Param",
-            0,
+            15,
         ): 18,
         (
             "PrivateParam",
-            0,
+            16,
         ): 19,
         (
             "PrivateReturn",
-            0,
+            17,
         ): 20,
         (
             "PrivateProp",
-            0,
+            18,
         ): 21,
         (
             "CtorProp",
-            0,
+            19,
         ): 22,
         (
             "OverloadParam",
-            0,
+            20,
         ): 23,
         (
             "OverloadReturn",
-            0,
+            21,
         ): 24,
         (
             "PrivateImplementationParam",
-            0,
+            22,
         ): 25,
         (
             "PrivateImplementationReturn",
-            0,
+            23,
         ): 26,
         (
             "ClassWithStatic",
-            0,
+            24,
         ): 27,
         (
             "ClassWithIndexSignatures",
-            0,
+            25,
         ): 29,
     },
     symbols: {
@@ -1041,34 +1041,34 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-2:19..24 [Id(("B", 0))]
-3:27..50 [Id(("C", 0))]
-7:109..599 [Id(("BBase", 0)), Id(("IBase", 0))]
-8:152..190 [Id(("CtorProp", 0))]
-9:193..209 [Id(("PropValue", 0))]
-9:340..366 [Id(("PrivateProp", 0))]
-10:212..239 [Id(("ReturnValue", 0))]
-11:243..276 [Id(("Param", 0))]
-12:280..336 [Id(("PrivateParam", 0)), Id(("PrivateReturn", 0))]
-13:370..423 [Id(("OverloadParam", 0)), Id(("OverloadReturn", 0))]
-13:426..510 [Id(("PrivateImplementationParam", 0)), Id(("PrivateImplementationReturn", 0))]
-14:514..536 [Id(("PrivateProp", 0))]
-15:539..597 [Id(("PrivateParam", 0)), Id(("PrivateReturn", 0))]
+2:19..24 [Id(("B", 6))]
+3:27..50 [Id(("C", 3))]
+7:109..599 [Id(("BBase", 4)), Id(("IBase", 5))]
+8:152..190 [Id(("CtorProp", 19))]
+9:193..209 [Id(("PropValue", 13))]
+9:340..366 [Id(("PrivateProp", 18))]
+10:212..239 [Id(("ReturnValue", 14))]
+11:243..276 [Id(("Param", 15))]
+12:280..336 [Id(("PrivateParam", 16)), Id(("PrivateReturn", 17))]
+13:370..423 [Id(("OverloadParam", 20)), Id(("OverloadReturn", 21))]
+13:426..510 [Id(("PrivateImplementationParam", 22)), Id(("PrivateImplementationReturn", 23))]
+14:514..536 [Id(("PrivateProp", 18))]
+15:539..597 [Id(("PrivateParam", 16)), Id(("PrivateReturn", 17))]
 
 == symbol deps (types only) ==
-2:19..24 [Id(("B", 0))]
-3:27..50 [Id(("C", 0))]
-7:109..599 [Id(("BBase", 0)), Id(("IBase", 0))]
-8:152..190 [Id(("CtorProp", 0))]
-9:193..209 [Id(("PropValue", 0))]
-9:340..366 [Id(("PrivateProp", 0))]
-10:212..239 [Id(("ReturnValue", 0))]
-11:243..276 [Id(("Param", 0))]
-12:280..336 [Id(("PrivateParam", 0)), Id(("PrivateReturn", 0))]
-13:370..423 [Id(("OverloadParam", 0)), Id(("OverloadReturn", 0))]
-13:426..510 [Id(("PrivateImplementationParam", 0)), Id(("PrivateImplementationReturn", 0))]
-14:514..536 [Id(("PrivateProp", 0))]
-15:539..597 [Id(("PrivateParam", 0)), Id(("PrivateReturn", 0))]
+2:19..24 [Id(("B", 6))]
+3:27..50 [Id(("C", 3))]
+7:109..599 [Id(("BBase", 4)), Id(("IBase", 5))]
+8:152..190 [Id(("CtorProp", 19))]
+9:193..209 [Id(("PropValue", 13))]
+9:340..366 [Id(("PrivateProp", 18))]
+10:212..239 [Id(("ReturnValue", 14))]
+11:243..276 [Id(("Param", 15))]
+12:280..336 [Id(("PrivateParam", 16)), Id(("PrivateReturn", 17))]
+13:370..423 [Id(("OverloadParam", 20)), Id(("OverloadReturn", 21))]
+13:426..510 [Id(("PrivateImplementationParam", 22)), Id(("PrivateImplementationReturn", 23))]
+14:514..536 [Id(("PrivateProp", 18))]
+15:539..597 [Id(("PrivateParam", 16)), Id(("PrivateReturn", 17))]
 
 == export definitions ==
 [A]: file:///mod.ts:0..52

@@ -23,15 +23,15 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "myFunc",
-            0,
+            1,
         ): 1,
         (
             "myNamespace",
-            0,
+            2,
         ): 5,
         (
             "myClass",
-            0,
+            3,
         ): 6,
     },
     symbols: {
@@ -244,7 +244,7 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "myFunc",
-                            0,
+                            1,
                         ),
                     ),
                     range: Span {

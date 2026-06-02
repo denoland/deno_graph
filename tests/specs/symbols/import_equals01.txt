@@ -16,15 +16,15 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "MyExport",
-            0,
+            1,
         ): 1,
         (
             "Test",
-            0,
+            2,
         ): 2,
         (
             "Inner",
-            0,
+            3,
         ): 3,
     },
     symbols: {

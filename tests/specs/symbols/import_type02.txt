@@ -20,11 +20,11 @@ file:///a.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "Test",
-            0,
+            1,
         ): 1,
         (
             "test",
-            0,
+            2,
         ): 3,
     },
     symbols: {
@@ -149,7 +149,7 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "Test",
-            0,
+            1,
         ): 1,
     },
     symbols: {

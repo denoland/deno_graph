@@ -20,11 +20,11 @@ file:///a.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "MyNamespace",
-            0,
+            1,
         ): 1,
         (
             "B",
-            0,
+            2,
         ): 2,
     },
     symbols: {
@@ -125,7 +125,7 @@ file:///a.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "MyNamespace",
-                            0,
+                            1,
                         ),
                     ),
                     range: Span {
@@ -150,11 +150,11 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "A",
-            0,
+            1,
         ): 1,
         (
             "Test",
-            0,
+            2,
         ): 2,
     },
     symbols: {
@@ -244,10 +244,10 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-2:31..61 [QualifiedId(("A", 0), ["B"])]
+2:31..61 [QualifiedId(("A", 1), ["B"])]
 
 == symbol deps (types only) ==
-2:31..61 [QualifiedId(("A", 0), ["B"])]
+2:31..61 [QualifiedId(("A", 1), ["B"])]
 
 == export definitions ==
 [Test]: file:///mod.ts:31..61

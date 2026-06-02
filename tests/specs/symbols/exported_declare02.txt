@@ -12,11 +12,11 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "foo",
-            0,
+            1,
         ): 1,
         (
             "bar",
-            0,
+            2,
         ): 2,
     },
     symbols: {

@@ -36,27 +36,27 @@ file:///a.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "AInner",
-            0,
+            1,
         ): 1,
         (
             "AInnerUnused",
-            0,
+            2,
         ): 3,
         (
             "A",
-            0,
+            3,
         ): 5,
         (
             "B",
-            0,
+            4,
         ): 7,
         (
             "C",
-            0,
+            5,
         ): 8,
         (
             "D",
-            0,
+            6,
         ): 9,
     },
     symbols: {
@@ -339,12 +339,12 @@ file:///a.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-6:102..115 [Id(("AInner", 0))]
-9:173..198 [Id(("C", 0))]
+6:102..115 [Id(("AInner", 1))]
+9:173..198 [Id(("C", 5))]
 
 == symbol deps (types only) ==
-6:102..115 [Id(("AInner", 0))]
-9:173..198 [Id(("C", 0))]
+6:102..115 [Id(("AInner", 1))]
+9:173..198 [Id(("C", 5))]
 
 file:///mod.ts: EsModuleInfo {
     module_id: ModuleId(
@@ -355,23 +355,23 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "A",
-            0,
+            1,
         ): 1,
         (
             "B",
-            0,
+            2,
         ): 2,
         (
             "D",
-            0,
+            3,
         ): 3,
         (
             "ExportA",
-            0,
+            4,
         ): 4,
         (
             "test",
-            0,
+            5,
         ): 5,
     },
     symbols: {
@@ -557,7 +557,7 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "D",
-                            0,
+                            3,
                         ),
                     ),
                     range: Span {
@@ -574,12 +574,12 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-4:48..69 [Id(("A", 0))]
-5:78..85 [Id(("B", 0))]
+4:48..69 [Id(("A", 1))]
+5:78..85 [Id(("B", 2))]
 
 == symbol deps (types only) ==
-4:48..69 [Id(("A", 0))]
-5:78..85 [Id(("B", 0))]
+4:48..69 [Id(("A", 1))]
+5:78..85 [Id(("B", 2))]
 
 == export definitions ==
 [ExportA]: file:///mod.ts:48..69

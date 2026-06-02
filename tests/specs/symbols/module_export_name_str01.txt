@@ -22,7 +22,7 @@ file:///a.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "someName",
-            0,
+            1,
         ): 1,
     },
     symbols: {
@@ -94,7 +94,7 @@ file:///a.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "someName",
-                            0,
+                            1,
                         ),
                     ),
                     range: Span {
@@ -184,7 +184,7 @@ file:///c.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "MyClass",
-            0,
+            1,
         ): 1,
     },
     symbols: {

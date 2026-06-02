@@ -916,7 +916,10 @@ impl<'a> PublicRangeFinder<'a> {
                     }
                   }
 
-                  for dep in node.deps(ResolveDepsMode::TypesAndExpressions) {
+                  for dep in node.deps(
+                    ResolveDepsMode::TypesAndExpressions,
+                    module_info.scoping(),
+                  ) {
                     match dep {
                       SymbolNodeDep::Id(id) => {
                         let module_info = module_info.esm().unwrap();

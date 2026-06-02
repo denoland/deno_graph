@@ -27,23 +27,23 @@ file:///a.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "test1",
-            0,
+            1,
         ): 1,
         (
             "test2",
-            0,
+            2,
         ): 2,
         (
             "test3",
-            0,
+            3,
         ): 3,
         (
             "test4",
-            0,
+            4,
         ): 4,
         (
             "test5",
-            0,
+            5,
         ): 5,
     },
     symbols: {
@@ -226,7 +226,7 @@ file:///a.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "test1",
-                            0,
+                            1,
                         ),
                     ),
                     range: Span {
@@ -253,7 +253,7 @@ file:///a.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "test2",
-                            0,
+                            2,
                         ),
                     ),
                     range: Span {
@@ -280,7 +280,7 @@ file:///a.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "test3",
-                            0,
+                            3,
                         ),
                     ),
                     range: Span {
@@ -307,7 +307,7 @@ file:///a.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "test4",
-                            0,
+                            4,
                         ),
                     ),
                     range: Span {
@@ -334,7 +334,7 @@ file:///a.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "test5",
-                            0,
+                            5,
                         ),
                     ),
                     range: Span {
@@ -359,7 +359,7 @@ file:///b.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "Test",
-            0,
+            1,
         ): 1,
     },
     symbols: {

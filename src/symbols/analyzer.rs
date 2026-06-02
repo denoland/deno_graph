@@ -254,21 +254,27 @@ impl<'a> RootSymbol<'a> {
     specifier: &ModuleSpecifier,
     source: ParsedSource<'a>,
   ) -> ModuleInfoRef<'_> {
+    let mut source = source;
+    let scoping = source.take_scoping();
     let is_declaration = source.media_type().is_declaration();
     let source_text = source.text().clone();
     let source_text_info = source.text_info_lazy().clone();
     let media_type = source.media_type();
     let comments: Vec<Comment> = source.comments().iter().copied().collect();
+    // Preserve the semantic symbol/reference ids when moving the program into
+    // the analyzer's allocator so they stay in sync with `scoping`.
     let program: &'a Program<'a> = self
       .allocator
-      .alloc(source.program().clone_in(self.allocator));
+      .alloc(source.program().clone_in_with_semantic_ids(self.allocator));
 
     let module_id = ModuleId(self.ids_to_modules.len() as u32);
     let filler = SymbolFiller {
       is_declaration,
       builder: ModuleBuilder::new(module_id),
+      scoping,
     };
     filler.fill(program);
+    let scoping = filler.scoping;
     let builder = filler.builder;
     let module_symbol = EsModuleInfo {
       specifier: specifier.clone(),
@@ -286,6 +292,7 @@ impl<'a> RootSymbol<'a> {
         .into_iter()
         .map(|(k, v)| (k, v.0.into_inner()))
         .collect(),
+      scoping,
     };
     self.finalize_insert(ModuleInfo::Esm(module_symbol))
   }
@@ -961,8 +968,12 @@ impl<'a> SymbolNodeRef<'a> {
     }
   }
 
-  pub fn deps(&self, mode: ResolveDepsMode) -> Vec<SymbolNodeDep> {
-    super::dep_analyzer::resolve_deps(*self, mode)
+  pub fn deps(
+    &self,
+    mode: ResolveDepsMode,
+    scoping: Option<&deno_ast::oxc::semantic::Scoping>,
+  ) -> Vec<SymbolNodeDep> {
+    super::dep_analyzer::resolve_deps(*self, mode, scoping)
   }
 }
 
@@ -1142,9 +1153,13 @@ impl<'a> SymbolDecl<'a> {
     self.maybe_node().and_then(|n| n.maybe_name())
   }
 
-  pub fn deps(&self, mode: ResolveDepsMode) -> Vec<SymbolNodeDep> {
+  pub fn deps(
+    &self,
+    mode: ResolveDepsMode,
+    scoping: Option<&deno_ast::oxc::semantic::Scoping>,
+  ) -> Vec<SymbolNodeDep> {
     match self.maybe_node() {
-      Some(node) => node.deps(mode),
+      Some(node) => node.deps(mode, scoping),
       None => Vec::new(),
     }
   }
@@ -1357,6 +1372,14 @@ impl<'a> ModuleInfoRef<'a> {
     match self {
       Self::Json(_) => None,
       Self::Esm(esm) => Some(esm),
+    }
+  }
+
+  /// Semantic scope info for this module, if available (esm only).
+  pub fn scoping(&self) -> Option<&'a deno_ast::oxc::semantic::Scoping> {
+    match self {
+      Self::Json(_) => None,
+      Self::Esm(esm) => esm.scoping(),
     }
   }
 
@@ -1593,6 +1616,9 @@ pub struct EsModuleInfo<'a> {
   // note: not all symbol ids have an swc id. For example, default exports
   swc_id_to_symbol_id: IndexMap<Id, SymbolId>,
   symbols: IndexMap<SymbolId, Symbol<'a>>,
+  /// Semantic scope info, used to resolve referenced identifiers to their
+  /// declaring symbol when computing dependencies.
+  scoping: Option<deno_ast::oxc::semantic::Scoping>,
 }
 
 impl std::fmt::Debug for EsModuleInfo<'_> {
@@ -1647,6 +1673,11 @@ impl<'a> EsModuleInfo<'a> {
     self.program
   }
 
+  /// Semantic scope info for this module, if scope analysis ran.
+  pub fn scoping(&self) -> Option<&deno_ast::oxc::semantic::Scoping> {
+    self.scoping.as_ref()
+  }
+
   pub fn statements(&self) -> &'a [Statement<'a>] {
     self.program.body.as_slice()
   }
@@ -1663,7 +1694,27 @@ impl<'a> EsModuleInfo<'a> {
   }
 
   pub fn symbol_id_from_swc(&self, id: &Id) -> Option<SymbolId> {
-    self.swc_id_to_symbol_id.get(id).copied()
+    if let Some(symbol_id) = self.swc_id_to_symbol_id.get(id).copied() {
+      return Some(symbol_id);
+    }
+    // The id's scope discriminator is `0` when semantic analysis couldn't
+    // resolve the reference to a declaration (e.g. the root of a qualified
+    // type name like `MyClass.prototype.x`). Fall back to matching by name
+    // when exactly one symbol has that name, recovering the pre-scope-aware
+    // behaviour without reintroducing cross-scope collisions.
+    if id.1 == 0 {
+      let mut found = None;
+      for (key, symbol_id) in &self.swc_id_to_symbol_id {
+        if key.0 == id.0 {
+          if found.is_some() {
+            return None; // ambiguous - can't safely pick one
+          }
+          found = Some(*symbol_id);
+        }
+      }
+      return found;
+    }
+    None
   }
 
   pub fn symbol_from_swc(&self, id: &Id) -> Option<&Symbol<'a>> {
@@ -1891,6 +1942,9 @@ impl<'a> ModuleBuilder<'a> {
 struct SymbolFiller<'a> {
   is_declaration: bool,
   builder: ModuleBuilder<'a>,
+  /// Scope/symbol information from semantic analysis, used to disambiguate
+  /// same-named identifiers across scopes when computing `Id`s.
+  scoping: Option<deno_ast::oxc::semantic::Scoping>,
 }
 
 impl<'a> SymbolFiller<'a> {
@@ -1923,7 +1977,7 @@ impl<'a> SymbolFiller<'a> {
               ImportDeclarationSpecifier::ImportSpecifier(n) => {
                 let imported_name = module_export_name_to_string(&n.imported);
                 self.builder.ensure_symbol_for_swc_id(
-                  n.local.to_id(),
+                  n.local.to_id(self.scoping.as_ref()),
                   SymbolDecl::new(
                     SymbolDeclKind::FileRef(FileDep {
                       name: FileDepName::Name(imported_name),
@@ -1936,7 +1990,7 @@ impl<'a> SymbolFiller<'a> {
               }
               ImportDeclarationSpecifier::ImportDefaultSpecifier(n) => {
                 self.builder.ensure_symbol_for_swc_id(
-                  n.local.to_id(),
+                  n.local.to_id(self.scoping.as_ref()),
                   SymbolDecl::new(
                     SymbolDeclKind::FileRef(FileDep {
                       name: FileDepName::Name("default".to_string()),
@@ -1949,7 +2003,7 @@ impl<'a> SymbolFiller<'a> {
               }
               ImportDeclarationSpecifier::ImportNamespaceSpecifier(n) => {
                 self.builder.ensure_symbol_for_swc_id(
-                  n.local.to_id(),
+                  n.local.to_id(self.scoping.as_ref()),
                   SymbolDecl::new(
                     SymbolDeclKind::FileRef(FileDep {
                       name: FileDepName::Star,
@@ -1992,10 +2046,10 @@ impl<'a> SymbolFiller<'a> {
                 ),
               );
             if let Some(ident) = n.id.as_ref() {
-              self
-                .builder
-                .swc_id_to_symbol_id
-                .insert(ident.to_id(), default_export_symbol_id);
+              self.builder.swc_id_to_symbol_id.insert(
+                ident.to_id(self.scoping.as_ref()),
+                default_export_symbol_id,
+              );
             }
             let symbol =
               self.builder.symbol_mut(default_export_symbol_id).unwrap();
@@ -2013,10 +2067,10 @@ impl<'a> SymbolFiller<'a> {
                 ),
               );
             if let Some(ident) = n.id.as_ref() {
-              self
-                .builder
-                .swc_id_to_symbol_id
-                .insert(ident.to_id(), default_export_symbol_id);
+              self.builder.swc_id_to_symbol_id.insert(
+                ident.to_id(self.scoping.as_ref()),
+                default_export_symbol_id,
+              );
             }
             // nothing to fill for functions
           }
@@ -2031,10 +2085,10 @@ impl<'a> SymbolFiller<'a> {
                   default_decl.span,
                 ),
               );
-            self
-              .builder
-              .swc_id_to_symbol_id
-              .insert(n.id.to_id(), default_export_symbol_id);
+            self.builder.swc_id_to_symbol_id.insert(
+              n.id.to_id(self.scoping.as_ref()),
+              default_export_symbol_id,
+            );
             let symbol =
               self.builder.symbol_mut(default_export_symbol_id).unwrap();
             self.fill_ts_interface(symbol, n)
@@ -2107,7 +2161,7 @@ impl<'a> SymbolFiller<'a> {
           && let Some(symbol_id) = self
             .builder
             .swc_id_to_symbol_id
-            .get(&expando_ref.obj_ident().to_id())
+            .get(&expando_ref.obj_ident().to_id(self.scoping.as_ref()))
         {
           let symbol = self.builder.symbol_mut(symbol_id).unwrap();
           // expando properties are only valid on a function
@@ -2129,7 +2183,7 @@ impl<'a> SymbolFiller<'a> {
         let decls_are_exports =
           is_ambient && !module_symbol.borrow_inner().is_module();
         if let Some(ident) = &n.id {
-          let id = ident.to_id();
+          let id = ident.to_id(self.scoping.as_ref());
           let symbol = self.builder.get_symbol_from_swc_id(
             id,
             SymbolDecl::new(
@@ -2153,7 +2207,7 @@ impl<'a> SymbolFiller<'a> {
           is_ambient && !module_symbol.borrow_inner().is_module();
         if let Some(ident) = &n.id {
           let symbol_id = self.builder.ensure_symbol_for_swc_id(
-            ident.to_id(),
+            ident.to_id(self.scoping.as_ref()),
             SymbolDecl::new(
               SymbolDeclKind::Definition(SymbolNode(SymbolNodeInner::FnDecl(
                 n,
@@ -2184,7 +2238,7 @@ impl<'a> SymbolFiller<'a> {
               SymbolNodeInner::Var(var_decl, decl, ident)
             };
             let symbol_id = self.builder.ensure_symbol_for_swc_id(
-              ident.to_id(),
+              ident.to_id(self.scoping.as_ref()),
               SymbolDecl::new(
                 SymbolDeclKind::Definition(SymbolNode(node_inner)),
                 decl.span,
@@ -2201,7 +2255,7 @@ impl<'a> SymbolFiller<'a> {
       Statement::TSInterfaceDeclaration(n) => {
         let decls_are_exports =
           is_ambient && !module_symbol.borrow_inner().is_module();
-        let id = n.id.to_id();
+        let id = n.id.to_id(self.scoping.as_ref());
         let symbol = self.builder.get_symbol_from_swc_id(
           id,
           SymbolDecl::new(
@@ -2223,7 +2277,7 @@ impl<'a> SymbolFiller<'a> {
         let decls_are_exports =
           is_ambient && !module_symbol.borrow_inner().is_module();
         let symbol_id = self.builder.ensure_symbol_for_swc_id(
-          n.id.to_id(),
+          n.id.to_id(self.scoping.as_ref()),
           SymbolDecl::new(
             SymbolDeclKind::Definition(SymbolNode(
               SymbolNodeInner::TsTypeAlias(n),
@@ -2241,7 +2295,7 @@ impl<'a> SymbolFiller<'a> {
         let decls_are_exports =
           is_ambient && !module_symbol.borrow_inner().is_module();
         let symbol_id = self.builder.ensure_symbol_for_swc_id(
-          n.id.to_id(),
+          n.id.to_id(self.scoping.as_ref()),
           SymbolDecl::new(
             SymbolDeclKind::Definition(SymbolNode(SymbolNodeInner::TsEnum(n))),
             n.span,
@@ -2297,7 +2351,7 @@ impl<'a> SymbolFiller<'a> {
       Declaration::ClassDeclaration(n) => {
         if let Some(ident) = &n.id {
           let symbol = self.builder.get_symbol_from_swc_id(
-            ident.to_id(),
+            ident.to_id(self.scoping.as_ref()),
             SymbolDecl::new(
               SymbolDeclKind::Definition(SymbolNode(
                 SymbolNodeInner::ExportDecl(
@@ -2318,7 +2372,7 @@ impl<'a> SymbolFiller<'a> {
       Declaration::FunctionDeclaration(n) => {
         if let Some(ident) = &n.id {
           let symbol_id = self.builder.ensure_symbol_for_swc_id(
-            ident.to_id(),
+            ident.to_id(self.scoping.as_ref()),
             SymbolDecl::new(
               SymbolDeclKind::Definition(SymbolNode(
                 SymbolNodeInner::ExportDecl(
@@ -2338,7 +2392,7 @@ impl<'a> SymbolFiller<'a> {
         for decl in &n.declarations {
           for ident in find_binding_ids(&decl.id) {
             let export_name = ident.name.to_string();
-            let id = ident.to_id();
+            let id = ident.to_id(self.scoping.as_ref());
             let symbol_id = self.builder.ensure_symbol_for_swc_id(
               id.clone(),
               SymbolDecl::new(
@@ -2359,7 +2413,7 @@ impl<'a> SymbolFiller<'a> {
       }
       Declaration::TSInterfaceDeclaration(n) => {
         let symbol = self.builder.get_symbol_from_swc_id(
-          n.id.to_id(),
+          n.id.to_id(self.scoping.as_ref()),
           SymbolDecl::new(
             SymbolDeclKind::Definition(SymbolNode(
               SymbolNodeInner::ExportDecl(
@@ -2378,7 +2432,7 @@ impl<'a> SymbolFiller<'a> {
       }
       Declaration::TSTypeAliasDeclaration(n) => {
         let symbol_id = self.builder.ensure_symbol_for_swc_id(
-          n.id.to_id(),
+          n.id.to_id(self.scoping.as_ref()),
           SymbolDecl::new(
             SymbolDeclKind::Definition(SymbolNode(
               SymbolNodeInner::ExportDecl(
@@ -2395,7 +2449,7 @@ impl<'a> SymbolFiller<'a> {
       }
       Declaration::TSEnumDeclaration(n) => {
         let symbol_id = self.builder.ensure_symbol_for_swc_id(
-          n.id.to_id(),
+          n.id.to_id(self.scoping.as_ref()),
           SymbolDecl::new(
             SymbolDeclKind::Definition(SymbolNode(
               SymbolNodeInner::ExportDecl(
@@ -2440,7 +2494,7 @@ impl<'a> SymbolFiller<'a> {
       }
       Declaration::TSImportEqualsDeclaration(n) => {
         let symbol_id = self.builder.ensure_symbol_for_swc_id(
-          n.id.to_id(),
+          n.id.to_id(self.scoping.as_ref()),
           SymbolDecl::new(
             SymbolDeclKind::Definition(SymbolNode(
               SymbolNodeInner::ExportDecl(
@@ -2482,7 +2536,8 @@ impl<'a> SymbolFiller<'a> {
           module_symbol.add_export(exported_name, symbol_id);
         }
         None => {
-          let local_id = module_export_name_to_id(&specifier.local);
+          let local_id =
+            module_export_name_to_id(&specifier.local, self.scoping.as_ref());
           if local_name != exported_name {
             let orig_symbol =
               self.builder.create_new_symbol(module_symbol.symbol_id());
@@ -2519,7 +2574,7 @@ impl<'a> SymbolFiller<'a> {
         self.builder.ensure_default_export_symbol(
           module_symbol,
           SymbolDecl::new(
-            SymbolDeclKind::Target(ident.to_id()),
+            SymbolDeclKind::Target(ident.to_id(self.scoping.as_ref())),
             default_decl.span,
           ),
         );
@@ -2547,7 +2602,10 @@ impl<'a> SymbolFiller<'a> {
       Expression::Identifier(ident) => {
         self.builder.ensure_default_export_symbol(
           module_symbol,
-          SymbolDecl::new(SymbolDeclKind::Target(ident.to_id()), ident.span),
+          SymbolDecl::new(
+            SymbolDeclKind::Target(ident.to_id(self.scoping.as_ref())),
+            ident.span,
+          ),
         );
       }
       _ => {
@@ -2562,7 +2620,7 @@ impl<'a> SymbolFiller<'a> {
     import_equals: &TSImportEqualsDeclaration,
     parent_symbol: &SymbolMut,
   ) -> SymbolId {
-    let id = import_equals.id.to_id();
+    let id = import_equals.id.to_id(self.scoping.as_ref());
     if let Some(symbol_id) = self.builder.swc_id_to_symbol_id.get(&id) {
       return symbol_id;
     }
@@ -2579,8 +2637,10 @@ impl<'a> SymbolFiller<'a> {
         )
       }
       TSModuleReference::QualifiedName(qualified_name) => {
-        let (leftmost_id, parts) =
-          super::helpers::ts_qualified_name_parts(qualified_name);
+        let (leftmost_id, parts) = super::helpers::ts_qualified_name_parts(
+          qualified_name,
+          self.scoping.as_ref(),
+        );
         self.builder.ensure_symbol_for_swc_id(
           id,
           SymbolDecl::new(
@@ -2663,7 +2723,9 @@ impl<'a> SymbolFiller<'a> {
     is_ambient: bool,
   ) -> Option<SymbolId> {
     let mut id = match &n.id {
-      TSModuleDeclarationName::Identifier(ident) => ident.to_id(),
+      TSModuleDeclarationName::Identifier(ident) => {
+        ident.to_id(self.scoping.as_ref())
+      }
       TSModuleDeclarationName::StringLiteral(_) => return None, // ignore for now
     };
     let mod_symbol = self.builder.get_symbol_from_swc_id(
@@ -2684,7 +2746,9 @@ impl<'a> SymbolFiller<'a> {
           // nested namespace: `namespace A.B { ... }`
           let previous_symbol = mod_symbol;
           id = match &inner_decl.id {
-            TSModuleDeclarationName::Identifier(ident) => ident.to_id(),
+            TSModuleDeclarationName::Identifier(ident) => {
+              ident.to_id(self.scoping.as_ref())
+            }
             TSModuleDeclarationName::StringLiteral(_) => {
               return Some(mod_symbol.symbol_id());
             }
@@ -2981,10 +3045,13 @@ fn module_export_name_to_string(name: &ModuleExportName) -> String {
   }
 }
 
-fn module_export_name_to_id(name: &ModuleExportName) -> Id {
+fn module_export_name_to_id(
+  name: &ModuleExportName,
+  scoping: Option<&deno_ast::oxc::semantic::Scoping>,
+) -> Id {
   match name {
-    ModuleExportName::IdentifierName(n) => n.to_id(),
-    ModuleExportName::IdentifierReference(n) => n.to_id(),
+    ModuleExportName::IdentifierName(n) => n.to_id(scoping),
+    ModuleExportName::IdentifierReference(n) => n.to_id(scoping),
     ModuleExportName::StringLiteral(n) => (n.value.to_string(), 0),
   }
 }

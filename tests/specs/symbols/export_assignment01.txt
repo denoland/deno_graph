@@ -15,7 +15,7 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "test",
-            0,
+            1,
         ): 1,
     },
     symbols: {
@@ -86,7 +86,7 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "test",
-                            0,
+                            1,
                         ),
                     ),
                     range: Span {

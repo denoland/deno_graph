@@ -24,19 +24,19 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "c",
-            0,
+            1,
         ): 1,
         (
             "d",
-            0,
+            2,
         ): 2,
         (
             "a",
-            0,
+            3,
         ): 3,
         (
             "b",
-            0,
+            4,
         ): 4,
     },
     symbols: {

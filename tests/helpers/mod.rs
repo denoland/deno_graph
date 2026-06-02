@@ -522,7 +522,7 @@ impl TestBuilder {
             for symbol in module.symbols() {
               for decl in symbol.decls() {
                 if let Some(node) = decl.maybe_node() {
-                  let deps = node.deps(resolve_mode);
+                  let deps = node.deps(resolve_mode, module.scoping());
                   if !deps.is_empty() {
                     symbol_deps_text.push_str(&format!(
                       "{:?}:{:?} {:?}\n",

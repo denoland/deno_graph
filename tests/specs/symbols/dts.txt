@@ -19,15 +19,15 @@ file:///declaration.d.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "Test",
-            0,
+            1,
         ): 1,
         (
             "random",
-            0,
+            2,
         ): 3,
         (
             "publicVar",
-            0,
+            3,
         ): 4,
     },
     symbols: {
@@ -170,10 +170,10 @@ file:///declaration.d.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-2:22..49 [Id(("publicVar", 0))]
+2:22..49 [Id(("publicVar", 3))]
 
 == symbol deps (types only) ==
-2:22..49 [Id(("publicVar", 0))]
+2:22..49 [Id(("publicVar", 3))]
 
 file:///mod.ts: EsModuleInfo {
     module_id: ModuleId(

@@ -17,19 +17,19 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "Test",
-            0,
+            1,
         ): 1,
         (
             "Other",
-            0,
+            3,
         ): 2,
         (
             "Other2",
-            0,
+            4,
         ): 3,
         (
             "Tuple",
-            0,
+            5,
         ): 4,
     },
     symbols: {
@@ -172,10 +172,10 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-1:0..43 [Id(("Other", 0)), Id(("Other2", 0))]
+1:0..43 [Id(("Other", 3)), Id(("Other2", 4))]
 
 == symbol deps (types only) ==
-1:0..43 [Id(("Other", 0)), Id(("Other2", 0))]
+1:0..43 [Id(("Other", 3)), Id(("Other2", 4))]
 
 == export definitions ==
 [Test]: file:///mod.ts:0..43

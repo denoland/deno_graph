@@ -20,11 +20,11 @@ use deno_ast::oxc::allocator::Vec as OxcVec;
 use deno_ast::oxc::ast::Comment;
 use deno_ast::oxc::ast::CommentKind;
 use deno_ast::oxc::ast::ast::*;
-use deno_ast::oxc::span::Atom;
 use deno_ast::oxc::span::GetSpan;
 use deno_ast::oxc::span::Ident;
 use deno_ast::oxc::span::SPAN;
 use deno_ast::oxc::span::Span;
+use deno_ast::oxc::span::Str;
 use deno_ast::oxc::syntax::node::NodeId;
 use indexmap::IndexMap;
 
@@ -49,6 +49,7 @@ use super::helpers::type_ann;
 use super::range_finder::ModulePublicRanges;
 use super::transform_dts::FastCheckDtsDiagnostic;
 use super::transform_dts::FastCheckDtsTransformer;
+use crate::symbols::helpers::ToId;
 
 /// Comments management for fast check transforms.
 /// In OXC, comments are stored as `Vec<Comment>` in `Program.comments`.
@@ -340,7 +341,12 @@ impl<'a> FastCheckTransformer<'a> {
 
   pub fn transform(&mut self) -> Result<Program<'a>, Vec<FastCheckDiagnostic>> {
     let is_ambient = self.media_type.is_declaration();
-    let mut program = self.es_module_info.program().clone_in(self.allocator);
+    // Preserve semantic symbol/reference ids so `to_id` can resolve expando
+    // object references against the analyzer's symbol table.
+    let mut program = self
+      .es_module_info
+      .program()
+      .clone_in_with_semantic_ids(self.allocator);
     let mut comments = CommentsMut::new(
       self.allocator,
       &program.comments,
@@ -533,9 +539,9 @@ impl<'a> FastCheckTransformer<'a> {
     if let Some(relative) = self.specifier.make_relative(resolved_specifier) {
       if !relative.starts_with("../") {
         src.value =
-          Atom::from(self.allocator.alloc_str(&format!("./{}", relative)));
+          Str::from(self.allocator.alloc_str(&format!("./{}", relative)));
       } else {
-        src.value = Atom::from(self.allocator.alloc_str(&relative));
+        src.value = Str::from(self.allocator.alloc_str(&relative));
       }
     }
   }
@@ -566,9 +572,8 @@ impl<'a> FastCheckTransformer<'a> {
       Statement::ExportNamedDeclaration(n) => {
         let n = n.as_mut();
         // If it has a declaration, handle it as a decl export
-        if n.declaration.is_some() {
-          let export_decl_span = n.span;
-          let decl = n.declaration.as_mut().unwrap();
+        let export_decl_span = n.span;
+        if let Some(decl) = n.declaration.as_mut() {
           return self.transform_decl_stmt(
             decl,
             comments,
@@ -2283,10 +2288,9 @@ impl<'a> FastCheckTransformer<'a> {
       // (e.g. `declare namespace fn { export var prop: T; }`), then
       // we can safely skip this assignment without error since the
       // namespace already provides the type information.
-      let swc_id = (obj_id.clone(), 0);
       let already_declared = self
         .es_module_info
-        .symbol_from_swc(&swc_id)
+        .symbol_from_swc(&obj_id)
         .map(|symbol| symbol.export(&prop_name).is_some())
         .unwrap_or(false);
       if !already_declared {
@@ -2295,8 +2299,7 @@ impl<'a> FastCheckTransformer<'a> {
         })?;
       }
     } else {
-      let id: Id = (obj_id.to_string(), 0);
-      let var_decls = self.expando_namespaces.entry(id).or_default();
+      let var_decls = self.expando_namespaces.entry(obj_id).or_default();
       var_decls.push(VariableDeclarator {
         node_id: Cell::new(NodeId::DUMMY),
         span: SPAN,
@@ -2318,29 +2321,32 @@ impl<'a> FastCheckTransformer<'a> {
     Ok(TransformItemResult::Remove)
   }
 
-  /// Extract expando property info: (object_ident_name, property_name, property_span)
+  /// Extract expando property info: (object_id, property_name, property_span).
+  /// The object id is resolved via semantic scope info so it matches the
+  /// declaring symbol's id.
   fn get_expando_info(
     &self,
     n: &AssignmentExpression<'a>,
-  ) -> Option<(String, String, Span)> {
+  ) -> Option<(Id, String, Span)> {
     if n.operator != AssignmentOperator::Assign {
       return None;
     }
+    let scoping = self.es_module_info.scoping();
     match &n.left {
       AssignmentTarget::StaticMemberExpression(member) => {
-        let obj_name = match &member.object {
-          Expression::Identifier(ident) => ident.name.to_string(),
+        let obj_id = match &member.object {
+          Expression::Identifier(ident) => ident.to_id(scoping),
           _ => return None,
         };
         let prop_name = member.property.name.to_string();
         if !is_valid_js_ident(&prop_name) {
           return None;
         }
-        Some((obj_name, prop_name, member.property.span))
+        Some((obj_id, prop_name, member.property.span))
       }
       AssignmentTarget::ComputedMemberExpression(member) => {
-        let obj_name = match &member.object {
-          Expression::Identifier(ident) => ident.name.to_string(),
+        let obj_id = match &member.object {
+          Expression::Identifier(ident) => ident.to_id(scoping),
           _ => return None,
         };
         match &member.expression {
@@ -2349,7 +2355,7 @@ impl<'a> FastCheckTransformer<'a> {
             if !is_valid_js_ident(&prop_name) {
               return None;
             }
-            Some((obj_name, prop_name, s.span))
+            Some((obj_id, prop_name, s.span))
           }
           _ => None,
         }
@@ -2705,12 +2711,10 @@ fn is_ts_private_computed_class_element(m: &ClassElement) -> bool {
         false
       }
     }
-    ClassElement::PropertyDefinition(p) => {
-      if p.accessibility == Some(TSAccessibility::Private) {
-        is_computed_property_key(&p.key)
-      } else {
-        false
-      }
+    ClassElement::PropertyDefinition(p)
+      if p.accessibility == Some(TSAccessibility::Private) =>
+    {
+      is_computed_property_key(&p.key)
     }
     _ => false,
   }

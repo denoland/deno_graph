@@ -24,19 +24,19 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "test",
-            0,
+            1,
         ): 1,
         (
             "Inner",
-            0,
+            5,
         ): 2,
         (
             "inner",
-            0,
+            6,
         ): 3,
         (
             "InnerInner",
-            0,
+            10,
         ): 4,
     },
     symbols: {
@@ -213,7 +213,7 @@ file:///mod.ts: EsModuleInfo {
                     kind: QualifiedTarget(
                         (
                             "Inner",
-                            0,
+                            5,
                         ),
                         [
                             "inner",
@@ -243,7 +243,7 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "InnerInner",
-                            0,
+                            10,
                         ),
                     ),
                     range: Span {

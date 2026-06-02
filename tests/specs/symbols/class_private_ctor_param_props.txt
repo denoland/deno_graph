@@ -21,15 +21,15 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "Class",
-            0,
+            1,
         ): 1,
         (
             "PublicClass",
-            0,
+            5,
         ): 5,
         (
             "PrivateClass",
-            0,
+            6,
         ): 6,
     },
     symbols: {
@@ -229,14 +229,14 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-2:23..156 [Id(("PublicClass", 0)), Id(("PrivateClass", 0)), Id(("PrivateClass", 0))]
-3:48..73 [Id(("PublicClass", 0))]
-4:79..113 [Id(("PrivateClass", 0))]
+2:23..156 [Id(("PublicClass", 5)), Id(("PrivateClass", 6)), Id(("PrivateClass", 6))]
+3:48..73 [Id(("PublicClass", 5))]
+4:79..113 [Id(("PrivateClass", 6))]
 
 == symbol deps (types only) ==
-2:23..156 [Id(("PublicClass", 0)), Id(("PrivateClass", 0)), Id(("PrivateClass", 0))]
-3:48..73 [Id(("PublicClass", 0))]
-4:79..113 [Id(("PrivateClass", 0))]
+2:23..156 [Id(("PublicClass", 5)), Id(("PrivateClass", 6)), Id(("PrivateClass", 6))]
+3:48..73 [Id(("PublicClass", 5))]
+4:79..113 [Id(("PrivateClass", 6))]
 
 == export definitions ==
 [Class]: file:///mod.ts:0..158

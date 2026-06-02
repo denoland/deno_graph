@@ -617,7 +617,7 @@ fn analyze_jsdoc_imports(
       });
     }
   }
-  deps.sort_by(|a, b| a.specifier.range.start.cmp(&b.specifier.range.start));
+  deps.sort_by_key(|a| a.specifier.range.start);
   deps
 }
 

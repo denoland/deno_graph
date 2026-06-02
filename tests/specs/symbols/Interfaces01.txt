@@ -29,35 +29,35 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "A",
-            0,
+            1,
         ): 1,
         (
             "Main",
-            0,
+            2,
         ): 2,
         (
             "Extends",
-            0,
+            4,
         ): 6,
         (
             "Prop",
-            0,
+            5,
         ): 7,
         (
             "Param",
-            0,
+            6,
         ): 8,
         (
             "Return",
-            0,
+            7,
         ): 9,
         (
             "SignatureValueType",
-            0,
+            8,
         ): 10,
         (
             "B",
-            0,
+            9,
         ): 12,
     },
     symbols: {
@@ -417,18 +417,18 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-2:17..142 [Id(("Extends", 0))]
-3:59..70 [Id(("Prop", 0))]
-4:73..103 [Id(("Param", 0)), Id(("Return", 0))]
-5:106..140 [Id(("SignatureValueType", 0))]
-11:255..264 [Id(("B", 0))]
+2:17..142 [Id(("Extends", 4))]
+3:59..70 [Id(("Prop", 5))]
+4:73..103 [Id(("Param", 6)), Id(("Return", 7))]
+5:106..140 [Id(("SignatureValueType", 8))]
+11:255..264 [Id(("B", 9))]
 
 == symbol deps (types only) ==
-2:17..142 [Id(("Extends", 0))]
-3:59..70 [Id(("Prop", 0))]
-4:73..103 [Id(("Param", 0)), Id(("Return", 0))]
-5:106..140 [Id(("SignatureValueType", 0))]
-11:255..264 [Id(("B", 0))]
+2:17..142 [Id(("Extends", 4))]
+3:59..70 [Id(("Prop", 5))]
+4:73..103 [Id(("Param", 6)), Id(("Return", 7))]
+5:106..140 [Id(("SignatureValueType", 8))]
+11:255..264 [Id(("B", 9))]
 
 == export definitions ==
 [Main]: file:///mod.ts:17..142

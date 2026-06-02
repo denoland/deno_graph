@@ -34,27 +34,27 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "Album",
-            0,
+            1,
         ): 1,
         (
             "Label",
-            0,
+            2,
         ): 2,
         (
             "Color",
-            0,
+            3,
         ): 3,
         (
             "mixColor",
-            0,
+            7,
         ): 4,
         (
             "Test",
-            0,
+            9,
         ): 5,
         (
             "other",
-            0,
+            10,
         ): 6,
     },
     symbols: {
@@ -307,7 +307,7 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "Album",
-                            0,
+                            1,
                         ),
                     ),
                     range: Span {
@@ -334,7 +334,7 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "Color",
-                            0,
+                            3,
                         ),
                     ),
                     range: Span {
@@ -361,7 +361,7 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "Test",
-                            0,
+                            9,
                         ),
                     ),
                     range: Span {

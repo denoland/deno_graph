@@ -39,10 +39,12 @@ use deno_ast::oxc::ast::ast::VariableDeclarator;
 use deno_ast::oxc::ast::ast::match_member_expression;
 use deno_ast::oxc::ast_visit::Visit;
 use deno_ast::oxc::ast_visit::walk;
+use deno_ast::oxc::semantic::Scoping;
 
 use super::ExportDeclRef;
 use super::SymbolNodeRef;
 use super::helpers::Id;
+use super::helpers::ToId;
 use super::helpers::ts_qualified_name_parts;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -78,21 +80,26 @@ impl ResolveDepsMode {
 pub fn resolve_deps(
   node_ref: SymbolNodeRef,
   mode: ResolveDepsMode,
+  scoping: Option<&Scoping>,
 ) -> Vec<SymbolNodeDep> {
   let mut filler = DepsFiller {
     deps: Vec::new(),
     mode,
+    scoping,
   };
   filler.fill(node_ref);
   filler.deps
 }
 
-struct DepsFiller {
+struct DepsFiller<'sc> {
   deps: Vec<SymbolNodeDep>,
   mode: ResolveDepsMode,
+  /// Semantic scope info used to give referenced identifiers the same
+  /// scope-aware `Id` discriminator as their declarations.
+  scoping: Option<&'sc Scoping>,
 }
 
-impl DepsFiller {
+impl DepsFiller<'_> {
   fn fill(&mut self, node_ref: SymbolNodeRef<'_>) {
     match node_ref {
       SymbolNodeRef::Module(_) | SymbolNodeRef::TsNamespace(_) => {
@@ -285,7 +292,7 @@ impl DepsFiller {
   }
 }
 
-impl<'a> Visit<'a> for DepsFiller {
+impl<'a> Visit<'a> for DepsFiller<'_> {
   fn visit_ts_index_signature(&mut self, n: &TSIndexSignature<'a>) {
     for param in &n.parameters {
       self.visit_ts_type_annotation(&param.type_annotation);
@@ -491,7 +498,8 @@ impl<'a> Visit<'a> for DepsFiller {
       self.visit_ts_type_parameter_instantiation(type_args);
     }
     // TSClassImplements.expression is TSTypeName, extract deps from it
-    let (id, parts) = super::helpers::ts_entity_name_to_parts(&n.expression);
+    let (id, parts) =
+      super::helpers::ts_entity_name_to_parts(&n.expression, self.scoping);
     if parts.is_empty() {
       self.deps.push(SymbolNodeDep::Id(id));
     } else {
@@ -556,7 +564,7 @@ impl<'a> Visit<'a> for DepsFiller {
   }
 
   fn visit_expression(&mut self, n: &Expression<'a>) {
-    match expr_into_id_and_parts(n) {
+    match expr_into_id_and_parts(n, self.scoping) {
       Some((id, parts)) => {
         if parts.is_empty() {
           self.deps.push(SymbolNodeDep::Id(id))
@@ -571,7 +579,7 @@ impl<'a> Visit<'a> for DepsFiller {
   }
 
   fn visit_identifier_reference(&mut self, n: &IdentifierReference<'a>) {
-    let id = (n.name.to_string(), 0);
+    let id = n.to_id(self.scoping);
     self.deps.push(id.into());
   }
 
@@ -581,7 +589,7 @@ impl<'a> Visit<'a> for DepsFiller {
   }
 
   fn visit_member_expression(&mut self, n: &MemberExpression<'a>) {
-    match member_expr_into_id_and_parts(n) {
+    match member_expr_into_id_and_parts(n, self.scoping) {
       Some((id, parts)) => {
         self.deps.push(SymbolNodeDep::QualifiedId(id, parts))
       }
@@ -609,7 +617,7 @@ impl<'a> Visit<'a> for DepsFiller {
   }
 
   fn visit_ts_qualified_name(&mut self, n: &TSQualifiedName<'a>) {
-    let (id, parts) = ts_qualified_name_parts(n);
+    let (id, parts) = ts_qualified_name_parts(n, self.scoping);
     self.deps.push(SymbolNodeDep::QualifiedId(id, parts));
   }
 
@@ -642,7 +650,7 @@ fn ts_type_is_const(ty: &deno_ast::oxc::ast::ast::TSType<'_>) -> bool {
       if i.name == "const"))
 }
 
-impl DepsFiller {
+impl DepsFiller<'_> {
   fn visit_function_deps(&mut self, n: &Function<'_>) {
     if let Some(type_params) = &n.type_parameters {
       self.visit_ts_type_parameter_declaration(type_params);
@@ -673,20 +681,22 @@ fn binding_pattern_has_type_ann(n: &BindingPattern) -> bool {
   }
 }
 
-fn expr_into_id_and_parts(expr: &Expression) -> Option<(Id, Vec<String>)> {
+fn expr_into_id_and_parts(
+  expr: &Expression,
+  scoping: Option<&Scoping>,
+) -> Option<(Id, Vec<String>)> {
   match expr {
     match_member_expression!(Expression) => {
-      member_expr_into_id_and_parts(expr.to_member_expression())
+      member_expr_into_id_and_parts(expr.to_member_expression(), scoping)
     }
-    Expression::Identifier(ident) => {
-      Some(((ident.name.to_string(), 0), vec![]))
-    }
+    Expression::Identifier(ident) => Some((ident.to_id(scoping), vec![])),
     _ => None,
   }
 }
 
 fn member_expr_into_id_and_parts(
   member: &MemberExpression,
+  scoping: Option<&Scoping>,
 ) -> Option<(Id, Vec<String>)> {
   fn member_prop_to_str(member: &MemberExpression) -> Option<String> {
     match member {
@@ -711,7 +721,7 @@ fn member_expr_into_id_and_parts(
     }
   }
 
-  let (id, mut parts) = expr_into_id_and_parts(member_object(member))?;
+  let (id, mut parts) = expr_into_id_and_parts(member_object(member), scoping)?;
   parts.push(member_prop_to_str(member)?);
   Some((id, parts))
 }

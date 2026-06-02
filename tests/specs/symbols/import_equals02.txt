@@ -34,19 +34,19 @@ file:///a.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "A",
-            0,
+            1,
         ): 1,
         (
             "B",
-            0,
+            2,
         ): 2,
         (
             "Other",
-            0,
+            3,
         ): 3,
         (
             "MyTest",
-            0,
+            4,
         ): 6,
     },
     symbols: {
@@ -286,7 +286,7 @@ file:///a.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "A",
-                            0,
+                            1,
                         ),
                     ),
                     range: Span {
@@ -311,19 +311,19 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "A",
-            0,
+            1,
         ): 1,
         (
             "MyExport",
-            0,
+            2,
         ): 2,
         (
             "Test",
-            0,
+            3,
         ): 3,
         (
             "OtherInner",
-            0,
+            4,
         ): 4,
     },
     symbols: {
@@ -452,7 +452,7 @@ file:///mod.ts: EsModuleInfo {
                     kind: QualifiedTarget(
                         (
                             "A",
-                            0,
+                            1,
                         ),
                         [
                             "B",
@@ -483,7 +483,7 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "OtherInner",
-                            0,
+                            4,
                         ),
                     ),
                     range: Span {

@@ -19,19 +19,23 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "MyClass",
-            0,
+            1,
         ): 1,
         (
             "OtherClass",
-            0,
+            2,
         ): 2,
         (
             "MyNamespace",
-            0,
+            3,
         ): 3,
         (
+            "MyClass",
+            4,
+        ): 4,
+        (
             "Test",
-            0,
+            5,
         ): 5,
     },
     symbols: {
@@ -206,12 +210,12 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-1:0..51 [QualifiedId(("MyNamespace", 0), ["MyClass"])]
-2:52..112 [QualifiedId(("MyNamespace", 0), ["MyClass"]), Id(("Test", 0))]
+1:0..51 [QualifiedId(("MyNamespace", 3), ["MyClass"])]
+2:52..112 [QualifiedId(("MyNamespace", 3), ["MyClass"]), Id(("Test", 5))]
 
 == symbol deps (types only) ==
-1:0..51 [QualifiedId(("MyNamespace", 0), ["MyClass"])]
-2:52..112 [QualifiedId(("MyNamespace", 0), ["MyClass"]), Id(("Test", 0))]
+1:0..51 [QualifiedId(("MyNamespace", 3), ["MyClass"])]
+2:52..112 [QualifiedId(("MyNamespace", 3), ["MyClass"]), Id(("Test", 5))]
 
 == export definitions ==
 [MyClass]: file:///mod.ts:0..51

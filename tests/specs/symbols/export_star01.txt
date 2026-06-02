@@ -45,19 +45,19 @@ file:///a.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "Test",
-            0,
+            1,
         ): 4,
         (
             "A",
-            0,
+            2,
         ): 6,
         (
             "B",
-            0,
+            3,
         ): 9,
         (
             "C",
-            0,
+            4,
         ): 12,
     },
     symbols: {
@@ -427,14 +427,14 @@ file:///a.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-5:172..180 [Id(("A", 0))]
-8:213..218 [Id(("B", 0))]
-11:251..257 [Id(("C", 0))]
+5:172..180 [Id(("A", 2))]
+8:213..218 [Id(("B", 3))]
+11:251..257 [Id(("C", 4))]
 
 == symbol deps (types only) ==
-5:172..180 [Id(("A", 0))]
-8:213..218 [Id(("B", 0))]
-11:251..257 [Id(("C", 0))]
+5:172..180 [Id(("A", 2))]
+8:213..218 [Id(("B", 3))]
+11:251..257 [Id(("C", 4))]
 
 file:///class.ts: EsModuleInfo {
     module_id: ModuleId(
@@ -445,7 +445,7 @@ file:///class.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "Test",
-            0,
+            1,
         ): 1,
     },
     symbols: {
@@ -514,7 +514,7 @@ file:///function.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "Test",
-            0,
+            1,
         ): 1,
     },
     symbols: {
@@ -583,7 +583,7 @@ file:///interface.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "Test",
-            0,
+            1,
         ): 1,
     },
     symbols: {

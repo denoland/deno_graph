@@ -85,7 +85,10 @@ export class MyClass {
       .iter()
       .filter_map(|d| d.maybe_node())
       .flat_map(|s| {
-        s.deps(deno_graph::symbols::ResolveDepsMode::TypesAndExpressions)
+        s.deps(
+          deno_graph::symbols::ResolveDepsMode::TypesAndExpressions,
+          module.scoping(),
+        )
       })
       .collect::<Vec<_>>();
     assert_eq!(deps.len(), 1);

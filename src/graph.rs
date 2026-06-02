@@ -6658,8 +6658,7 @@ impl<'a> NpmSpecifierResolver<'a> {
       self.pending_info.dependencies_resolution = Some(result.dep_graph_result);
 
       assert_eq!(all_package_reqs.len(), result.results.len());
-      for (req, resolution) in
-        all_package_reqs.into_iter().zip(result.results.into_iter())
+      for (req, resolution) in all_package_reqs.into_iter().zip(result.results)
       {
         let items = items_by_req.get(&req).unwrap();
         for item in items {

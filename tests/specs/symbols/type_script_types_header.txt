@@ -42,19 +42,19 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "MyInterface",
-            0,
+            1,
         ): 1,
         (
             "MyInterface2",
-            0,
+            2,
         ): 2,
         (
             "MyInterface3",
-            0,
+            3,
         ): 3,
         (
             "MyClass",
-            0,
+            4,
         ): 4,
     },
     symbols: {
@@ -202,10 +202,10 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-4:148..223 [Id(("MyInterface", 0)), Id(("MyInterface2", 0)), Id(("MyInterface3", 0))]
+4:148..223 [Id(("MyInterface", 1)), Id(("MyInterface2", 2)), Id(("MyInterface3", 3))]
 
 == symbol deps (types only) ==
-4:148..223 [Id(("MyInterface", 0)), Id(("MyInterface2", 0)), Id(("MyInterface3", 0))]
+4:148..223 [Id(("MyInterface", 1)), Id(("MyInterface2", 2)), Id(("MyInterface3", 3))]
 
 file:///other.d.ts: EsModuleInfo {
     module_id: ModuleId(
@@ -216,7 +216,7 @@ file:///other.d.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "MyInterface2",
-            0,
+            1,
         ): 1,
     },
     symbols: {
@@ -313,7 +313,7 @@ file:///other.js: EsModuleInfo {
     id_to_symbol_id: {
         (
             "MyInterface2",
-            0,
+            1,
         ): 1,
     },
     symbols: {
@@ -410,7 +410,7 @@ file:///typescript.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "MyInterface3",
-            0,
+            1,
         ): 1,
     },
     symbols: {
@@ -507,11 +507,11 @@ https://localhost/mod.d.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "MyInterface",
-            0,
+            1,
         ): 1,
         (
             "MyNonPublicInterface",
-            0,
+            2,
         ): 3,
     },
     symbols: {
@@ -664,11 +664,11 @@ https://localhost/mod.js: EsModuleInfo {
     id_to_symbol_id: {
         (
             "MyInterface",
-            0,
+            1,
         ): 1,
         (
             "MyNonPublicInterface",
-            0,
+            2,
         ): 3,
     },
     symbols: {

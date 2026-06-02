@@ -31,51 +31,51 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "test",
-            0,
+            1,
         ): 1,
         (
             "TypeParam",
-            0,
+            4,
         ): 2,
         (
             "Param",
-            0,
+            5,
         ): 3,
         (
             "Return",
-            0,
+            6,
         ): 4,
         (
             "Default",
-            0,
+            7,
         ): 5,
         (
             "overloaded",
-            0,
+            8,
         ): 6,
         (
             "OverloadTypeParam",
-            0,
+            13,
         ): 7,
         (
             "OverloadParam",
-            0,
+            14,
         ): 8,
         (
             "OverloadReturn",
-            0,
+            15,
         ): 9,
         (
             "PrivateTypeParam",
-            0,
+            16,
         ): 10,
         (
             "PrivateParam",
-            0,
+            17,
         ): 11,
         (
             "PrivateReturn",
-            0,
+            18,
         ): 12,
     },
     symbols: {
@@ -458,14 +458,14 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-1:0..77 [Id(("TypeParam", 0)), Id(("Default", 0)), Id(("Param", 0)), Id(("Return", 0))]
-6:201..295 [Id(("OverloadTypeParam", 0)), Id(("OverloadParam", 0)), Id(("OverloadReturn", 0))]
-6:334..428 [Id(("PrivateTypeParam", 0)), Id(("PrivateParam", 0)), Id(("PrivateReturn", 0))]
+1:0..77 [Id(("TypeParam", 4)), Id(("Default", 7)), Id(("Param", 5)), Id(("Return", 6))]
+6:201..295 [Id(("OverloadTypeParam", 13)), Id(("OverloadParam", 14)), Id(("OverloadReturn", 15))]
+6:334..428 [Id(("PrivateTypeParam", 16)), Id(("PrivateParam", 17)), Id(("PrivateReturn", 18))]
 
 == symbol deps (types only) ==
-1:0..77 [Id(("TypeParam", 0)), Id(("Default", 0)), Id(("Param", 0)), Id(("Return", 0))]
-6:201..295 [Id(("OverloadTypeParam", 0)), Id(("OverloadParam", 0)), Id(("OverloadReturn", 0))]
-6:334..428 [Id(("PrivateTypeParam", 0)), Id(("PrivateParam", 0)), Id(("PrivateReturn", 0))]
+1:0..77 [Id(("TypeParam", 4)), Id(("Default", 7)), Id(("Param", 5)), Id(("Return", 6))]
+6:201..295 [Id(("OverloadTypeParam", 13)), Id(("OverloadParam", 14)), Id(("OverloadReturn", 15))]
+6:334..428 [Id(("PrivateTypeParam", 16)), Id(("PrivateParam", 17)), Id(("PrivateReturn", 18))]
 
 == export definitions ==
 [test]: file:///mod.ts:0..77

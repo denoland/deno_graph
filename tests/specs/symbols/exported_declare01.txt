@@ -22,27 +22,27 @@ file:///mod.ts: EsModuleInfo {
     id_to_symbol_id: {
         (
             "foo",
-            0,
+            1,
         ): 1,
         (
             "Test",
-            0,
+            2,
         ): 2,
         (
             "test",
-            0,
+            3,
         ): 3,
         (
             "Other",
-            0,
+            4,
         ): 5,
         (
             "MyClass",
-            0,
+            5,
         ): 6,
         (
             "inner",
-            0,
+            6,
         ): 9,
     },
     symbols: {
@@ -174,7 +174,7 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "test",
-                            0,
+                            3,
                         ),
                     ),
                     range: Span {
@@ -308,7 +308,7 @@ file:///mod.ts: EsModuleInfo {
                     kind: QualifiedTarget(
                         (
                             "Test",
-                            0,
+                            2,
                         ),
                         [
                             "test",
@@ -338,7 +338,7 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "foo",
-                            0,
+                            1,
                         ),
                     ),
                     range: Span {
@@ -365,7 +365,7 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "inner",
-                            0,
+                            6,
                         ),
                     ),
                     range: Span {
@@ -392,7 +392,7 @@ file:///mod.ts: EsModuleInfo {
                     kind: Target(
                         (
                             "MyClass",
-                            0,
+                            5,
                         ),
                     ),
                     range: Span {
@@ -409,10 +409,10 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-8:160..172 [Id(("Other", 0))]
+8:160..172 [Id(("Other", 4))]
 
 == symbol deps (types only) ==
-8:160..172 [Id(("Other", 0))]
+8:160..172 [Id(("Other", 4))]
 
 == export definitions ==
 [bar]: file:///mod.ts:0..29
