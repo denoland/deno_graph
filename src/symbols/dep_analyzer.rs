@@ -622,8 +622,24 @@ impl<'a> Visit<'a> for DepsFiller {
   }
 
   fn visit_ts_as_expression(&mut self, n: &TSAsExpression<'a>) {
-    self.visit_ts_type(&n.type_annotation);
+    if ts_type_is_const(&n.type_annotation) {
+      // `expr as const` keeps `expr` verbatim in the fast check output, so its
+      // value references are dependencies. (swc models this as a separate
+      // `TsConstAssertion` node, which is walked by default.) A plain
+      // `expr as T` has its value replaced, so only the type matters.
+      self.visit_expression(&n.expression);
+    } else {
+      self.visit_ts_type(&n.type_annotation);
+    }
   }
+}
+
+fn ts_type_is_const(ty: &deno_ast::oxc::ast::ast::TSType<'_>) -> bool {
+  use deno_ast::oxc::ast::ast::TSType;
+  use deno_ast::oxc::ast::ast::TSTypeName;
+  matches!(ty, TSType::TSTypeReference(r)
+    if matches!(&r.type_name, TSTypeName::IdentifierReference(i)
+      if i.name == "const"))
 }
 
 impl DepsFiller {
