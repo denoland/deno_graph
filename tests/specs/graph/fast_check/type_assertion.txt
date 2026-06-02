@@ -102,7 +102,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     return {} as never;
   }
   export class A {
-    declare prop;
+    declare prop: Public1;
     constructor(prop?: Public1) {}
     declare handler: Public2<Public3>;
     declare secondProp: Public4;
@@ -127,7 +127,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   };
   export declare function createMockApp<S extends Record<string | number | symbol, any> = Record<string, any>>(state?: S): Application<S>;
   export declare class A {
-    prop;
+    prop: Public1;
     constructor(prop?: Public1);
     handler: Public2<Public3>;
     secondProp: Public4;

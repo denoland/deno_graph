@@ -102,7 +102,7 @@ impl<'a> CommentsMut<'a> {
   pub fn reanchor_interior_ts_directives(
     &mut self,
     body: &[Statement<'a>],
-    body_spans: &[Span],
+    param_spans: &[Span],
     source_text: &str,
   ) {
     for c in self.comments.iter_mut() {
@@ -118,20 +118,19 @@ impl<'a> CommentsMut<'a> {
       {
         continue;
       }
-      // Directives inside a function/method body are left alone: fast check
-      // replaces the body, so the error they suppressed is gone and codegen
-      // (which can't find the removed body position) already drops them.
-      // Hoisting them would turn them into unused-directive errors (TS2578).
-      if body_spans
+      // Only hoist directives that sit inside a function/method parameter
+      // list. `oxc_codegen` doesn't emit comments on parameters, and the
+      // emitted signature is collapsed onto a single line, so re-anchoring
+      // the directive to the enclosing top-level statement keeps it
+      // suppressing the same error. Directives elsewhere (e.g. on a class
+      // member spanning its own line) can't be safely hoisted this way, so
+      // they're left untouched.
+      if !param_spans
         .iter()
-        .any(|b| c.span.start >= b.start && c.span.end <= b.end)
+        .any(|p| c.span.start >= p.start && c.span.end <= p.end)
       {
         continue;
       }
-      // Re-anchor signature-interior directives (e.g. inside a parameter
-      // list) to the enclosing top-level statement so codegen emits them
-      // just before that statement. The emitted signature is collapsed onto
-      // a single line, so the directive still suppresses the same error.
       for stmt in body {
         let span = stmt.span();
         if c.span.start > span.start && c.span.end <= span.end {
@@ -147,25 +146,26 @@ impl<'a> CommentsMut<'a> {
   }
 }
 
-/// Collects the spans of every function/method body in the program. Used to
-/// detect `@ts-*` directives that live inside a body (which fast check strips).
-fn collect_function_body_spans(program: &Program<'_>) -> Vec<Span> {
-  use deno_ast::oxc::ast::ast::FunctionBody;
+/// Collects the spans of every function/method parameter list in the program.
+/// Used to detect `@ts-*` directives written inside a signature, which
+/// `oxc_codegen` would otherwise drop (it doesn't emit comments on parameters).
+fn collect_formal_parameter_spans(program: &Program<'_>) -> Vec<Span> {
+  use deno_ast::oxc::ast::ast::FormalParameters;
   use deno_ast::oxc::ast_visit::Visit;
   use deno_ast::oxc::ast_visit::walk;
 
-  struct BodySpanCollector {
+  struct ParamSpanCollector {
     spans: Vec<Span>,
   }
 
-  impl<'a> Visit<'a> for BodySpanCollector {
-    fn visit_function_body(&mut self, body: &FunctionBody<'a>) {
-      self.spans.push(body.span);
-      walk::walk_function_body(self, body);
+  impl<'a> Visit<'a> for ParamSpanCollector {
+    fn visit_formal_parameters(&mut self, params: &FormalParameters<'a>) {
+      self.spans.push(params.span);
+      walk::walk_formal_parameters(self, params);
     }
   }
 
-  let mut collector = BodySpanCollector { spans: Vec::new() };
+  let mut collector = ParamSpanCollector { spans: Vec::new() };
   collector.visit_program(program);
   collector.spans
 }
@@ -353,10 +353,11 @@ impl<'a> FastCheckTransformer<'a> {
     let new_body =
       self.transform_module_body(body_vec, &mut comments, is_ambient)?;
     program.body = OxcVec::from_iter_in(new_body, self.allocator);
-    let body_spans = collect_function_body_spans(self.es_module_info.program());
+    let param_spans =
+      collect_formal_parameter_spans(self.es_module_info.program());
     comments.reanchor_interior_ts_directives(
       &program.body,
-      &body_spans,
+      &param_spans,
       self.es_module_info.source_text(),
     );
     program.comments = comments.into_comments();
@@ -1277,7 +1278,23 @@ impl<'a> FastCheckTransformer<'a> {
             } else {
               match &param.pattern {
                 BindingPattern::BindingIdentifier(_) => {
-                  param.type_annotation.clone_in(self.allocator)
+                  let explicit = param.type_annotation.clone_in(self.allocator);
+                  // A parameter property with a default (`public r = 0`) stores
+                  // the default in `param.initializer`. Infer the field type
+                  // from it so the hoisted property isn't implicitly `any`.
+                  explicit.or_else(|| {
+                    param.initializer.as_ref().and_then(|init| {
+                      self
+                        .maybe_infer_type_from_expr(
+                          init,
+                          match param.readonly {
+                            true => DeclMutabilityKind::Const,
+                            false => DeclMutabilityKind::Mutable,
+                          },
+                        )
+                        .map(|t| type_ann(self.allocator, t))
+                    })
+                  })
                 }
                 BindingPattern::AssignmentPattern(assign) => {
                   let explicit = param.type_annotation.clone_in(self.allocator);
@@ -3102,7 +3119,12 @@ fn is_valid_js_ident(s: &str) -> bool {
   if !first.is_ascii_alphabetic() && first != '_' && first != '$' {
     return false;
   }
-  chars.all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '$')
+  if !chars.all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '$') {
+    return false;
+  }
+  // Reserved words (e.g. `for`) are not valid binding identifiers, so they
+  // can't become expando namespace members. Matches swc's `is_valid_ident`.
+  !deno_ast::oxc::syntax::keyword::is_reserved_keyword(s)
 }
 
 /// Walk an expression tree collecting identifier references.
