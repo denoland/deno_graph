@@ -309,6 +309,13 @@ pub struct LoadOptions {
   ///
   /// The source may be verified by running `checksum.check_source(content)?`.
   pub maybe_checksum: Option<LoaderChecksum>,
+  /// The `type` import attribute the module is being loaded with, if any
+  /// (e.g. `"json"`, `"text"`, `"bytes"`).
+  ///
+  /// Loaders may use this to set an appropriate `Accept` header on remote
+  /// requests. For example, JSON modules should be fetched with
+  /// `Accept: application/json,*/*;q=0.5` per the HTML specification.
+  pub maybe_attribute_type: Option<String>,
 }
 
 /// A trait which allows asynchronous loading of source files into a module

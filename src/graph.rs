@@ -5558,6 +5558,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           was_dynamic_root: self.was_dynamic_root,
           cache_setting: CacheSetting::Only,
           maybe_checksum: Some(checksum.clone()),
+          maybe_attribute_type: None,
         },
       );
       let is_dynamic_branch = self.in_dynamic_branch;
@@ -5965,6 +5966,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
           was_dynamic_root,
           cache_setting: CacheSetting::Use,
           maybe_checksum: maybe_checksum.clone(),
+          maybe_attribute_type: maybe_attribute_type
+            .as_ref()
+            .map(|t| t.kind.clone()),
         };
 
         let handle_redirect =
@@ -6051,6 +6055,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                       was_dynamic_root,
                       cache_setting: CacheSetting::Reload,
                       maybe_checksum: maybe_checksum.clone(),
+                      maybe_attribute_type: maybe_attribute_type
+                        .as_ref()
+                        .map(|t| t.kind.clone()),
                     },
                   )
                   .await;
@@ -6144,6 +6151,9 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     was_dynamic_root,
                     cache_setting: CacheSetting::Reload,
                     maybe_checksum: maybe_checksum.clone(),
+                    maybe_attribute_type: maybe_attribute_type
+                      .as_ref()
+                      .map(|t| t.kind.clone()),
                   },
                 )
                 .await;
@@ -6325,6 +6335,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                 was_dynamic_root: self.was_dynamic_root,
                 cache_setting: CacheSetting::Use,
                 maybe_checksum: Some(checksum.clone()),
+                maybe_attribute_type: None,
               },
             );
             async move {

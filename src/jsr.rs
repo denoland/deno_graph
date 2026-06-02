@@ -211,6 +211,7 @@ impl JsrMetadataStore {
         was_dynamic_root: false,
         cache_setting,
         maybe_checksum: maybe_expected_checksum,
+        maybe_attribute_type: None,
       },
     );
     let fut = spawn(
