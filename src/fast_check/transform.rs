@@ -1843,44 +1843,57 @@ impl<'a> FastCheckTransformer<'a> {
         self.handle_param_assignment_pattern(param, is_optional)?;
       }
       BindingPattern::ArrayPattern(_) => {
-        if param.type_annotation.is_none() {
-          // A destructured param with a leavable default (e.g. `[a] = []`)
-          // doesn't require an explicit type, matching the assignment-pattern
-          // handling. OXC stores the default in `initializer`.
-          let is_init_leavable = match param.initializer.as_mut() {
-            Some(init) => self.maybe_transform_expr_if_leavable(init, None)?,
-            None => false,
-          };
-          if !is_init_leavable {
-            let p_span = param.pattern.span();
-            self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-              range: self.source_range_to_range(p_span),
-            })?;
-          }
-        }
+        self.handle_destructured_param_default(
+          param,
+          array_as_never_expr(self.allocator),
+        )?;
         if let BindingPattern::ArrayPattern(p) = &mut param.pattern {
           p.elements = OxcVec::new_in(self.allocator);
         }
       }
       BindingPattern::ObjectPattern(_) => {
-        if param.type_annotation.is_none() {
-          // A destructured param with a leavable default (e.g. `{a} = {}`)
-          // doesn't require an explicit type, matching the assignment-pattern
-          // handling. OXC stores the default in `initializer`.
-          let is_init_leavable = match param.initializer.as_mut() {
-            Some(init) => self.maybe_transform_expr_if_leavable(init, None)?,
-            None => false,
-          };
-          if !is_init_leavable {
-            let p_span = param.pattern.span();
-            self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-              range: self.source_range_to_range(p_span),
-            })?;
-          }
-        }
+        self.handle_destructured_param_default(
+          param,
+          obj_as_never_expr(self.allocator),
+        )?;
         if let BindingPattern::ObjectPattern(p) = &mut param.pattern {
           p.properties = OxcVec::new_in(self.allocator);
         }
+      }
+    }
+    Ok(())
+  }
+
+  /// Handles the default value of a destructured (array/object) parameter. A
+  /// leavable default is kept; a non-leavable one is replaced with the given
+  /// `never` placeholder when the parameter is typed (so the param stays
+  /// optional without referencing pruned bindings), otherwise an explicit type
+  /// is required.
+  fn handle_destructured_param_default(
+    &mut self,
+    param: &mut FormalParameter<'a>,
+    never_placeholder: Expression<'a>,
+  ) -> Result<(), Vec<FastCheckDiagnostic>> {
+    if param.type_annotation.is_some() {
+      // Typed destructured param: the default is runtime-only. Replace it
+      // unconditionally with a `never` placeholder (matching swc), so the
+      // param stays optional without referencing pruned bindings.
+      if param.initializer.is_some() {
+        param.initializer =
+          Some(OxcBox::new_in(never_placeholder, self.allocator));
+      }
+    } else {
+      // Untyped destructured param: a leavable default lets us avoid an
+      // explicit type; otherwise the type can't be inferred.
+      let is_init_leavable = match param.initializer.as_mut() {
+        Some(init) => self.maybe_transform_expr_if_leavable(init, None)?,
+        None => false,
+      };
+      if !is_init_leavable {
+        let p_span = param.pattern.span();
+        self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
+          range: self.source_range_to_range(p_span),
+        })?;
       }
     }
     Ok(())

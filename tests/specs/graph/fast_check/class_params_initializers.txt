@@ -87,11 +87,11 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     constructor(values: {}, {}: {
       a?: A;
       b?: B;
-    } = {}) {}
+    } = {} as never) {}
     method(values: {}, {}: {
       a?: A;
       b?: B;
-    } = {}, value?: number): void {}
+    } = {} as never, value?: number): void {}
   }
   --- DTS ---
   export declare class Object {
