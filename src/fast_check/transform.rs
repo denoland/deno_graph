@@ -949,6 +949,23 @@ impl<'a> FastCheckTransformer<'a> {
       }
 
       if retain {
+        // Decorators are runtime-only and aren't part of the fast check type
+        // surface; drop them (and their now-unused imports) like swc does.
+        match &mut member {
+          ClassElement::MethodDefinition(m) => {
+            m.decorators = OxcVec::new_in(self.allocator);
+            for param in m.value.params.items.iter_mut() {
+              param.decorators = OxcVec::new_in(self.allocator);
+            }
+          }
+          ClassElement::PropertyDefinition(p) => {
+            p.decorators = OxcVec::new_in(self.allocator);
+          }
+          ClassElement::AccessorProperty(a) => {
+            a.decorators = OxcVec::new_in(self.allocator);
+          }
+          _ => {}
+        }
         members.push(member);
       } else {
         comments.remove_leading(member.span());
