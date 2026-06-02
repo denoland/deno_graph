@@ -24,9 +24,9 @@ std/archive/0.198.0
 
 -- stderr --
 TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Seeker'.
-  constructor(meta: TarMeta, header: TarHeader, reader: Reader | (Reader & Deno.Seeker)){}
+  constructor(meta: TarMeta, header: TarHeader, reader: Reader | (Reader & Deno.Seeker)) {}
                                                                                 ~~~~~~
-    at file://<tmpdir>/untar.ts:10:81
+    at file://<tmpdir>/untar.ts:9:81
 
 error: Type checking failed.
 

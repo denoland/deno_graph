@@ -85,7 +85,10 @@ export class MyClass {
       .iter()
       .filter_map(|d| d.maybe_node())
       .flat_map(|s| {
-        s.deps(deno_graph::symbols::ResolveDepsMode::TypesAndExpressions)
+        s.deps(
+          deno_graph::symbols::ResolveDepsMode::TypesAndExpressions,
+          module.scoping(),
+        )
       })
       .collect::<Vec<_>>();
     assert_eq!(deps.len(), 1);
@@ -128,7 +131,7 @@ async fn test_symbols_re_export_external_and_npm() {
     .with_loader(|loader| {
       loader.remote.add_source_with_text(
         "file:///mod.ts",
-        r#"export * from 'npm:example@1.0.0'; export * from 'external:other"#,
+        r#"export * from 'npm:example@1.0.0'; export * from 'external:other';"#,
       );
       loader.remote.add_external_source("external:other");
     })
@@ -175,7 +178,7 @@ async fn test_jsr_version_not_found_then_found() {
             specifier: specifier.clone(),
             maybe_headers: None,
             mtime: None,
-            content: b"import 'jsr:@scope/a@1.2".to_vec().into(),
+            content: b"import 'jsr:@scope/a@1.2'".to_vec().into(),
           }))
         }),
         "file:///empty.ts" => Box::pin(async move {
@@ -343,7 +346,7 @@ async fn test_jsr_wasm_module() {
             specifier: specifier.clone(),
             maybe_headers: None,
             mtime: None,
-            content: b"import 'jsr:@scope/a@1".to_vec().into(),
+            content: b"import 'jsr:@scope/a@1'".to_vec().into(),
           }))
         }),
         "https://jsr.io/@scope/a/meta.json" => Box::pin(async move {

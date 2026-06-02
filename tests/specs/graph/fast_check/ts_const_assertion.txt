@@ -67,10 +67,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export const b = 2 as const;
   export const c = true as const;
   export const d = false as const;
-  export const g = [
-    1,
-    2
-  ] as const;
+  export const g = [1, 2] as const;
   export const h = {
     a: 1,
     b: 2

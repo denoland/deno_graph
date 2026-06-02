@@ -24,24 +24,24 @@ kz/common-exceptions/0.0.1
 
 -- stderr --
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
-   */ public get name(): string {
-                 ~~~~
-    at file://<tmpdir>/src/exceptions/exception.ts:87:18
+  public get name(): string {
+             ~~~~
+    at file://<tmpdir>/src/exceptions/exception.ts:95:14
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
-   */ public get cause(): Error | undefined {
-                 ~~~~~
-    at file://<tmpdir>/src/exceptions/exception.ts:156:18
+  public get cause(): Error | undefined {
+             ~~~~~
+    at file://<tmpdir>/src/exceptions/exception.ts:170:14
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
-   */ public valueOf(): number {
-             ~~~~~~~
-    at file://<tmpdir>/src/exceptions/exception.ts:189:14
+  public valueOf(): number {
+         ~~~~~~~
+    at file://<tmpdir>/src/exceptions/exception.ts:205:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
-   */ public toString(): string {
-             ~~~~~~~~
-    at file://<tmpdir>/src/exceptions/exception.ts:207:14
+  public toString(): string {
+         ~~~~~~~~
+    at file://<tmpdir>/src/exceptions/exception.ts:224:10
 
 Found 4 errors.
 

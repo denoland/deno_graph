@@ -84,20 +84,22 @@ halvardm/js-helpers/0.2.0
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
   name = this.constructor.name;
   ~~~~
-    at file://<tmpdir>/lib/default/cookie.ts:77:3
+    at file://<tmpdir>/lib/default/cookie.ts:95:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
   name = this.constructor.name;
   ~~~~
-    at file://<tmpdir>/lib/default/fetcher.ts:78:3
+    at file://<tmpdir>/lib/default/fetcher.ts:87:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Fetcher'.
-   */ requester<R extends ValidatorFetcherRequesterOptions = ValidatorFetcherRequesterOptions>(input: string, options?: R): Promise<Response> {
-      ~~~~~~~~~
-    at file://<tmpdir>/lib/default/fetcher.ts:256:7
+  requester<R extends ValidatorFetcherRequesterOptions = ValidatorFetcherRequesterOptions>(input: string, options?: R): Promise<Response> {
+  ~~~~~~~~~
+    at file://<tmpdir>/lib/default/fetcher.ts:307:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Fetcher'.
-    at file://<tmpdir>/lib/default/fetcher.ts:261:7
+  requesterJson<
+  ~~~~~~~~~~~~~
+    at file://<tmpdir>/lib/default/fetcher.ts:313:3
 
 TS2416 [ERROR]: Property 'stdout' in type 'FsCommandOutput' is not assignable to the same property in base type 'CommandOutput'.
   Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'Uint8Array<ArrayBuffer>'.

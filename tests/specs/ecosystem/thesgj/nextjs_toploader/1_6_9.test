@@ -42,9 +42,9 @@ thesgj/nextjs-toploader/1.6.9
 
 -- stderr --
 TS2503 [ERROR]: Cannot find namespace 'JSX'.
- */ const NextTopLoader = ({}: NextTopLoaderProps): JSX.Element =>({} as never);
-                                                    ~~~
-    at file://<tmpdir>/src/index.tsx:60:53
+const NextTopLoader = ({}: NextTopLoaderProps): JSX.Element => {
+                                                ~~~
+    at file://<tmpdir>/src/index.tsx:73:49
 
 error: Type checking failed.
 

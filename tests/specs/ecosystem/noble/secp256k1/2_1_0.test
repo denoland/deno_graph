@@ -316,15 +316,15 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
-error[missing-explicit-type]: missing explicit type in the public API
-   --> /index.ts:392:7
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /index.ts:396:13
     | 
-392 | const utils = {                                         // utilities
-    |       ^^^^^ this symbol is missing an explicit type
+396 |   precompute(w=8, p: Point = G) { p.multiply(3n); w; return p; }, // no-op
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
     | 
-    = hint: add an explicit type annotation to the symbol
+    = hint: add an explicit return type to the function
 
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 

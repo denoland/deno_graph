@@ -72,7 +72,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   --- DTS ---
   export declare class Test {
-    "string": string;
-    "string2": string;
-    1: string;
+    ["string"]: string;
+    ["string2"]: string;
+    [1]: string;
   }

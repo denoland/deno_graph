@@ -14,38 +14,44 @@ kt3k/capsule/0.6.0
 
 -- stderr --
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
-  /** The element */ el: HTMLElement;
-                         ~~~~~~~~~~~
-    at file://<tmpdir>/mod.ts:19:26
+  el: HTMLElement;
+      ~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:20:7
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
-  /** Queries elements by the given selector under the component dom */ query<T extends HTMLElement = HTMLElement>(selector: string): T | null;
-                                                                                        ~~~~~~~~~~~
-    at file://<tmpdir>/mod.ts:20:89
+  query<T extends HTMLElement = HTMLElement>(selector: string): T | null;
+                  ~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:22:19
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
-  /** Queries elements by the given selector under the component dom */ query<T extends HTMLElement = HTMLElement>(selector: string): T | null;
-                                                                                                      ~~~~~~~~~~~
-    at file://<tmpdir>/mod.ts:20:103
+  query<T extends HTMLElement = HTMLElement>(selector: string): T | null;
+                                ~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:22:33
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
-    at file://<tmpdir>/mod.ts:21:96
+  queryAll<T extends HTMLElement = HTMLElement>(selector: string): NodeListOf<T>;
+                     ~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:24:22
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
-    at file://<tmpdir>/mod.ts:21:110
+  queryAll<T extends HTMLElement = HTMLElement>(selector: string): NodeListOf<T>;
+                                   ~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:24:36
 
 TS2304 [ERROR]: Cannot find name 'NodeListOf'.
-    at file://<tmpdir>/mod.ts:21:142
+  queryAll<T extends HTMLElement = HTMLElement>(selector: string): NodeListOf<T>;
+                                                                   ~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:24:68
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
 export function mount(name?: string | null, el?: HTMLElement): void {}
                                                  ~~~~~~~~~~~
-    at file://<tmpdir>/mod.ts:29:50
+    at file://<tmpdir>/mod.ts:33:50
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
 export function unmount(name: string, el: HTMLElement): void {}
                                           ~~~~~~~~~~~
-    at file://<tmpdir>/mod.ts:30:43
+    at file://<tmpdir>/mod.ts:34:43
 
 Found 8 errors.
 

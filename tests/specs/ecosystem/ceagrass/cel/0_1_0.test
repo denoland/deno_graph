@@ -16,17 +16,17 @@ ceagrass/cel/0.1.0
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
   children?: Array<HTMLElement | CreateElementOptions>;
                    ~~~~~~~~~~~
-    at file://<tmpdir>/mod.ts:30:20
+    at file://<tmpdir>/mod.ts:31:20
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
 export function cel(options?: CreateElementOptions): HTMLElement {
                                                      ~~~~~~~~~~~
-    at file://<tmpdir>/mod.ts:34:54
+    at file://<tmpdir>/mod.ts:38:54
 
 TS2304 [ERROR]: Cannot find name 'HTMLStyleElement'.
 export function createStyle(options?: CreateStyleOptions): HTMLStyleElement {
                                                            ~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/mod.ts:43:60
+    at file://<tmpdir>/mod.ts:47:60
 
 Found 3 errors.
 

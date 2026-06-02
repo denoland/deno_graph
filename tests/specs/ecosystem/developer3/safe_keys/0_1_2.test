@@ -24,7 +24,7 @@ TS2503 [ERROR]: Cannot find namespace 'KeyLocker'.
     at file://<tmpdir>/lib/dom/index.ts:2:35
 
 TS2503 [ERROR]: Cannot find namespace 'KeyLocker'.
-  constructor(config: KeyLocker.DOMConfig){}
+  constructor(config: KeyLocker.DOMConfig) {}
                       ~~~~~~~~~
     at file://<tmpdir>/lib/dom/index.ts:3:23
 

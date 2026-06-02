@@ -14,12 +14,12 @@ oriondean/finput/0.0.1
 
 -- stderr --
 TS2304 [ERROR]: Cannot find name 'HTMLInputElement'.
-  constructor(element: HTMLInputElement, options: IOptions){}
+  constructor(element: HTMLInputElement, options: IOptions) {}
                        ~~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/finput.ts:8:24
 
 TS2304 [ERROR]: Cannot find name 'HTMLInputElement'.
-export default (element: HTMLInputElement, options: IOptions): Finput =>({} as never);
+export default (element: HTMLInputElement, options: IOptions): Finput => ({}) as never;
                          ~~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/finput.ts:26:26
 

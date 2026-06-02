@@ -104,7 +104,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     declare left: RedBlackNode<T> | null;
     declare right: RedBlackNode<T> | null;
     declare red: boolean;
-    constructor(parent: RedBlackNode<T> | null, value: T){
+    constructor(parent: RedBlackNode<T> | null, value: T) {
       super({} as never, {} as never);
     }
     static override from<T>(node: RedBlackNode<T>): RedBlackNode<T> {

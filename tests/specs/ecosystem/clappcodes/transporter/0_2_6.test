@@ -14,7 +14,9 @@ clappcodes/transporter/0.2.6
 
 -- stderr --
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
-    at file://<tmpdir>/readable/from-event.ts:11:41
+  K extends HTMLElement,
+            ~~~~~~~~~~~
+    at file://<tmpdir>/readable/from-event.ts:13:13
 
 error: Type checking failed.
 

@@ -146,7 +146,7 @@ pub struct ParseModuleFromAstOptions<'a> {
   pub specifier: ModuleSpecifier,
   pub maybe_headers: Option<&'a HashMap<String, String>>,
   pub mtime: Option<SystemTime>,
-  pub parsed_source: &'a deno_ast::ParsedSource,
+  pub parsed_source: &'a deno_ast::ParsedSource<'a>,
   pub file_system: &'a FileSystem,
   pub jsr_url_provider: &'a dyn JsrUrlProvider,
   pub maybe_resolver: Option<&'a dyn Resolver>,

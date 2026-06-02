@@ -55,7 +55,7 @@ TS2430 [ERROR]: Interface 'MagicStringAST' incorrectly extends interface 'MagicS
   The types returned by 'clone()' are incompatible between these types.
     Type 'MagicStringAST' is not assignable to type 'this'.
       'MagicStringAST' is assignable to the constraint of type 'this', but 'this' could be instantiated with a different subtype of constraint 'MagicStringAST'.
-export interface MagicStringAST extends MagicString {
+export interface MagicStringAST extends MagicString {}
                  ~~~~~~~~~~~~~~
     at file://<tmpdir>/src/index.ts:5:18
 

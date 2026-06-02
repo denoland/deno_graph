@@ -62,8 +62,6 @@ await import("jsr:@scope/a");
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  export class Test {
-  }
+  export class Test {}
   --- DTS ---
-  export declare class Test {
-  }
+  export declare class Test {}

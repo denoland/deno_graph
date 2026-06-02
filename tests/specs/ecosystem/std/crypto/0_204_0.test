@@ -5,10 +5,10 @@ std/crypto/0.204.0
 
 == FAST CHECK EMIT FAILED ==
 error[missing-explicit-return-type]: missing explicit return type in the public API
-   --> /unstable/keystack.ts:146:3
+   --> /unstable/keystack.ts:146:4
     | 
 146 |   [Symbol.for("Deno.customInspect")](inspect: (value: unknown) => string) {
-    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
     | 
     = hint: add an explicit return type to the function
 
@@ -17,10 +17,10 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
-   --> /unstable/keystack.ts:151:3
+   --> /unstable/keystack.ts:151:4
     | 
 151 |   [Symbol.for("nodejs.util.inspect.custom")](
-    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
     | 
     = hint: add an explicit return type to the function
 

@@ -57,7 +57,7 @@ export class D {
 
 Fast check file:///mod.ts:
   {}
-  export const a = (): void =>{};
+  export const a = (): void => {};
   export const b = function(): void {};
   export function c(): void {}
   export class D {

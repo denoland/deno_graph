@@ -16,7 +16,7 @@ lambdalisue/unknownutil/3.16.3-alpha
 TS1192 [ERROR]: Module '"file://<tmpdir>/is.ts"' has no default export.
 import is from "./is.ts";
        ~~
-    at file://<tmpdir>/mod.ts:243:8
+    at file://<tmpdir>/mod.ts:244:8
 
 error: Type checking failed.
 

@@ -125,10 +125,10 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
-   --> /src/python.ts:660:4
+   --> /src/python.ts:660:5
     | 
 660 |   *[Symbol.iterator]() {
-    |    ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    |     ^^^^^^^^^^^^^^^ this function is missing an explicit return type
     | 
     = hint: add an explicit return type to the function
 
@@ -197,10 +197,10 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
-   --> /src/python.ts:804:3
+   --> /src/python.ts:804:4
     | 
 804 |   [Symbol.for("Deno.customInspect")]() {
-    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
     | 
     = hint: add an explicit return type to the function
 
@@ -209,10 +209,10 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
-   --> /src/python.ts:808:3
+   --> /src/python.ts:808:4
     | 
 808 |   [Symbol.for("nodejs.util.inspect.custom")]() {
-    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
     | 
     = hint: add an explicit return type to the function
 

@@ -137,10 +137,8 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     protected method2(): void {}
     declare private tsPrivateMethod: any;
   }
-  class PublicOther {
-  }
-  class PublicOther2 {
-  }
+  class PublicOther {}
+  class PublicOther2 {}
   --- DTS ---
   export declare class Test {
     test1(): void;
@@ -159,7 +157,5 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     protected method2(): void;
     private tsPrivateMethod: any;
   }
-  declare class PublicOther {
-  }
-  declare class PublicOther2 {
-  }
+  declare class PublicOther {}
+  declare class PublicOther2 {}

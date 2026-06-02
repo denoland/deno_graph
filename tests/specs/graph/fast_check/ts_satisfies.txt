@@ -61,15 +61,15 @@ import 'jsr:@scope/a'
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export const a: "hello" = {} as never;
-  export const b = [
+  export const b = ([
     1,
     2,
     3
-  ] as const satisfies readonly number[];
-  export const c = {
+  ] as const) satisfies readonly number[];
+  export const c = ({
     x: 1,
     y: 2
-  } as const satisfies Record<string, number>;
+  } as const) satisfies Record<string, number>;
   --- DTS ---
   export declare const a: "hello";
   export declare const b: readonly [1, 2, 3];

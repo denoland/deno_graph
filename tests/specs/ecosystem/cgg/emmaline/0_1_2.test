@@ -59,34 +59,34 @@ TS2304 [ERROR]: Cannot find name 'CanvasImageSource'.
     at file://<tmpdir>/canvas.ts:46:18
 
 TS2304 [ERROR]: Cannot find name 'HTMLImageElement'.
-   */ drawImageWithOutline(img: HTMLImageElement, at: Vector, style?: IStyle): void;
-                                ~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/canvas.ts:56:33
-
-TS2304 [ERROR]: Cannot find name 'HTMLImageElement'.
-  drawImageWithOutline(img: HTMLImageElement, at: Vector, w: number, h: number, style?: IStyle): void;
+  drawImageWithOutline(img: HTMLImageElement, at: Vector, style?: IStyle): void;
                             ~~~~~~~~~~~~~~~~
     at file://<tmpdir>/canvas.ts:57:29
 
 TS2304 [ERROR]: Cannot find name 'HTMLImageElement'.
+  drawImageWithOutline(img: HTMLImageElement, at: Vector, w: number, h: number, style?: IStyle): void;
+                            ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/canvas.ts:58:29
+
+TS2304 [ERROR]: Cannot find name 'HTMLImageElement'.
   drawSprite(img: HTMLImageElement, spritePos: Vector, sWidth: number, sHeight: number, at: Vector, width: number, height: number): void {}
                   ~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/canvas.ts:61:19
+    at file://<tmpdir>/canvas.ts:62:19
 
 TS2304 [ERROR]: Cannot find name 'MouseEvent'.
   onClick(e: MouseEvent): void {}
              ~~~~~~~~~~
-    at file://<tmpdir>/canvas.ts:86:14
+    at file://<tmpdir>/canvas.ts:87:14
 
 TS2304 [ERROR]: Cannot find name 'MouseEvent'.
   offClick(e: MouseEvent): void {}
               ~~~~~~~~~~
-    at file://<tmpdir>/canvas.ts:87:15
+    at file://<tmpdir>/canvas.ts:88:15
 
 TS2304 [ERROR]: Cannot find name 'MouseEvent'.
   onDrag(e: MouseEvent): void {}
             ~~~~~~~~~~
-    at file://<tmpdir>/canvas.ts:88:13
+    at file://<tmpdir>/canvas.ts:89:13
 
 TS2304 [ERROR]: Cannot find name 'CanvasRenderingContext2D'.
 export type postInit = (ctx: CanvasRenderingContext2D) => void;
