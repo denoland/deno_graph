@@ -144,6 +144,10 @@ impl<'a, 'b> DependencyCollector<'a, 'b> {
 }
 
 impl<'a, 'b> Visit<'a> for DependencyCollector<'a, 'b> {
+  fn visit_program(&mut self, node: &Program<'a>) {
+    walk::walk_program(self, node);
+  }
+
   fn visit_import_declaration(&mut self, node: &ImportDeclaration<'a>) {
     let leading_comments = self.get_leading_comments(node.span.start);
     let kind = if node.import_kind == ImportOrExportKind::Type {
