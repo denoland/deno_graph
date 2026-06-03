@@ -126,6 +126,62 @@ export class MyClass {
 
 #[cfg(feature = "symbols")]
 #[tokio::test]
+async fn test_symbols_type_refs_are_scope_resolved() {
+  let result = TestBuilder::new()
+    .with_loader(|loader| {
+      loader.remote.add_source_with_text(
+        "file:///mod.ts",
+        r#"
+export interface A {}
+export type B = A;
+export type C<T extends A = A> = T;
+export interface D extends A {}
+export interface Array<T> {}
+export type E = Array<string>;
+"#,
+      );
+    })
+    .build()
+    .await;
+
+  let root_symbol = result.root_symbol();
+  let module = root_symbol
+    .module_from_specifier(&ModuleSpecifier::parse("file:///mod.ts").unwrap())
+    .unwrap();
+  let exports = module.exports(&root_symbol);
+
+  for name in ["B", "C", "D", "E"] {
+    let resolved_type = exports.resolved.get(name).unwrap();
+    let resolved_type = resolved_type.as_resolved_export();
+    let type_symbol = resolved_type.symbol();
+    let deps = type_symbol
+      .decls()
+      .iter()
+      .filter_map(|d| d.maybe_node())
+      .flat_map(|s| {
+        s.deps(
+          deno_graph::symbols::ResolveDepsMode::TypesOnly,
+          module.scoping(),
+        )
+      })
+      .collect::<Vec<_>>();
+    assert!(
+      deps.iter().all(|dep| {
+        match dep {
+          deno_graph::symbols::SymbolNodeDep::Id((_, ctxt))
+          | deno_graph::symbols::SymbolNodeDep::QualifiedId((_, ctxt), _) => {
+            *ctxt != 0
+          }
+          deno_graph::symbols::SymbolNodeDep::ImportType(_, _) => true,
+        }
+      }),
+      "{name} had unresolved deps: {deps:?}"
+    );
+  }
+}
+
+#[cfg(feature = "symbols")]
+#[tokio::test]
 async fn test_symbols_re_export_external_and_npm() {
   let result = TestBuilder::new()
     .with_loader(|loader| {

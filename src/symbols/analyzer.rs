@@ -4,6 +4,7 @@ use std::borrow::Cow;
 use std::cell::Cell;
 use std::cell::Ref;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::hash::Hash;
 
 use deno_ast::Comment;
@@ -276,6 +277,9 @@ impl<'a> RootSymbol<'a> {
     filler.fill(program);
     let scoping = filler.scoping;
     let builder = filler.builder;
+    let swc_id_to_symbol_id = builder.swc_id_to_symbol_id.take();
+    let unique_symbol_id_by_name =
+      create_unique_symbol_id_by_name(&swc_id_to_symbol_id);
     let module_symbol = EsModuleInfo {
       specifier: specifier.clone(),
       module_id,
@@ -285,7 +289,8 @@ impl<'a> RootSymbol<'a> {
       comments,
       program,
       re_exports: builder.re_exports.take(),
-      swc_id_to_symbol_id: builder.swc_id_to_symbol_id.take(),
+      swc_id_to_symbol_id,
+      unique_symbol_id_by_name,
       symbols: builder
         .symbols
         .take()
@@ -1615,6 +1620,7 @@ pub struct EsModuleInfo<'a> {
   re_exports: Vec<&'a ExportAllDeclaration<'a>>,
   // note: not all symbol ids have an swc id. For example, default exports
   swc_id_to_symbol_id: IndexMap<Id, SymbolId>,
+  unique_symbol_id_by_name: HashMap<String, Option<SymbolId>>,
   symbols: IndexMap<SymbolId, Symbol<'a>>,
   /// Semantic scope info, used to resolve referenced identifiers to their
   /// declaring symbol when computing dependencies.
@@ -1703,16 +1709,7 @@ impl<'a> EsModuleInfo<'a> {
     // when exactly one symbol has that name, recovering the pre-scope-aware
     // behaviour without reintroducing cross-scope collisions.
     if id.1 == 0 {
-      let mut found = None;
-      for (key, symbol_id) in &self.swc_id_to_symbol_id {
-        if key.0 == id.0 {
-          if found.is_some() {
-            return None; // ambiguous - can't safely pick one
-          }
-          found = Some(*symbol_id);
-        }
-      }
-      return found;
+      return self.unique_symbol_id_by_name.get(&id.0).copied().flatten();
     }
     None
   }
@@ -1729,6 +1726,19 @@ impl<'a> EsModuleInfo<'a> {
   pub fn symbol(&self, id: SymbolId) -> Option<&Symbol<'a>> {
     self.symbols.get(&id)
   }
+}
+
+fn create_unique_symbol_id_by_name(
+  swc_id_to_symbol_id: &IndexMap<Id, SymbolId>,
+) -> HashMap<String, Option<SymbolId>> {
+  let mut unique_symbol_id_by_name = HashMap::new();
+  for ((name, _), symbol_id) in swc_id_to_symbol_id {
+    unique_symbol_id_by_name
+      .entry(name.clone())
+      .and_modify(|existing| *existing = None)
+      .or_insert(Some(*symbol_id));
+  }
+  unique_symbol_id_by_name
 }
 
 struct SymbolMut<'a>(RefCell<Symbol<'a>>);
