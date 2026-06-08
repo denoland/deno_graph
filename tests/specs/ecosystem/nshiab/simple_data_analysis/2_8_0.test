@@ -867,15 +867,6 @@ nshiab/simple-data-analysis/2.8.0
 -- stdout --
 
 -- stderr --
-╭ Warning
-│
-│  Ignored build scripts for packages:
-│  npm:duckdb@0.10.2
-│
-│  Lifecycle scripts are only supported when using a `node_modules` directory.
-│  Enable it in your deno config file:
-│  "nodeModulesDir": "auto"
-╰─
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'SimpleDB'.
      */ start(): Promise<void> {
         ~~~~~

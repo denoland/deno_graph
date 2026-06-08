@@ -150,7 +150,7 @@ impl Visit for DependencyCollector<'_> {
       (true, _) => StaticDependencyKind::ImportType,
       (false, ImportPhase::Evaluation) => StaticDependencyKind::Import,
       (false, ImportPhase::Source) => StaticDependencyKind::ImportSource,
-      (false, ImportPhase::Defer) => return,
+      (false, ImportPhase::Defer) => StaticDependencyKind::ImportDefer,
     };
     self.items.push(
       StaticDependencyDescriptor {
@@ -247,7 +247,7 @@ impl Visit for DependencyCollector<'_> {
       Callee::Import(import) => match import.phase {
         ImportPhase::Evaluation => DynamicDependencyKind::Import,
         ImportPhase::Source => DynamicDependencyKind::ImportSource,
-        ImportPhase::Defer => return,
+        ImportPhase::Defer => DynamicDependencyKind::ImportDefer,
       },
       _ if self.is_require(&node.callee) => DynamicDependencyKind::Require,
       _ => return,

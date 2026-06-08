@@ -1,18 +1,39 @@
 brc-dd/iron/1.0.1
 -- deno.lock --
-{}
+{
+  "version": "5",
+  "specifiers": {
+    "npm:@smithy/util-utf8@^2.2.0": "2.3.0"
+  },
+  "npm": {
+    "@smithy/is-array-buffer@2.2.0": {
+      "integrity": "sha512-GGP3O9QFD24uGeAXYUjwSTXARoqpZykHadOmA8G5vfJPK0/DC67qa//0qvqrJzL1xc8WQWX7/yc7fwudjPHPhA==",
+      "dependencies": [
+        "tslib"
+      ]
+    },
+    "@smithy/util-buffer-from@2.2.0": {
+      "integrity": "sha512-IJdWBbTcMQ6DA0gdNhh/BwrLkDR+ADW5Kr1aZmd4k3DIF6ezMV4R2NIAmT08wQJ3yUK82thHWmC/TnK/wpMMIA==",
+      "dependencies": [
+        "@smithy/is-array-buffer",
+        "tslib"
+      ]
+    },
+    "@smithy/util-utf8@2.3.0": {
+      "integrity": "sha512-R8Rdn8Hy72KKcebgLiv8jQcQkXoLMOGGv5uI1/k0l+snqkOzQ1R0ChUBCxWMlBsFMekWjq0wRudIweFs7sKT5A==",
+      "dependencies": [
+        "@smithy/util-buffer-from",
+        "tslib"
+      ]
+    },
+    "tslib@2.8.1": {
+      "integrity": "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="
+    }
+  }
+}
+
 ===
 
-== FAST CHECK EMIT FAILED ==
-error[missing-explicit-type]: missing explicit type in the public API
-  --> /src/index.ts:62:14
-   | 
-62 | export const macPrefix = `Fe26.${macFormatVersion}`
-   |              ^^^^^^^^^ this symbol is missing an explicit type
-   | 
-   = hint: add an explicit type annotation to the symbol
+== FAST CHECK EMIT PASSED ==
 
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
+== TYPE CHECK PASSED ==

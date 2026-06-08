@@ -716,6 +716,11 @@ fn analyze_jsdoc_imports(
     }
   }
   deps.sort_by(|a, b| a.specifier.range.start.cmp(&b.specifier.range.start));
+  // The same `import(...)` can be discovered from more than one `{` when it is
+  // nested inside a compound JSDoc type (e.g. `{Foo & { x: import('./a').B }}`),
+  // since the scan above ignores nested braces. Drop these duplicates so they
+  // don't produce overlapping entries for the same specifier range.
+  deps.dedup_by(|a, b| a.specifier.range == b.specifier.range);
   deps
 }
 
@@ -732,7 +737,9 @@ fn parse_jsdoc_import_decl(input: &str) -> monch::ParseResult<'_, JsDocImport> {
   fn skip_named_imports(input: &str) -> monch::ParseResult<'_, ()> {
     // { ... }
     let (input, _) = ch('{')(input)?;
-    let (input, _) = monch::take_while(|c| c != '}')(input)?;
+    // `}` is ASCII so a byte-level scan is safe even with multibyte chars in
+    // the body, and skips UTF-8 decoding on every character.
+    let (input, _) = monch::take_while_byte(|b| b != b'}')(input)?;
     let (input, _) = ch('}')(input)?;
     Ok((input, ()))
   }
@@ -837,7 +844,7 @@ fn parse_jsdoc_dynamic_import(
     maybe(parse_second_param_obj_with_leading_comma)(input)?;
   let (input, _) = skip_whitespace(input)?;
   let (input, _) = ch(')')(input)?;
-  let (input, _) = take_while(|c| c != '}')(input)?;
+  let (input, _) = take_while_byte(|b| b != b'}')(input)?;
   let (input, _) = ch('}')(input)?;
 
   Ok((
@@ -904,7 +911,10 @@ fn parse_ident(input: &str) -> monch::ParseResult<'_, &str> {
 fn parse_quote(input: &str) -> monch::ParseResult<'_, &str> {
   use monch::*;
   let (input, open_char) = or(ch('"'), ch('\''))(input)?;
-  let (input, text) = take_while(|c| c != open_char)(input)?;
+  // both quote chars are ASCII so a byte-level scan halts on a valid char
+  // boundary even when the body contains multibyte UTF-8.
+  let open_byte = open_char as u8;
+  let (input, text) = take_while_byte(|b| b != open_byte)(input)?;
   let (input, _) = ch(open_char)(input)?;
   Ok((input, text))
 }
@@ -1415,6 +1425,49 @@ const f = new Set();
           resolution_mode: Some(TypeScriptTypesResolutionMode::Require),
         }
       ]
+    );
+  }
+
+  #[test]
+  fn test_analyze_jsdoc_imports_nested_compound_type() {
+    // a nested `import(...)` inside a compound JSDoc type used to be reported
+    // twice (once per `{`), producing duplicate entries for the same range
+    let specifier = ModuleSpecifier::parse("file:///a/test.js").unwrap();
+    let source = r#"
+/**
+ * @param {Ctx & { aliases: import('./a.js').A }} ctx
+ */
+function b(ctx) {
+  return;
+}
+"#;
+    let parsed_source = DefaultEsParser
+      .parse_program(ParseOptions {
+        specifier: &specifier,
+        source: source.into(),
+        media_type: MediaType::JavaScript,
+        scope_analysis: false,
+      })
+      .unwrap();
+    let module_info = ParserModuleAnalyzer::module_info(&parsed_source);
+    assert_eq!(
+      module_info.jsdoc_imports,
+      [JsDocImportInfo {
+        specifier: SpecifierWithRange {
+          text: "./a.js".to_string(),
+          range: PositionRange {
+            start: Position {
+              line: 2,
+              character: 35,
+            },
+            end: Position {
+              line: 2,
+              character: 43,
+            },
+          },
+        },
+        resolution_mode: None,
+      }]
     );
   }
 

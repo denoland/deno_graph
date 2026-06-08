@@ -1682,9 +1682,22 @@ impl<'a> FastCheckTransformer<'a> {
     };
     let mem_expr = expando_prop.member_expr();
     if !is_init_leavable {
-      self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
-        range: self.source_range_to_range(mem_expr.range()),
-      })?;
+      // If the property is already declared in an existing namespace
+      // (e.g. `declare namespace fn { export var prop: T; }`), then
+      // we can safely skip this assignment without error since the
+      // namespace already provides the type information.
+      let prop_name = expando_prop.prop_name();
+      let obj_id = expando_prop.obj_ident().to_id();
+      let already_declared = self
+        .es_module_info
+        .symbol_from_swc(&obj_id)
+        .map(|symbol| symbol.export(prop_name).is_some())
+        .unwrap_or(false);
+      if !already_declared {
+        self.mark_diagnostic(FastCheckDiagnostic::MissingExplicitType {
+          range: self.source_range_to_range(mem_expr.range()),
+        })?;
+      }
     } else {
       let var_decls = self
         .expando_namespaces
@@ -1831,8 +1844,18 @@ impl<'a> FastCheckTransformer<'a> {
         self.transform_arrow(n, parent_id_range)?;
         true
       }
-      Expr::Tpl(_)
-      | Expr::TaggedTpl(_)
+      Expr::Tpl(n) => {
+        // Untagged template literals always produce strings and are leavable.
+        let mut is_leavable = true;
+        for expr in &mut n.exprs {
+          is_leavable = recurse(expr)?;
+          if !is_leavable {
+            break;
+          }
+        }
+        is_leavable
+      }
+      Expr::TaggedTpl(_)
       | Expr::Class(_)
       | Expr::Yield(_)
       | Expr::MetaProp(_)
@@ -1842,11 +1865,11 @@ impl<'a> FastCheckTransformer<'a> {
       | Expr::JSXElement(_)
       | Expr::JSXFragment(_)
       | Expr::TsInstantiation(_)
-      | Expr::TsSatisfies(_)
       | Expr::PrivateName(_)
       // todo(dsherret): probably could analyze this more
       | Expr::OptChain(_)
       | Expr::Invalid(_) => false,
+      Expr::TsSatisfies(n) => recurse(&mut n.expr)?,
     };
     Ok(is_leavable)
   }
@@ -1875,6 +1898,16 @@ impl<'a> FastCheckTransformer<'a> {
           None
         }
       }
+      Expr::Tpl(_) => {
+        // Untagged template literals always produce strings.
+        Some(TsType::TsKeywordType(TsKeywordType {
+          span: DUMMY_SP,
+          kind: TsKeywordTypeKind::TsStringKeyword,
+        }))
+      }
+      Expr::TsSatisfies(n) => {
+        self.maybe_infer_type_from_expr(&n.expr, decl_kind)
+      }
       Expr::Paren(n) => self.maybe_infer_type_from_expr(&n.expr, decl_kind),
       Expr::This(_)
       | Expr::Array(_)
@@ -1890,7 +1923,6 @@ impl<'a> FastCheckTransformer<'a> {
       | Expr::New(_)
       | Expr::Seq(_)
       | Expr::Ident(_)
-      | Expr::Tpl(_)
       | Expr::TaggedTpl(_)
       | Expr::Arrow(_)
       | Expr::Class(_)
@@ -1905,7 +1937,6 @@ impl<'a> FastCheckTransformer<'a> {
       | Expr::TsConstAssertion(_)
       | Expr::TsNonNull(_)
       | Expr::TsInstantiation(_)
-      | Expr::TsSatisfies(_)
       | Expr::PrivateName(_)
       | Expr::OptChain(_)
       | Expr::Invalid(_) => None,
@@ -1936,7 +1967,15 @@ impl<'a> FastCheckTransformer<'a> {
 
     let is_symbol_global = expr_ident.sym == "Symbol"
       && expr_ident.to_id().1 == self.parsed_source.unresolved_context();
-    if !is_symbol_global || call_expr.args.len() != 1 {
+    if !is_symbol_global {
+      return false;
+    }
+    // Symbol() with no args is valid
+    if call_expr.args.is_empty() {
+      return true;
+    }
+    // Symbol("description") with a single string arg is valid
+    if call_expr.args.len() != 1 {
       return false;
     }
     let Some(arg_lit) = call_expr.args.first().and_then(|a| a.expr.as_lit())
