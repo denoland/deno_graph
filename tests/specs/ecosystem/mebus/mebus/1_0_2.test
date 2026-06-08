@@ -20,4 +20,19 @@ mebus/mebus/1.0.2
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS1192 [ERROR]: Module '"file:<global_npm_dir>/zod/3.23.8/index.d.ts"' has no default export.
+ */ import z from "npm:zod@^3.22.4";
+           ^
+    at file://<tmpdir>/index.ts:4:12
+
+TS1195 [ERROR]:     'export *' does not re-export a default.
+    export * from "./lib";
+    ~~~~~~~~~~~~~~~~~~~~~~
+        at file:<global_npm_dir>/zod/3.23.8/index.d.ts:1:1
+
+error: Type checking failed.
+
