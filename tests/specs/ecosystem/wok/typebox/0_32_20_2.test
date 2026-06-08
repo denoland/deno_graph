@@ -41,54 +41,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /src/type/pick/pick.ts:54:10
-   | 
-54 | function FromIntersect<T extends TSchema[], K extends PropertyKey[]>(T: T, K: K) {
-   |          ^^^^^^^^^^^^^ this function is missing an explicit return type
-   | 
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /src/type/pick/pick.ts:65:10
-   | 
-65 | function FromUnion<T extends TSchema[], K extends PropertyKey[]>(T: T, K: K) {
-   |          ^^^^^^^^^ this function is missing an explicit return type
-   | 
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /src/type/pick/pick.ts:76:10
-   | 
-76 | function FromProperties<T extends TProperties, K extends PropertyKey[]>(T: T, K: K) {
-   |          ^^^^^^^^^^^^^^ this function is missing an explicit return type
-   | 
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /src/type/deref/deref.ts:82:10
-   | 
-82 | function FromProperties(properties: TProperties, references: TSchema[]) {
-   |          ^^^^^^^^^^^^^^ this function is missing an explicit return type
-   | 
-   = hint: add an explicit return type to the function
-
-  info: all functions in the public API must have an explicit return type
-  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-return-type]: missing explicit return type in the public API
   --> /src/type/registry/type.ts:34:17
    | 
 34 | export function Entries() {
