@@ -1017,6 +1017,65 @@ impl<'a> SymbolNodeRef<'a> {
   pub fn deps(&self, mode: ResolveDepsMode) -> Vec<SymbolNodeDep> {
     super::dep_analyzer::resolve_deps(*self, mode)
   }
+
+  pub fn deps_with_namespace(
+    &self,
+    mode: ResolveDepsMode,
+  ) -> Vec<(SymbolNodeDep, super::dep_analyzer::ReferenceNamespace)> {
+    super::dep_analyzer::resolve_deps_with_namespace(*self, mode)
+  }
+
+  /// Whether this declaration introduces a binding in the value namespace
+  /// and/or the type namespace, returned as `(value, type)`.
+  ///
+  /// A value and a type that share a name (e.g. a private `const Role` and an
+  /// exported `type Role`) are merged into a single symbol. This is used by
+  /// fast check to avoid pulling a private value declaration into the public
+  /// API when only the type is exported (and vice versa).
+  pub fn namespaces(&self) -> (bool, bool) {
+    match self {
+      SymbolNodeRef::Var(..)
+      | SymbolNodeRef::UsingVar(..)
+      | SymbolNodeRef::FnDecl(_)
+      | SymbolNodeRef::ExportDefaultExpr(_)
+      | SymbolNodeRef::ExpandoProperty(_) => (true, false),
+      SymbolNodeRef::TsInterface(_) | SymbolNodeRef::TsTypeAlias(_) => {
+        (false, true)
+      }
+      SymbolNodeRef::ClassDecl(_)
+      | SymbolNodeRef::TsEnum(_)
+      | SymbolNodeRef::TsNamespace(_) => (true, true),
+      SymbolNodeRef::ExportDecl(_, inner) => match inner {
+        ExportDeclRef::Fn(_) | ExportDeclRef::Var(..) => (true, false),
+        ExportDeclRef::TsInterface(_) | ExportDeclRef::TsTypeAlias(_) => {
+          (false, true)
+        }
+        ExportDeclRef::Class(_)
+        | ExportDeclRef::TsEnum(_)
+        | ExportDeclRef::TsModule(_) => (true, true),
+      },
+      SymbolNodeRef::ExportDefaultDecl(n) => match &n.decl {
+        DefaultDecl::Fn(_) => (true, false),
+        DefaultDecl::TsInterfaceDecl(_) => (false, true),
+        DefaultDecl::Class(_) => (true, true),
+      },
+      // the module itself and class/interface members aren't subject to
+      // value/type namespace filtering, so conservatively treat them as both
+      SymbolNodeRef::Module(_)
+      | SymbolNodeRef::AutoAccessor(_)
+      | SymbolNodeRef::ClassMethod(_)
+      | SymbolNodeRef::ClassProp(_)
+      | SymbolNodeRef::ClassParamProp(_)
+      | SymbolNodeRef::Constructor(_)
+      | SymbolNodeRef::TsIndexSignature(_)
+      | SymbolNodeRef::TsCallSignatureDecl(_)
+      | SymbolNodeRef::TsConstructSignatureDecl(_)
+      | SymbolNodeRef::TsPropertySignature(_)
+      | SymbolNodeRef::TsGetterSignature(_)
+      | SymbolNodeRef::TsSetterSignature(_)
+      | SymbolNodeRef::TsMethodSignature(_) => (true, true),
+    }
+  }
 }
 
 /// An "expando property" is a property that's assigned to a declaration
@@ -1191,6 +1250,17 @@ impl SymbolDecl {
 
   pub fn has_overloads(&self) -> bool {
     self.flags.has_overloads()
+  }
+
+  /// Whether this declaration introduces a binding in the value namespace
+  /// and/or the type namespace, returned as `(value, type)`. Declarations
+  /// that aren't a [`SymbolDeclKind::Definition`] (e.g. re-export aliases)
+  /// conservatively return `(true, true)`.
+  pub fn namespaces(&self) -> (bool, bool) {
+    self
+      .maybe_node()
+      .map(|n| n.namespaces())
+      .unwrap_or((true, true))
   }
 
   pub fn is_class(&self) -> bool {
