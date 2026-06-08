@@ -1,6 +1,6 @@
 [package]
 name = "deno_graph"
-version = "0.108.3"
+version = "0.108.4"
 authors = ["the Deno authors"]
 documentation = "https://docs.rs/deno_graph"
 edition = "2024"
