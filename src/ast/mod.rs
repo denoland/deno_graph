@@ -716,6 +716,11 @@ fn analyze_jsdoc_imports(
     }
   }
   deps.sort_by(|a, b| a.specifier.range.start.cmp(&b.specifier.range.start));
+  // The same `import(...)` can be discovered from more than one `{` when it is
+  // nested inside a compound JSDoc type (e.g. `{Foo & { x: import('./a').B }}`),
+  // since the scan above ignores nested braces. Drop these duplicates so they
+  // don't produce overlapping entries for the same specifier range.
+  deps.dedup_by(|a, b| a.specifier.range == b.specifier.range);
   deps
 }
 
@@ -1420,6 +1425,49 @@ const f = new Set();
           resolution_mode: Some(TypeScriptTypesResolutionMode::Require),
         }
       ]
+    );
+  }
+
+  #[test]
+  fn test_analyze_jsdoc_imports_nested_compound_type() {
+    // a nested `import(...)` inside a compound JSDoc type used to be reported
+    // twice (once per `{`), producing duplicate entries for the same range
+    let specifier = ModuleSpecifier::parse("file:///a/test.js").unwrap();
+    let source = r#"
+/**
+ * @param {Ctx & { aliases: import('./a.js').A }} ctx
+ */
+function b(ctx) {
+  return;
+}
+"#;
+    let parsed_source = DefaultEsParser
+      .parse_program(ParseOptions {
+        specifier: &specifier,
+        source: source.into(),
+        media_type: MediaType::JavaScript,
+        scope_analysis: false,
+      })
+      .unwrap();
+    let module_info = ParserModuleAnalyzer::module_info(&parsed_source);
+    assert_eq!(
+      module_info.jsdoc_imports,
+      [JsDocImportInfo {
+        specifier: SpecifierWithRange {
+          text: "./a.js".to_string(),
+          range: PositionRange {
+            start: Position {
+              line: 2,
+              character: 35,
+            },
+            end: Position {
+              line: 2,
+              character: 43,
+            },
+          },
+        },
+        resolution_mode: None,
+      }]
     );
   }
 

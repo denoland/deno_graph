@@ -25,9 +25,11 @@ use crate::WorkspaceMember;
 use crate::source::JsrUrlProvider;
 use crate::symbols::FileDepName;
 use crate::symbols::ModuleInfoRef;
+use crate::symbols::ReferenceNamespace;
 use crate::symbols::ResolveDepsMode;
 use crate::symbols::ResolvedExportOrReExportAllPath;
 use crate::symbols::RootSymbol;
+use crate::symbols::Symbol;
 use crate::symbols::SymbolDeclKind;
 use crate::symbols::SymbolId;
 use crate::symbols::SymbolNodeDep;
@@ -628,11 +630,88 @@ impl<'a> PublicRangeFinder<'a> {
     trace: &PendingTrace,
     module_info: ModuleInfoRef<'a>,
   ) -> bool {
+    // A value and a type can share a name (e.g. a private `const Role` and an
+    // exported `type Role`), in which case they're merged into a single
+    // symbol. Tracking which namespace(s) a trace cares about lets us avoid
+    // pulling a private value declaration into the public API just because it
+    // shares a name with an exported type (and vice versa).
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    struct Namespaces {
+      value: bool,
+      type_: bool,
+    }
+
+    impl Namespaces {
+      fn both() -> Self {
+        Namespaces {
+          value: true,
+          type_: true,
+        }
+      }
+
+      fn value() -> Self {
+        Namespaces {
+          value: true,
+          type_: false,
+        }
+      }
+
+      fn type_() -> Self {
+        Namespaces {
+          value: false,
+          type_: true,
+        }
+      }
+
+      fn none() -> Self {
+        Namespaces {
+          value: false,
+          type_: false,
+        }
+      }
+
+      fn from_value_type((value, type_): (bool, bool)) -> Self {
+        Namespaces { value, type_ }
+      }
+
+      fn from_reference(ns: ReferenceNamespace) -> Self {
+        match ns {
+          ReferenceNamespace::Value => Namespaces::value(),
+          ReferenceNamespace::Type => Namespaces::type_(),
+          ReferenceNamespace::Both => Namespaces::both(),
+        }
+      }
+
+      fn is_empty(&self) -> bool {
+        !self.value && !self.type_
+      }
+
+      fn intersects(&self, other: Namespaces) -> bool {
+        (self.value && other.value) || (self.type_ && other.type_)
+      }
+
+      fn union(&self, other: Namespaces) -> Namespaces {
+        Namespaces {
+          value: self.value || other.value,
+          type_: self.type_ || other.type_,
+        }
+      }
+
+      /// The namespaces present in `self` but not in `other`.
+      fn difference(&self, other: Namespaces) -> Namespaces {
+        Namespaces {
+          value: self.value && !other.value,
+          type_: self.type_ && !other.type_,
+        }
+      }
+    }
+
     #[derive(Debug)]
     enum PendingIdTrace {
       Id {
         symbol_id: SymbolId,
         referrer_id: SymbolId,
+        namespaces: Namespaces,
       },
       QualifiedId {
         symbol_id: SymbolId,
@@ -644,7 +723,8 @@ impl<'a> PublicRangeFinder<'a> {
     #[derive(Default)]
     struct PendingTraces {
       traces: VecDeque<PendingIdTrace>,
-      done_id_traces: HashSet<SymbolId>,
+      // tracks which namespaces of each symbol have already been queued
+      done_id_traces: HashMap<SymbolId, Namespaces>,
     }
 
     impl PendingTraces {
@@ -652,16 +732,49 @@ impl<'a> PublicRangeFinder<'a> {
         &mut self,
         symbol_id: SymbolId,
         referrer_id: SymbolId,
+        namespaces: Namespaces,
       ) {
         // the referrer_id is only used for diagnostic purposes and we only
-        // care about the first diagnostic, so we can only take the symbol_id
-        // into account when checking if we should trace this
-        if self.done_id_traces.insert(symbol_id) {
+        // care about the first diagnostic, so we only take the symbol_id and
+        // the requested namespaces into account when checking if we should
+        // trace this
+        let done = self
+          .done_id_traces
+          .entry(symbol_id)
+          .or_insert(Namespaces::none());
+        let new_namespaces = namespaces.difference(*done);
+        if !new_namespaces.is_empty() {
+          *done = done.union(namespaces);
           self.traces.push_back(PendingIdTrace::Id {
             symbol_id,
             referrer_id,
+            namespaces: new_namespaces,
           });
         }
+      }
+    }
+
+    // Computes which namespaces of a module export are actually exported. When
+    // a value and a type share a name only the exported one(s) should be part
+    // of the public API. If the export came from a specifier (`export { x }`)
+    // or a default/star export none of the decls carry an export keyword, so
+    // fall back to tracing both namespaces.
+    fn exported_namespaces(symbol: &Symbol) -> Namespaces {
+      let mut namespaces = Namespaces::none();
+      for decl in symbol.decls() {
+        let is_export_keyword = decl
+          .maybe_node()
+          .map(|n| n.has_export_keyword())
+          .unwrap_or(false);
+        if is_export_keyword {
+          namespaces =
+            namespaces.union(Namespaces::from_value_type(decl.namespaces()));
+        }
+      }
+      if namespaces.is_empty() {
+        Namespaces::both()
+      } else {
+        namespaces
       }
     }
 
@@ -682,8 +795,15 @@ impl<'a> PublicRangeFinder<'a> {
             continue;
           }
 
-          pending_traces
-            .maybe_add_id_trace(*export_symbol_id, module_symbol.symbol_id());
+          let namespaces = module_info
+            .symbol(*export_symbol_id)
+            .map(exported_namespaces)
+            .unwrap_or_else(Namespaces::both);
+          pending_traces.maybe_add_id_trace(
+            *export_symbol_id,
+            module_symbol.symbol_id(),
+            namespaces,
+          );
         }
 
         // add all the specifiers to the list of pending specifiers
@@ -729,9 +849,14 @@ impl<'a> PublicRangeFinder<'a> {
               named_exports.swap_remove(&export_name).unwrap();
             match named_exports {
               Exports::All => {
+                let namespaces = module_info
+                  .symbol(*export_symbol_id)
+                  .map(exported_namespaces)
+                  .unwrap_or_else(Namespaces::both);
                 pending_traces.maybe_add_id_trace(
                   *export_symbol_id,
                   module_symbol.symbol_id(),
+                  namespaces,
                 );
               }
               Exports::Subset(subset) => {
@@ -824,6 +949,7 @@ impl<'a> PublicRangeFinder<'a> {
         PendingIdTrace::Id {
           symbol_id,
           referrer_id: trace_referrer_id,
+          namespaces: trace_namespaces,
         } => {
           let symbol = module_info.symbol(symbol_id).unwrap();
           if symbol.is_private_member() {
@@ -851,6 +977,16 @@ impl<'a> PublicRangeFinder<'a> {
           }
 
           for decl in symbol.decls() {
+            // Skip declarations that don't contribute to the traced
+            // namespace(s). This avoids pulling a private value declaration
+            // into the public API when only an identically named type is
+            // exported (and vice versa).
+            if !Namespaces::from_value_type(decl.namespaces())
+              .intersects(trace_namespaces)
+            {
+              continue;
+            }
+
             log::trace!(
               "Found decl - {}",
               decl.maybe_name().unwrap_or(Cow::Borrowed("<no-name>"))
@@ -867,7 +1003,12 @@ impl<'a> PublicRangeFinder<'a> {
                 if let Some(symbol_id) =
                   module_info.esm().and_then(|m| m.symbol_id_from_swc(id))
                 {
-                  pending_traces.maybe_add_id_trace(symbol_id, referrer_id);
+                  // an alias inherits the namespaces requested of it
+                  pending_traces.maybe_add_id_trace(
+                    symbol_id,
+                    referrer_id,
+                    trace_namespaces,
+                  );
                 }
               }
               SymbolDeclKind::QualifiedTarget(id, parts) => {
@@ -912,7 +1053,11 @@ impl<'a> PublicRangeFinder<'a> {
                   {
                     // don't add the parent if we analyzed this node from the parent
                     if trace_referrer_id != parent_id {
-                      pending_traces.maybe_add_id_trace(parent_id, referrer_id);
+                      pending_traces.maybe_add_id_trace(
+                        parent_id,
+                        referrer_id,
+                        Namespaces::both(),
+                      );
                     }
                   }
 
@@ -937,15 +1082,20 @@ impl<'a> PublicRangeFinder<'a> {
                     }
                   }
 
-                  for dep in node.deps(ResolveDepsMode::TypesAndExpressions) {
+                  for (dep, reference_namespace) in node
+                    .deps_with_namespace(ResolveDepsMode::TypesAndExpressions)
+                  {
                     match dep {
                       SymbolNodeDep::Id(id) => {
                         let module_info = module_info.esm().unwrap();
                         if let Some(symbol_id) =
                           module_info.symbol_id_from_swc(&id)
                         {
-                          pending_traces
-                            .maybe_add_id_trace(symbol_id, referrer_id);
+                          pending_traces.maybe_add_id_trace(
+                            symbol_id,
+                            referrer_id,
+                            Namespaces::from_reference(reference_namespace),
+                          );
                         }
                       }
                       SymbolNodeDep::QualifiedId(id, parts) => {
@@ -997,22 +1147,27 @@ impl<'a> PublicRangeFinder<'a> {
             }
           }
 
-          pending_traces.traces.extend(
-            symbol
-              .exports()
-              .values()
-              .map(|id| (*id, symbol.symbol_id()))
-              .chain(
-                symbol.members().iter().map(|id| (*id, symbol.symbol_id())),
-              )
-              .filter(|(symbol_id, _referrer_id)| {
-                !pending_traces.done_id_traces.contains(symbol_id)
-              })
-              .map(|(symbol_id, referrer_id)| PendingIdTrace::Id {
-                symbol_id,
-                referrer_id,
-              }),
-          );
+          let child_ids = symbol
+            .exports()
+            .values()
+            .copied()
+            .chain(symbol.members().iter().copied())
+            .collect::<Vec<_>>();
+          // Queue the children without marking them done. A class member may
+          // also be reached later through an explicit reference (e.g. a public
+          // member whose type is `typeof MyClass.prototype.privateMember`); that
+          // second trace carries a different referrer and is what triggers the
+          // private-member diagnostic, so it must not be deduped away by this
+          // parent-referrer trace.
+          for child_id in child_ids {
+            if !pending_traces.done_id_traces.contains_key(&child_id) {
+              pending_traces.traces.push_back(PendingIdTrace::Id {
+                symbol_id: child_id,
+                referrer_id: symbol.symbol_id(),
+                namespaces: Namespaces::both(),
+              });
+            }
+          }
         }
         PendingIdTrace::QualifiedId {
           symbol_id,
@@ -1104,7 +1259,11 @@ impl<'a> PublicRangeFinder<'a> {
               {
                 match next_parts {
                   Exports::All => {
-                    pending_traces.maybe_add_id_trace(symbol_id, referrer_id);
+                    pending_traces.maybe_add_id_trace(
+                      symbol_id,
+                      referrer_id,
+                      Namespaces::both(),
+                    );
                   }
                   Exports::Subset(next_parts) => {
                     let mut member_symbols = symbol
@@ -1122,6 +1281,7 @@ impl<'a> PublicRangeFinder<'a> {
                             pending_traces.maybe_add_id_trace(
                               member.symbol_id(),
                               referrer_id,
+                              Namespaces::both(),
                             );
                           }
                           Exports::Subset(next_parts) => {
@@ -1185,7 +1345,11 @@ impl<'a> PublicRangeFinder<'a> {
                 match symbol.export(&first_part) {
                   Some(symbol_id) => match next_parts {
                     Exports::All => {
-                      pending_traces.maybe_add_id_trace(symbol_id, referrer_id);
+                      pending_traces.maybe_add_id_trace(
+                        symbol_id,
+                        referrer_id,
+                        Namespaces::both(),
+                      );
                     }
                     Exports::Subset(subset) => {
                       pending_traces.traces.push_back(
@@ -1225,7 +1389,11 @@ impl<'a> PublicRangeFinder<'a> {
                       // or a class (ex. if it's a variable with a type) then just add
                       // the symbol at this point because we'll want to include the entire
                       // type being referenced rather than just the member.
-                      pending_traces.maybe_add_id_trace(symbol_id, referrer_id);
+                      pending_traces.maybe_add_id_trace(
+                        symbol_id,
+                        referrer_id,
+                        Namespaces::both(),
+                      );
                     } else {
                       diagnostics.push(
                         FastCheckDiagnostic::NotFoundReference {

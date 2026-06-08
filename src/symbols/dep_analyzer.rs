@@ -32,12 +32,14 @@ use deno_ast::swc::ast::TsPropertySignature;
 use deno_ast::swc::ast::TsQualifiedName;
 use deno_ast::swc::ast::TsSetterSignature;
 use deno_ast::swc::ast::TsTupleElement;
+use deno_ast::swc::ast::TsType;
 use deno_ast::swc::ast::TsTypeAliasDecl;
 use deno_ast::swc::ast::TsTypeAnn;
 use deno_ast::swc::ast::TsTypeAssertion;
 use deno_ast::swc::ast::TsTypeParam;
 use deno_ast::swc::ast::TsTypeParamDecl;
 use deno_ast::swc::ast::TsTypeParamInstantiation;
+use deno_ast::swc::ast::TsTypeQuery;
 use deno_ast::swc::ast::VarDeclarator;
 use deno_ast::swc::ecma_visit::Visit;
 use deno_ast::swc::ecma_visit::VisitWith;
@@ -77,21 +79,78 @@ impl ResolveDepsMode {
   }
 }
 
+/// Which namespace a dependency is referenced from.
+///
+/// A type and a value can share a name (e.g. `const Role` and `type Role`),
+/// so fast check needs to know whether a reference resolves to the value or
+/// the type in order to avoid pulling unrelated declarations into the public
+/// API. For example, `(): Role` references the type while `typeof Role`
+/// references the value. `Both` is used when the reference position is
+/// ambiguous (e.g. an `extends`/`implements` clause, which may name either a
+/// class value or an interface type).
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum ReferenceNamespace {
+  Value,
+  Type,
+  Both,
+}
+
 pub fn resolve_deps(
   node_ref: SymbolNodeRef,
   mode: ResolveDepsMode,
 ) -> Vec<SymbolNodeDep> {
+  resolve_deps_with_namespace(node_ref, mode)
+    .into_iter()
+    .map(|(dep, _)| dep)
+    .collect()
+}
+
+pub fn resolve_deps_with_namespace(
+  node_ref: SymbolNodeRef,
+  mode: ResolveDepsMode,
+) -> Vec<(SymbolNodeDep, ReferenceNamespace)> {
   let mut filler = DepsFiller {
     deps: Vec::new(),
     mode,
+    context: ReferenceNamespace::Value,
   };
   filler.fill(node_ref);
   filler.deps
 }
 
 struct DepsFiller {
-  deps: Vec<SymbolNodeDep>,
+  deps: Vec<(SymbolNodeDep, ReferenceNamespace)>,
   mode: ResolveDepsMode,
+  /// The namespace that references encountered at the current position
+  /// resolve to. Defaults to the value namespace and is switched to the type
+  /// namespace while visiting a type (and back to the value namespace inside
+  /// a `typeof` query).
+  context: ReferenceNamespace,
+}
+
+impl DepsFiller {
+  fn push_dep(&mut self, dep: SymbolNodeDep) {
+    self.deps.push((dep, self.context));
+  }
+
+  /// Visits a computed member/property key. These reference a value even when
+  /// they appear inside a type (e.g. `{ [someSymbol]: never }`).
+  fn visit_computed_key(&mut self, key: &Expr) {
+    self.with_context(ReferenceNamespace::Value, |filler| {
+      filler.visit_expr(key);
+    });
+  }
+
+  fn with_context(
+    &mut self,
+    context: ReferenceNamespace,
+    f: impl FnOnce(&mut Self),
+  ) {
+    let previous = self.context;
+    self.context = context;
+    f(self);
+    self.context = previous;
+  }
 }
 
 impl DepsFiller {
@@ -262,7 +321,7 @@ impl Visit for DepsFiller {
 
   fn visit_ts_property_signature(&mut self, n: &TsPropertySignature) {
     if n.computed {
-      self.visit_expr(&n.key);
+      self.visit_computed_key(&n.key);
     }
     if let Some(type_ann) = &n.type_ann {
       self.visit_ts_type_ann(type_ann)
@@ -271,7 +330,7 @@ impl Visit for DepsFiller {
 
   fn visit_ts_getter_signature(&mut self, n: &TsGetterSignature) {
     if n.computed {
-      self.visit_expr(&n.key);
+      self.visit_computed_key(&n.key);
     }
     if let Some(type_ann) = &n.type_ann {
       self.visit_ts_type_ann(type_ann)
@@ -280,14 +339,14 @@ impl Visit for DepsFiller {
 
   fn visit_ts_setter_signature(&mut self, n: &TsSetterSignature) {
     if n.computed {
-      self.visit_expr(&n.key);
+      self.visit_computed_key(&n.key);
     }
     self.visit_ts_fn_param(&n.param);
   }
 
   fn visit_ts_method_signature(&mut self, n: &TsMethodSignature) {
     if n.computed {
-      self.visit_expr(&n.key);
+      self.visit_computed_key(&n.key);
     }
     if let Some(type_params) = &n.type_params {
       self.visit_ts_type_param_decl(type_params);
@@ -380,7 +439,7 @@ impl Visit for DepsFiller {
   fn visit_prop_name(&mut self, key: &PropName) {
     match key {
       PropName::Computed(computed) => {
-        self.visit_expr(&computed.expr);
+        self.visit_computed_key(&computed.expr);
       }
       // property name idents aren't a dep
       PropName::Ident(_)
@@ -396,8 +455,12 @@ impl Visit for DepsFiller {
     if let Some(type_args) = &n.type_args {
       self.visit_ts_type_param_instantiation(type_args);
     }
-    // visit this expr unconditionally because it's in a TsExprWithTypeArgs
-    self.visit_expr(&n.expr);
+    // visit this expr unconditionally because it's in a TsExprWithTypeArgs.
+    // an `extends`/`implements` target may resolve to either a class value or
+    // an interface type, so treat the reference as belonging to both.
+    self.with_context(ReferenceNamespace::Both, |filler| {
+      filler.visit_expr(&n.expr);
+    });
   }
 
   fn visit_ts_type_param_decl(&mut self, type_params: &TsTypeParamDecl) {
@@ -497,9 +560,9 @@ impl Visit for DepsFiller {
     match expr_into_id_and_parts(n) {
       Some((id, parts)) => {
         if parts.is_empty() {
-          self.deps.push(SymbolNodeDep::Id(id))
+          self.push_dep(SymbolNodeDep::Id(id))
         } else {
-          self.deps.push(SymbolNodeDep::QualifiedId(id, parts))
+          self.push_dep(SymbolNodeDep::QualifiedId(id, parts))
         }
       }
       _ => {
@@ -510,7 +573,7 @@ impl Visit for DepsFiller {
 
   fn visit_ident(&mut self, n: &Ident) {
     let id = n.to_id();
-    self.deps.push(id.into());
+    self.push_dep(id.into());
   }
 
   fn visit_binding_ident(&mut self, n: &BindingIdent) {
@@ -520,9 +583,7 @@ impl Visit for DepsFiller {
 
   fn visit_member_expr(&mut self, n: &MemberExpr) {
     match member_expr_into_id_and_parts(n) {
-      Some((id, parts)) => {
-        self.deps.push(SymbolNodeDep::QualifiedId(id, parts))
-      }
+      Some((id, parts)) => self.push_dep(SymbolNodeDep::QualifiedId(id, parts)),
       _ => {
         n.visit_children_with(self);
       }
@@ -542,7 +603,7 @@ impl Visit for DepsFiller {
       }
       None => Vec::new(),
     };
-    self.deps.push(SymbolNodeDep::ImportType(
+    self.push_dep(SymbolNodeDep::ImportType(
       n.arg.value.to_string_lossy().to_string(),
       parts,
     ));
@@ -551,7 +612,24 @@ impl Visit for DepsFiller {
 
   fn visit_ts_qualified_name(&mut self, n: &TsQualifiedName) {
     let (id, parts) = ts_qualified_name_parts(n);
-    self.deps.push(SymbolNodeDep::QualifiedId(id, parts));
+    self.push_dep(SymbolNodeDep::QualifiedId(id, parts));
+  }
+
+  fn visit_ts_type(&mut self, n: &TsType) {
+    // references within a type resolve to the type namespace
+    self.with_context(ReferenceNamespace::Type, |filler| {
+      n.visit_children_with(filler);
+    });
+  }
+
+  fn visit_ts_type_query(&mut self, n: &TsTypeQuery) {
+    // the operand of `typeof` references a value rather than a type
+    self.with_context(ReferenceNamespace::Value, |filler| {
+      n.expr_name.visit_with(filler);
+    });
+    if let Some(type_args) = &n.type_args {
+      self.visit_ts_type_param_instantiation(type_args);
+    }
   }
 
   fn visit_ts_type_ann(&mut self, type_ann: &TsTypeAnn) {
