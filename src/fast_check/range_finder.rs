@@ -1134,12 +1134,20 @@ impl<'a> PublicRangeFinder<'a> {
             .copied()
             .chain(symbol.members().iter().copied())
             .collect::<Vec<_>>();
+          // Queue the children without marking them done. A class member may
+          // also be reached later through an explicit reference (e.g. a public
+          // member whose type is `typeof MyClass.prototype.privateMember`); that
+          // second trace carries a different referrer and is what triggers the
+          // private-member diagnostic, so it must not be deduped away by this
+          // parent-referrer trace.
           for child_id in child_ids {
-            pending_traces.maybe_add_id_trace(
-              child_id,
-              symbol.symbol_id(),
-              Namespaces::both(),
-            );
+            if !pending_traces.done_id_traces.contains_key(&child_id) {
+              pending_traces.traces.push_back(PendingIdTrace::Id {
+                symbol_id: child_id,
+                referrer_id: symbol.symbol_id(),
+                namespaces: Namespaces::both(),
+              });
+            }
           }
         }
         PendingIdTrace::QualifiedId {
