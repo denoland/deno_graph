@@ -106,7 +106,6 @@ fn run_graph_test(test: &CollectedTest) {
     );
     builder.skip_dynamic_deps(options.skip_dynamic_deps);
     builder.unstable_bytes_imports(options.unstable_bytes_imports);
-    builder.unstable_text_imports(options.unstable_text_imports);
     builder.workspace_fast_check(options.workspace_fast_check);
     builder.fast_check_cache(options.fast_check_cache);
     if let Some(checksums) = options.remote_checksums.as_ref() {
@@ -356,9 +355,6 @@ pub struct SpecOptions {
   #[serde(default)]
   #[serde(skip_serializing_if = "is_false")]
   pub unstable_bytes_imports: bool,
-  #[serde(default)]
-  #[serde(skip_serializing_if = "is_false")]
-  pub unstable_text_imports: bool,
 }
 
 fn is_false(v: &bool) -> bool {
