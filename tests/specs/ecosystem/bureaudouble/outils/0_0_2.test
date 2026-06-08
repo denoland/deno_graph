@@ -153,12 +153,12 @@ bureaudouble/outils/0.0.2
 TS2304 [ERROR]: Cannot find name 'Plugin'.
   plugins: Plugin[];
            ~~~~~~
-    at file://<tmpdir>/createRenderPipe.ts:27:12
+    at file://<tmpdir>/createRenderPipe.ts:26:12
 
 TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
   server: Partial<Deno.ServeTlsOptions>;
                        ~~~~~~~~~~~~~~~
-    at file://<tmpdir>/createRenderPipe.ts:30:24
+    at file://<tmpdir>/createRenderPipe.ts:29:24
 
 TS2536 [ERROR]: Type '0' cannot be used to index type 'InferResult<T>'.
 export type QueryFunction<V> = <T extends CompiledQuery<unknown>>(fn: (qb: Kysely<V>) => T) => Promise<InferResult<T>[0][]>;

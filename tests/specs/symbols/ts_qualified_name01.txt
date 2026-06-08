@@ -14,22 +14,22 @@ file:///mod.ts: EsModuleInfo {
     ),
     specifier: "file:///mod.ts",
     re_exports: [],
-    swc_id_to_symbol_id: {
+    id_to_symbol_id: {
         (
             "Test",
-            #2,
+            1,
         ): 1,
         (
             "Other",
-            #2,
+            2,
         ): 2,
         (
             "Test",
-            #3,
+            3,
         ): 3,
         (
             "other",
-            #3,
+            4,
         ): 4,
     },
     symbols: {
@@ -43,16 +43,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export type Test = typeof Other.Test;\n\nnamespace Other {\n  export const Test = 1;\n\n  export const other = 2;\n}",
+                            <node @ 0..111>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            110,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 111,
                     },
                     flags: 0,
                 },
@@ -78,16 +74,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export type Test = typeof Other.Test;",
+                            <node @ 0..37>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            0,
-                        ),
-                        end: SourcePos(
-                            37,
-                        ),
+                    range: Span {
+                        start: 0,
+                        end: 37,
                     },
                     flags: 0,
                 },
@@ -108,16 +100,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "namespace Other {\n  export const Test = 1;\n\n  export const other = 2;\n}",
+                            <node @ 39..110>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            39,
-                        ),
-                        end: SourcePos(
-                            110,
-                        ),
+                    range: Span {
+                        start: 39,
+                        end: 110,
                     },
                     flags: 0,
                 },
@@ -144,16 +132,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export const Test = 1;",
+                            <node @ 59..81>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            72,
-                        ),
-                        end: SourcePos(
-                            80,
-                        ),
+                    range: Span {
+                        start: 72,
+                        end: 80,
                     },
                     flags: 0,
                 },
@@ -174,16 +158,12 @@ file:///mod.ts: EsModuleInfo {
                 SymbolDecl {
                     kind: Definition(
                         SymbolNode(
-                            "export const other = 2;",
+                            <node @ 85..108>,
                         ),
                     ),
-                    range: SourceRange {
-                        start: SourcePos(
-                            98,
-                        ),
-                        end: SourcePos(
-                            107,
-                        ),
+                    range: Span {
+                        start: 98,
+                        end: 107,
                     },
                     flags: 0,
                 },
@@ -195,10 +175,10 @@ file:///mod.ts: EsModuleInfo {
     },
 }
 == symbol deps (types and exprs) ==
-1:0..37 [QualifiedId(("Other", #2), ["Test"])]
+1:0..37 [QualifiedId(("Other", 2), ["Test"])]
 
 == symbol deps (types only) ==
-1:0..37 [QualifiedId(("Other", #2), ["Test"])]
+1:0..37 [QualifiedId(("Other", 2), ["Test"])]
 
 == export definitions ==
 [Test]: file:///mod.ts:0..37

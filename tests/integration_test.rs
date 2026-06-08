@@ -85,7 +85,10 @@ export class MyClass {
       .iter()
       .filter_map(|d| d.maybe_node())
       .flat_map(|s| {
-        s.deps(deno_graph::symbols::ResolveDepsMode::TypesAndExpressions)
+        s.deps(
+          deno_graph::symbols::ResolveDepsMode::TypesAndExpressions,
+          module.scoping(),
+        )
       })
       .collect::<Vec<_>>();
     assert_eq!(deps.len(), 1);
@@ -123,12 +126,68 @@ export class MyClass {
 
 #[cfg(feature = "symbols")]
 #[tokio::test]
+async fn test_symbols_type_refs_are_scope_resolved() {
+  let result = TestBuilder::new()
+    .with_loader(|loader| {
+      loader.remote.add_source_with_text(
+        "file:///mod.ts",
+        r#"
+export interface A {}
+export type B = A;
+export type C<T extends A = A> = T;
+export interface D extends A {}
+export interface Array<T> {}
+export type E = Array<string>;
+"#,
+      );
+    })
+    .build()
+    .await;
+
+  let root_symbol = result.root_symbol();
+  let module = root_symbol
+    .module_from_specifier(&ModuleSpecifier::parse("file:///mod.ts").unwrap())
+    .unwrap();
+  let exports = module.exports(&root_symbol);
+
+  for name in ["B", "C", "D", "E"] {
+    let resolved_type = exports.resolved.get(name).unwrap();
+    let resolved_type = resolved_type.as_resolved_export();
+    let type_symbol = resolved_type.symbol();
+    let deps = type_symbol
+      .decls()
+      .iter()
+      .filter_map(|d| d.maybe_node())
+      .flat_map(|s| {
+        s.deps(
+          deno_graph::symbols::ResolveDepsMode::TypesOnly,
+          module.scoping(),
+        )
+      })
+      .collect::<Vec<_>>();
+    assert!(
+      deps.iter().all(|dep| {
+        match dep {
+          deno_graph::symbols::SymbolNodeDep::Id((_, ctxt))
+          | deno_graph::symbols::SymbolNodeDep::QualifiedId((_, ctxt), _) => {
+            *ctxt != 0
+          }
+          deno_graph::symbols::SymbolNodeDep::ImportType(_, _) => true,
+        }
+      }),
+      "{name} had unresolved deps: {deps:?}"
+    );
+  }
+}
+
+#[cfg(feature = "symbols")]
+#[tokio::test]
 async fn test_symbols_re_export_external_and_npm() {
   let result = TestBuilder::new()
     .with_loader(|loader| {
       loader.remote.add_source_with_text(
         "file:///mod.ts",
-        r#"export * from 'npm:example@1.0.0'; export * from 'external:other"#,
+        r#"export * from 'npm:example@1.0.0'; export * from 'external:other';"#,
       );
       loader.remote.add_external_source("external:other");
     })
@@ -175,7 +234,7 @@ async fn test_jsr_version_not_found_then_found() {
             specifier: specifier.clone(),
             maybe_headers: None,
             mtime: None,
-            content: b"import 'jsr:@scope/a@1.2".to_vec().into(),
+            content: b"import 'jsr:@scope/a@1.2'".to_vec().into(),
           }))
         }),
         "file:///empty.ts" => Box::pin(async move {
@@ -343,7 +402,7 @@ async fn test_jsr_wasm_module() {
             specifier: specifier.clone(),
             maybe_headers: None,
             mtime: None,
-            content: b"import 'jsr:@scope/a@1".to_vec().into(),
+            content: b"import 'jsr:@scope/a@1'".to_vec().into(),
           }))
         }),
         "https://jsr.io/@scope/a/meta.json" => Box::pin(async move {

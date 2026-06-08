@@ -42,9 +42,9 @@ hansschall/rpc-broker/1.1.0
 
 -- stderr --
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'RPCClient'.
-     */ public dispose(): void {}
-               ~~~~~~~
-    at file://<tmpdir>/src/hub/hub.ts:39:16
+  public dispose(): void {}
+         ~~~~~~~
+    at file://<tmpdir>/src/hub/hub.ts:45:10
 
 error: Type checking failed.
 

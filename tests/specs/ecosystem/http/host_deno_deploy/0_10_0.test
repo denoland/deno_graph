@@ -31,7 +31,7 @@ http/host-deno-deploy/0.10.0
 
 -- stderr --
 TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
-    at file://<tmpdir>/init.ts:5:222
+    at file://<tmpdir>/init.ts:6:218
 
 error: Type checking failed.
 

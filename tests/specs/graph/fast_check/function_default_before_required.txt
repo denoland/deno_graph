@@ -76,13 +76,13 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export function test(value: number[] | undefined, value2: number): void {}
   export class Test {
-    constructor(value: number[] | undefined, value2: number){}
+    constructor(value: number[] | undefined, value2: number) {}
     method(value: number[] | undefined, value2: number): void {}
   }
   export class TestParamProp {
     declare value: number[];
     declare value2: number;
-    constructor(value: number[] | undefined, value2: number){}
+    constructor(value: number[] | undefined, value2: number) {}
   }
   --- DTS ---
   export declare function test(value: number[] | undefined, value2: number): void;

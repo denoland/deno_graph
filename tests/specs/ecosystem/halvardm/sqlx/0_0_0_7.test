@@ -75,17 +75,27 @@ halvardm/sqlx/0.0.0-7
 -- stdout --
 
 -- stderr --
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'QueryResult'.
-   */ insertRow(row_data: Uint8Array[], controls?: ClientControls): void {}
-      ~~~~~~~~~
-    at file://<tmpdir>/vendor/deno.land/x/postgres@v0.19.3/query/query.ts:102:7
+TS2344 [ERROR]: Type 'EventType' does not satisfy the constraint 'ConnectionEventType'.
+  Type 'PoolConnectionEventType' is not assignable to type 'ConnectionEventType'.
+    Type '"acquire"' is not assignable to type 'ConnectionEventType'.
+    at file://<tmpdir>/lib/interfaces.ts:307:96
+
+TS2344 [ERROR]: Type 'EventType' does not satisfy the constraint 'ConnectionEventType'.
+  Type 'PoolConnectionEventType' is not assignable to type 'ConnectionEventType'.
+    Type '"acquire"' is not assignable to type 'ConnectionEventType'.
+    at file://<tmpdir>/lib/interfaces.ts:524:41
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'QueryResult'.
-   */ insertRow(row_data: Uint8Array[], controls?: ClientControls): void {}
-      ~~~~~~~~~
-    at file://<tmpdir>/vendor/deno.land/x/postgres@v0.19.3/query/query.ts:115:7
+  insertRow(row_data: Uint8Array[], controls?: ClientControls): void {}
+  ~~~~~~~~~
+    at file://<tmpdir>/vendor/deno.land/x/postgres@v0.19.3/query/query.ts:128:3
 
-Found 2 errors.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'QueryResult'.
+  insertRow(row_data: Uint8Array[], controls?: ClientControls): void {}
+  ~~~~~~~~~
+    at file://<tmpdir>/vendor/deno.land/x/postgres@v0.19.3/query/query.ts:145:3
+
+Found 4 errors.
 
 error: Type checking failed.
 

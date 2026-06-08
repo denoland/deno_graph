@@ -37,44 +37,44 @@ krutoo/utils/0.0.3
 
 -- stderr --
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
- */ export function findOffsetParent(element: HTMLElement): Element | null {
-                                              ~~~~~~~~~~~
-    at file://<tmpdir>/src/dom/fing-offset-parent.ts:5:47
-
-TS2304 [ERROR]: Cannot find name 'Element'.
- */ export function findOffsetParent(element: HTMLElement): Element | null {
-                                                            ~~~~~~~
-    at file://<tmpdir>/src/dom/fing-offset-parent.ts:5:61
-
-TS2304 [ERROR]: Cannot find name 'HTMLElement'.
- */ export function getPositionedParentOffset(element: HTMLElement): Point2d {
-                                                       ~~~~~~~~~~~
-    at file://<tmpdir>/src/dom/get-positioned-parent-offset.ts:6:56
-
-TS2304 [ERROR]: Cannot find name 'Element'.
- */ export function getScrollParent(element: Element | undefined | null): HTMLElement {
-                                             ~~~~~~~
-    at file://<tmpdir>/src/dom/get-scroll-parent.ts:5:46
-
-TS2304 [ERROR]: Cannot find name 'HTMLElement'.
- */ export function getScrollParent(element: Element | undefined | null): HTMLElement {
-                                                                          ~~~~~~~~~~~
-    at file://<tmpdir>/src/dom/get-scroll-parent.ts:5:75
-
-TS2304 [ERROR]: Cannot find name 'HTMLElement'.
- */ export function isScrollable(element: HTMLElement | undefined | null): boolean {
+export function findOffsetParent(element: HTMLElement): Element | null {
                                           ~~~~~~~~~~~
-    at file://<tmpdir>/src/dom/is-scrollable.ts:5:43
+    at file://<tmpdir>/src/dom/fing-offset-parent.ts:6:43
 
 TS2304 [ERROR]: Cannot find name 'Element'.
- */ export function useBoundingClientRect<T extends Element>(ref: RefObject<T>, extraDeps?: DependencyList): DOMRectState {
-                                                    ~~~~~~~
-    at file://<tmpdir>/src/react/use-bounding-client-rect.ts:10:53
+export function findOffsetParent(element: HTMLElement): Element | null {
+                                                        ~~~~~~~
+    at file://<tmpdir>/src/dom/fing-offset-parent.ts:6:57
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
- */ export function useDragAndDrop(ref: RefObject<HTMLElement>, {}: UseDragAndDropOptions): UseDragAndDropReturn {
-                                                  ~~~~~~~~~~~
-    at file://<tmpdir>/src/react/use-drag-and-drop.ts:22:51
+export function getPositionedParentOffset(element: HTMLElement): Point2d {
+                                                   ~~~~~~~~~~~
+    at file://<tmpdir>/src/dom/get-positioned-parent-offset.ts:7:52
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+export function getScrollParent(element: Element | undefined | null): HTMLElement {
+                                         ~~~~~~~
+    at file://<tmpdir>/src/dom/get-scroll-parent.ts:6:42
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+export function getScrollParent(element: Element | undefined | null): HTMLElement {
+                                                                      ~~~~~~~~~~~
+    at file://<tmpdir>/src/dom/get-scroll-parent.ts:6:71
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+export function isScrollable(element: HTMLElement | undefined | null): boolean {
+                                      ~~~~~~~~~~~
+    at file://<tmpdir>/src/dom/is-scrollable.ts:6:39
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+export function useBoundingClientRect<T extends Element>(ref: RefObject<T>, extraDeps?: DependencyList): DOMRectState {
+                                                ~~~~~~~
+    at file://<tmpdir>/src/react/use-bounding-client-rect.ts:11:49
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+export function useDragAndDrop(ref: RefObject<HTMLElement>, {}: UseDragAndDropOptions): UseDragAndDropReturn {
+                                              ~~~~~~~~~~~
+    at file://<tmpdir>/src/react/use-drag-and-drop.ts:23:47
 
 Found 8 errors.
 

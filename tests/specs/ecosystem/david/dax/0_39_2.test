@@ -58,32 +58,32 @@ david/dax/0.39.2
 TS2304 [ERROR]: Cannot find name 'PipeOptions'.
   stdout(kind: WritableStream<Uint8Array>, options?: PipeOptions): CommandBuilder;
                                                      ~~~~~~~~~~~
-    at file://<tmpdir>/src/command.ts:99:54
+    at file://<tmpdir>/src/command.ts:117:54
 
 TS2304 [ERROR]: Cannot find name 'PipeOptions'.
   stderr(kind: WritableStream<Uint8Array>, options?: PipeOptions): CommandBuilder;
                                                      ~~~~~~~~~~~
-    at file://<tmpdir>/src/command.ts:104:54
+    at file://<tmpdir>/src/command.ts:123:54
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
   get name(): string {
       ~~~~
-    at file://<tmpdir>/src/common.ts:36:7
+    at file://<tmpdir>/src/common.ts:39:7
 
 TS2304 [ERROR]: Cannot find name 'PipeOptions'.
-  /** Opens the file and pipes it to the writable stream. */ pipeTo(dest: WritableStream<Uint8Array>, options?: PipeOptions): Promise<this> {
-                                                                                                                ~~~~~~~~~~~
-    at file://<tmpdir>/src/path.ts:408:113
+  pipeTo(dest: WritableStream<Uint8Array>, options?: PipeOptions): Promise<this> {
+                                                     ~~~~~~~~~~~
+    at file://<tmpdir>/src/path.ts:509:54
 
 TS2304 [ERROR]: Cannot find name 'PipeOptions'.
-  /** Pipes the response body to the provided writable stream. */ pipeTo(dest: WritableStream<Uint8Array>, options?: PipeOptions): Promise<void> {
-                                                                                                                     ~~~~~~~~~~~
-    at file://<tmpdir>/src/request.ts:109:118
+  pipeTo(dest: WritableStream<Uint8Array>, options?: PipeOptions): Promise<void> {
+                                                     ~~~~~~~~~~~
+    at file://<tmpdir>/src/request.ts:130:54
 
 TS2304 [ERROR]: Cannot find name 'PipeOptions'.
-  /** Pipes the response body to the provided writable stream. */ pipeTo(dest: WritableStream<Uint8Array>, options?: PipeOptions): Promise<void> {
-                                                                                                                     ~~~~~~~~~~~
-    at file://<tmpdir>/src/request.ts:217:118
+  pipeTo(dest: WritableStream<Uint8Array>, options?: PipeOptions): Promise<void> {
+                                                     ~~~~~~~~~~~
+    at file://<tmpdir>/src/request.ts:260:54
 
 Found 6 errors.
 

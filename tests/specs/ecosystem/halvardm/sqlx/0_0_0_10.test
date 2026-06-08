@@ -9,4 +9,14 @@ halvardm/sqlx/0.0.0-10
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2344 [ERROR]: Type 'EventType' does not satisfy the constraint 'SqlxConnectionEventType'.
+  Type 'SqlxPoolConnectionEventType' is not assignable to type 'SqlxConnectionEventType'.
+    Type '"acquire"' is not assignable to type 'SqlxConnectionEventType'.
+    at file://<tmpdir>/lib/interfaces.ts:471:98
+
+error: Type checking failed.
+

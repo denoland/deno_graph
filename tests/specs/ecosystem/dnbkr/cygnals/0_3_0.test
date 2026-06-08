@@ -14,13 +14,19 @@ dnbkr/cygnals/0.3.0
 
 -- stderr --
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
-    at file://<tmpdir>/src/dom.ts:12:41
+  E extends HTMLElement,
+            ~~~~~~~~~~~
+    at file://<tmpdir>/src/dom.ts:14:13
 
 TS2304 [ERROR]: Cannot find name 'HTMLElementEventMap'.
-    at file://<tmpdir>/src/dom.ts:12:70
+  V extends keyof HTMLElementEventMap
+                  ~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/dom.ts:15:19
 
 TS2304 [ERROR]: Cannot find name 'HTMLElementEventMap'.
-    at file://<tmpdir>/src/dom.ts:12:123
+>(element: E, event: V): Readable<HTMLElementEventMap[V] | undefined> {
+                                  ~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/dom.ts:16:35
 
 Found 3 errors.
 

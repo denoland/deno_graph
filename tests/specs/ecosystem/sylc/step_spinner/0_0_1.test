@@ -24,7 +24,7 @@ sylc/step-spinner/0.0.1
 
 -- stderr --
 TS2377 [ERROR]: Constructors for derived classes must contain a 'super' call.
-  constructor(msg: string | SpinnerOptions){}
+  constructor(msg: string | SpinnerOptions) {}
   ~~~~~~~~~~~
     at file://<tmpdir>/StepSpinner.ts:4:3
 

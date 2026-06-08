@@ -138,7 +138,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/b.ts:
   function b(): void {}
   export { b };
   namespace b {
-    export var skip = (): void =>{};
+    export var skip = (): void => {};
   }
   --- DTS ---
   declare function b(): void;
@@ -198,20 +198,18 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   function test(): void {}
   namespace test {
-    export class Other {
-    }
+    export class Other {}
   }
   export { test };
   export { b } from "./b.ts";
   export { c } from "./c.ts";
   namespace test {
-    export var skip = (): void =>{};
+    export var skip = (): void => {};
   }
   --- DTS ---
   declare function test(): void;
   declare namespace test {
-    export class Other {
-    }
+    export class Other {}
   }
   export { test };
   export { b } from "./b.ts";

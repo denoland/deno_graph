@@ -14,14 +14,14 @@ radix-ui-fork/react-use-escape-keydown/0.0.6
 
 -- stderr --
 TS2304 [ERROR]: Cannot find name 'KeyboardEvent'.
- */ function useEscapeKeydown(onEscapeKeyDownProp?: (event: KeyboardEvent) => void, ownerDocument?: Document): void {}
-                                                            ~~~~~~~~~~~~~
-    at file://<tmpdir>/src/useEscapeKeydown.tsx:3:61
+function useEscapeKeydown(onEscapeKeyDownProp?: (event: KeyboardEvent) => void, ownerDocument?: Document): void {}
+                                                        ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/useEscapeKeydown.tsx:4:57
 
 TS2304 [ERROR]: Cannot find name 'Document'.
- */ function useEscapeKeydown(onEscapeKeyDownProp?: (event: KeyboardEvent) => void, ownerDocument?: Document): void {}
-                                                                                                    ~~~~~~~~
-    at file://<tmpdir>/src/useEscapeKeydown.tsx:3:101
+function useEscapeKeydown(onEscapeKeyDownProp?: (event: KeyboardEvent) => void, ownerDocument?: Document): void {}
+                                                                                                ~~~~~~~~
+    at file://<tmpdir>/src/useEscapeKeydown.tsx:4:97
 
 Found 2 errors.
 

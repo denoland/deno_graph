@@ -6,7 +6,6 @@ use std::sync::Arc;
 use crate::ModuleSpecifier;
 
 use deno_ast::EmitError;
-use deno_ast::SourceRange;
 use deno_ast::SourceTextInfo;
 use deno_ast::diagnostics::DiagnosticLevel;
 use deno_ast::diagnostics::DiagnosticLocation;
@@ -15,10 +14,11 @@ use deno_ast::diagnostics::DiagnosticSnippetHighlight;
 use deno_ast::diagnostics::DiagnosticSnippetHighlightStyle;
 use deno_ast::diagnostics::DiagnosticSourcePos;
 use deno_ast::diagnostics::DiagnosticSourceRange;
+use deno_ast::oxc::span::Span;
 
 mod cache;
+mod helpers;
 mod range_finder;
-mod swc_helpers;
 mod transform;
 mod transform_dts;
 
@@ -35,7 +35,7 @@ pub use transform::TransformOptions;
 #[derive(Clone)]
 pub struct FastCheckDiagnosticRange {
   pub specifier: ModuleSpecifier,
-  pub range: SourceRange,
+  pub range: Span,
   pub text_info: SourceTextInfo,
 }
 
@@ -320,7 +320,7 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
       Some(range) => DiagnosticLocation::ModulePosition {
         specifier: Cow::Borrowed(self.specifier()),
         text_info: Cow::Borrowed(&range.text_info),
-        source_pos: DiagnosticSourcePos::SourcePos(range.range.start),
+        source_pos: DiagnosticSourcePos::ByteIndex(range.range.start as usize),
       },
       None => DiagnosticLocation::Module {
         specifier: Cow::Borrowed(self.specifier()),
@@ -334,8 +334,8 @@ impl deno_ast::diagnostics::Diagnostic for FastCheckDiagnostic {
       highlights: vec![DiagnosticSnippetHighlight {
         style: DiagnosticSnippetHighlightStyle::Error,
         range: DiagnosticSourceRange {
-          start: DiagnosticSourcePos::SourcePos(range.range.start),
-          end: DiagnosticSourcePos::SourcePos(range.range.end),
+          start: DiagnosticSourcePos::ByteIndex(range.range.start as usize),
+          end: DiagnosticSourcePos::ByteIndex(range.range.end as usize),
         },
         description: self.range_description().map(Cow::Borrowed),
       }],
@@ -545,7 +545,7 @@ pub fn build_fast_check_type_graph<'a>(
   graph: &'a crate::ModuleGraph,
   root_symbol: &'a crate::symbols::RootSymbol<'a>,
   pending_nvs: std::collections::VecDeque<deno_semver::package::PackageNv>,
-  options: &TransformOptions,
+  options: &TransformOptions<'a>,
 ) -> Vec<(
   crate::ModuleSpecifier,
   Result<FastCheckModule, Vec<FastCheckDiagnostic>>,

@@ -16,22 +16,22 @@ lala/appraisal/0.7.3
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Tensor<DT, 2>'.
   get length(): number {
       ~~~~~~
-    at file://<tmpdir>/src/utils/misc/matrix.ts:31:7
+    at file://<tmpdir>/src/utils/misc/matrix.ts:37:7
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Tensor<DT, 2>'.
-  /** Filter the matrix by rows */ filter(fn: (value: DType<DT>, row: number, _: DType<DT>[]) => boolean): Matrix<DT> {
-                                   ~~~~~~
-    at file://<tmpdir>/src/utils/misc/matrix.ts:61:36
+  filter(fn: (value: DType<DT>, row: number, _: DType<DT>[]) => boolean): Matrix<DT> {
+  ~~~~~~
+    at file://<tmpdir>/src/utils/misc/matrix.ts:76:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Tensor<DT, 2>'.
-  /** Get an item using a row and column index */ item(row: number, col: number): DTypeValue<DT> {
-                                                  ~~~~
-    at file://<tmpdir>/src/utils/misc/matrix.ts:64:51
+  item(row: number, col: number): DTypeValue<DT> {
+  ~~~~
+    at file://<tmpdir>/src/utils/misc/matrix.ts:80:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Tensor<DT, 2>'.
-  /** Slice matrix by rows */ slice(start?: number, end?: number): Matrix<DT> {
-                              ~~~~~
-    at file://<tmpdir>/src/utils/misc/matrix.ts:85:31
+  slice(start?: number, end?: number): Matrix<DT> {
+  ~~~~~
+    at file://<tmpdir>/src/utils/misc/matrix.ts:108:3
 
 Found 4 errors.
 

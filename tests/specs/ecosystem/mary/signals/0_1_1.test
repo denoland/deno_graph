@@ -14,29 +14,29 @@ mary/signals/0.1.1
 
 -- stderr --
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Signal<T>'.
-  /** @internal */ _refresh(): boolean {
-                   ~~~~~~~~
-    at file://<tmpdir>/mod.ts:69:20
+  _refresh(): boolean {
+  ~~~~~~~~
+    at file://<tmpdir>/mod.ts:85:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Signal<T>'.
-  /** @internal */ _subscribe(target: Computation): void {}
-                   ~~~~~~~~~~
-    at file://<tmpdir>/mod.ts:72:20
+  _subscribe(target: Computation): void {}
+  ~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:89:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Signal<T>'.
-  /** @internal */ _unsubscribe(target: Computation): void {}
-                   ~~~~~~~~~~~~
-    at file://<tmpdir>/mod.ts:73:20
+  _unsubscribe(target: Computation): void {}
+  ~~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:91:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Signal<T>'.
-	 */ peek(): T {
-	    ~~~~
-    at file://<tmpdir>/mod.ts:77:6
+  peek(): T {
+  ~~~~
+    at file://<tmpdir>/mod.ts:97:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Signal<T>'.
-	 */ get value(): T {
-	        ~~~~~
-    at file://<tmpdir>/mod.ts:82:10
+  get value(): T {
+      ~~~~~
+    at file://<tmpdir>/mod.ts:103:7
 
 Found 5 errors.
 

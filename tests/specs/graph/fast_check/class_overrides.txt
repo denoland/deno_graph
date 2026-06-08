@@ -92,7 +92,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   export class Baz extends Foo {
     declare name: string;
-    public constructor(name: string){
+    public constructor(name: string) {
       super({} as never);
     }
   }
@@ -103,11 +103,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     declare fields: HeaderField[];
   }
   export class ChildHeader extends BaseHeader {
-    override fields = [
-      {
-        name: 'Content-ID'
-      }
-    ];
+    override fields = [{ name: "Content-ID" }];
   }
   --- DTS ---
   export declare class Foo extends Error {
@@ -128,6 +124,6 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   }
   export declare class ChildHeader extends BaseHeader {
     override fields: [{
-        name: string;
-      }];
+      name: string;
+    }];
   }

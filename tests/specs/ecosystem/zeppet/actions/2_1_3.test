@@ -11,48 +11,56 @@ zeppet/actions/2.1.3
 
 -- stderr --
 TS2304 [ERROR]: Cannot find name 'HTMLElementEventMap'.
-export const listen = <K extends keyof HTMLElementEventMap>(eventName: K, handler: (event: HTMLElementEventMap[K]) => void): ActionFn =>({} as never);
-                                       ~~~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/index.ts:5:40
 
 TS2304 [ERROR]: Cannot find name 'HTMLElementEventMap'.
-export const listen = <K extends keyof HTMLElementEventMap>(eventName: K, handler: (event: HTMLElementEventMap[K]) => void): ActionFn =>({} as never);
-                                                                                           ~~~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/index.ts:5:92
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
-export const bindFieldToObs = <T extends HTMLElement, K extends keyof T>(field: K, obs: Observer<NonNullable<T[K]>>)=>(element: T): T =>({} as never);
-                                         ~~~~~~~~~~~
-    at file://<tmpdir>/src/index.ts:6:42
+  T extends HTMLElement,
+            ~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:7:13
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
-    at file://<tmpdir>/src/index.ts:7:48
+  T extends HTMLElement,
+            ~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:13:13
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
-    at file://<tmpdir>/src/index.ts:8:41
+  T extends HTMLElement,
+            ~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:18:13
 
 TS2304 [ERROR]: Cannot find name 'HTMLElementEventMap'.
-    at file://<tmpdir>/src/index.ts:8:73
+  K extends keyof HTMLElementEventMap
+                  ~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:20:19
 
 TS2304 [ERROR]: Cannot find name 'HTMLElementEventMap'.
-    at file://<tmpdir>/src/index.ts:8:154
+>(event: K, observer: Observer<V>, mutateFn: (prev: V, event: HTMLElementEventMap[K], element: T) => V): Action<T> => ({}) as never;
+                                                              ~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:21:63
 
 TS2304 [ERROR]: Cannot find name 'HTMLInputElement'.
-export const bindInput = <T extends HTMLInputElement>(obs: Observer<string>): Action<T> =>({} as never);
+export const bindInput = <T extends HTMLInputElement>(obs: Observer<string>): Action<T> => ({}) as never;
                                     ~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/index.ts:9:37
+    at file://<tmpdir>/src/index.ts:22:37
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
-    at file://<tmpdir>/src/index.ts:10:34
+  T extends HTMLElement,
+            ~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:24:13
 
 TS2304 [ERROR]: Cannot find name 'HTMLElementTagNameMap'.
-    at file://<tmpdir>/src/index.ts:10:63
+  K extends keyof HTMLElementTagNameMap,
+                  ~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:25:19
 
 TS2304 [ERROR]: Cannot find name 'HTMLElementTagNameMap'.
-    at file://<tmpdir>/src/index.ts:10:179
+    at file://<tmpdir>/src/index.ts:27:93
 
 TS2304 [ERROR]: Cannot find name 'HTMLElementTagNameMap'.
-    at file://<tmpdir>/src/index.ts:10:208
+    at file://<tmpdir>/src/index.ts:27:122
 
 Found 12 errors.
 

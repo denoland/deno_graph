@@ -21,7 +21,7 @@ TS2304 [ERROR]: Cannot find name 'ClientRect'.
 TS2304 [ERROR]: Cannot find name 'ClientRect'.
 type CallbackFn = (rect: ClientRect) => void;
                          ~~~~~~~~~~
-    at file://<tmpdir>/src/observeElementRect.ts:11:26
+    at file://<tmpdir>/src/observeElementRect.ts:12:26
 
 Found 2 errors.
 

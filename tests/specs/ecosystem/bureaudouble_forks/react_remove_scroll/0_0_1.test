@@ -39,17 +39,17 @@ bureaudouble-forks/react-remove-scroll/0.0.1
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
   ref?: Ref<HTMLElement>;
             ~~~~~~~~~~~
-    at file://<tmpdir>/src/types.tsx:24:13
+    at file://<tmpdir>/src/types.tsx:26:13
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
-   */ shards?: Array<React.RefObject<any> | HTMLElement>;
-                                            ~~~~~~~~~~~
-    at file://<tmpdir>/src/types.tsx:49:45
+  shards?: Array<React.RefObject<any> | HTMLElement>;
+                                        ~~~~~~~~~~~
+    at file://<tmpdir>/src/types.tsx:57:41
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
-type RefForwarded<T> = ForwardRefExoticComponent<T & RefAttributes<HTMLElement>> & WithClassNames;
-                                                                   ~~~~~~~~~~~
-    at file://<tmpdir>/src/types.tsx:69:68
+type RefForwarded<T,> = ForwardRefExoticComponent<T & RefAttributes<HTMLElement>> & WithClassNames;
+                                                                    ~~~~~~~~~~~
+    at file://<tmpdir>/src/types.tsx:79:69
 
 Found 3 errors.
 

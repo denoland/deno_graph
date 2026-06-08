@@ -11,14 +11,14 @@ happy-js/happy-opfs/1.0.0
 
 -- stderr --
 TS2304 [ERROR]: Cannot find name 'FileSystemHandle'.
- */ export function readDir(dirPath: string): Promise<Result<AsyncIterableIterator<[string, FileSystemHandle]>, Error>> {
-                                                                                            ~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/fs/opfs_core.ts:13:93
+export function readDir(dirPath: string): Promise<Result<AsyncIterableIterator<[string, FileSystemHandle]>, Error>> {
+                                                                                        ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/fs/opfs_core.ts:15:89
 
 TS2304 [ERROR]: Cannot find name 'FileSystemHandle'.
- */ export function stat(path: string): Promise<Result<FileSystemHandle, Error>> {
-                                                       ~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/fs/opfs_core.ts:35:56
+export function stat(path: string): Promise<Result<FileSystemHandle, Error>> {
+                                                   ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/fs/opfs_core.ts:40:52
 
 Found 2 errors.
 

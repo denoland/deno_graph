@@ -14,116 +14,116 @@ sebbo2002/ical-generator/7.0.0-develop.1
 
 -- stderr --
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:38:32
+    at file://<tmpdir>/src/index.ts:43:32
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:38:47
+    at file://<tmpdir>/src/index.ts:43:47
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:38:66
+    at file://<tmpdir>/src/index.ts:43:66
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:38:105
+    at file://<tmpdir>/src/index.ts:43:105
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:38:126
+    at file://<tmpdir>/src/index.ts:43:126
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:38:148
+    at file://<tmpdir>/src/index.ts:43:148
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:38:175
+    at file://<tmpdir>/src/index.ts:43:175
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:38:218
+    at file://<tmpdir>/src/index.ts:43:218
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:38:238
+    at file://<tmpdir>/src/index.ts:43:238
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:39:35
+    at file://<tmpdir>/src/index.ts:44:35
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:39:109
+    at file://<tmpdir>/src/index.ts:44:109
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
 export { default as ICalCalendar, ICalCalendarData, ICalCalendarProdIdData, ICalCalendarMethod, ICalCalendarJSONData } from "./calendar.ts";
                                   ~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/index.ts:40:35
+    at file://<tmpdir>/src/index.ts:45:35
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
 export { default as ICalCalendar, ICalCalendarData, ICalCalendarProdIdData, ICalCalendarMethod, ICalCalendarJSONData } from "./calendar.ts";
                                                     ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/index.ts:40:53
+    at file://<tmpdir>/src/index.ts:45:53
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
 export { default as ICalCalendar, ICalCalendarData, ICalCalendarProdIdData, ICalCalendarMethod, ICalCalendarJSONData } from "./calendar.ts";
                                                                                                 ~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/index.ts:40:97
+    at file://<tmpdir>/src/index.ts:45:97
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
 export { default as ICalCategory, ICalCategoryData, ICalCategoryJSONData } from "./category.ts";
                                   ~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/index.ts:41:35
+    at file://<tmpdir>/src/index.ts:46:35
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
 export { default as ICalCategory, ICalCategoryData, ICalCategoryJSONData } from "./category.ts";
                                                     ~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/index.ts:41:53
+    at file://<tmpdir>/src/index.ts:46:53
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:42:93
+    at file://<tmpdir>/src/index.ts:47:93
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:42:108
+    at file://<tmpdir>/src/index.ts:47:108
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:42:127
+    at file://<tmpdir>/src/index.ts:47:127
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:43:10
+    at file://<tmpdir>/src/index.ts:48:10
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:43:29
+    at file://<tmpdir>/src/index.ts:48:29
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:43:51
+    at file://<tmpdir>/src/index.ts:48:51
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:43:65
+    at file://<tmpdir>/src/index.ts:48:65
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:43:88
+    at file://<tmpdir>/src/index.ts:48:88
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:43:114
+    at file://<tmpdir>/src/index.ts:48:114
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:43:123
+    at file://<tmpdir>/src/index.ts:48:123
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:43:138
+    at file://<tmpdir>/src/index.ts:48:138
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:43:192
+    at file://<tmpdir>/src/index.ts:48:192
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:43:206
+    at file://<tmpdir>/src/index.ts:48:206
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:43:222
+    at file://<tmpdir>/src/index.ts:48:222
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:43:246
+    at file://<tmpdir>/src/index.ts:48:246
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:43:270
+    at file://<tmpdir>/src/index.ts:48:270
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:43:293
+    at file://<tmpdir>/src/index.ts:48:293
 
 TS1205 [ERROR]: Re-exporting a type when 'isolatedModules' is enabled requires using 'export type'.
-    at file://<tmpdir>/src/index.ts:43:308
+    at file://<tmpdir>/src/index.ts:48:308
 
 Found 34 errors.
 
