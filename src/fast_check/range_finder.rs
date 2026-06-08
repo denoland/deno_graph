@@ -190,12 +190,31 @@ impl ImportedExports {
           named_exports.add("default".to_string());
           Some(ImportedExports::Subset(named_exports))
         }
-        ImportedExports::Subset(_) => None,
+        // `Star` covers every named export except `default`, so a subset that
+        // references `default` (ex. a default import of the same module that is
+        // also re-exported with `export *`) still needs to be traced. Upgrade
+        // to `StarWithDefault` and report `default` as newly added.
+        ImportedExports::Subset(new_subset) => {
+          if new_subset.0.contains_key("default") {
+            *self = ImportedExports::StarWithDefault;
+            let mut named_exports = NamedSubset::default();
+            named_exports.add("default".to_string());
+            Some(ImportedExports::Subset(named_exports))
+          } else {
+            None
+          }
+        }
       },
       ImportedExports::StarWithDefault => None,
       ImportedExports::Subset(current_subset) => match exports_to_trace {
         ImportedExports::Star => {
-          *self = ImportedExports::Star;
+          // `Star` does not include `default`, so preserve a previously traced
+          // `default` export by upgrading to `StarWithDefault`.
+          if current_subset.0.contains_key("default") {
+            *self = ImportedExports::StarWithDefault;
+          } else {
+            *self = ImportedExports::Star;
+          }
           Some(ImportedExports::Star)
         }
         ImportedExports::StarWithDefault => {
