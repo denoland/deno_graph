@@ -8409,6 +8409,7 @@ mod tests {
           Version::parse_standard("1.0.0").unwrap(),
           JsrPackageInfoVersion::default(),
         )]),
+        latest: None,
       },
     );
     test_loader.add_jsr_version_info(
