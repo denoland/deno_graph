@@ -1,0 +1,45 @@
+# mod.ts
+import sheet from "./a.css" with { type: "css" };
+
+# a.css
+body { color: red; }
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "specifier": "file:///a.css",
+      "error": "The import attribute type of \"css\" is unsupported.\n  Specifier: file:///a.css"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./a.css",
+          "code": {
+            "specifier": "file:///a.css",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 18
+              },
+              "end": {
+                "line": 0,
+                "character": 27
+              }
+            }
+          },
+          "assertionType": "css"
+        }
+      ],
+      "size": 50,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}

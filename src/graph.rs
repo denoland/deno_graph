@@ -1694,6 +1694,8 @@ pub struct BuildOptions<'a> {
   pub unstable_bytes_imports: bool,
   /// Support unstable text imports.
   pub unstable_text_imports: bool,
+  /// Support unstable css imports.
+  pub unstable_css_imports: bool,
   pub executor: &'a dyn Executor,
   pub locker: Option<&'a mut dyn Locker>,
   pub file_system: &'a FileSystem,
@@ -1718,6 +1720,7 @@ impl Default for BuildOptions<'_> {
       skip_dynamic_deps: false,
       unstable_bytes_imports: false,
       unstable_text_imports: false,
+      unstable_css_imports: false,
       executor: Default::default(),
       locker: None,
       file_system: &NullFileSystem,
@@ -2681,7 +2684,7 @@ impl ModuleGraph {
   }
 
   /// List of all the url in the graph that are statically known to be
-  /// imported with type "text" or "bytes".
+  /// imported with type "text", "bytes" or "css".
   pub fn asset_module_urls(&self) -> IndexSet<&Url> {
     let mut result = IndexSet::with_capacity(self.module_slots.len());
     for module in self.module_slots.values() {
@@ -4558,6 +4561,7 @@ struct Builder<'a, 'graph> {
   was_dynamic_root: bool,
   unstable_bytes_imports: bool,
   unstable_text_imports: bool,
+  unstable_css_imports: bool,
   file_system: &'a FileSystem,
   jsr_url_provider: &'a dyn JsrUrlProvider,
   jsr_version_resolver: Cow<'a, JsrVersionResolver>,
@@ -4592,6 +4596,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       was_dynamic_root: options.is_dynamic,
       unstable_bytes_imports: options.unstable_bytes_imports,
       unstable_text_imports: options.unstable_text_imports,
+      unstable_css_imports: options.unstable_css_imports,
       file_system: options.file_system,
       jsr_url_provider: options.jsr_url_provider,
       jsr_version_resolver: options.jsr_version_resolver,
@@ -5351,6 +5356,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         let is_allowed = match attribute.kind.as_str() {
           "bytes" => self.unstable_bytes_imports,
           "text" => self.unstable_text_imports,
+          "css" => self.unstable_css_imports,
           _ => false,
         };
         if !is_allowed {
