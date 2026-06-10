@@ -1,0 +1,77 @@
+~~ {"unstableCssImports":true} ~~
+# mod.ts
+import sheet from "./a.css" with { type: "css" };
+const dynamic = await import("./b.css", {
+  with: {
+    "type": "css",
+  }
+});
+
+# a.css
+body { color: red; }
+
+# b.css
+.a { color: green; }
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "external",
+      "specifier": "file:///a.css"
+    },
+    {
+      "kind": "external",
+      "specifier": "file:///b.css"
+    },
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "./a.css",
+          "code": {
+            "specifier": "file:///a.css",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 18
+              },
+              "end": {
+                "line": 0,
+                "character": 27
+              }
+            }
+          },
+          "assertionType": "css"
+        },
+        {
+          "specifier": "./b.css",
+          "code": {
+            "specifier": "file:///b.css",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 1,
+                "character": 29
+              },
+              "end": {
+                "line": 1,
+                "character": 38
+              }
+            }
+          },
+          "isDynamic": true,
+          "assertionType": "css"
+        }
+      ],
+      "size": 129,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    }
+  ],
+  "redirects": {}
+}
