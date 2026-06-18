@@ -124,6 +124,9 @@ pub async fn parse_module(
       maybe_source_phase_referrer: None,
       is_root: true,
       is_dynamic_branch: false,
+      // The one-off `parse_module` helper does not support config imports;
+      // they are driven through the full graph build (`BuildOptions`).
+      unstable_config_imports: false,
     },
   )
   .await?;

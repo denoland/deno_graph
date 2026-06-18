@@ -1696,6 +1696,10 @@ pub struct BuildOptions<'a> {
   pub unstable_text_imports: bool,
   /// Support unstable css imports.
   pub unstable_css_imports: bool,
+  /// Support unstable config imports (yaml/toml/json5/jsonc), which are
+  /// transformed into JavaScript modules that parse the file with a parser
+  /// pulled from the registry on demand.
+  pub unstable_config_imports: bool,
   pub executor: &'a dyn Executor,
   pub locker: Option<&'a mut dyn Locker>,
   pub file_system: &'a FileSystem,
@@ -1721,6 +1725,7 @@ impl Default for BuildOptions<'_> {
       unstable_bytes_imports: false,
       unstable_text_imports: false,
       unstable_css_imports: false,
+      unstable_config_imports: false,
       executor: Default::default(),
       locker: None,
       file_system: &NullFileSystem,
@@ -3171,6 +3176,102 @@ pub(crate) struct ParseModuleAndSourceInfoOptions<'a> {
   pub maybe_source_phase_referrer: Option<&'a Range>,
   pub is_root: bool,
   pub is_dynamic_branch: bool,
+  pub unstable_config_imports: bool,
+}
+
+/// A configuration file format that can be imported as a module. Each variant
+/// maps to a registry package whose `parse` is used to turn the file contents
+/// into the module's default export.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ConfigImportKind {
+  Yaml,
+  Toml,
+  Json5,
+  Jsonc,
+}
+
+impl ConfigImportKind {
+  /// Determines the config import kind from the file extension / media type and
+  /// the optional `type` import attribute. An explicit attribute takes
+  /// precedence; `type: "json"` is additionally accepted for JSON5/JSONC files.
+  ///
+  /// YAML and TOML are detected from the specifier's extension rather than a
+  /// dedicated media type, so that adding the feature does not require new
+  /// `MediaType` variants (which would ripple across the ecosystem).
+  fn detect(
+    specifier: &ModuleSpecifier,
+    media_type: MediaType,
+    attribute_type: Option<&str>,
+  ) -> Option<Self> {
+    match attribute_type {
+      Some("yaml") => Some(Self::Yaml),
+      Some("toml") => Some(Self::Toml),
+      Some("json5") => Some(Self::Json5),
+      Some("jsonc") => Some(Self::Jsonc),
+      // JSON5/JSONC are supersets of JSON, so they satisfy `type: "json"`.
+      Some("json") => match Self::from_extension(specifier, media_type) {
+        kind @ (Some(Self::Json5) | Some(Self::Jsonc)) => kind,
+        _ => None,
+      },
+      Some(_) => None,
+      None => Self::from_extension(specifier, media_type),
+    }
+  }
+
+  fn from_extension(
+    specifier: &ModuleSpecifier,
+    media_type: MediaType,
+  ) -> Option<Self> {
+    // JSON5/JSONC have dedicated media types, so they may also be identified
+    // via a remote `content-type` header even without a matching extension.
+    match media_type {
+      MediaType::Json5 => return Some(Self::Json5),
+      MediaType::Jsonc => return Some(Self::Jsonc),
+      _ => {}
+    }
+    let path = specifier.path().to_ascii_lowercase();
+    if path.ends_with(".yaml") || path.ends_with(".yml") {
+      Some(Self::Yaml)
+    } else if path.ends_with(".toml") {
+      Some(Self::Toml)
+    } else if path.ends_with(".json5") {
+      Some(Self::Json5)
+    } else if path.ends_with(".jsonc") {
+      Some(Self::Jsonc)
+    } else {
+      None
+    }
+  }
+
+  /// Renders a JavaScript module that parses `text` and exposes the result as
+  /// the default export. The parser is imported from the registry, so it only
+  /// becomes a graph dependency when a file of this kind is actually imported,
+  /// which keeps the feature zero-cost when unused.
+  ///
+  /// The file contents are inlined as a string literal rather than imported via
+  /// `with { type: "text" }`: the transformed module occupies the file's
+  /// specifier in the graph, so a self text-import would read back this
+  /// generated source instead of the original bytes.
+  fn render_module(&self, text: &str) -> String {
+    // `serde_json::to_string` produces a valid JS string literal (it is a
+    // subset of JS), so this safely escapes arbitrary file contents.
+    let source = serde_json::to_string(text).unwrap();
+    match self {
+      Self::Yaml => format!(
+        "import {{ parse }} from \"jsr:@std/yaml@^1\";\nexport default parse({source});\n"
+      ),
+      Self::Toml => format!(
+        "import {{ parse }} from \"jsr:@std/toml@^1\";\nexport default parse({source});\n"
+      ),
+      Self::Jsonc => format!(
+        "import {{ parse }} from \"jsr:@std/jsonc@^1\";\nexport default parse({source});\n"
+      ),
+      // There is no `@std/json5`, so use the ubiquitous npm package.
+      Self::Json5 => format!(
+        "import JSON5 from \"npm:json5@^2\";\nexport default JSON5.parse({source});\n"
+      ),
+    }
+  }
 }
 
 /// With the provided information, parse a module and return its "module slot"
@@ -3209,6 +3310,11 @@ pub(crate) async fn parse_module_source_and_info(
 
   if let Some(attribute_type) = opts.maybe_attribute_type
     && !matches!(attribute_type.kind.as_str(), "json" | "text" | "bytes")
+    && !(opts.unstable_config_imports
+      && matches!(
+        attribute_type.kind.as_str(),
+        "yaml" | "toml" | "json5" | "jsonc"
+      ))
   {
     return Err(
       ModuleErrorKind::UnsupportedImportAttributeType {
@@ -3218,6 +3324,53 @@ pub(crate) async fn parse_module_source_and_info(
       }
       .into_box(),
     );
+  }
+
+  // Config imports (yaml/toml/json5/jsonc) are transformed into JavaScript
+  // modules that parse the file contents with a parser pulled from the
+  // registry on demand. This keeps the feature zero-cost when unused: the
+  // parser only enters the module graph when such a file is actually imported.
+  if opts.unstable_config_imports
+    && let Some(kind) = ConfigImportKind::detect(
+      &opts.specifier,
+      media_type,
+      opts.maybe_attribute_type.map(|t| t.kind.as_str()),
+    )
+  {
+    let raw = new_source_with_text(
+      &opts.specifier,
+      opts.content,
+      maybe_charset,
+      opts.mtime,
+    )?;
+    let wrapper: Arc<[u8]> = kind.render_module(&raw.text).into_bytes().into();
+    let source = new_source_with_text(
+      &opts.specifier,
+      wrapper,
+      Some("utf-8"),
+      opts.mtime,
+    )?;
+    return match module_analyzer
+      .analyze(&opts.specifier, source.text.clone(), MediaType::JavaScript)
+      .await
+    {
+      Ok(module_info) => Ok(ModuleSourceAndInfo::Js {
+        specifier: opts.specifier,
+        media_type: MediaType::JavaScript,
+        mtime: opts.mtime,
+        source,
+        maybe_headers: opts.maybe_headers,
+        module_info: Box::new(module_info),
+      }),
+      Err(diagnostic) => Err(
+        ModuleErrorKind::Parse {
+          specifier: opts.specifier,
+          mtime: opts.mtime,
+          diagnostic: Arc::new(diagnostic),
+        }
+        .into_box(),
+      ),
+    };
   }
 
   // here we check any media types that should have assertions made against them
@@ -4562,6 +4715,7 @@ struct Builder<'a, 'graph> {
   unstable_bytes_imports: bool,
   unstable_text_imports: bool,
   unstable_css_imports: bool,
+  unstable_config_imports: bool,
   file_system: &'a FileSystem,
   jsr_url_provider: &'a dyn JsrUrlProvider,
   jsr_version_resolver: Cow<'a, JsrVersionResolver>,
@@ -4597,6 +4751,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       unstable_bytes_imports: options.unstable_bytes_imports,
       unstable_text_imports: options.unstable_text_imports,
       unstable_css_imports: options.unstable_css_imports,
+      unstable_config_imports: options.unstable_config_imports,
       file_system: options.file_system,
       jsr_url_provider: options.jsr_url_provider,
       jsr_version_resolver: options.jsr_version_resolver,
@@ -5568,6 +5723,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       );
       let is_dynamic_branch = self.in_dynamic_branch;
       let module_analyzer = self.module_analyzer;
+      let unstable_config_imports = self.unstable_config_imports;
       self.state.pending.push_back({
         let requested_specifier = specifier.clone();
         let maybe_range = options.maybe_range.cloned();
@@ -5605,6 +5761,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     .as_ref(),
                   is_root: options.is_root,
                   is_dynamic_branch,
+                  unstable_config_imports,
                 },
               )
               .await
@@ -5651,6 +5808,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     .as_ref(),
                   is_root: options.is_root,
                   is_dynamic_branch,
+                  unstable_config_imports,
                 },
               )
               .await
@@ -5868,6 +6026,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let module_analyzer = self.module_analyzer;
     let jsr_url_provider = self.jsr_url_provider;
     let was_dynamic_root = self.was_dynamic_root;
+    let unstable_config_imports = self.unstable_config_imports;
     let maybe_nv_when_no_version_info = if maybe_version_info.is_none() {
       self
         .jsr_url_provider
@@ -5914,6 +6073,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         loader: &dyn Loader,
         jsr_url_provider: &dyn JsrUrlProvider,
         module_analyzer: &dyn ModuleAnalyzer,
+        unstable_config_imports: bool,
       ) -> Result<PendingInfoResponse, ModuleError> {
         async fn handle_success(
           module_analyzer: &dyn ModuleAnalyzer,
@@ -6127,6 +6287,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   maybe_source_phase_referrer,
                   is_root,
                   is_dynamic_branch: in_dynamic_branch,
+                  unstable_config_imports,
                 },
               )
               .await
@@ -6173,6 +6334,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     maybe_source_phase_referrer,
                     is_root,
                     is_dynamic_branch: in_dynamic_branch,
+                    unstable_config_imports,
                   },
                 )
                 .await;
@@ -6223,6 +6385,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         loader,
         jsr_url_provider,
         module_analyzer,
+        unstable_config_imports,
       )
       .await;
 
