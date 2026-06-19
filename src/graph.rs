@@ -1696,17 +1696,10 @@ pub struct BuildOptions<'a> {
   pub unstable_text_imports: bool,
   /// Support unstable css imports.
   pub unstable_css_imports: bool,
-  /// Support unstable config imports (yaml/toml/json5/jsonc), which are
-  /// transformed into JavaScript modules that parse the file with a parser
-  /// pulled from the registry on demand.
+  /// Permit the `yaml`/`toml`/`json5`/`jsonc` import attribute types. deno_graph
+  /// does not interpret them itself; the embedder's [`Resolver`] is expected to
+  /// redirect such imports (see [`Resolver::resolve_attribute_type_import`]).
   pub unstable_config_imports: bool,
-  /// The `type` import attribute to associate with the roots being built.
-  ///
-  /// Roots normally have no import attribute, but a non-analyzable dynamic
-  /// `import()` of a config file enters the graph as a root, so the caller
-  /// passes its `with { type: "..." }` attribute here to let it be recognized
-  /// as a config import (which requires an explicit attribute).
-  pub maybe_root_attribute_type: Option<String>,
   pub executor: &'a dyn Executor,
   pub locker: Option<&'a mut dyn Locker>,
   pub file_system: &'a FileSystem,
@@ -1733,7 +1726,6 @@ impl Default for BuildOptions<'_> {
       unstable_text_imports: false,
       unstable_css_imports: false,
       unstable_config_imports: false,
-      maybe_root_attribute_type: None,
       executor: Default::default(),
       locker: None,
       file_system: &NullFileSystem,
@@ -2968,6 +2960,42 @@ fn resolve(
   Resolution::from_resolve_result(response, specifier_text, referrer_range)
 }
 
+/// Like [`resolve`], but first consults [`Resolver::resolve_attribute_type_import`]
+/// when the import carries a `type` attribute. This lets an embedder redirect
+/// attribute imports (e.g. config-file imports) without deno_graph knowing about
+/// the attribute's meaning.
+fn resolve_with_attribute_type(
+  specifier_text: &str,
+  referrer_range: Range,
+  resolution_kind: ResolutionKind,
+  maybe_attribute_type: Option<&str>,
+  jsr_url_provider: &dyn JsrUrlProvider,
+  maybe_resolver: Option<&dyn Resolver>,
+) -> Resolution {
+  if let Some(attribute_type) = maybe_attribute_type
+    && let Some(resolver) = maybe_resolver
+    && let Some(response) = resolver.resolve_attribute_type_import(
+      specifier_text,
+      &referrer_range,
+      resolution_kind,
+      attribute_type,
+    )
+  {
+    return Resolution::from_resolve_result(
+      response,
+      specifier_text,
+      referrer_range,
+    );
+  }
+  resolve(
+    specifier_text,
+    referrer_range,
+    resolution_kind,
+    jsr_url_provider,
+    maybe_resolver,
+  )
+}
+
 struct NewSpecifier {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
@@ -3187,85 +3215,6 @@ pub(crate) struct ParseModuleAndSourceInfoOptions<'a> {
   pub unstable_config_imports: bool,
 }
 
-/// A configuration file format that can be imported as a module. Each variant
-/// maps to a registry package whose `parse` is used to turn the file contents
-/// into the module's default export.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum ConfigImportKind {
-  Yaml,
-  Toml,
-  Json5,
-  Jsonc,
-}
-
-impl ConfigImportKind {
-  /// Determines the config import kind solely from the `type` import attribute.
-  ///
-  /// An explicit attribute is required: a config file is only treated as such
-  /// when imported with `with { type: "yaml" }` (or `"toml"`/`"json5"`/
-  /// `"jsonc"`). The file extension is deliberately not consulted, matching the
-  /// browser rule that a non-JS module type must be requested explicitly, and
-  /// `type: "json"` is intentionally not accepted for JSON5/JSONC since those
-  /// are not JSON per the JSON modules proposal.
-  fn detect(attribute_type: Option<&str>) -> Option<Self> {
-    match attribute_type {
-      Some("yaml") => Some(Self::Yaml),
-      Some("toml") => Some(Self::Toml),
-      Some("json5") => Some(Self::Json5),
-      Some("jsonc") => Some(Self::Jsonc),
-      _ => None,
-    }
-  }
-
-  /// Renders a JavaScript module that imports the original file as text, parses
-  /// it with a parser pulled from the registry on demand, and exposes the
-  /// result as the default export:
-  ///
-  /// ```js
-  /// import source from "<raw_specifier>" with { type: "text" };
-  /// import { parse } from "jsr:@std/yaml@^1";
-  /// export default parse(source);
-  /// ```
-  ///
-  /// The file contents are imported as text rather than inlined as a string
-  /// literal, so the original bytes flow through the normal text-import path (a
-  /// real graph node, cached and lockfile-tracked, not embedded in the
-  /// generated source). `raw_specifier` is the file's own specifier with a
-  /// marker query, so the wrapper (which occupies the file's plain specifier)
-  /// and the raw text module are distinct graph nodes rather than colliding.
-  ///
-  /// The parser is imported from the registry, so it only becomes a graph
-  /// dependency when a file of this kind is actually imported, which keeps the
-  /// feature zero-cost when unused.
-  fn render_module(&self, raw_specifier: &str) -> String {
-    // `serde_json::to_string` produces a valid JS string literal (it is a
-    // subset of JS), so this safely escapes the specifier.
-    let raw = serde_json::to_string(raw_specifier).unwrap();
-    let import_source =
-      format!("import source from {raw} with {{ type: \"text\" }};\n");
-    match self {
-      Self::Yaml => format!(
-        "{import_source}import {{ parse }} from \"jsr:@std/yaml@^1\";\nexport default parse(source);\n"
-      ),
-      Self::Toml => format!(
-        "{import_source}import {{ parse }} from \"jsr:@std/toml@^1\";\nexport default parse(source);\n"
-      ),
-      Self::Jsonc => format!(
-        "{import_source}import {{ parse }} from \"jsr:@std/jsonc@^1\";\nexport default parse(source);\n"
-      ),
-      // There is no `@std/json5`, so use the ubiquitous npm package.
-      Self::Json5 => format!(
-        "{import_source}import JSON5 from \"npm:json5@^2\";\nexport default JSON5.parse(source);\n"
-      ),
-    }
-  }
-
-  /// The marker query appended to a config file's specifier to form the raw
-  /// text module's specifier, keeping it distinct from the wrapper module that
-  /// occupies the plain specifier.
-  const RAW_QUERY_MARKER: &'static str = "deno-config-raw";
-}
-
 /// With the provided information, parse a module and return its "module slot"
 #[allow(clippy::too_many_arguments)]
 #[allow(clippy::result_large_err)]
@@ -3316,51 +3265,6 @@ pub(crate) async fn parse_module_source_and_info(
       }
       .into_box(),
     );
-  }
-
-  // Config imports (yaml/toml/json5/jsonc) are transformed into JavaScript
-  // modules that text-import the file contents and parse them with a parser
-  // pulled from the registry on demand. This keeps the feature zero-cost when
-  // unused: the parser only enters the module graph when such a file is
-  // actually imported. The wrapper occupies the file's plain specifier; the
-  // raw text module lives at the same specifier with a marker query so the two
-  // are distinct graph nodes.
-  if opts.unstable_config_imports
-    && let Some(kind) = ConfigImportKind::detect(
-      opts.maybe_attribute_type.map(|t| t.kind.as_str()),
-    )
-  {
-    let mut raw_specifier = opts.specifier.clone();
-    raw_specifier.set_query(Some(ConfigImportKind::RAW_QUERY_MARKER));
-    let wrapper: Arc<[u8]> =
-      kind.render_module(raw_specifier.as_str()).into_bytes().into();
-    let source = new_source_with_text(
-      &opts.specifier,
-      wrapper,
-      Some("utf-8"),
-      opts.mtime,
-    )?;
-    return match module_analyzer
-      .analyze(&opts.specifier, source.text.clone(), MediaType::JavaScript)
-      .await
-    {
-      Ok(module_info) => Ok(ModuleSourceAndInfo::Js {
-        specifier: opts.specifier,
-        media_type: MediaType::JavaScript,
-        mtime: opts.mtime,
-        source,
-        maybe_headers: opts.maybe_headers,
-        module_info: Box::new(module_info),
-      }),
-      Err(diagnostic) => Err(
-        ModuleErrorKind::Parse {
-          specifier: opts.specifier,
-          mtime: opts.mtime,
-          diagnostic: Arc::new(diagnostic),
-        }
-        .into_box(),
-      ),
-    };
   }
 
   // here we check any media types that should have assertions made against them
@@ -4195,10 +4099,11 @@ fn fill_module_dependencies(
         if dep.maybe_code.is_none() {
           // This is a code import, the first one of that specifier in this module.
           // Resolve and determine the initial `is_dynamic` value from it.
-          dep.maybe_code = resolve(
+          dep.maybe_code = resolve_with_attribute_type(
             &import.specifier,
             import.specifier_range.clone(),
             ResolutionKind::Execution,
+            dep.maybe_attribute_type.as_deref(),
             jsr_url_provider,
             maybe_resolver,
           );
@@ -4212,10 +4117,16 @@ fn fill_module_dependencies(
         }
       }
       if graph_kind.include_types() && dep.maybe_type.is_none() {
-        let maybe_type = resolve(
+        // Use the same attribute-aware resolution as the code dependency so an
+        // attribute import that the resolver redirects (e.g. a config import to
+        // a wrapper module) doesn't also pull in the original file as a typed
+        // dependency. The result matching `maybe_code` below means no separate
+        // type dependency is recorded.
+        let maybe_type = resolve_with_attribute_type(
           &import.specifier,
           import.specifier_range.clone(),
           ResolutionKind::Types,
+          dep.maybe_attribute_type.as_deref(),
           jsr_url_provider,
           maybe_resolver,
         );
@@ -4706,7 +4617,6 @@ struct Builder<'a, 'graph> {
   unstable_text_imports: bool,
   unstable_css_imports: bool,
   unstable_config_imports: bool,
-  maybe_root_attribute_type: Option<String>,
   file_system: &'a FileSystem,
   jsr_url_provider: &'a dyn JsrUrlProvider,
   jsr_version_resolver: Cow<'a, JsrVersionResolver>,
@@ -4743,7 +4653,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       unstable_text_imports: options.unstable_text_imports,
       unstable_css_imports: options.unstable_css_imports,
       unstable_config_imports: options.unstable_config_imports,
-      maybe_root_attribute_type: options.maybe_root_attribute_type,
       file_system: options.file_system,
       jsr_url_provider: options.jsr_url_provider,
       jsr_version_resolver: options.jsr_version_resolver,
@@ -4792,21 +4701,6 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     self.graph.roots.extend(roots.clone());
 
     for root in roots {
-      // A non-analyzable dynamic import of a config file enters the graph as a
-      // root carrying a `type` attribute; synthesize an attribute (with a
-      // zeroed range, since a root has no referrer position) so it can be
-      // recognized as a config import.
-      let maybe_attribute_type =
-        self.maybe_root_attribute_type.as_ref().map(|kind| {
-          AttributeTypeWithRange {
-            range: Range {
-              specifier: root.clone(),
-              range: PositionRange::zeroed(),
-              resolution_mode: None,
-            },
-            kind: kind.clone(),
-          }
-        });
       self.load(LoadOptionsRef {
         specifier: &root,
         maybe_range: None,
@@ -4814,7 +4708,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         is_asset: false,
         in_dynamic_branch: self.in_dynamic_branch,
         is_root: true,
-        maybe_attribute_type,
+        maybe_attribute_type: None,
         maybe_version_info: None,
       });
     }
