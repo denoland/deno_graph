@@ -1700,6 +1700,13 @@ pub struct BuildOptions<'a> {
   /// transformed into JavaScript modules that parse the file with a parser
   /// pulled from the registry on demand.
   pub unstable_config_imports: bool,
+  /// The `type` import attribute to associate with the roots being built.
+  ///
+  /// Roots normally have no import attribute, but a non-analyzable dynamic
+  /// `import()` of a config file enters the graph as a root, so the caller
+  /// passes its `with { type: "..." }` attribute here to let it be recognized
+  /// as a config import (which requires an explicit attribute).
+  pub maybe_root_attribute_type: Option<String>,
   pub executor: &'a dyn Executor,
   pub locker: Option<&'a mut dyn Locker>,
   pub file_system: &'a FileSystem,
@@ -1726,6 +1733,7 @@ impl Default for BuildOptions<'_> {
       unstable_text_imports: false,
       unstable_css_imports: false,
       unstable_config_imports: false,
+      maybe_root_attribute_type: None,
       executor: Default::default(),
       locker: None,
       file_system: &NullFileSystem,
@@ -3191,55 +3199,21 @@ enum ConfigImportKind {
 }
 
 impl ConfigImportKind {
-  /// Determines the config import kind from the file extension / media type and
-  /// the optional `type` import attribute. An explicit attribute takes
-  /// precedence; `type: "json"` is additionally accepted for JSON5/JSONC files.
+  /// Determines the config import kind solely from the `type` import attribute.
   ///
-  /// YAML and TOML are detected from the specifier's extension rather than a
-  /// dedicated media type, so that adding the feature does not require new
-  /// `MediaType` variants (which would ripple across the ecosystem).
-  fn detect(
-    specifier: &ModuleSpecifier,
-    media_type: MediaType,
-    attribute_type: Option<&str>,
-  ) -> Option<Self> {
+  /// An explicit attribute is required: a config file is only treated as such
+  /// when imported with `with { type: "yaml" }` (or `"toml"`/`"json5"`/
+  /// `"jsonc"`). The file extension is deliberately not consulted, matching the
+  /// browser rule that a non-JS module type must be requested explicitly, and
+  /// `type: "json"` is intentionally not accepted for JSON5/JSONC since those
+  /// are not JSON per the JSON modules proposal.
+  fn detect(attribute_type: Option<&str>) -> Option<Self> {
     match attribute_type {
       Some("yaml") => Some(Self::Yaml),
       Some("toml") => Some(Self::Toml),
       Some("json5") => Some(Self::Json5),
       Some("jsonc") => Some(Self::Jsonc),
-      // JSON5/JSONC are supersets of JSON, so they satisfy `type: "json"`.
-      Some("json") => match Self::from_extension(specifier, media_type) {
-        kind @ (Some(Self::Json5) | Some(Self::Jsonc)) => kind,
-        _ => None,
-      },
-      Some(_) => None,
-      None => Self::from_extension(specifier, media_type),
-    }
-  }
-
-  fn from_extension(
-    specifier: &ModuleSpecifier,
-    media_type: MediaType,
-  ) -> Option<Self> {
-    // JSON5/JSONC have dedicated media types, so they may also be identified
-    // via a remote `content-type` header even without a matching extension.
-    match media_type {
-      MediaType::Json5 => return Some(Self::Json5),
-      MediaType::Jsonc => return Some(Self::Jsonc),
-      _ => {}
-    }
-    let path = specifier.path().to_ascii_lowercase();
-    if path.ends_with(".yaml") || path.ends_with(".yml") {
-      Some(Self::Yaml)
-    } else if path.ends_with(".toml") {
-      Some(Self::Toml)
-    } else if path.ends_with(".json5") {
-      Some(Self::Json5)
-    } else if path.ends_with(".jsonc") {
-      Some(Self::Jsonc)
-    } else {
-      None
+      _ => None,
     }
   }
 
@@ -3332,8 +3306,6 @@ pub(crate) async fn parse_module_source_and_info(
   // parser only enters the module graph when such a file is actually imported.
   if opts.unstable_config_imports
     && let Some(kind) = ConfigImportKind::detect(
-      &opts.specifier,
-      media_type,
       opts.maybe_attribute_type.map(|t| t.kind.as_str()),
     )
   {
@@ -4716,6 +4688,7 @@ struct Builder<'a, 'graph> {
   unstable_text_imports: bool,
   unstable_css_imports: bool,
   unstable_config_imports: bool,
+  maybe_root_attribute_type: Option<String>,
   file_system: &'a FileSystem,
   jsr_url_provider: &'a dyn JsrUrlProvider,
   jsr_version_resolver: Cow<'a, JsrVersionResolver>,
@@ -4752,6 +4725,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       unstable_text_imports: options.unstable_text_imports,
       unstable_css_imports: options.unstable_css_imports,
       unstable_config_imports: options.unstable_config_imports,
+      maybe_root_attribute_type: options.maybe_root_attribute_type,
       file_system: options.file_system,
       jsr_url_provider: options.jsr_url_provider,
       jsr_version_resolver: options.jsr_version_resolver,
@@ -4800,6 +4774,21 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     self.graph.roots.extend(roots.clone());
 
     for root in roots {
+      // A non-analyzable dynamic import of a config file enters the graph as a
+      // root carrying a `type` attribute; synthesize an attribute (with a
+      // zeroed range, since a root has no referrer position) so it can be
+      // recognized as a config import.
+      let maybe_attribute_type =
+        self.maybe_root_attribute_type.as_ref().map(|kind| {
+          AttributeTypeWithRange {
+            range: Range {
+              specifier: root.clone(),
+              range: PositionRange::zeroed(),
+              resolution_mode: None,
+            },
+            kind: kind.clone(),
+          }
+        });
       self.load(LoadOptionsRef {
         specifier: &root,
         maybe_range: None,
@@ -4807,7 +4796,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         is_asset: false,
         in_dynamic_branch: self.in_dynamic_branch,
         is_root: true,
-        maybe_attribute_type: None,
+        maybe_attribute_type,
         maybe_version_info: None,
       });
     }
