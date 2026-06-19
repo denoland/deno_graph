@@ -3217,35 +3217,53 @@ impl ConfigImportKind {
     }
   }
 
-  /// Renders a JavaScript module that parses `text` and exposes the result as
-  /// the default export. The parser is imported from the registry, so it only
-  /// becomes a graph dependency when a file of this kind is actually imported,
-  /// which keeps the feature zero-cost when unused.
+  /// Renders a JavaScript module that imports the original file as text, parses
+  /// it with a parser pulled from the registry on demand, and exposes the
+  /// result as the default export:
   ///
-  /// The file contents are inlined as a string literal rather than imported via
-  /// `with { type: "text" }`: the transformed module occupies the file's
-  /// specifier in the graph, so a self text-import would read back this
-  /// generated source instead of the original bytes.
-  fn render_module(&self, text: &str) -> String {
+  /// ```js
+  /// import source from "<raw_specifier>" with { type: "text" };
+  /// import { parse } from "jsr:@std/yaml@^1";
+  /// export default parse(source);
+  /// ```
+  ///
+  /// The file contents are imported as text rather than inlined as a string
+  /// literal, so the original bytes flow through the normal text-import path (a
+  /// real graph node, cached and lockfile-tracked, not embedded in the
+  /// generated source). `raw_specifier` is the file's own specifier with a
+  /// marker query, so the wrapper (which occupies the file's plain specifier)
+  /// and the raw text module are distinct graph nodes rather than colliding.
+  ///
+  /// The parser is imported from the registry, so it only becomes a graph
+  /// dependency when a file of this kind is actually imported, which keeps the
+  /// feature zero-cost when unused.
+  fn render_module(&self, raw_specifier: &str) -> String {
     // `serde_json::to_string` produces a valid JS string literal (it is a
-    // subset of JS), so this safely escapes arbitrary file contents.
-    let source = serde_json::to_string(text).unwrap();
+    // subset of JS), so this safely escapes the specifier.
+    let raw = serde_json::to_string(raw_specifier).unwrap();
+    let import_source =
+      format!("import source from {raw} with {{ type: \"text\" }};\n");
     match self {
       Self::Yaml => format!(
-        "import {{ parse }} from \"jsr:@std/yaml@^1\";\nexport default parse({source});\n"
+        "{import_source}import {{ parse }} from \"jsr:@std/yaml@^1\";\nexport default parse(source);\n"
       ),
       Self::Toml => format!(
-        "import {{ parse }} from \"jsr:@std/toml@^1\";\nexport default parse({source});\n"
+        "{import_source}import {{ parse }} from \"jsr:@std/toml@^1\";\nexport default parse(source);\n"
       ),
       Self::Jsonc => format!(
-        "import {{ parse }} from \"jsr:@std/jsonc@^1\";\nexport default parse({source});\n"
+        "{import_source}import {{ parse }} from \"jsr:@std/jsonc@^1\";\nexport default parse(source);\n"
       ),
       // There is no `@std/json5`, so use the ubiquitous npm package.
       Self::Json5 => format!(
-        "import JSON5 from \"npm:json5@^2\";\nexport default JSON5.parse({source});\n"
+        "{import_source}import JSON5 from \"npm:json5@^2\";\nexport default JSON5.parse(source);\n"
       ),
     }
   }
+
+  /// The marker query appended to a config file's specifier to form the raw
+  /// text module's specifier, keeping it distinct from the wrapper module that
+  /// occupies the plain specifier.
+  const RAW_QUERY_MARKER: &'static str = "deno-config-raw";
 }
 
 /// With the provided information, parse a module and return its "module slot"
@@ -3301,21 +3319,21 @@ pub(crate) async fn parse_module_source_and_info(
   }
 
   // Config imports (yaml/toml/json5/jsonc) are transformed into JavaScript
-  // modules that parse the file contents with a parser pulled from the
-  // registry on demand. This keeps the feature zero-cost when unused: the
-  // parser only enters the module graph when such a file is actually imported.
+  // modules that text-import the file contents and parse them with a parser
+  // pulled from the registry on demand. This keeps the feature zero-cost when
+  // unused: the parser only enters the module graph when such a file is
+  // actually imported. The wrapper occupies the file's plain specifier; the
+  // raw text module lives at the same specifier with a marker query so the two
+  // are distinct graph nodes.
   if opts.unstable_config_imports
     && let Some(kind) = ConfigImportKind::detect(
       opts.maybe_attribute_type.map(|t| t.kind.as_str()),
     )
   {
-    let raw = new_source_with_text(
-      &opts.specifier,
-      opts.content,
-      maybe_charset,
-      opts.mtime,
-    )?;
-    let wrapper: Arc<[u8]> = kind.render_module(&raw.text).into_bytes().into();
+    let mut raw_specifier = opts.specifier.clone();
+    raw_specifier.set_query(Some(ConfigImportKind::RAW_QUERY_MARKER));
+    let wrapper: Arc<[u8]> =
+      kind.render_module(raw_specifier.as_str()).into_bytes().into();
     let source = new_source_with_text(
       &opts.specifier,
       wrapper,
