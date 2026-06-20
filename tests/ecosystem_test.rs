@@ -300,7 +300,6 @@ async fn test_version(
         unstable_text_imports: false,
         unstable_css_imports: false,
         unstable_config_imports: false,
-        maybe_root_attribute_type: None,
         module_analyzer: &module_analyzer,
         module_info_cacher: Default::default(),
         file_system: &NullFileSystem,
