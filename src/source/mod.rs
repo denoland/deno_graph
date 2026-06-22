@@ -546,6 +546,24 @@ pub trait Resolver: fmt::Debug {
     Ok(resolve_import(specifier_text, &referrer_range.specifier)?)
   }
 
+  /// Optionally override how an import that carries a `type` import attribute
+  /// resolves. This lets an embedder redirect, for example, a
+  /// `import data from "./c.yaml" with { type: "yaml" }` to a generated wrapper
+  /// module rather than the file itself, keeping any such "config import"
+  /// semantics out of deno_graph.
+  ///
+  /// Returning `Some` overrides the normal [`Resolver::resolve`] result for this
+  /// import; returning `None` (the default) falls back to `resolve`.
+  fn resolve_attribute_type_import(
+    &self,
+    _specifier_text: &str,
+    _referrer_range: &Range,
+    _kind: ResolutionKind,
+    _attribute_type: &str,
+  ) -> Option<Result<ModuleSpecifier, ResolveError>> {
+    None
+  }
+
   /// Given a module specifier, return an optional tuple which provides a module
   /// specifier that contains the types for the module and an optional range
   /// which contains information about the source of the dependency. This will
