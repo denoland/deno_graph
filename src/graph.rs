@@ -8911,4 +8911,112 @@ export class Auth {
       vec![0xEF, 0xBB, 0xBF, b't', b'e', b's', b't']
     )
   }
+
+  #[tokio::test]
+  async fn config_import_redirected_by_resolver_hook() {
+    // With `unstable_config_imports` enabled and a resolver that claims the
+    // `yaml` attribute, a `with { type: "yaml" }` import is redirected to the
+    // wrapper module the resolver returns rather than the file itself.
+    let mut mem_loader = MemoryLoader::default();
+    mem_loader.add_source_with_text(
+      "file:///main.js",
+      "import data from \"./config.yaml\" with { type: \"yaml\" };\nconsole.log(data);\n",
+    );
+    mem_loader
+      .add_source_with_text("file:///wrapper.js", "export default 1;\n");
+    // `file:///config.yaml` is intentionally not provided: if the redirect did
+    // not happen the build would surface a missing-module error and
+    // `graph.valid()` below would fail.
+
+    #[derive(Debug)]
+    struct ConfigImportResolver;
+    impl Resolver for ConfigImportResolver {
+      fn resolve_attribute_type_import(
+        &self,
+        _specifier_text: &str,
+        _referrer_range: &Range,
+        _kind: ResolutionKind,
+        attribute_type: &str,
+      ) -> Option<Result<ModuleSpecifier, ResolveError>> {
+        matches!(attribute_type, "yaml" | "toml" | "json5" | "jsonc")
+          .then(|| Ok(ModuleSpecifier::parse("file:///wrapper.js").unwrap()))
+      }
+    }
+
+    let resolver = ConfigImportResolver;
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///main.js").unwrap()],
+        Vec::new(),
+        &mem_loader,
+        BuildOptions {
+          resolver: Some(&resolver),
+          unstable_config_imports: true,
+          ..Default::default()
+        },
+      )
+      .await;
+    graph.valid().unwrap();
+
+    let module = graph
+      .get(&Url::parse("file:///main.js").unwrap())
+      .unwrap()
+      .js()
+      .unwrap();
+    let dep = module.dependencies.get("./config.yaml").unwrap();
+    // The code dependency points at the wrapper, not the config file.
+    assert_eq!(
+      dep.maybe_code.maybe_specifier().unwrap().as_str(),
+      "file:///wrapper.js"
+    );
+    // The type resolution is redirected to the same wrapper, so no separate
+    // type dependency is recorded and the original file is never pulled in as a
+    // typed dependency.
+    assert!(dep.maybe_type.maybe_specifier().is_none());
+    // The wrapper is in the graph; the config file was never loaded.
+    assert!(
+      graph
+        .get(&Url::parse("file:///wrapper.js").unwrap())
+        .is_some()
+    );
+    assert!(
+      graph
+        .get(&Url::parse("file:///config.yaml").unwrap())
+        .is_none()
+    );
+  }
+
+  #[tokio::test]
+  async fn config_import_attribute_rejected_without_unstable_flag() {
+    // Without `unstable_config_imports` (and with no resolver hook to claim it),
+    // a config attribute type is unsupported, matching the behaviour for any
+    // unknown attribute kind.
+    let mut mem_loader = MemoryLoader::default();
+    mem_loader.add_source_with_text(
+      "file:///main.js",
+      "import data from \"./config.yaml\" with { type: \"yaml\" };\n",
+    );
+    mem_loader.add_source_with_text("file:///config.yaml", "name: deno\n");
+
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///main.js").unwrap()],
+        Vec::new(),
+        &mem_loader,
+        Default::default(),
+      )
+      .await;
+
+    let errors = graph.module_errors().collect::<Vec<_>>();
+    assert!(
+      errors.iter().any(|e| matches!(
+        e.as_kind(),
+        ModuleErrorKind::UnsupportedImportAttributeType { kind, .. }
+          if kind == "yaml"
+      )),
+      "expected an UnsupportedImportAttributeType error for the yaml attribute, got: {errors:?}"
+    );
+  }
 }
