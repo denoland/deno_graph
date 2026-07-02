@@ -28,6 +28,7 @@ pub use self::cross_module::ResolvedExportOrReExportAllPath;
 pub use self::cross_module::ResolvedReExportAllPath;
 pub use self::cross_module::ResolvedSymbolDepEntry;
 pub use self::cross_module::UnresolvedSpecifier;
+pub use self::dep_analyzer::ReferenceNamespace;
 pub use self::dep_analyzer::ResolveDepsMode;
 pub use self::dep_analyzer::SymbolNodeDep;
 

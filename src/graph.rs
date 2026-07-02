@@ -1671,6 +1671,12 @@ pub struct BuildOptions<'a> {
   pub unstable_bytes_imports: bool,
   /// Support unstable text imports.
   pub unstable_text_imports: bool,
+  /// Support unstable css imports.
+  pub unstable_css_imports: bool,
+  /// Permit the `yaml`/`toml`/`json5`/`jsonc` import attribute types. deno_graph
+  /// does not interpret them itself; the embedder's [`Resolver`] is expected to
+  /// redirect such imports (see [`Resolver::resolve_attribute_type_import`]).
+  pub unstable_config_imports: bool,
   pub executor: &'a dyn Executor,
   pub locker: Option<&'a mut dyn Locker>,
   pub file_system: &'a FileSystem,
@@ -1695,6 +1701,8 @@ impl Default for BuildOptions<'_> {
       skip_dynamic_deps: false,
       unstable_bytes_imports: false,
       unstable_text_imports: false,
+      unstable_css_imports: false,
+      unstable_config_imports: false,
       executor: Default::default(),
       locker: None,
       file_system: &NullFileSystem,
@@ -2660,7 +2668,7 @@ impl ModuleGraph {
   }
 
   /// List of all the url in the graph that are statically known to be
-  /// imported with type "text" or "bytes".
+  /// imported with type "text", "bytes" or "css".
   pub fn asset_module_urls(&self) -> IndexSet<&Url> {
     let mut result = IndexSet::with_capacity(self.module_slots.len());
     for module in self.module_slots.values() {
@@ -2931,6 +2939,42 @@ fn resolve(
   Resolution::from_resolve_result(response, specifier_text, referrer_range)
 }
 
+/// Like [`resolve`], but first consults [`Resolver::resolve_attribute_type_import`]
+/// when the import carries a `type` attribute. This lets an embedder redirect
+/// attribute imports (e.g. config-file imports) without deno_graph knowing about
+/// the attribute's meaning.
+fn resolve_with_attribute_type(
+  specifier_text: &str,
+  referrer_range: Range,
+  resolution_kind: ResolutionKind,
+  maybe_attribute_type: Option<&str>,
+  jsr_url_provider: &dyn JsrUrlProvider,
+  maybe_resolver: Option<&dyn Resolver>,
+) -> Resolution {
+  if let Some(attribute_type) = maybe_attribute_type
+    && let Some(resolver) = maybe_resolver
+    && let Some(response) = resolver.resolve_attribute_type_import(
+      specifier_text,
+      &referrer_range,
+      resolution_kind,
+      attribute_type,
+    )
+  {
+    return Resolution::from_resolve_result(
+      response,
+      specifier_text,
+      referrer_range,
+    );
+  }
+  resolve(
+    specifier_text,
+    referrer_range,
+    resolution_kind,
+    jsr_url_provider,
+    maybe_resolver,
+  )
+}
+
 struct NewSpecifier {
   specifier: ModuleSpecifier,
   maybe_range: Option<Range>,
@@ -3147,6 +3191,7 @@ pub(crate) struct ParseModuleAndSourceInfoOptions<'a> {
   pub maybe_source_phase_referrer: Option<&'a Range>,
   pub is_root: bool,
   pub is_dynamic_branch: bool,
+  pub unstable_config_imports: bool,
 }
 
 /// With the provided information, parse a module and return its "module slot"
@@ -3185,6 +3230,11 @@ pub(crate) async fn parse_module_source_and_info(
 
   if let Some(attribute_type) = opts.maybe_attribute_type
     && !matches!(attribute_type.kind.as_str(), "json" | "text" | "bytes")
+    && !(opts.unstable_config_imports
+      && matches!(
+        attribute_type.kind.as_str(),
+        "yaml" | "toml" | "json5" | "jsonc"
+      ))
   {
     return Err(
       ModuleErrorKind::UnsupportedImportAttributeType {
@@ -4028,10 +4078,11 @@ fn fill_module_dependencies(
         if dep.maybe_code.is_none() {
           // This is a code import, the first one of that specifier in this module.
           // Resolve and determine the initial `is_dynamic` value from it.
-          dep.maybe_code = resolve(
+          dep.maybe_code = resolve_with_attribute_type(
             &import.specifier,
             import.specifier_range.clone(),
             ResolutionKind::Execution,
+            dep.maybe_attribute_type.as_deref(),
             jsr_url_provider,
             maybe_resolver,
           );
@@ -4045,10 +4096,16 @@ fn fill_module_dependencies(
         }
       }
       if graph_kind.include_types() && dep.maybe_type.is_none() {
-        let maybe_type = resolve(
+        // Use the same attribute-aware resolution as the code dependency so an
+        // attribute import that the resolver redirects (e.g. a config import to
+        // a wrapper module) doesn't also pull in the original file as a typed
+        // dependency. The result matching `maybe_code` below means no separate
+        // type dependency is recorded.
+        let maybe_type = resolve_with_attribute_type(
           &import.specifier,
           import.specifier_range.clone(),
           ResolutionKind::Types,
+          dep.maybe_attribute_type.as_deref(),
           jsr_url_provider,
           maybe_resolver,
         );
@@ -4532,6 +4589,8 @@ struct Builder<'a, 'graph> {
   was_dynamic_root: bool,
   unstable_bytes_imports: bool,
   unstable_text_imports: bool,
+  unstable_css_imports: bool,
+  unstable_config_imports: bool,
   file_system: &'a FileSystem,
   jsr_url_provider: &'a dyn JsrUrlProvider,
   jsr_version_resolver: Cow<'a, JsrVersionResolver>,
@@ -4566,6 +4625,8 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       was_dynamic_root: options.is_dynamic,
       unstable_bytes_imports: options.unstable_bytes_imports,
       unstable_text_imports: options.unstable_text_imports,
+      unstable_css_imports: options.unstable_css_imports,
+      unstable_config_imports: options.unstable_config_imports,
       file_system: options.file_system,
       jsr_url_provider: options.jsr_url_provider,
       jsr_version_resolver: options.jsr_version_resolver,
@@ -5325,6 +5386,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         let is_allowed = match attribute.kind.as_str() {
           "bytes" => self.unstable_bytes_imports,
           "text" => self.unstable_text_imports,
+          "css" => self.unstable_css_imports,
           _ => false,
         };
         if !is_allowed {
@@ -5536,6 +5598,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       );
       let is_dynamic_branch = self.in_dynamic_branch;
       let module_analyzer = self.module_analyzer;
+      let unstable_config_imports = self.unstable_config_imports;
       self.state.pending.push_back({
         let requested_specifier = specifier.clone();
         let maybe_range = options.maybe_range.cloned();
@@ -5573,6 +5636,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     .as_ref(),
                   is_root: options.is_root,
                   is_dynamic_branch,
+                  unstable_config_imports,
                 },
               )
               .await
@@ -5619,6 +5683,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     .as_ref(),
                   is_root: options.is_root,
                   is_dynamic_branch,
+                  unstable_config_imports,
                 },
               )
               .await
@@ -5836,6 +5901,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     let module_analyzer = self.module_analyzer;
     let jsr_url_provider = self.jsr_url_provider;
     let was_dynamic_root = self.was_dynamic_root;
+    let unstable_config_imports = self.unstable_config_imports;
     let maybe_nv_when_no_version_info = if maybe_version_info.is_none() {
       self
         .jsr_url_provider
@@ -5882,6 +5948,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         loader: &dyn Loader,
         jsr_url_provider: &dyn JsrUrlProvider,
         module_analyzer: &dyn ModuleAnalyzer,
+        unstable_config_imports: bool,
       ) -> Result<PendingInfoResponse, ModuleError> {
         async fn handle_success(
           module_analyzer: &dyn ModuleAnalyzer,
@@ -6095,6 +6162,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                   maybe_source_phase_referrer,
                   is_root,
                   is_dynamic_branch: in_dynamic_branch,
+                  unstable_config_imports,
                 },
               )
               .await
@@ -6141,6 +6209,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
                     maybe_source_phase_referrer,
                     is_root,
                     is_dynamic_branch: in_dynamic_branch,
+                    unstable_config_imports,
                   },
                 )
                 .await;
@@ -6191,6 +6260,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         loader,
         jsr_url_provider,
         module_analyzer,
+        unstable_config_imports,
       )
       .await;
 
@@ -8341,6 +8411,67 @@ mod tests {
 
   #[cfg(feature = "fast_check")]
   #[tokio::test]
+  async fn fast_check_strips_private_declare_field_decorators() {
+    let mut exports = IndexMap::new();
+    exports.insert(".".to_string(), "./foo.ts".to_string());
+
+    let workspace_members = vec![WorkspaceMember {
+      base: Url::parse("file:///").unwrap(),
+      exports: exports.clone(),
+      name: "@foo/bar".into(),
+      version: Some(Version::parse_standard("1.0.0").unwrap()),
+    }];
+    let mut test_loader = MemoryLoader::default();
+    test_loader.add_source_with_text(
+      "file:///foo.ts",
+      r#"
+function Inject(_token: string) {
+  return () => {};
+}
+
+export class Auth {
+  @Inject("jwt")
+  private readonly options?: { issuer: string };
+}
+"#,
+    );
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///foo.ts").unwrap()],
+        Vec::new(),
+        &test_loader,
+        BuildOptions {
+          ..Default::default()
+        },
+      )
+      .await;
+    graph.build_fast_check_type_graph(BuildFastCheckTypeGraphOptions {
+      fast_check_cache: None,
+      fast_check_dts: false,
+      workspace_fast_check: WorkspaceFastCheckOption::Enabled(
+        &workspace_members,
+      ),
+      ..Default::default()
+    });
+    graph.valid().unwrap();
+    let module = graph.get(&Url::parse("file:///foo.ts").unwrap()).unwrap();
+    let module = module.js().unwrap();
+    let FastCheckTypeModuleSlot::Module(fsm) =
+      module.fast_check.clone().unwrap()
+    else {
+      unreachable!();
+    };
+    assert!(!fsm.source.contains("@Inject"));
+    assert!(
+      fsm
+        .source
+        .contains("declare private readonly options?: any;")
+    );
+  }
+
+  #[cfg(feature = "fast_check")]
+  #[tokio::test]
   async fn fast_check_external() {
     let mut exports = IndexMap::new();
     exports.insert(".".to_string(), "./foo.ts".to_string());
@@ -8363,6 +8494,7 @@ mod tests {
           Version::parse_standard("1.0.0").unwrap(),
           JsrPackageInfoVersion::default(),
         )]),
+        latest: None,
       },
     );
     test_loader.add_jsr_version_info(
@@ -8717,5 +8849,113 @@ mod tests {
         .to_vec(),
       vec![0xEF, 0xBB, 0xBF, b't', b'e', b's', b't']
     )
+  }
+
+  #[tokio::test]
+  async fn config_import_redirected_by_resolver_hook() {
+    // With `unstable_config_imports` enabled and a resolver that claims the
+    // `yaml` attribute, a `with { type: "yaml" }` import is redirected to the
+    // wrapper module the resolver returns rather than the file itself.
+    let mut mem_loader = MemoryLoader::default();
+    mem_loader.add_source_with_text(
+      "file:///main.js",
+      "import data from \"./config.yaml\" with { type: \"yaml\" };\nconsole.log(data);\n",
+    );
+    mem_loader
+      .add_source_with_text("file:///wrapper.js", "export default 1;\n");
+    // `file:///config.yaml` is intentionally not provided: if the redirect did
+    // not happen the build would surface a missing-module error and
+    // `graph.valid()` below would fail.
+
+    #[derive(Debug)]
+    struct ConfigImportResolver;
+    impl Resolver for ConfigImportResolver {
+      fn resolve_attribute_type_import(
+        &self,
+        _specifier_text: &str,
+        _referrer_range: &Range,
+        _kind: ResolutionKind,
+        attribute_type: &str,
+      ) -> Option<Result<ModuleSpecifier, ResolveError>> {
+        matches!(attribute_type, "yaml" | "toml" | "json5" | "jsonc")
+          .then(|| Ok(ModuleSpecifier::parse("file:///wrapper.js").unwrap()))
+      }
+    }
+
+    let resolver = ConfigImportResolver;
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///main.js").unwrap()],
+        Vec::new(),
+        &mem_loader,
+        BuildOptions {
+          resolver: Some(&resolver),
+          unstable_config_imports: true,
+          ..Default::default()
+        },
+      )
+      .await;
+    graph.valid().unwrap();
+
+    let module = graph
+      .get(&Url::parse("file:///main.js").unwrap())
+      .unwrap()
+      .js()
+      .unwrap();
+    let dep = module.dependencies.get("./config.yaml").unwrap();
+    // The code dependency points at the wrapper, not the config file.
+    assert_eq!(
+      dep.maybe_code.maybe_specifier().unwrap().as_str(),
+      "file:///wrapper.js"
+    );
+    // The type resolution is redirected to the same wrapper, so no separate
+    // type dependency is recorded and the original file is never pulled in as a
+    // typed dependency.
+    assert!(dep.maybe_type.maybe_specifier().is_none());
+    // The wrapper is in the graph; the config file was never loaded.
+    assert!(
+      graph
+        .get(&Url::parse("file:///wrapper.js").unwrap())
+        .is_some()
+    );
+    assert!(
+      graph
+        .get(&Url::parse("file:///config.yaml").unwrap())
+        .is_none()
+    );
+  }
+
+  #[tokio::test]
+  async fn config_import_attribute_rejected_without_unstable_flag() {
+    // Without `unstable_config_imports` (and with no resolver hook to claim it),
+    // a config attribute type is unsupported, matching the behaviour for any
+    // unknown attribute kind.
+    let mut mem_loader = MemoryLoader::default();
+    mem_loader.add_source_with_text(
+      "file:///main.js",
+      "import data from \"./config.yaml\" with { type: \"yaml\" };\n",
+    );
+    mem_loader.add_source_with_text("file:///config.yaml", "name: deno\n");
+
+    let mut graph = ModuleGraph::new(GraphKind::All);
+    graph
+      .build(
+        vec![Url::parse("file:///main.js").unwrap()],
+        Vec::new(),
+        &mem_loader,
+        Default::default(),
+      )
+      .await;
+
+    let errors = graph.module_errors().collect::<Vec<_>>();
+    assert!(
+      errors.iter().any(|e| matches!(
+        e.as_kind(),
+        ModuleErrorKind::UnsupportedImportAttributeType { kind, .. }
+          if kind == "yaml"
+      )),
+      "expected an UnsupportedImportAttributeType error for the yaml attribute, got: {errors:?}"
+    );
   }
 }

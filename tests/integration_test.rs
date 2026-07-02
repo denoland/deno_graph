@@ -824,6 +824,7 @@ async fn test_fill_from_lockfile() {
       ]
       .into_iter()
       .collect(),
+      latest: None,
     },
   );
   loader.add_jsr_version_info(
@@ -921,6 +922,7 @@ async fn test_json_root() {
       )]
       .into_iter()
       .collect(),
+      latest: None,
     },
   );
   loader.add_jsr_version_info(

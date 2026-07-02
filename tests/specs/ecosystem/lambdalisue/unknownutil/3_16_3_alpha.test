@@ -9,14 +9,4 @@ lambdalisue/unknownutil/3.16.3-alpha
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-TS1192 [ERROR]: Module '"file://<tmpdir>/is.ts"' has no default export.
-import is from "./is.ts";
-       ~~
-    at file://<tmpdir>/mod.ts:244:8
-
-error: Type checking failed.
-
+== TYPE CHECK PASSED ==

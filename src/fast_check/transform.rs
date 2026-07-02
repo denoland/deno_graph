@@ -1105,6 +1105,7 @@ impl<'a> FastCheckTransformer<'a> {
           n.definite = false;
           n.r#override = false;
           n.value = None;
+          n.decorators.clear();
           return Ok(true);
         }
         if n.type_annotation.is_none() {

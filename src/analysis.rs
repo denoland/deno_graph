@@ -87,7 +87,7 @@ impl ImportAttributes {
     let Some(value) = self.get("type") else {
       return false;
     };
-    matches!(value, "text" | "bytes")
+    matches!(value, "text" | "bytes" | "css")
   }
 }
 
