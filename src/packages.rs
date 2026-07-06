@@ -42,6 +42,10 @@ pub struct NewestDependencyDateOptions {
   /// JSR packages to exclude from the newest dependency date checks.
   #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
   pub exclude_jsr_pkgs: BTreeSet<PackageName>,
+  /// JSR package name prefixes to exclude from the newest dependency date
+  /// checks (e.g. `@scope/` from a `@scope/*` wildcard entry).
+  #[serde(default, skip_serializing_if = "Vec::is_empty")]
+  pub exclude_jsr_pkg_prefixes: Vec<PackageName>,
 }
 
 impl NewestDependencyDateOptions {
@@ -49,6 +53,7 @@ impl NewestDependencyDateOptions {
     Self {
       date: Some(NewestDependencyDate(date)),
       exclude_jsr_pkgs: Default::default(),
+      exclude_jsr_pkg_prefixes: Default::default(),
     }
   }
 
@@ -57,7 +62,12 @@ impl NewestDependencyDateOptions {
     package_name: &PackageName,
   ) -> Option<NewestDependencyDate> {
     let date = self.date?;
-    if self.exclude_jsr_pkgs.contains(package_name) {
+    if self.exclude_jsr_pkgs.contains(package_name)
+      || self
+        .exclude_jsr_pkg_prefixes
+        .iter()
+        .any(|prefix| package_name.starts_with(prefix.as_str()))
+    {
       None
     } else {
       Some(date)
