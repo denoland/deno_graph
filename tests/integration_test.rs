@@ -7,6 +7,8 @@
 // out of deno_graph that should be public
 
 use std::cell::RefCell;
+use std::collections::BTreeMap;
+use std::collections::HashMap;
 
 use deno_ast::ModuleSpecifier;
 use deno_error::JsErrorBox;
@@ -19,12 +21,14 @@ use deno_graph::Range;
 use deno_graph::packages::JsrPackageInfo;
 use deno_graph::packages::JsrPackageInfoVersion;
 use deno_graph::packages::JsrPackageVersionInfo;
+use deno_graph::packages::JsrPackageVersionManifestEntry;
 use deno_graph::source::CacheSetting;
 use deno_graph::source::ChecksumIntegrityError;
 use deno_graph::source::LoadError;
 use deno_graph::source::LoadFuture;
 use deno_graph::source::LoadOptions;
 use deno_graph::source::LoadResponse;
+use deno_graph::source::LoaderChecksum;
 use deno_graph::source::MemoryLoader;
 use deno_graph::source::NpmResolver;
 use deno_graph::source::ResolutionKind;
@@ -40,6 +44,7 @@ use sys_traits::impls::InMemorySys;
 use url::Url;
 
 use crate::helpers::TestBuilder;
+use crate::helpers::TestLoader;
 
 use self::helpers::TestNpmResolver;
 
@@ -824,6 +829,148 @@ async fn test_fill_from_lockfile() {
       .get(&PackageReq::from_str("@scope/example").unwrap())
       .unwrap(),
     PackageNv::from_str("@scope/example@1.0.1").unwrap(),
+  );
+}
+
+/// Registers a JSR package with the given versions in both the remote and the
+/// cache of a [`TestLoader`], including each version's manifest and an (empty)
+/// `mod.ts`. Every version manifest is present in the cache so that a cached
+/// probe of it would succeed, which is what makes the probe-count assertions
+/// in the tests below meaningful.
+fn add_cached_jsr_package(
+  loader: &mut TestLoader,
+  name: &str,
+  versions: &[&str],
+) {
+  let package_info = JsrPackageInfo {
+    versions: versions
+      .iter()
+      .map(|v| {
+        (
+          deno_semver::Version::parse_standard(v).unwrap(),
+          JsrPackageInfoVersion::default(),
+        )
+      })
+      .collect(),
+    latest: None,
+  };
+  // the package `meta.json` is not a version manifest and must never be
+  // counted as a probe
+  loader.remote.add_jsr_package_info(name, &package_info);
+  loader.cache.add_jsr_package_info(name, &package_info);
+  for version in versions {
+    let content = "";
+    let manifest = HashMap::from([(
+      "/mod.ts".to_string(),
+      JsrPackageVersionManifestEntry {
+        checksum: format!(
+          "sha256-{}",
+          LoaderChecksum::r#gen(content.as_bytes())
+        ),
+      },
+    )]);
+    let version_info = JsrPackageVersionInfo {
+      exports: serde_json::json!({ ".": "./mod.ts" }),
+      manifest,
+      ..Default::default()
+    };
+    loader
+      .remote
+      .add_jsr_version_info(name, version, &version_info);
+    loader
+      .cache
+      .add_jsr_version_info(name, version, &version_info);
+    let mod_url = format!("https://jsr.io/{name}/{version}/mod.ts");
+    loader.remote.add_source_with_text(&mod_url, content);
+    loader.cache.add_source_with_text(&mod_url, content);
+  }
+}
+
+// When in-graph version unification (step 1 of `resolve_version`) already
+// decides a req, `prefer_cached_jsr_versions` must not probe the cached
+// version manifests: the probe would be pure waste. Here the lockfile pins
+// `@scope/a` to an in-graph version satisfying the req, so the probe count
+// must be zero even though 10 matching manifests are sitting in the cache.
+#[tokio::test]
+async fn test_prefer_cached_jsr_versions_skips_probe_on_unification() {
+  let versions = [
+    "1.0.0", "1.0.1", "1.0.2", "1.0.3", "1.0.4", "1.0.5", "1.0.6", "1.0.7",
+    "1.0.8", "1.0.9",
+  ];
+  let mut builder = TestBuilder::new();
+  builder
+    .with_loader(|loader| {
+      loader.remote.add_source_with_text(
+        "file:///mod.ts",
+        "import \"jsr:@scope/a@^1.0.0\";",
+      );
+      add_cached_jsr_package(loader, "@scope/a", &versions);
+    })
+    .prefer_cached_jsr_versions(true)
+    .lockfile_jsr_packages(BTreeMap::from([(
+      PackageReq::from_str("@scope/a@^1.0.0").unwrap(),
+      PackageNv::from_str("@scope/a@1.0.5").unwrap(),
+    )]));
+  let result = builder.build().await;
+  result.graph.valid().unwrap();
+
+  assert_eq!(builder.cached_jsr_version_manifest_probe_count(), 0);
+  assert_eq!(
+    result
+      .graph
+      .packages
+      .mappings()
+      .get(&PackageReq::from_str("@scope/a@^1.0.0").unwrap())
+      .unwrap()
+      .to_string(),
+    "@scope/a@1.0.5",
+  );
+}
+
+// Multiple pending reqs on the same package within a single resolution pass
+// must not re-probe version manifests that were already probed. The package
+// has 10 versions across the 1.0.x and 1.1.x series. The first req (`^1.0.0`)
+// matches all 10 and resolves to `1.1.4`, probing all 10. The second req
+// (`~1.0.0`) matches only the five 1.0.x versions and does *not* unify with
+// `1.1.4`, so it takes the cached-probe path — but all five were already
+// probed, so it adds nothing. Total probes are 10 (once per version) rather
+// than 10 + 5 = 15.
+#[tokio::test]
+async fn test_prefer_cached_jsr_versions_memoizes_probes_per_package() {
+  let versions = [
+    "1.0.0", "1.0.1", "1.0.2", "1.0.3", "1.0.4", "1.1.0", "1.1.1", "1.1.2",
+    "1.1.3", "1.1.4",
+  ];
+  let mut builder = TestBuilder::new();
+  builder
+    .with_loader(|loader| {
+      // `^1.0.0` is intentionally first so it is processed first and seeds the
+      // graph with `1.1.4`, which `~1.0.0` does not unify with.
+      loader.remote.add_source_with_text(
+        "file:///mod.ts",
+        "import \"jsr:@scope/a@^1.0.0\";\nimport \"jsr:@scope/a@~1.0.0\";",
+      );
+      add_cached_jsr_package(loader, "@scope/a", &versions);
+    })
+    .prefer_cached_jsr_versions(true);
+  let result = builder.build().await;
+  result.graph.valid().unwrap();
+
+  assert_eq!(builder.cached_jsr_version_manifest_probe_count(), 10);
+  let mappings = result.graph.packages.mappings();
+  assert_eq!(
+    mappings
+      .get(&PackageReq::from_str("@scope/a@^1.0.0").unwrap())
+      .unwrap()
+      .to_string(),
+    "@scope/a@1.1.4",
+  );
+  assert_eq!(
+    mappings
+      .get(&PackageReq::from_str("@scope/a@~1.0.0").unwrap())
+      .unwrap()
+      .to_string(),
+    "@scope/a@1.0.4",
   );
 }
 
