@@ -310,6 +310,7 @@ async fn test_version(
         jsr_version_resolver: Default::default(),
         jsr_url_provider: &PassthroughJsrUrlProvider,
         passthrough_jsr_specifiers: true,
+        prefer_cached_jsr_versions: false,
         executor: Default::default(),
         jsr_metadata_store: None,
       },

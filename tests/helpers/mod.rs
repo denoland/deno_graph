@@ -1,8 +1,10 @@
 // Copyright 2018-2024 the Deno authors. MIT license.
 
 use std::borrow::Cow;
+use std::cell::Cell;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
+use std::rc::Rc;
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -39,6 +41,31 @@ use futures::FutureExt;
 pub struct TestLoader {
   pub cache: MemoryLoader,
   pub remote: MemoryLoader,
+  /// Test-only instrumentation: counts cache-only (`CacheSetting::Only`) loads
+  /// of JSR version manifests (`<version>_meta.json`), i.e. the cached-version
+  /// probes performed when `prefer_cached_jsr_versions` is enabled. Package
+  /// `meta.json` loads are intentionally excluded.
+  pub cached_jsr_version_manifest_probe_count: Rc<Cell<usize>>,
+}
+
+fn is_jsr_version_manifest_probe(specifier: &ModuleSpecifier) -> bool {
+  if specifier.scheme() != "https" || specifier.host_str() != Some("jsr.io") {
+    return false;
+  }
+  let Some(path_segments) = specifier.path_segments() else {
+    return false;
+  };
+  let path_segments = path_segments.collect::<Vec<_>>();
+  let [scope, package, manifest] = path_segments.as_slice() else {
+    return false;
+  };
+  if !scope.starts_with('@') || package.is_empty() {
+    return false;
+  }
+  let Some(version) = manifest.strip_suffix("_meta.json") else {
+    return false;
+  };
+  Version::parse_standard(version).is_ok()
 }
 
 impl Loader for TestLoader {
@@ -51,6 +78,13 @@ impl Loader for TestLoader {
     specifier: &ModuleSpecifier,
     options: LoadOptions,
   ) -> LoadFuture {
+    if matches!(options.cache_setting, CacheSetting::Only)
+      && is_jsr_version_manifest_probe(specifier)
+    {
+      self
+        .cached_jsr_version_manifest_probe_count
+        .set(self.cached_jsr_version_manifest_probe_count.get() + 1);
+    }
     let checksum = options.maybe_checksum.clone();
     let future = match options.cache_setting {
       // todo(dsherret): in the future, actually make this use the cache
@@ -154,6 +188,7 @@ pub struct TestBuilder {
   fast_check_cache: bool,
   lockfile_jsr_packages: BTreeMap<PackageReq, PackageNv>,
   newest_dependency_date: NewestDependencyDateOptions,
+  prefer_cached_jsr_versions: bool,
   resolver: Option<Box<dyn deno_graph::source::Resolver>>,
   skip_dynamic_deps: bool,
   workspace_members: Vec<WorkspaceMember>,
@@ -174,6 +209,7 @@ impl TestBuilder {
       fast_check_cache: false,
       lockfile_jsr_packages: Default::default(),
       newest_dependency_date: Default::default(),
+      prefer_cached_jsr_versions: false,
       skip_dynamic_deps: false,
       resolver: None,
       workspace_members: Default::default(),
@@ -235,6 +271,20 @@ impl TestBuilder {
   ) -> &mut Self {
     self.resolver = Some(Box::new(resolver));
     self
+  }
+
+  #[allow(unused)]
+  pub fn prefer_cached_jsr_versions(&mut self, value: bool) -> &mut Self {
+    self.prefer_cached_jsr_versions = value;
+    self
+  }
+
+  /// Test-only instrumentation: the number of cache-only JSR version-manifest
+  /// (`<version>_meta.json`) probes performed by the most recent build. See
+  /// [`TestLoader::cached_jsr_version_manifest_probe_count`].
+  #[allow(unused)]
+  pub fn cached_jsr_version_manifest_probe_count(&self) -> usize {
+    self.loader.cached_jsr_version_manifest_probe_count.get()
   }
 
   #[allow(unused)]
@@ -335,6 +385,7 @@ impl TestBuilder {
           } else {
             &workspace_resolver
           }),
+          prefer_cached_jsr_versions: self.prefer_cached_jsr_versions,
           skip_dynamic_deps: self.skip_dynamic_deps,
           unstable_bytes_imports: self.unstable_bytes_imports,
           unstable_text_imports: self.unstable_text_imports,

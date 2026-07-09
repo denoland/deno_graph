@@ -53,6 +53,7 @@ use deno_semver::package::PackageReq;
 use deno_semver::package::PackageReqReferenceParseError;
 use futures::FutureExt;
 use futures::future::LocalBoxFuture;
+use futures::future::join_all;
 use futures::stream::FuturesOrdered;
 use futures::stream::FuturesUnordered;
 use futures::stream::StreamExt;
@@ -1709,6 +1710,11 @@ pub struct BuildOptions<'a> {
   /// resolving them. This is useful in cases where you want to mark JSR
   /// specifiers as external.
   pub passthrough_jsr_specifiers: bool,
+  /// When resolving a `jsr:` semver range, prefer versions whose version
+  /// manifest is already cached. Intended for cached-only modes so
+  /// resolution matches what a previous cache-building command
+  /// materialized.
+  pub prefer_cached_jsr_versions: bool,
   pub module_analyzer: &'a dyn ModuleAnalyzer,
   pub module_info_cacher: &'a dyn ModuleInfoCacher,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
@@ -1732,6 +1738,7 @@ impl Default for BuildOptions<'_> {
       jsr_url_provider: Default::default(),
       jsr_version_resolver: Default::default(),
       passthrough_jsr_specifiers: false,
+      prefer_cached_jsr_versions: false,
       module_analyzer: Default::default(),
       module_info_cacher: Default::default(),
       npm_resolver: None,
@@ -4526,6 +4533,20 @@ struct PendingJsrReqResolutionItem {
   is_root: bool,
 }
 
+/// Memoizes the results of cache-only JSR version-manifest probes for a
+/// single package within one `resolve_pending_jsr_specifiers` pass, so that
+/// multiple pending reqs on the same package don't repeat the (cache-only)
+/// manifest existence checks. Only populated when `prefer_cached_jsr_versions`
+/// is enabled.
+#[derive(Debug, Default)]
+struct CachedJsrVersionProbe {
+  /// Versions whose manifest cache presence has already been checked in this
+  /// pass (regardless of whether it was found in the cache).
+  probed: HashSet<Version>,
+  /// Subset of `probed` whose version manifest was found in the cache.
+  cached: HashSet<Version>,
+}
+
 #[derive(Debug)]
 struct PendingJsrNvResolutionItem {
   specifier: ModuleSpecifier,
@@ -4621,6 +4642,7 @@ struct Builder<'a, 'graph> {
   jsr_url_provider: &'a dyn JsrUrlProvider,
   jsr_version_resolver: Cow<'a, JsrVersionResolver>,
   passthrough_jsr_specifiers: bool,
+  prefer_cached_jsr_versions: bool,
   loader: &'a dyn Loader,
   locker: Option<&'a mut dyn Locker>,
   resolver: Option<&'a dyn Resolver>,
@@ -4657,6 +4679,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       jsr_url_provider: options.jsr_url_provider,
       jsr_version_resolver: options.jsr_version_resolver,
       passthrough_jsr_specifiers: options.passthrough_jsr_specifiers,
+      prefer_cached_jsr_versions: options.prefer_cached_jsr_versions,
       loader,
       locker: options.locker,
       resolver: options.resolver,
@@ -4891,6 +4914,15 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         && self.graph.graph_kind.include_types();
     // don't bother pre-allocating because adding to this should be rare
     let mut restarted_pkgs = HashSet::new();
+    // Memoizes cache-only version-manifest probe results per package name for
+    // the duration of this pass so multiple pending reqs on the same package
+    // don't repeat probes. Only populated when `prefer_cached_jsr_versions` is
+    // enabled and in-graph unification isn't going to decide the version.
+    let empty_cached_versions = HashSet::new();
+    let mut cached_versions_by_package: HashMap<
+      StackString,
+      CachedJsrVersionProbe,
+    > = HashMap::new();
     while let Some(pending_resolution) = pending_resolutions.pop_front() {
       let package_name = &pending_resolution.package_ref.req().name;
       let fut = self
@@ -4902,7 +4934,27 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       match fut.await {
         Ok(info) => {
           let package_req = pending_resolution.package_ref.req();
-          match self.resolve_jsr_nv(package_req, &info) {
+          let cached_versions = if !self.prefer_cached_jsr_versions
+            || self.jsr_unification_decides(package_req)
+          {
+            // Either the feature is off, or in-graph version unification
+            // (step 1 of `resolve_version`) is going to decide this req, in
+            // which case the cached-manifest probe would be pure waste.
+            &empty_cached_versions
+          } else {
+            self
+              .probe_cached_jsr_version_manifests(
+                package_req,
+                &info,
+                &mut cached_versions_by_package,
+              )
+              .await;
+            &cached_versions_by_package
+              .get(&package_req.name)
+              .unwrap()
+              .cached
+          };
+          match self.resolve_jsr_nv(package_req, &info, cached_versions) {
             Ok(package_nv) => {
               // now queue a pending load for that version information
               self.queue_load_package_version_info(&package_nv);
@@ -5294,10 +5346,88 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     async move { self.build(roots, imports).await }.boxed_local()
   }
 
+  /// Whether step 1 of `resolve_version` (in-graph version unification) will
+  /// already decide `package_req`. When it will, the cached-manifest probe is
+  /// unnecessary because step 1 runs before the cached versions are ever read.
+  fn jsr_unification_decides(&self, package_req: &PackageReq) -> bool {
+    self
+      .graph
+      .packages
+      .versions_by_name(&package_req.name)
+      .into_iter()
+      .flatten()
+      .any(|nv| package_req.version_req.matches(&nv.version))
+  }
+
+  /// Probes which versions of `package_req` that match the requirement already
+  /// have their version manifest (`<version>_meta.json`) in the cache, using
+  /// cache-only loads issued concurrently. Results are memoized per package
+  /// name in `memo` so that multiple pending reqs on the same package don't
+  /// repeat probes within a single resolution pass. Only called when
+  /// `prefer_cached_jsr_versions` is enabled and in-graph unification isn't
+  /// going to decide the version.
+  async fn probe_cached_jsr_version_manifests(
+    &self,
+    package_req: &PackageReq,
+    package_info: &JsrPackageInfo,
+    memo: &mut HashMap<StackString, CachedJsrVersionProbe>,
+  ) {
+    let probe = memo.entry(package_req.name.clone()).or_default();
+    // Only probe unyanked versions that match this req and haven't been probed
+    // yet in this pass. `resolve_version` still applies the version req (and
+    // newest dependency date) to the memoized cached set, so accumulating
+    // results across reqs on the same package is safe.
+    let candidates = package_info
+      .versions
+      .iter()
+      .filter(|(version, version_info)| {
+        !version_info.yanked
+          && package_req.version_req.matches(version)
+          && !probe.probed.contains(*version)
+      })
+      .map(|(version, _)| {
+        let specifier = self
+          .jsr_url_provider
+          .url()
+          .join(&format!("{}/{}_meta.json", package_req.name, version))
+          .unwrap();
+        (version.clone(), specifier)
+      })
+      .collect::<Vec<_>>();
+    if candidates.is_empty() {
+      return;
+    }
+    // the per-version loads are independent cache reads, so issue them
+    // concurrently rather than awaiting one at a time
+    let results =
+      join_all(candidates.iter().map(|(_, specifier)| async move {
+        let fut = self.loader.load(
+          specifier,
+          LoadOptions {
+            in_dynamic_branch: false,
+            was_dynamic_root: false,
+            cache_setting: CacheSetting::Only,
+            maybe_checksum: None,
+          },
+        );
+        // the loader contract for `CacheSetting::Only` is to return `Ok(None)`
+        // when the specifier is not found in the cache
+        matches!(fut.await, Ok(Some(LoadResponse::Module { .. })))
+      }))
+      .await;
+    for ((version, _), is_cached) in candidates.into_iter().zip(results) {
+      if is_cached {
+        probe.cached.insert(version.clone());
+      }
+      probe.probed.insert(version);
+    }
+  }
+
   fn resolve_jsr_nv(
     &mut self,
     package_req: &PackageReq,
     package_info: &JsrPackageInfo,
+    cached_versions: &HashSet<Version>,
   ) -> Result<PackageNv, JsrPackageReqNotFoundError> {
     let version_resolver = self
       .jsr_version_resolver
@@ -5311,6 +5441,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         .into_iter()
         .flatten()
         .map(|nv| &nv.version),
+      cached_versions,
     )?;
     let version = resolved_version.version.clone();
     if resolved_version.is_yanked {

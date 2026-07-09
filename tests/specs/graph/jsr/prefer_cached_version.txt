@@ -1,0 +1,81 @@
+~~ {"preferCachedJsrVersions":true} ~~
+# https://jsr.io/@scope/a/meta.json
+{
+  "versions": {
+    "1.0.10": {},
+    "1.0.11": {}
+  }
+}
+
+# https://jsr.io/@scope/a/1.0.10_meta.json
+{
+  "exports": {
+    ".": "./mod.ts"
+  }
+}
+
+# cache:https://jsr.io/@scope/a/1.0.10_meta.json
+{
+  "exports": {
+    ".": "./mod.ts"
+  }
+}
+
+# https://jsr.io/@scope/a/1.0.10/mod.ts
+console.log("Hello, world!");
+
+# cache:https://jsr.io/@scope/a/1.0.10/mod.ts
+console.log("Hello, world!");
+
+# mod.ts
+import "jsr:@scope/a@^1.0.10";
+
+# output
+{
+  "roots": [
+    "file:///mod.ts"
+  ],
+  "modules": [
+    {
+      "kind": "esm",
+      "dependencies": [
+        {
+          "specifier": "jsr:@scope/a@^1.0.10",
+          "code": {
+            "specifier": "jsr:@scope/a@^1.0.10",
+            "resolutionMode": "import",
+            "span": {
+              "start": {
+                "line": 0,
+                "character": 7
+              },
+              "end": {
+                "line": 0,
+                "character": 29
+              }
+            }
+          }
+        }
+      ],
+      "size": 31,
+      "mediaType": "TypeScript",
+      "specifier": "file:///mod.ts"
+    },
+    {
+      "kind": "esm",
+      "size": 30,
+      "mediaType": "TypeScript",
+      "specifier": "https://jsr.io/@scope/a/1.0.10/mod.ts"
+    }
+  ],
+  "redirects": {
+    "jsr:@scope/a@^1.0.10": "https://jsr.io/@scope/a/1.0.10/mod.ts"
+  },
+  "packages": {
+    "@scope/a@^1.0.10": "@scope/a@1.0.10"
+  }
+}
+
+Fast check https://jsr.io/@scope/a/1.0.10/mod.ts:
+  {}
+  <empty>
