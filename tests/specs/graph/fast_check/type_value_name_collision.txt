@@ -71,10 +71,7 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  const roles = [
-    "admin",
-    "user"
-  ] as const;
+  const roles = ["admin", "user"] as const;
   export type Role = (typeof roles)[number];
   export function getRole(): Role {
     return {} as never;

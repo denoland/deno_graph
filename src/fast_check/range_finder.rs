@@ -7,9 +7,7 @@ use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::sync::Arc;
 
-use deno_ast::SourceRange;
-use deno_ast::SourceRangedForSpanned;
-use deno_ast::swc::ast::Expr;
+use deno_ast::oxc::span::Span;
 use deno_semver::package::PackageNv;
 use indexmap::IndexMap;
 use url::Url;
@@ -312,17 +310,17 @@ pub fn find_public_ranges<'a>(
 
 #[derive(Debug, Default)]
 pub struct ModulePublicRanges {
-  ranges: HashSet<SourceRange>,
-  impl_with_overload_ranges: HashSet<SourceRange>,
+  ranges: HashSet<Span>,
+  impl_with_overload_ranges: HashSet<Span>,
   diagnostics: Vec<FastCheckDiagnostic>,
 }
 
 impl ModulePublicRanges {
-  pub fn contains(&self, range: &SourceRange) -> bool {
+  pub fn contains(&self, range: &Span) -> bool {
     self.ranges.contains(range)
   }
 
-  pub fn is_impl_with_overloads(&self, range: &SourceRange) -> bool {
+  pub fn is_impl_with_overloads(&self, range: &Span) -> bool {
     self.impl_with_overload_ranges.contains(range)
   }
 
@@ -811,10 +809,10 @@ impl<'a> PublicRangeFinder<'a> {
           for re_export_all_node in re_export_all_nodes {
             log::trace!(
               "Found re-export all - {}",
-              re_export_all_node.src.value.to_string_lossy()
+              re_export_all_node.source.value
             );
-            found_ranges.insert(re_export_all_node.span.range());
-            let specifier_text = re_export_all_node.src.value.to_string_lossy();
+            found_ranges.insert(re_export_all_node.span);
+            let specifier_text = re_export_all_node.source.value.to_string();
             if let Some(dep_specifier) = self.graph.resolve_dependency(
               &specifier_text,
               module_info.specifier(),
@@ -879,7 +877,7 @@ impl<'a> PublicRangeFinder<'a> {
             if named_exports.is_empty() {
               break; // all done
             }
-            let specifier_text = re_export_all_node.src.value.to_string_lossy();
+            let specifier_text = re_export_all_node.source.value.to_string();
             if let Some(dep_specifier) = self.graph.resolve_dependency(
               &specifier_text,
               module_info.specifier(),
@@ -894,10 +892,10 @@ impl<'a> PublicRangeFinder<'a> {
                 if let Some(export_path) =
                   module_exports.resolved.get(export_name)
                 {
-                  if found_ranges.insert(re_export_all_node.span.range()) {
+                  if found_ranges.insert(re_export_all_node.span) {
                     log::trace!(
                       "Found re-export all - {}",
-                      re_export_all_node.src.value.to_string_lossy()
+                      re_export_all_node.source.value
                     );
                   }
                   let export_name = export_name.clone();
@@ -934,9 +932,9 @@ impl<'a> PublicRangeFinder<'a> {
               for re_export_all_node in re_export_all_nodes {
                 log::trace!(
                   "Found re-export all - {}",
-                  re_export_all_node.src.value.to_string_lossy()
+                  re_export_all_node.source.value
                 );
-                found_ranges.insert(re_export_all_node.span.range());
+                found_ranges.insert(re_export_all_node.span);
               }
             }
           }
@@ -1069,7 +1067,7 @@ impl<'a> PublicRangeFinder<'a> {
                       let export_symbol =
                         module_info.symbol(*export_id).unwrap();
                       for export_decl in export_symbol.decls() {
-                        if !decl.range.contains(&export_decl.range) {
+                        if !decl.range.contains_inclusive(export_decl.range) {
                           log::trace!(
                             "Found expando property - {}",
                             export_decl
@@ -1082,9 +1080,10 @@ impl<'a> PublicRangeFinder<'a> {
                     }
                   }
 
-                  for (dep, reference_namespace) in node
-                    .deps_with_namespace(ResolveDepsMode::TypesAndExpressions)
-                  {
+                  for (dep, reference_namespace) in node.deps_with_namespace(
+                    ResolveDepsMode::TypesAndExpressions,
+                    module_info.scoping(),
+                  ) {
                     match dep {
                       SymbolNodeDep::Id(id) => {
                         let module_info = module_info.esm().unwrap();
@@ -1378,7 +1377,10 @@ impl<'a> PublicRangeFinder<'a> {
                             default_expr,
                           ) = n
                           {
-                            matches!(&*default_expr.expr, Expr::Class(_))
+                            matches!(
+                              default_expr,
+                              deno_ast::oxc::ast::ast::ExportDefaultDeclarationKind::ClassDeclaration(_)
+                            )
                           } else {
                             false
                           }

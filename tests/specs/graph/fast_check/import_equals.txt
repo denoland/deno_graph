@@ -125,9 +125,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     function test(): void {}
     export { test };
   }
-  export namespace Test {
-    export import Asdf = Test2.test;
-  }
+  export namespace Test {}
   export { foo };
   --- DTS ---
   import * as inner from "./inner.ts";
@@ -136,7 +134,5 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     function test(): void;
     export { test };
   }
-  export declare namespace Test {
-    export import Asdf = Test2.test;
-  }
+  export declare namespace Test {}
   export { foo };

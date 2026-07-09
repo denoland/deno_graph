@@ -100,20 +100,22 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  export const useFn = (...[]: [bigint, bigint, (a: bigint, b: bigint) => bigint]): bigint =>({} as never);
-  export function useFn2(...[]: [bigint, bigint, (a: bigint, b: bigint) => bigint]): bigint {
+  export const useFn = (...[a, b, fn = add]: [bigint, bigint, (a: bigint, b: bigint) => bigint]): bigint => {
+    return {} as never;
+  };
+  export function useFn2(...[a, b, fn = add]: [bigint, bigint, (a: bigint, b: bigint) => bigint]): bigint {
     return {} as never;
   }
-  export function useFn3(...{}: {
+  export function useFn3(...{ a }: {
     a: number;
     b: number;
   }): bigint {
     return {} as never;
   }
   --- DTS ---
-  export declare const useFn: (...[]: [bigint, bigint, (a: bigint, b: bigint) => bigint]) => bigint;
-  export declare function useFn2(...[]: [bigint, bigint, (a: bigint, b: bigint) => bigint]): bigint;
-  export declare function useFn3(...{}: {
+  export declare const useFn: (...[a, b, fn = add]: [bigint, bigint, (a: bigint, b: bigint) => bigint]) => bigint;
+  export declare function useFn2(...[a, b, fn = add]: [bigint, bigint, (a: bigint, b: bigint) => bigint]): bigint;
+  export declare function useFn3(...{ a }: {
     a: number;
     b: number;
   }): bigint;

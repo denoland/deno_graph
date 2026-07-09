@@ -13,14 +13,6 @@ sisou/nimiq-ts/0.1.0
 -- stdout --
 
 -- stderr --
-TS2578 [ERROR]: Unused '@ts-expect-error' directive.
-    at file://<tmpdir>/src/MultiSigWallet.ts:57:1
-
-TS2416 [ERROR]: Property 'signTransaction' in type 'MultiSigWallet' is not assignable to the same property in base type 'Wallet'.
-  Type '(transaction: Transaction, aggregatedPublicKey: PublicKey, aggregatedCommitment: Commitment, signatures: PartialSignature[]) => SignatureProof' is not assignable to type '(transaction: Transaction) => SignatureProof'.
-    Target signature provides too few arguments. Expected 4 or more, but got 1.
-    at file://<tmpdir>/src/MultiSigWallet.ts:57:82
-
 TS2416 [ERROR]: Property 'subarray' in type 'SerialBuffer' is not assignable to the same property in base type 'Uint8Array<ArrayBuffer>'.
   Type '(start?: number | undefined, end?: number | undefined) => Uint8Array<ArrayBufferLike>' is not assignable to type '(begin?: number | undefined, end?: number | undefined) => Uint8Array<ArrayBuffer>'.
     Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'Uint8Array<ArrayBuffer>'.
@@ -29,8 +21,6 @@ TS2416 [ERROR]: Property 'subarray' in type 'SerialBuffer' is not assignable to 
   override subarray(start?: number, end?: number): Uint8Array {
            ~~~~~~~~
     at file://<tmpdir>/src/SerialBuffer.ts:11:12
-
-Found 3 errors.
 
 error: Type checking failed.
 

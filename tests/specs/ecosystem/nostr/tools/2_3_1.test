@@ -124,16 +124,181 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
-error[missing-explicit-type]: missing explicit type in the public API
-  --> /nip44.ts:11:7
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /nip44.ts:16:13
    | 
-11 | const u = {
-   |       ^ this symbol is missing an explicit type
+16 |   utf8Decode(bytes: Uint8Array) {
+   |             ^^^^^^^^^^^^^^^^^^^^^
    | 
-   = hint: add an explicit type annotation to the symbol
+17 |     return decoder.decode(bytes)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+18 |   },
+   | ^^^ this function is missing an explicit return type
+   | 
+   = hint: add an explicit return type to the function
 
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /nip44.ts:25:17
+   | 
+25 |   getMessageKeys(conversationKey: Uint8Array, nonce: Uint8Array) {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+26 |     const keys = hkdf_expand(sha256, conversationKey, nonce, 76)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+27 |     return {
+   | ^^^^^^^^^^^^
+   | 
+28 |       chacha_key: keys.subarray(0, 32),
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+29 |       chacha_nonce: keys.subarray(32, 44),
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+30 |       hmac_key: keys.subarray(44, 76),
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+31 |     }
+   | ^^^^^
+   | 
+32 |   },
+   | ^^^ this function is missing an explicit return type
+   | 
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /nip44.ts:42:13
+   | 
+42 |   writeU16BE(num: number) {
+   |             ^^^^^^^^^^^^^^^
+   | 
+43 |     if (!Number.isSafeInteger(num) || num < u.minPlaintextSize || num > u.maxPlaintextSize)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+44 |       throw new Error('invalid plaintext size: must be between 1 and 65535 bytes')
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+45 |     const arr = new Uint8Array(2)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+46 |     new DataView(arr.buffer).setUint16(0, num, false)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+47 |     return arr
+   | ^^^^^^^^^^^^^^
+   | 
+48 |   },
+   | ^^^ this function is missing an explicit return type
+   | 
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+  --> /nip44.ts:71:10
+   | 
+71 |   hmacAad(key: Uint8Array, message: Uint8Array, aad: Uint8Array) {
+   |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+72 |     if (aad.length !== 32) throw new Error('AAD associated data must be 32 bytes')
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+73 |     const combined = concatBytes(aad, message)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+74 |     return hmac(sha256, key, combined)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | 
+75 |   },
+   | ^^^ this function is missing an explicit return type
+   | 
+   = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /nip44.ts:83:16
+    | 
+ 83 |   decodePayload(payload: string) {
+    |                ^^^^^^^^^^^^^^^^^^^
+    | 
+ 84 |     if (typeof payload !== 'string') throw new Error('payload must be a valid string')
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
+ 85 |     const plen = payload.length
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
+ 86 |     if (plen < 132 || plen > 87472) throw new Error('invalid payload length: ' + plen)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
+ 87 |     if (payload[0] === '#') throw new Error('unknown encryption version')
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
+ 88 |     let data: Uint8Array
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
+ 89 |     try {
+    | ^^^^^^^^^
+    | 
+ 90 |       data = base64.decode(payload)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
+ 91 |     } catch (error) {
+    | ^^^^^^^^^^^^^^^^^^^^^
+    | 
+ 92 |       throw new Error('invalid base64: ' + (error as any).message)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
+ 93 |     }
+    | ^^^^^
+    | 
+ 94 |     const dlen = data.length
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
+ 95 |     if (dlen < 99 || dlen > 65603) throw new Error('invalid data length: ' + dlen)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
+ 96 |     const vers = data[0]
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
+ 97 |     if (vers !== 2) throw new Error('unknown encryption version ' + vers)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
+ 98 |     return {
+    | ^^^^^^^^^^^^
+    | 
+ 99 |       nonce: data.subarray(1, 33),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
+100 |       ciphertext: data.subarray(33, -32),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
+101 |       mac: data.subarray(-32),
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
+102 |     }
+    | ^^^^^
+    | 
+103 |   },
+    | ^^^ this function is missing an explicit return type
+    | 
+    = hint: add an explicit return type to the function
+
+  info: all functions in the public API must have an explicit return type
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
 error[missing-explicit-type]: missing explicit type in the public API

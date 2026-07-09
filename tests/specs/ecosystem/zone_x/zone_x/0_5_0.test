@@ -14,14 +14,14 @@ zone-x/zone-x/0.5.0
 
 -- stderr --
 TS2304 [ERROR]: Cannot find name 'TimeZone'.
-/** Gets users timezone from system settings */ export function getCurrentTimeZone(): TimeZone {
-                                                                                      ~~~~~~~~
-    at file://<tmpdir>/src/index.ts:1:87
+export function getCurrentTimeZone(): TimeZone {
+                                      ~~~~~~~~
+    at file://<tmpdir>/src/index.ts:2:39
 
 TS2304 [ERROR]: Cannot find name 'TimeZone'.
-/** Returns a Date string set to custom timezone */ export function getCustomTimeZoneDateString(timeZone: TimeZone): string {
-                                                                                                          ~~~~~~~~
-    at file://<tmpdir>/src/index.ts:4:107
+export function getCustomTimeZoneDateString(timeZone: TimeZone): string {
+                                                      ~~~~~~~~
+    at file://<tmpdir>/src/index.ts:6:55
 
 Found 2 errors.
 

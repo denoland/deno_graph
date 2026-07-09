@@ -164,7 +164,7 @@ export type QueryFunction<V> = <T extends CompiledQuery<unknown>>(fn: (qb: Kysel
 TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
   server: Partial<Deno.ServeTlsOptions>;
                        ~~~~~~~~~~~~~~~
-    at file://<tmpdir>/fresh/types.ts:56:24
+    at file://<tmpdir>/fresh/types.ts:59:24
 
 Found 2 errors.
 

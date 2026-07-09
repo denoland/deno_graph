@@ -26,7 +26,7 @@ xeaone/server/5.3.4
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Plugin<Options>'.
   handle(context: Context, options?: Options): void {}
   ~~~~~~
-    at file://<tmpdir>/src/cache.ts:36:3
+    at file://<tmpdir>/src/cache.ts:37:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Plugin<string>'.
   handle(context: Context, origin: string): void {}
@@ -36,7 +36,7 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Plugin<any>'.
   handle(context: Context): Response | void {
   ~~~~~~
-    at file://<tmpdir>/src/defenders.ts:130:3
+    at file://<tmpdir>/src/defenders.ts:131:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Plugin<boolean>'.
   handle(context: Context, use: boolean): Promise<Response | void> {
@@ -46,17 +46,17 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Plugin<any>'.
   setup(context: Context): void {}
   ~~~~~
-    at file://<tmpdir>/src/forwarded.ts:6:3
+    at file://<tmpdir>/src/forwarded.ts:7:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Plugin<any>'.
   handle(context: Context): void {}
   ~~~~~~
-    at file://<tmpdir>/src/forwarded.ts:7:3
+    at file://<tmpdir>/src/forwarded.ts:8:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Plugin<any>'.
   handle(context: Context): Response | void {
   ~~~~~~
-    at file://<tmpdir>/src/normalize.ts:17:3
+    at file://<tmpdir>/src/normalize.ts:18:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Plugin<boolean>'.
   setup(context: Context): void {}
@@ -76,12 +76,12 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Plugin<boolean>'.
   setup(context: Context): void {}
   ~~~~~
-    at file://<tmpdir>/src/session.ts:122:3
+    at file://<tmpdir>/src/session.ts:129:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Plugin<boolean>'.
   handle(context: Context, use: boolean): Promise<Response | void> {
   ~~~~~~
-    at file://<tmpdir>/src/session.ts:123:3
+    at file://<tmpdir>/src/session.ts:130:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Plugin<any>'.
   handle(context: Context): Response | undefined {
@@ -91,4 +91,3 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
 Found 13 errors.
 
 error: Type checking failed.
-

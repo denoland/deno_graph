@@ -91,12 +91,10 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/class_bad.ts:
   {}
-  export class Bad {
-  }
+  export class Bad {}
   export default Bad;
   --- DTS ---
-  export declare class Bad {
-  }
+  export declare class Bad {}
   export default Bad;
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:

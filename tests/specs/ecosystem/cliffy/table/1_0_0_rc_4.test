@@ -14,19 +14,19 @@ cliffy/table/1.0.0-rc.4
 
 -- stderr --
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'T[]'.
-   */ public static from<T extends CellType | undefined>(cells: RowType<T>): Row<T> {
-                    ~~~~
-    at file://<tmpdir>/row.ts:31:21
+  public static from<T extends CellType | undefined>(cells: RowType<T>): Row<T> {
+                ~~~~
+    at file://<tmpdir>/row.ts:36:17
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'TRow[]'.
-   */ public static from<TRow extends RowType>(rows: TableType<TRow>): Table<TRow> {
-                    ~~~~
-    at file://<tmpdir>/table.ts:42:21
+  public static from<TRow extends RowType>(rows: TableType<TRow>): Table<TRow> {
+                ~~~~
+    at file://<tmpdir>/table.ts:55:17
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'TRow[]'.
-  /** Generate table string. */ public toString(): string {
-                                       ~~~~~~~~
-    at file://<tmpdir>/table.ts:105:40
+  public toString(): string {
+         ~~~~~~~~
+    at file://<tmpdir>/table.ts:128:10
 
 Found 3 errors.
 

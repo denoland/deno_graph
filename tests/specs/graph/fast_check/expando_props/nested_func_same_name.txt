@@ -68,7 +68,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
   export function test(): void {}
   export namespace test {
-    export var skip = (): void =>{};
+    export var skip = (): void => {};
   }
   --- DTS ---
   export declare function test(): void;

@@ -365,10 +365,10 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
-   --> /src/structs/trees/bst.ts:292:3
+   --> /src/structs/trees/bst.ts:292:4
     | 
 292 |   *[Symbol.iterator]() {
-    |    ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+    |     ^^^^^^^^^^^^^^^ this function is missing an explicit return type
     | 
     = hint: add an explicit return type to the function
 
@@ -425,10 +425,10 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /src/structs/sorted-array.ts:41:2
+  --> /src/structs/sorted-array.ts:41:3
    | 
 41 |   [Symbol.iterator]() {
-   |   ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   |    ^^^^^^^^^^^^^^^ this function is missing an explicit return type
    | 
    = hint: add an explicit return type to the function
 
@@ -533,10 +533,10 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /src/structs/queue.ts:27:3
+  --> /src/structs/queue.ts:27:4
    | 
 27 |   *[Symbol.iterator]() {
-   |    ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   |     ^^^^^^^^^^^^^^^ this function is missing an explicit return type
    | 
    = hint: add an explicit return type to the function
 
@@ -557,10 +557,10 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /src/structs/linked-list.ts:35:3
+  --> /src/structs/linked-list.ts:35:4
    | 
 35 |   *[Symbol.iterator]() {
-   |    ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   |     ^^^^^^^^^^^^^^^ this function is missing an explicit return type
    | 
    = hint: add an explicit return type to the function
 
@@ -713,10 +713,10 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /src/structs/heaps/heap.ts:90:2
+  --> /src/structs/heaps/heap.ts:90:3
    | 
 90 |   [Symbol.iterator]() {
-   |   ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   |    ^^^^^^^^^^^^^^^ this function is missing an explicit return type
    | 
    = hint: add an explicit return type to the function
 
@@ -749,10 +749,10 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
-  --> /src/structs/doubly-linked-list.ts:27:3
+  --> /src/structs/doubly-linked-list.ts:27:4
    | 
 27 |   *[Symbol.iterator]() {
-   |    ^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+   |     ^^^^^^^^^^^^^^^ this function is missing an explicit return type
    | 
    = hint: add an explicit return type to the function
 
@@ -4943,10 +4943,10 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
 
 error[missing-explicit-return-type]: missing explicit return type in the public API
- --> /src/async/queue.ts:7:9
+ --> /src/async/queue.ts:7:10
   | 
 7 |   async *[Symbol.asyncIterator]() {
-  |          ^^^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
+  |           ^^^^^^^^^^^^^^^^^^^^ this function is missing an explicit return type
   | 
   = hint: add an explicit return type of 'Promise<void>' or 'Promise<never>' to the function
 

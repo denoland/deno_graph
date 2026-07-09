@@ -14,7 +14,7 @@ sftsrv/structured-html/0.0.1
 
 -- stderr --
 TS2304 [ERROR]: Cannot find name 'Element'.
-export const convertHtmlToBlocks = (html: Element): EditorContent =>({} as never);
+export const convertHtmlToBlocks = (html: Element): EditorContent => {
                                           ~~~~~~~
     at file://<tmpdir>/src/index.ts:2:43
 

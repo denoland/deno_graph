@@ -14,9 +14,9 @@ pengzhanbo/utils/1.1.1
 
 -- stderr --
 TS2578 [ERROR]: Unused '@ts-expect-error' directive.
- */ // @ts-expect-error 跳过环境检查
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/is.ts:55:5
+// @ts-expect-error 跳过环境检查
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/is.ts:70:1
 
 error: Type checking failed.
 

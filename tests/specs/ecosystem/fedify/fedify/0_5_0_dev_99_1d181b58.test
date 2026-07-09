@@ -49,764 +49,764 @@ fedify/fedify/0.5.0-dev.99+1d181b58
 
 -- stderr --
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:922:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:1014:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1052:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:1153:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1063:14
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-  protected _getCustomInspectProxy(): Record<string, unknown> {
-            ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1068:13
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1140:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1194:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1205:14
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-  protected _getCustomInspectProxy(): Record<string, unknown> {
-            ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1210:13
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1283:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1337:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1348:14
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-  protected _getCustomInspectProxy(): Record<string, unknown> {
-            ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1353:13
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1425:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1479:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1490:14
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-  protected _getCustomInspectProxy(): Record<string, unknown> {
-            ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1495:13
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1578:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1863:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1874:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:1165:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1879:13
+    at file://<tmpdir>/vocab/vocab.ts:1170:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:1245:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:1300:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:1312:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  protected _getCustomInspectProxy(): Record<string, unknown> {
+            ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:1317:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:1393:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:1448:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:1460:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  protected _getCustomInspectProxy(): Record<string, unknown> {
+            ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:1465:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:1540:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:1595:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:1607:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  protected _getCustomInspectProxy(): Record<string, unknown> {
+            ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:1612:13
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1945:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:1698:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:1995:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2008:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2006:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2020:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2011:13
+    at file://<tmpdir>/vocab/vocab.ts:2025:13
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2077:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2094:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2127:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2145:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2138:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2157:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2143:13
+    at file://<tmpdir>/vocab/vocab.ts:2162:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2231:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2282:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2294:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  protected _getCustomInspectProxy(): Record<string, unknown> {
+            ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2299:13
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2209:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2368:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2259:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2419:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2270:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2431:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2275:13
+    at file://<tmpdir>/vocab/vocab.ts:2436:13
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2346:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2510:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2400:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2565:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2411:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2577:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2416:13
+    at file://<tmpdir>/vocab/vocab.ts:2582:13
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Ignore'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2489:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2658:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Ignore'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2543:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2713:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Ignore'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2554:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2725:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Ignore'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2559:13
+    at file://<tmpdir>/vocab/vocab.ts:2730:13
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2635:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2809:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2768:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2952:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2779:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:2964:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2784:13
+    at file://<tmpdir>/vocab/vocab.ts:2969:13
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Collection'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2861:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:3049:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Collection'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2971:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:3166:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Collection'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2982:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:3178:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Collection'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:2987:13
+    at file://<tmpdir>/vocab/vocab.ts:3183:13
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3057:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:3256:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3111:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:3311:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3122:14
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-  protected _getCustomInspectProxy(): Record<string, unknown> {
-            ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3127:13
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3198:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3252:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3263:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:3323:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3268:13
+    at file://<tmpdir>/vocab/vocab.ts:3328:13
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3338:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:3402:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3392:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:3457:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3403:14
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-  protected _getCustomInspectProxy(): Record<string, unknown> {
-            ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3408:13
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3581:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3631:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3642:14
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-  protected _getCustomInspectProxy(): Record<string, unknown> {
-            ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3647:13
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3719:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3773:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3784:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:3469:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3789:13
+    at file://<tmpdir>/vocab/vocab.ts:3474:13
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3862:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:3547:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3916:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:3602:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3927:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:3614:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:3932:13
+    at file://<tmpdir>/vocab/vocab.ts:3619:13
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4015:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:3806:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4300:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:3857:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4311:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:3869:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4316:13
+    at file://<tmpdir>/vocab/vocab.ts:3874:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:3949:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:4004:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:4016:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  protected _getCustomInspectProxy(): Record<string, unknown> {
+            ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:4021:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:4097:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:4152:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:4164:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  protected _getCustomInspectProxy(): Record<string, unknown> {
+            ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:4169:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:4255:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:4565:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:4577:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  protected _getCustomInspectProxy(): Record<string, unknown> {
+            ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:4582:13
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4382:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:4651:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4432:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:4702:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4443:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:4714:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4448:13
+    at file://<tmpdir>/vocab/vocab.ts:4719:13
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4520:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:4794:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4574:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:4849:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4585:14
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-  protected _getCustomInspectProxy(): Record<string, unknown> {
-            ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4590:13
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4661:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4715:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4726:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:4861:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4731:13
+    at file://<tmpdir>/vocab/vocab.ts:4866:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:4940:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:4995:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:5007:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  protected _getCustomInspectProxy(): Record<string, unknown> {
+            ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:5012:13
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Link'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4911:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:5211:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Link'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4929:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:5230:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Link'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4940:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:5242:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Link'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:4945:13
+    at file://<tmpdir>/vocab/vocab.ts:5247:13
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5012:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:5317:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5062:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:5368:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5073:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:5380:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5078:13
+    at file://<tmpdir>/vocab/vocab.ts:5385:13
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Collection'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5150:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:5460:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Collection'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5205:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:5516:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Collection'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5216:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:5528:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Collection'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5221:13
+    at file://<tmpdir>/vocab/vocab.ts:5533:13
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'CollectionPage'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5299:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:5614:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'CollectionPage'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5363:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:5680:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'CollectionPage'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5374:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:5692:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'CollectionPage'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5379:13
+    at file://<tmpdir>/vocab/vocab.ts:5697:13
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5462:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:5783:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5747:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:6093:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5758:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:6105:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5763:13
+    at file://<tmpdir>/vocab/vocab.ts:6110:13
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5829:7
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:6179:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5879:7
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:6230:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5890:14
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
-  protected _getCustomInspectProxy(): Record<string, unknown> {
-            ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5895:13
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:5978:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:6263:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:6274:14
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-  protected _getCustomInspectProxy(): Record<string, unknown> {
-            ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:6279:13
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:6354:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:6442:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:6453:14
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-  protected _getCustomInspectProxy(): Record<string, unknown> {
-            ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:6458:13
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:6530:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:6599:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:6610:14
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-  protected _getCustomInspectProxy(): Record<string, unknown> {
-            ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:6615:13
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:6686:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:6740:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:6751:14
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-  protected _getCustomInspectProxy(): Record<string, unknown> {
-            ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:6756:13
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:6834:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:6981:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:6992:14
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-  protected _getCustomInspectProxy(): Record<string, unknown> {
-            ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:6997:13
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7068:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7122:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7133:14
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-  protected _getCustomInspectProxy(): Record<string, unknown> {
-            ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7138:13
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7221:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7506:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7517:14
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
-  protected _getCustomInspectProxy(): Record<string, unknown> {
-            ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7522:13
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7598:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7652:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7663:14
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-  protected _getCustomInspectProxy(): Record<string, unknown> {
-            ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7668:13
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7742:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7796:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7807:14
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
-  protected _getCustomInspectProxy(): Record<string, unknown> {
-            ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7812:13
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
-   */ clone(values?: {
-      ~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7878:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
-   */ toJsonLd(options?: {
-      ~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7928:7
-
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
-   */ static fromJsonLd(json: unknown, options?: {
-             ~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7939:14
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:6242:10
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
   protected _getCustomInspectProxy(): Record<string, unknown> {
             ~~~~~~~~~~~~~~~~~~~~~~
-    at file://<tmpdir>/vocab/vocab.ts:7944:13
+    at file://<tmpdir>/vocab/vocab.ts:6247:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:6333:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:6643:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:6655:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  protected _getCustomInspectProxy(): Record<string, unknown> {
+            ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:6660:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:6738:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:6833:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:6845:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  protected _getCustomInspectProxy(): Record<string, unknown> {
+            ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:6850:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:6925:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:6997:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:7009:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  protected _getCustomInspectProxy(): Record<string, unknown> {
+            ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:7014:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:7088:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:7143:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:7155:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  protected _getCustomInspectProxy(): Record<string, unknown> {
+            ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:7160:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:7241:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:7399:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:7411:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  protected _getCustomInspectProxy(): Record<string, unknown> {
+            ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:7416:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:7490:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:7545:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:7557:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  protected _getCustomInspectProxy(): Record<string, unknown> {
+            ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:7562:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:7648:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:7958:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:7970:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Object'.
+  protected _getCustomInspectProxy(): Record<string, unknown> {
+            ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:7975:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:8054:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:8109:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:8121:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  protected _getCustomInspectProxy(): Record<string, unknown> {
+            ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:8126:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:8203:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:8258:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:8270:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Activity'.
+  protected _getCustomInspectProxy(): Record<string, unknown> {
+            ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:8275:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
+  clone(values?: {
+  ~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:8344:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
+  toJsonLd(options?: {
+  ~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:8395:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
+  static fromJsonLd(json: unknown, options?: {
+         ~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:8407:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Document'.
+  protected _getCustomInspectProxy(): Record<string, unknown> {
+            ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/vocab/vocab.ts:8412:13
 
 Found 152 errors.
 

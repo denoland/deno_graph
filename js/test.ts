@@ -714,18 +714,15 @@ Deno.test({
 });
 
 Deno.test({
-  name: "parseModule() - syntax error",
+  name: "parseModule() - recovers from syntax errors",
   async fn() {
-    await assertRejects(
-      async () => {
-        await parseModule(
-          "file:///a/test.js",
-          new TextEncoder().encode(`# Some Markdown\n\n**bold**`),
-        );
-      },
-      Error,
-      "at file:///a/test.js:",
+    // The parser recovers from syntax errors and produces a best-effort
+    // module rather than failing, so parsing does not reject here.
+    const module = await parseModule(
+      "file:///a/test.js",
+      new TextEncoder().encode(`# Some Markdown\n\n**bold**`),
     );
+    assertEquals(module.specifier, "file:///a/test.js");
   },
 });
 

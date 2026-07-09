@@ -28,9 +28,9 @@ pup/api-client/1.0.3
 
 -- stderr --
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'RestClient'.
-   */ refreshApiToken(token: string): void {}
-      ~~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/pup.ts:27:7
+  refreshApiToken(token: string): void {}
+  ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/pup.ts:30:3
 
 error: Type checking failed.
 

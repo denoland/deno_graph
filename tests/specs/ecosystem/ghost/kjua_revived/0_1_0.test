@@ -11,17 +11,17 @@ ghost/kjua-revived/0.1.0
 
 -- stderr --
 TS2304 [ERROR]: Cannot find name 'SVGElement'.
-export const kjua = (inputOptions: Partial<KjuaOptions>): SVGElement | HTMLCanvasElement | HTMLImageElement =>({} as never);
+export const kjua = (inputOptions: Partial<KjuaOptions>): SVGElement | HTMLCanvasElement | HTMLImageElement => {
                                                           ~~~~~~~~~~
     at file://<tmpdir>/src/kjua.ts:2:59
 
 TS2304 [ERROR]: Cannot find name 'HTMLCanvasElement'.
-export const kjua = (inputOptions: Partial<KjuaOptions>): SVGElement | HTMLCanvasElement | HTMLImageElement =>({} as never);
+export const kjua = (inputOptions: Partial<KjuaOptions>): SVGElement | HTMLCanvasElement | HTMLImageElement => {
                                                                        ~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/kjua.ts:2:72
 
 TS2304 [ERROR]: Cannot find name 'HTMLImageElement'.
-export const kjua = (inputOptions: Partial<KjuaOptions>): SVGElement | HTMLCanvasElement | HTMLImageElement =>({} as never);
+export const kjua = (inputOptions: Partial<KjuaOptions>): SVGElement | HTMLCanvasElement | HTMLImageElement => {
                                                                                            ~~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/kjua.ts:2:92
 
