@@ -86,7 +86,7 @@ TS2552 [ERROR]: Cannot find name 'MouseEvent'. Did you mean 'CloseEvent'?
     at file://<tmpdir>/src/types.ts:38:56
 
     'CloseEvent' is declared here.
-    declare var CloseEvent: {
+    declare var CloseEvent: typeof globalThis extends
                 ~~~~~~~~~~
         at asset:///lib.deno.websocket.d.ts:88:13
 
