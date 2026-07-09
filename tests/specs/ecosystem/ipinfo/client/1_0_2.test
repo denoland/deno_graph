@@ -680,14 +680,4 @@ ipinfo/client/1.0.2
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-TS2503 [ERROR]: Cannot find namespace 'puppeteer'.
-    browser: puppeteer.Browser;
-             ~~~~~~~~~
-    at file://<tmpdir>/mod.ts:18:14
-
-error: Type checking failed.
-
+== TYPE CHECK PASSED ==
