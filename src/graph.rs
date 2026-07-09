@@ -1709,6 +1709,11 @@ pub struct BuildOptions<'a> {
   /// resolving them. This is useful in cases where you want to mark JSR
   /// specifiers as external.
   pub passthrough_jsr_specifiers: bool,
+  /// When resolving a `jsr:` semver range, prefer versions whose version
+  /// manifest is already cached. Intended for cached-only modes so
+  /// resolution matches what a previous cache-building command
+  /// materialized.
+  pub prefer_cached_jsr_versions: bool,
   pub module_analyzer: &'a dyn ModuleAnalyzer,
   pub module_info_cacher: &'a dyn ModuleInfoCacher,
   pub npm_resolver: Option<&'a dyn NpmResolver>,
@@ -1732,6 +1737,7 @@ impl Default for BuildOptions<'_> {
       jsr_url_provider: Default::default(),
       jsr_version_resolver: Default::default(),
       passthrough_jsr_specifiers: false,
+      prefer_cached_jsr_versions: false,
       module_analyzer: Default::default(),
       module_info_cacher: Default::default(),
       npm_resolver: None,
@@ -4621,6 +4627,7 @@ struct Builder<'a, 'graph> {
   jsr_url_provider: &'a dyn JsrUrlProvider,
   jsr_version_resolver: Cow<'a, JsrVersionResolver>,
   passthrough_jsr_specifiers: bool,
+  prefer_cached_jsr_versions: bool,
   loader: &'a dyn Loader,
   locker: Option<&'a mut dyn Locker>,
   resolver: Option<&'a dyn Resolver>,
@@ -4657,6 +4664,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       jsr_url_provider: options.jsr_url_provider,
       jsr_version_resolver: options.jsr_version_resolver,
       passthrough_jsr_specifiers: options.passthrough_jsr_specifiers,
+      prefer_cached_jsr_versions: options.prefer_cached_jsr_versions,
       loader,
       locker: options.locker,
       resolver: options.resolver,
@@ -4902,7 +4910,14 @@ impl<'a, 'graph> Builder<'a, 'graph> {
       match fut.await {
         Ok(info) => {
           let package_req = pending_resolution.package_ref.req();
-          match self.resolve_jsr_nv(package_req, &info) {
+          let cached_versions = if self.prefer_cached_jsr_versions {
+            self
+              .load_cached_jsr_version_manifests(package_req, &info)
+              .await
+          } else {
+            Default::default()
+          };
+          match self.resolve_jsr_nv(package_req, &info, &cached_versions) {
             Ok(package_nv) => {
               // now queue a pending load for that version information
               self.queue_load_package_version_info(&package_nv);
@@ -5294,10 +5309,47 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     async move { self.build(roots, imports).await }.boxed_local()
   }
 
+  /// Finds the versions of a package that match the package requirement
+  /// and already have their version manifest (`<version>_meta.json`) in
+  /// the cache. Only called when `prefer_cached_jsr_versions` is enabled.
+  async fn load_cached_jsr_version_manifests(
+    &self,
+    package_req: &PackageReq,
+    package_info: &JsrPackageInfo,
+  ) -> HashSet<Version> {
+    let mut cached_versions = HashSet::new();
+    for (version, version_info) in &package_info.versions {
+      if version_info.yanked || !package_req.version_req.matches(version) {
+        continue;
+      }
+      let specifier = self
+        .jsr_url_provider
+        .url()
+        .join(&format!("{}/{}_meta.json", package_req.name, version))
+        .unwrap();
+      let fut = self.loader.load(
+        &specifier,
+        LoadOptions {
+          in_dynamic_branch: false,
+          was_dynamic_root: false,
+          cache_setting: CacheSetting::Only,
+          maybe_checksum: None,
+        },
+      );
+      // the loader contract for `CacheSetting::Only` is to return
+      // `Ok(None)` when the specifier is not found in the cache
+      if matches!(fut.await, Ok(Some(LoadResponse::Module { .. }))) {
+        cached_versions.insert(version.clone());
+      }
+    }
+    cached_versions
+  }
+
   fn resolve_jsr_nv(
     &mut self,
     package_req: &PackageReq,
     package_info: &JsrPackageInfo,
+    cached_versions: &HashSet<Version>,
   ) -> Result<PackageNv, JsrPackageReqNotFoundError> {
     let version_resolver = self
       .jsr_version_resolver
@@ -5311,6 +5363,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         .into_iter()
         .flatten()
         .map(|nv| &nv.version),
+      cached_versions,
     )?;
     let version = resolved_version.version.clone();
     if resolved_version.is_yanked {

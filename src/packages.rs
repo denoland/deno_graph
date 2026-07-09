@@ -355,6 +355,7 @@ impl<'a> JsrPackageVersionResolver<'a> {
     &'b self,
     package_req: &PackageReq,
     existing_versions: impl Iterator<Item = &'b Version>,
+    cached_versions: &HashSet<Version>,
   ) -> Result<JsrVersionResolverResolvedVersion<'b>, JsrPackageReqNotFoundError>
   {
     // 1. try to resolve with the list of existing versions
@@ -373,6 +374,45 @@ impl<'a> JsrPackageVersionResolver<'a> {
         .map(|i| i.yanked)
         .unwrap_or(false);
       return Ok(JsrVersionResolverResolvedVersion { is_yanked, version });
+    }
+
+    // 1.5. attempt to resolve with the versions whose version manifest is
+    // already cached (only populated when `prefer_cached_jsr_versions` is
+    // enabled). The placement of this step is important:
+    // - Step 1 must stay first so in-graph version unification still wins.
+    //   This matches online behavior when another package requirement
+    //   already selected a version in this graph.
+    // - This step must not be merged into step 1's iterator: if the graph
+    //   unified onto an older version, but a newer matching version is
+    //   also cached, chaining the two sets would resolve to the newer
+    //   version and diverge from what an online run resolves to.
+    // - Placing this before step 2 is strictly error-converting under
+    //   cached-only resolution: if step 2's best pick is cached, it equals
+    //   the best cached match here; if it's not cached, step 2's pick
+    //   would fail to load anyway.
+    // Yanked versions are excluded here, consistent with step 2 preceding
+    // step 3.
+    if !cached_versions.is_empty() {
+      let cached_unyanked_versions =
+        self.package_info.versions.iter().filter_map(|(v, i)| {
+          if !i.yanked && cached_versions.contains(v) {
+            Some((v, Some(i)))
+          } else {
+            None
+          }
+        });
+      if let ResolveVersionResult::Some(version) = resolve_version(
+        ResolveVersionOptions {
+          version_req: &package_req.version_req,
+          newest_dependency_date: self.newest_dependency_date,
+        },
+        cached_unyanked_versions,
+      ) {
+        return Ok(JsrVersionResolverResolvedVersion {
+          is_yanked: false,
+          version,
+        });
+      }
     }
 
     // 2. attempt to resolve with the unyanked versions
