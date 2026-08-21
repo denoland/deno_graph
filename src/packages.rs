@@ -358,14 +358,56 @@ impl<'a> JsrPackageVersionResolver<'a> {
     cached_versions: &HashSet<Version>,
   ) -> Result<JsrVersionResolverResolvedVersion<'b>, JsrPackageReqNotFoundError>
   {
+    let existing_versions = existing_versions.collect::<Vec<_>>();
+    match self.resolve_version_inner(
+      package_req,
+      &existing_versions,
+      cached_versions,
+      false,
+    ) {
+      Ok(resolved) => Ok(resolved),
+      Err(err) => {
+        // A `*` version requirement never matches pre-release versions, so a
+        // package that only has pre-release versions would never resolve.
+        // Mirror npm's behavior for such packages (where a `*` requirement
+        // resolves to the `latest` dist-tag, even when that is a pre-release)
+        // by retrying with pre-release versions included. Only do so when no
+        // version matched at all: if versions merely got excluded by the
+        // newest dependency date, the error carries that date and falling
+        // back to an unrelated pre-release would be surprising.
+        if package_req.version_req.version_text() == "*"
+          && err.newest_dependency_date.is_none()
+        {
+          self.resolve_version_inner(
+            package_req,
+            &existing_versions,
+            cached_versions,
+            true,
+          )
+        } else {
+          Err(err)
+        }
+      }
+    }
+  }
+
+  fn resolve_version_inner<'b>(
+    &'b self,
+    package_req: &PackageReq,
+    existing_versions: &[&'b Version],
+    cached_versions: &HashSet<Version>,
+    include_prerelease: bool,
+  ) -> Result<JsrVersionResolverResolvedVersion<'b>, JsrPackageReqNotFoundError>
+  {
     // 1. try to resolve with the list of existing versions
     if let ResolveVersionResult::Some(version) = resolve_version(
       ResolveVersionOptions {
         version_req: &package_req.version_req,
         // don't use this here because existing versions are ok to resolve to
         newest_dependency_date: None,
+        include_prerelease,
       },
-      existing_versions.map(|v| (v, None)),
+      existing_versions.iter().map(|v| (*v, None)),
     ) {
       let is_yanked = self
         .package_info
@@ -405,6 +447,7 @@ impl<'a> JsrPackageVersionResolver<'a> {
         ResolveVersionOptions {
           version_req: &package_req.version_req,
           newest_dependency_date: self.newest_dependency_date,
+          include_prerelease,
         },
         cached_unyanked_versions,
       ) {
@@ -426,6 +469,7 @@ impl<'a> JsrPackageVersionResolver<'a> {
       ResolveVersionOptions {
         version_req: &package_req.version_req,
         newest_dependency_date: self.newest_dependency_date,
+        include_prerelease,
       },
       unyanked_versions,
     ) {
@@ -452,6 +496,7 @@ impl<'a> JsrPackageVersionResolver<'a> {
       ResolveVersionOptions {
         version_req: &package_req.version_req,
         newest_dependency_date: self.newest_dependency_date,
+        include_prerelease,
       },
       yanked_versions,
     ) {
@@ -492,6 +537,10 @@ impl<'a> JsrPackageVersionResolver<'a> {
 pub struct ResolveVersionOptions<'a> {
   pub version_req: &'a VersionReq,
   pub newest_dependency_date: Option<NewestDependencyDate>,
+  /// Whether to additionally consider pre-release versions the version
+  /// requirement does not match. Used to resolve a `*` requirement for
+  /// packages that only have pre-release versions.
+  pub include_prerelease: bool,
 }
 
 pub enum ResolveVersionResult<'a> {
@@ -506,7 +555,9 @@ pub fn resolve_version<'a>(
   let mut maybe_best_version: Option<&Version> = None;
   let mut had_higher_date_version = false;
   for (version, version_info) in versions {
-    if options.version_req.matches(version) {
+    if options.version_req.matches(version)
+      || (options.include_prerelease && !version.pre.is_empty())
+    {
       had_higher_date_version = true;
       if matches_newest_dependency_date(
         version_info,

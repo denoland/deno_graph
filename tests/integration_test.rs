@@ -974,6 +974,52 @@ async fn test_prefer_cached_jsr_versions_memoizes_probes_per_package() {
   );
 }
 
+// A `*` requirement (e.g. `jsr:@scope/a` without a version) never matches
+// pre-release versions, so a package that only has pre-release versions
+// falls back to resolving to its newest pre-release instead of failing —
+// mirroring how npm resolves `*` to the `latest` dist-tag even when that is
+// a pre-release.
+#[tokio::test]
+async fn test_jsr_package_with_only_prerelease_versions() {
+  let versions = ["1.0.0-rc.1", "1.0.0-rc.2"];
+  let mut builder = TestBuilder::new();
+  builder.with_loader(|loader| {
+    loader
+      .remote
+      .add_source_with_text("file:///mod.ts", "import \"jsr:@scope/a\";");
+    add_cached_jsr_package(loader, "@scope/a", &versions);
+  });
+  let result = builder.build().await;
+  result.graph.valid().unwrap();
+  assert_eq!(
+    result
+      .graph
+      .packages
+      .mappings()
+      .get(&PackageReq::from_str("@scope/a").unwrap())
+      .unwrap()
+      .to_string(),
+    "@scope/a@1.0.0-rc.2",
+  );
+}
+
+// The pre-release fallback only applies to `*` requirements: a constrained
+// requirement on a package that only has pre-release versions still fails.
+#[tokio::test]
+async fn test_jsr_package_with_only_prerelease_versions_constrained_req() {
+  let versions = ["1.0.0-rc.1", "1.0.0-rc.2"];
+  let mut builder = TestBuilder::new();
+  builder.with_loader(|loader| {
+    loader.remote.add_source_with_text(
+      "file:///mod.ts",
+      "import \"jsr:@scope/a@^1.0.0\";",
+    );
+    add_cached_jsr_package(loader, "@scope/a", &versions);
+  });
+  let result = builder.build().await;
+  assert!(result.graph.valid().is_err());
+}
+
 #[tokio::test]
 async fn test_json_root() {
   let mut graph = ModuleGraph::new(GraphKind::All);
