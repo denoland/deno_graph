@@ -9,4 +9,9 @@ nekooftheabyss/fortuna/4.1.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: trailing comma at line 10 column 3
+

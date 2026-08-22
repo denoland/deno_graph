@@ -19,4 +19,9 @@ lambdalisue/messagepack-rpc/2.1.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: No version matching '^2.1.1' for @jsr/lambdalisue__async
+

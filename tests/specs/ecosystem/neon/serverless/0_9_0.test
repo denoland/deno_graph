@@ -68,12 +68,4 @@ neon/serverless/0.9.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-TS2307 [ERROR]: Cannot find module 'file://<tmpdir>/pg-protocol'.
-    at file://<tmpdir>/index.d.ts:1:31
-
-error: Type checking failed.
-
+== TYPE CHECK PASSED ==

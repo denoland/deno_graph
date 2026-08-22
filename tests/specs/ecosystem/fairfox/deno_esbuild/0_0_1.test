@@ -136,4 +136,46 @@ fairfox/deno-esbuild/0.0.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2307 [ERROR]: Cannot find module 'npm:esbuild@0.20.2/wasm.js' or its corresponding type declarations.
+import { type BuildOptions, type BuildResult } from 'npm:esbuild@0.20.2/wasm.js';
+                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/bundle-with-wasm.ts:1:53
+
+TS2307 [ERROR]: Cannot find module 'npm:esbuild@0.20.2/mod.js' or its corresponding type declarations.
+import { type BuildResult, type BuildOptions } from 'npm:esbuild@0.20.2/mod.js';
+                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/bundle.ts:1:53
+
+TS2307 [ERROR]: Cannot find module 'npm:esbuild@0.20.2/mod.js' or its corresponding type declarations.
+import { type BuildOptions } from 'npm:esbuild@0.20.2/mod.js';
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/configs.ts:1:35
+
+TS2307 [ERROR]: Cannot find module 'npm:esbuild@0.20.2/mod.js' or its corresponding type declarations.
+import { type Plugin } from 'npm:esbuild@0.20.2/mod.js';
+                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/import-map-plugin.ts:1:29
+
+TS2307 [ERROR]: Cannot find module 'npm:esbuild@0.20.2/mod.js' or its corresponding type declarations.
+import { type Plugin } from 'npm:esbuild@0.20.2/mod.js';
+                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/local-file-loader-plugin.ts:1:29
+
+TS2307 [ERROR]: Cannot find module 'npm:esbuild@0.20.2/mod.js' or its corresponding type declarations.
+export type { BuildOptions, BuildResult, OnLoad } from 'npm:esbuild@0.20.2/mod.js';
+                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/mod.ts:7:56
+
+TS2307 [ERROR]: Cannot find module 'npm:esbuild@0.20.2/mod.js' or its corresponding type declarations.
+import { type Plugin } from 'npm:esbuild@0.20.2/mod.js';
+                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/remote-fetch-plugin.ts:1:29
+
+Found 7 errors.
+
+error: Type checking failed.
+

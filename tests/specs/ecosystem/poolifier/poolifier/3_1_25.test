@@ -33,6 +33,11 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
                             ~~~~~~
     at file://<tmpdir>/src/circular-array.ts:20:29
 
+TS2305 [ERROR]: Module '"node:worker_threads"' has no exported member 'TransferListItem'.
+import type { TransferListItem } from 'node:worker_threads';
+              ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/pools/abstract-pool.ts:2:15
+
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'FixedClusterPool<Data, Response>'.
   /** @inheritDoc */ protected shallCreateDynamicWorker(): boolean {
                                ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -58,6 +63,11 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
                                ~~~~~~~~~
     at file://<tmpdir>/src/pools/cluster/fixed.ts:26:32
 
+TS2305 [ERROR]: Module '"node:worker_threads"' has no exported member 'TransferListItem'.
+import type { TransferListItem, WorkerOptions } from 'node:worker_threads';
+              ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/pools/pool.ts:3:15
+
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'FixedThreadPool<Data, Response>'.
   /** @inheritDoc */ protected shallCreateDynamicWorker(): boolean {
                                ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -78,6 +88,16 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
                                    ~~~~
     at file://<tmpdir>/src/pools/thread/dynamic.ts:31:36
 
+TS2305 [ERROR]: Module '"node:worker_threads"' has no exported member 'TransferListItem'.
+import { type TransferListItem, type Worker } from 'node:worker_threads';
+              ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/pools/thread/fixed.ts:1:15
+
+TS2305 [ERROR]: Module '"node:worker_threads"' has no exported member 'TransferListItem'.
+import type { MessagePort, TransferListItem } from 'node:worker_threads';
+                           ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/utility-types.ts:3:28
+
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'AbstractWorker<MessagePort, Data, Response>'.
   /** @inheritDoc */ protected handleKillMessage(message: MessageValue<Data>): void {}
                                ~~~~~~~~~~~~~~~~~
@@ -88,7 +108,7 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
                 ~~~~~~~~~~~
     at file://<tmpdir>/src/worker/thread-worker.ts:40:17
 
-Found 15 errors.
+Found 19 errors.
 
 error: Type checking failed.
 

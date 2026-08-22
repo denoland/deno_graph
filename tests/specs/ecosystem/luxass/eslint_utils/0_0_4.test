@@ -743,4 +743,14 @@ luxass/eslint-utils/0.0.4
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2305 [ERROR]: Module '"npm:eslint@^8.57.0"' has no exported member 'Rule'.
+import type { Rule } from 'npm:eslint@^8.57.0';
+              ~~~~
+    at file://<tmpdir>/src/index.ts:2:15
+
+error: Type checking failed.
+

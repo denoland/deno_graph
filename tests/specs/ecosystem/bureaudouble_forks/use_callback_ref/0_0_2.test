@@ -32,4 +32,34 @@ bureaudouble-forks/use-callback-ref/0.0.2
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2709 [ERROR]: Cannot use namespace 'RefObject' as a type.
+ */ export function createCallbackRef<T>(callback: (newValue: T | null, lastValue: T | null) => any): RefObject<T> {
+                                                                                                      ~~~~~~~~~
+    at file://<tmpdir>/src/createRef.ts:9:103
+
+TS2709 [ERROR]: Cannot use namespace 'MutableRefObject' as a type.
+ */ export function mergeRefs<T>(refs: ReactRef<T>[]): MutableRefObject<T | null> {
+                                                       ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/mergeRef.ts:15:56
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'MutableRefObject'.
+export type RefObject<T> = React.MutableRefObject<T | null>;
+                                 ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:3:34
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'MutableRefObject'.
+ */ export function useMergeRefs<T>(refs: ReactRef<T>[], defaultValue?: T): React.MutableRefObject<T | null> {
+                                                                                  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/useMergeRef.ts:16:83
+
+TS2709 [ERROR]: Cannot use namespace 'MutableRefObject' as a type.
+    at file://<tmpdir>/src/useRef.ts:15:125
+
+Found 5 errors.
+
+error: Type checking failed.
+

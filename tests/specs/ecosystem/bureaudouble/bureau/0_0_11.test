@@ -1312,4 +1312,17 @@ bureaudouble/bureau/0.0.11
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2688 [ERROR]: Cannot find type definition file for '@types/react-dom'.
+  The file is in the program because:
+    Entry point of type library '@types/react-dom' specified in compilerOptions
+
+TS5089 [ERROR]: Option 'jsxImportSource' cannot be specified when option 'jsx' is 'react'.
+
+Found 2 errors.
+
+error: Type checking failed.
+

@@ -9,4 +9,21 @@ ssr/velocirouter/0.8.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2552 [ERROR]: Cannot find name 'URLPatternInput'. Did you mean 'URLPatternInit'?
+   */ use(handle: Handle<P> | Array<Handle<P>>, method?: Method, input?: URLPatternInput): void {}
+                                                                         ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/router.ts:39:74
+
+TS2552 [ERROR]: Cannot find name 'URLPatternInput'. Did you mean 'URLPatternInit'?
+  (pattern: URLPatternInput, ...handle: Array<Handle<P>>) : void;
+            ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:34:13
+
+Found 2 errors.
+
+error: Type checking failed.
+

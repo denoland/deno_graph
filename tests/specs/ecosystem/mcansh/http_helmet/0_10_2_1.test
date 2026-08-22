@@ -37,4 +37,21 @@ mcansh/http-helmet/0.10.2-1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  children: React.ReactNode;
+                  ~~~~~~~~~
+    at file://<tmpdir>/src/react.tsx:4:19
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'JSX'.
+ */ export function NonceProvider({}: NonceProviderProps): React.JSX.Element {
+                                                                 ~~~
+    at file://<tmpdir>/src/react.tsx:11:66
+
+Found 2 errors.
+
+error: Type checking failed.
+

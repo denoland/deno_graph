@@ -412,4 +412,14 @@ yi/throttle/1.0.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2709 [ERROR]: Cannot use namespace 'RequestHandler' as a type.
+ */ export const rateLimiter = (options: RateLimitOptions): RequestHandler =>({} as never);
+                                                            ~~~~~~~~~~~~~~
+    at file://<tmpdir>/throttle.ts:12:61
+
+error: Type checking failed.
+

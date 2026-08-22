@@ -20,4 +20,26 @@ monishcm-jsr/hello-jsr/0.1.6
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2709 [ERROR]: Cannot use namespace 'complex' as a type.
+ */ export function complexAdd(a: complex, b: complex): complex {
+                                  ~~~~~~~
+    at file://<tmpdir>/mod.ts:49:35
+
+TS2709 [ERROR]: Cannot use namespace 'complex' as a type.
+ */ export function complexAdd(a: complex, b: complex): complex {
+                                              ~~~~~~~
+    at file://<tmpdir>/mod.ts:49:47
+
+TS2709 [ERROR]: Cannot use namespace 'complex' as a type.
+ */ export function complexAdd(a: complex, b: complex): complex {
+                                                        ~~~~~~~
+    at file://<tmpdir>/mod.ts:49:57
+
+Found 3 errors.
+
+error: Type checking failed.
+

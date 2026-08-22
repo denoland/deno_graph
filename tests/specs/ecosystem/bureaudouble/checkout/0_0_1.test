@@ -363,4 +363,14 @@ bureaudouble/checkout/0.0.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2306 [ERROR]: File '<global_npm_dir>/stripe/14.23.0/types/index.d.ts' is not a module.
+import Stripe from "npm:stripe@14.23.0";
+                   ~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/stripe.ts:1:20
+
+error: Type checking failed.
+

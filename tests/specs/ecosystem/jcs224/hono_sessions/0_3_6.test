@@ -20,4 +20,14 @@ jcs224/hono-sessions/0.3.6
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2307 [ERROR]: Cannot find module 'npm:hono@3.12.8/utils/cookie' or its corresponding type declarations.
+export type { CookieOptions } from 'npm:hono@3.12.8/utils/cookie';
+                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/deps.ts:2:36
+
+error: Type checking failed.
+

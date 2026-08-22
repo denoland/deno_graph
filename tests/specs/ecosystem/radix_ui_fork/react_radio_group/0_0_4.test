@@ -1,167 +1,864 @@
 radix-ui-fork/react-radio-group/0.0.4
 -- deno.lock --
 {
-  "version": "3",
-  "packages": {
-    "specifiers": {
-      "jsr:@radix-ui-fork/primitive@0.0.4": "jsr:@radix-ui-fork/primitive@0.0.4",
-      "jsr:@radix-ui-fork/react-collection@0.0.4": "jsr:@radix-ui-fork/react-collection@0.0.4",
-      "jsr:@radix-ui-fork/react-compose-refs@0.0.4": "jsr:@radix-ui-fork/react-compose-refs@0.0.4",
-      "jsr:@radix-ui-fork/react-context@0.0.4": "jsr:@radix-ui-fork/react-context@0.0.4",
-      "jsr:@radix-ui-fork/react-direction@0.0.4": "jsr:@radix-ui-fork/react-direction@0.0.4",
-      "jsr:@radix-ui-fork/react-id@0.0.4": "jsr:@radix-ui-fork/react-id@0.0.4",
-      "jsr:@radix-ui-fork/react-primitive@0.0.4": "jsr:@radix-ui-fork/react-primitive@0.0.4",
-      "jsr:@radix-ui-fork/react-roving-focus@0.0.4": "jsr:@radix-ui-fork/react-roving-focus@0.0.4",
-      "jsr:@radix-ui-fork/react-slot@0.0.4": "jsr:@radix-ui-fork/react-slot@0.0.4",
-      "jsr:@radix-ui-fork/react-use-callback-ref@0.0.4": "jsr:@radix-ui-fork/react-use-callback-ref@0.0.4",
-      "jsr:@radix-ui-fork/react-use-controllable-state@0.0.4": "jsr:@radix-ui-fork/react-use-controllable-state@0.0.4",
-      "jsr:@radix-ui-fork/react-use-layout-effect@0.0.4": "jsr:@radix-ui-fork/react-use-layout-effect@0.0.4",
-      "npm:@types/react@^18.2.0": "npm:@types/react@18.3.1",
-      "npm:react-dom@^18.0.0": "npm:react-dom@18.3.1_react@18.3.1",
-      "npm:react@^18.2.0": "npm:react@18.3.1"
+  "version": "5",
+  "specifiers": {
+    "jsr:@radix-ui-fork/primitive@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-collection@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-compose-refs@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-context@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-direction@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-id@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-primitive@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-roving-focus@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-slot@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-use-callback-ref@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-use-controllable-state@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-use-layout-effect@0.0.4": "0.0.4",
+    "npm:@types/react@^18.2.0": "18.3.1",
+    "npm:react-dom@18": "18.3.1_react@18.3.1",
+    "npm:react@^18.2.0": "18.3.1"
+  },
+  "jsr": {
+    "@radix-ui-fork/primitive@0.0.4": {
+      "integrity": "260c5e3c0a8eef9cbdac2bcf75a552e6661e65f728c222b9d334001168755dd2"
     },
-    "jsr": {
-      "@radix-ui-fork/primitive@0.0.4": {
-        "integrity": "260c5e3c0a8eef9cbdac2bcf75a552e6661e65f728c222b9d334001168755dd2"
-      },
-      "@radix-ui-fork/react-collection@0.0.4": {
-        "integrity": "9f03d1a4bce66bab0ef87eae5c1b58c32aa68aa165d921c58901172f327381ad",
-        "dependencies": [
-          "jsr:@radix-ui-fork/react-compose-refs@0.0.4",
-          "jsr:@radix-ui-fork/react-context@0.0.4",
-          "jsr:@radix-ui-fork/react-primitive@0.0.4",
-          "jsr:@radix-ui-fork/react-slot@0.0.4",
-          "npm:@types/react@^18.2.0"
-        ]
-      },
-      "@radix-ui-fork/react-compose-refs@0.0.4": {
-        "integrity": "a98338b4cce11888d1e1249e35ee2b74d81db0c32212af6116d79ae2b00eeb72",
-        "dependencies": [
-          "npm:@types/react@^18.2.0"
-        ]
-      },
-      "@radix-ui-fork/react-context@0.0.4": {
-        "integrity": "daf9b1b4c1de39475521174521080048087a6ee3fb943f026a5be9bc7cf231e1",
-        "dependencies": [
-          "npm:@types/react@^18.2.0"
-        ]
-      },
-      "@radix-ui-fork/react-direction@0.0.4": {
-        "integrity": "eb34fa9719f19e2975edc53fcee7d35dc40755a404f69d340bb9b3bea34437d2",
-        "dependencies": [
-          "npm:@types/react@^18.2.0"
-        ]
-      },
-      "@radix-ui-fork/react-id@0.0.4": {
-        "integrity": "cb9d6a352b28e3bfe0945be1cfedeb76e9e35ea86a8ae1b0f70e0c68a9e454f5",
-        "dependencies": [
-          "jsr:@radix-ui-fork/react-use-layout-effect@0.0.4",
-          "npm:@types/react@^18.2.0"
-        ]
-      },
-      "@radix-ui-fork/react-primitive@0.0.4": {
-        "integrity": "913a0c06a5d46add620e3d7a81c0ab09692dda8b325f714641de610406f43c80",
-        "dependencies": [
-          "jsr:@radix-ui-fork/react-slot@0.0.4",
-          "npm:@types/react@^18.2.0",
-          "npm:react-dom@^18.0.0"
-        ]
-      },
-      "@radix-ui-fork/react-roving-focus@0.0.4": {
-        "integrity": "177e681d1515e705c3d751919f437618125a58264bdd96559f534da394089028",
-        "dependencies": [
-          "jsr:@radix-ui-fork/primitive@0.0.4",
-          "jsr:@radix-ui-fork/react-collection@0.0.4",
-          "jsr:@radix-ui-fork/react-compose-refs@0.0.4",
-          "jsr:@radix-ui-fork/react-context@0.0.4",
-          "jsr:@radix-ui-fork/react-direction@0.0.4",
-          "jsr:@radix-ui-fork/react-id@0.0.4",
-          "jsr:@radix-ui-fork/react-primitive@0.0.4",
-          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.4",
-          "jsr:@radix-ui-fork/react-use-controllable-state@0.0.4",
-          "npm:@types/react@^18.2.0"
-        ]
-      },
-      "@radix-ui-fork/react-slot@0.0.4": {
-        "integrity": "a42d541d041d3efb25af23134632558e53212d43a9379fba3238c91d15fe56b3",
-        "dependencies": [
-          "jsr:@radix-ui-fork/react-compose-refs@0.0.4",
-          "npm:@types/react@^18.2.0"
-        ]
-      },
-      "@radix-ui-fork/react-use-callback-ref@0.0.4": {
-        "integrity": "51657c38f5cc9ac2f68946f106577bde307f774bfe4063d3547eb590d55d3927",
-        "dependencies": [
-          "npm:@types/react@^18.2.0"
-        ]
-      },
-      "@radix-ui-fork/react-use-controllable-state@0.0.4": {
-        "integrity": "b0944cfaa721131c26451036fa1f6b1ac3859e37ad5d719656ee214bb896f603",
-        "dependencies": [
-          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.4",
-          "npm:@types/react@^18.2.0"
-        ]
-      },
-      "@radix-ui-fork/react-use-layout-effect@0.0.4": {
-        "integrity": "77947bfa42543b2ec042a8f7664647344c5c692237b3670d0454a67f69fd1d1b",
-        "dependencies": [
-          "npm:@types/react@^18.2.0"
-        ]
-      }
+    "@radix-ui-fork/react-collection@0.0.4": {
+      "integrity": "9f03d1a4bce66bab0ef87eae5c1b58c32aa68aa165d921c58901172f327381ad",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "jsr:@radix-ui-fork/react-context",
+        "jsr:@radix-ui-fork/react-primitive",
+        "jsr:@radix-ui-fork/react-slot",
+        "npm:@types/react",
+        "npm:react"
+      ]
     },
-    "npm": {
-      "@types/prop-types@15.7.12": {
-        "integrity": "sha512-5zvhXYtRNRluoE/jAp4GVsSduVUzNWKkOZrCDBWYtE7biZywwdC2AcEzg+cSMLFRfVgeAFqpfNabiPjxFddV1Q==",
-        "dependencies": {}
-      },
-      "@types/react@18.3.1": {
-        "integrity": "sha512-V0kuGBX3+prX+DQ/7r2qsv1NsdfnCLnTgnRJ1pYnxykBhGMz+qj+box5lq7XsO5mtZsBqpjwwTu/7wszPfMBcw==",
-        "dependencies": {
-          "@types/prop-types": "@types/prop-types@15.7.12",
-          "csstype": "csstype@3.1.3"
-        }
-      },
-      "csstype@3.1.3": {
-        "integrity": "sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==",
-        "dependencies": {}
-      },
-      "js-tokens@4.0.0": {
-        "integrity": "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==",
-        "dependencies": {}
-      },
-      "loose-envify@1.4.0": {
-        "integrity": "sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==",
-        "dependencies": {
-          "js-tokens": "js-tokens@4.0.0"
-        }
-      },
-      "react-dom@18.3.1_react@18.3.1": {
-        "integrity": "sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==",
-        "dependencies": {
-          "loose-envify": "loose-envify@1.4.0",
-          "react": "react@18.3.1",
-          "scheduler": "scheduler@0.23.2"
-        }
-      },
-      "react@18.3.1": {
-        "integrity": "sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==",
-        "dependencies": {
-          "loose-envify": "loose-envify@1.4.0"
-        }
-      },
-      "scheduler@0.23.2": {
-        "integrity": "sha512-UOShsPwz7NrMUqhR6t0hWjFduvOzbtv7toDH1/hIrfRNIDBnnBWd0CwJTGvTpngVlmwGCdP9/Zl/tVrDqcuYzQ==",
-        "dependencies": {
-          "loose-envify": "loose-envify@1.4.0"
-        }
-      }
+    "@radix-ui-fork/react-compose-refs@0.0.4": {
+      "integrity": "a98338b4cce11888d1e1249e35ee2b74d81db0c32212af6116d79ae2b00eeb72",
+      "dependencies": [
+        "npm:@types/react",
+        "npm:react"
+      ]
+    },
+    "@radix-ui-fork/react-context@0.0.4": {
+      "integrity": "daf9b1b4c1de39475521174521080048087a6ee3fb943f026a5be9bc7cf231e1",
+      "dependencies": [
+        "npm:@types/react",
+        "npm:react"
+      ]
+    },
+    "@radix-ui-fork/react-direction@0.0.4": {
+      "integrity": "eb34fa9719f19e2975edc53fcee7d35dc40755a404f69d340bb9b3bea34437d2",
+      "dependencies": [
+        "npm:@types/react",
+        "npm:react"
+      ]
+    },
+    "@radix-ui-fork/react-id@0.0.4": {
+      "integrity": "cb9d6a352b28e3bfe0945be1cfedeb76e9e35ea86a8ae1b0f70e0c68a9e454f5",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-use-layout-effect",
+        "npm:@types/react",
+        "npm:react"
+      ]
+    },
+    "@radix-ui-fork/react-primitive@0.0.4": {
+      "integrity": "913a0c06a5d46add620e3d7a81c0ab09692dda8b325f714641de610406f43c80",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-slot",
+        "npm:@types/react",
+        "npm:react",
+        "npm:react-dom"
+      ]
+    },
+    "@radix-ui-fork/react-roving-focus@0.0.4": {
+      "integrity": "177e681d1515e705c3d751919f437618125a58264bdd96559f534da394089028",
+      "dependencies": [
+        "jsr:@radix-ui-fork/primitive",
+        "jsr:@radix-ui-fork/react-collection",
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "jsr:@radix-ui-fork/react-context",
+        "jsr:@radix-ui-fork/react-direction",
+        "jsr:@radix-ui-fork/react-id",
+        "jsr:@radix-ui-fork/react-primitive",
+        "jsr:@radix-ui-fork/react-use-callback-ref",
+        "jsr:@radix-ui-fork/react-use-controllable-state",
+        "npm:@types/react",
+        "npm:react"
+      ]
+    },
+    "@radix-ui-fork/react-slot@0.0.4": {
+      "integrity": "a42d541d041d3efb25af23134632558e53212d43a9379fba3238c91d15fe56b3",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "npm:@types/react",
+        "npm:react"
+      ]
+    },
+    "@radix-ui-fork/react-use-callback-ref@0.0.4": {
+      "integrity": "51657c38f5cc9ac2f68946f106577bde307f774bfe4063d3547eb590d55d3927",
+      "dependencies": [
+        "npm:@types/react",
+        "npm:react"
+      ]
+    },
+    "@radix-ui-fork/react-use-controllable-state@0.0.4": {
+      "integrity": "b0944cfaa721131c26451036fa1f6b1ac3859e37ad5d719656ee214bb896f603",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-use-callback-ref",
+        "npm:@types/react",
+        "npm:react"
+      ]
+    },
+    "@radix-ui-fork/react-use-layout-effect@0.0.4": {
+      "integrity": "77947bfa42543b2ec042a8f7664647344c5c692237b3670d0454a67f69fd1d1b",
+      "dependencies": [
+        "npm:@types/react",
+        "npm:react"
+      ]
     }
   },
-  "remote": {}
+  "npm": {
+    "@types/prop-types@15.7.12": {
+      "integrity": "sha512-5zvhXYtRNRluoE/jAp4GVsSduVUzNWKkOZrCDBWYtE7biZywwdC2AcEzg+cSMLFRfVgeAFqpfNabiPjxFddV1Q=="
+    },
+    "@types/react@18.3.1": {
+      "integrity": "sha512-V0kuGBX3+prX+DQ/7r2qsv1NsdfnCLnTgnRJ1pYnxykBhGMz+qj+box5lq7XsO5mtZsBqpjwwTu/7wszPfMBcw==",
+      "dependencies": [
+        "@types/prop-types",
+        "csstype"
+      ]
+    },
+    "csstype@3.1.3": {
+      "integrity": "sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw=="
+    },
+    "js-tokens@4.0.0": {
+      "integrity": "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ=="
+    },
+    "loose-envify@1.4.0": {
+      "integrity": "sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==",
+      "dependencies": [
+        "js-tokens"
+      ],
+      "bin": true
+    },
+    "react-dom@18.3.1_react@18.3.1": {
+      "integrity": "sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==",
+      "dependencies": [
+        "loose-envify",
+        "react",
+        "scheduler"
+      ]
+    },
+    "react@18.3.1": {
+      "integrity": "sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==",
+      "dependencies": [
+        "loose-envify"
+      ]
+    },
+    "scheduler@0.23.2": {
+      "integrity": "sha512-UOShsPwz7NrMUqhR6t0hWjFduvOzbtv7toDH1/hIrfRNIDBnnBWd0CwJTGvTpngVlmwGCdP9/Zl/tVrDqcuYzQ==",
+      "dependencies": [
+        "loose-envify"
+      ]
+    }
+  }
 }
 
 ===
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+type CollectionElement = HTMLElement;
+                         ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:10:26
+
+TS2552 [ERROR]: Cannot find name 'HTMLElement'. Did you mean 'ItemElement'?
+function createCollection<ItemElement extends HTMLElement, ItemData = {}>(name: string): readonly [{
+                                              ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:20:47
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'FC'.
+  readonly Provider: React.FC<{
+                           ~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:21:28
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+      children?: React.ReactNode;
+                       ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:22:24
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+  readonly Slot: React.ForwardRefExoticComponent<CollectionProps & React.RefAttributes<HTMLElement>>;
+                       ~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:25:24
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+  readonly Slot: React.ForwardRefExoticComponent<CollectionProps & React.RefAttributes<HTMLElement>>;
+                                                                         ~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:25:74
+
+TS2552 [ERROR]: Cannot find name 'HTMLElement'. Did you mean 'ItemElement'?
+  readonly Slot: React.ForwardRefExoticComponent<CollectionProps & React.RefAttributes<HTMLElement>>;
+                                                                                       ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:25:88
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+  readonly ItemSlot: React.ForwardRefExoticComponent<any>;
+                           ~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:26:28
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefObject'.
+    collectionRef: React.RefObject<CollectionElement>;
+                         ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:36:26
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefObject'.
+    itemMap: Map<React.RefObject<ItemElement>, { ref: React.RefObject<ItemElement> } & ItemData>;
+                       ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:37:24
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefObject'.
+    itemMap: Map<React.RefObject<ItemElement>, { ref: React.RefObject<ItemElement> } & ItemData>;
+                                                            ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:37:61
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'FC'.
+  const CollectionProvider: React.FC<{ children?: React.ReactNode; scope: any }> = (props) => {
+                                  ~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:45:35
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  const CollectionProvider: React.FC<{ children?: React.ReactNode; scope: any }> = (props) => {
+                                                        ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:45:57
+
+TS7006 [ERROR]: Parameter 'props' implicitly has an 'any' type.
+  const CollectionProvider: React.FC<{ children?: React.ReactNode; scope: any }> = (props) => {
+                                                                                    ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:45:85
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    const ref = React.useRef<CollectionElement>(null);
+                ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:47:17
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    const itemMap = React.useRef<ContextValue['itemMap']>(new Map()).current;
+                    ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:48:21
+
+TS2322 [ERROR]: Type '{ scope: any; itemMap: any; collectionRef: any; }' is not assignable to type 'ContextValue & { scope: Scope<any>; children: React.ReactNode; }'.
+  Property 'children' is missing in type '{ scope: any; itemMap: any; collectionRef: any; }' but required in type '{ scope: Scope<any>; children: React.ReactNode; }'.
+      <CollectionProviderImpl scope={scope} itemMap={itemMap} collectionRef={ref}>
+       ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:50:8
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+  const CollectionSlot = React.forwardRef<CollectionElement, CollectionProps>(
+                         ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:64:26
+
+TS7006 [ERROR]: Parameter 'props' implicitly has an 'any' type.
+    (props, forwardedRef) => {
+     ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:65:6
+
+TS7006 [ERROR]: Parameter 'forwardedRef' implicitly has an 'any' type.
+    (props, forwardedRef) => {
+            ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:65:13
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+    children: React.ReactNode;
+                    ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:83:21
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+  const CollectionItemSlot = React.forwardRef<ItemElement, CollectionItemSlotProps>(
+                             ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:87:30
+
+TS7006 [ERROR]: Parameter 'props' implicitly has an 'any' type.
+    (props, forwardedRef) => {
+     ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:88:6
+
+TS7006 [ERROR]: Parameter 'forwardedRef' implicitly has an 'any' type.
+    (props, forwardedRef) => {
+            ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:88:13
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+      const ref = React.useRef<ItemElement>(null);
+                  ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-collection/src/Collection.tsx:90:19
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'Ref'.
+type PossibleRef<T> = React.Ref<T> | undefined;
+                            ~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-compose-refs/src/composeRefs.tsx:4:29
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'MutableRefObject'.
+    (ref as React.MutableRefObject<T>).current = value;
+                  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-compose-refs/src/composeRefs.tsx:14:19
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+      children: React.ReactNode;
+                      ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-context/src/createContext.tsx:10:23
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'JSX'.
+  ): React.JSX.Element;
+           ~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-context/src/createContext.tsx:12:12
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+  const Context = React.createContext<ContextValueType | undefined>(defaultContext);
+                  ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-context/src/createContext.tsx:15:19
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  function Provider(props: ContextValueType & { children: React.ReactNode }) {
+                                                                ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-context/src/createContext.tsx:17:65
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'Context'.
+type Scope<C = any> = { [scopeName: string]: React.Context<C>[] } | undefined;
+                                                   ~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-context/src/createContext.tsx:41:52
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+    children: React.ReactNode;
+                    ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-context/src/createContext.tsx:51:21
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'JSX'.
+  }): React.JSX.Element;
+            ~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-context/src/createContext.tsx:52:13
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    const BaseContext = React.createContext<ContextValueType | undefined>(defaultContext);
+                        ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-context/src/createContext.tsx:66:25
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+      props: ContextValueType & { scope: Scope<ContextValueType>; children: React.ReactNode }
+                                                                                  ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-context/src/createContext.tsx:71:83
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+const DirectionContext = React.createContext<Direction | undefined>(undefined);
+                         ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-direction/src/Direction.tsx:5:26
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  children?: React.ReactNode;
+                   ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-direction/src/Direction.tsx:12:20
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'FC'.
+const DirectionProvider: React.FC<DirectionProviderProps> = (props) => {
+                               ~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-direction/src/Direction.tsx:15:32
+
+TS7006 [ERROR]: Parameter 'props' implicitly has an 'any' type.
+const DirectionProvider: React.FC<DirectionProviderProps> = (props) => {
+                                                             ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-direction/src/Direction.tsx:15:62
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+  const [id, setId] = React.useState<string | undefined>(useReactId());
+                      ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-id/src/id.tsx:10:23
+
+TS7006 [ERROR]: Parameter 'reactId' implicitly has an 'any' type.
+    if (!deterministicId) setId((reactId) => reactId ?? String(count++));
+                                 ~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-id/src/id.tsx:13:34
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementType'.
+type ComponentPropsWithoutRef<T extends React.ElementType> = PropsWithoutRef<
+                                              ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-primitive/src/Primitive.tsx:29:47
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ComponentProps'.
+  React.ComponentProps<T>
+        ~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-primitive/src/Primitive.tsx:30:9
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementType'.
+type PrimitivePropsWithRef<E extends React.ElementType> = React.ComponentPropsWithRef<E> & {
+                                           ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-primitive/src/Primitive.tsx:34:44
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ComponentPropsWithRef'.
+type PrimitivePropsWithRef<E extends React.ElementType> = React.ComponentPropsWithRef<E> & {
+                                                                ~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-primitive/src/Primitive.tsx:34:65
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementType'.
+interface PrimitiveForwardRefComponent<E extends React.ElementType>
+                                                       ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-primitive/src/Primitive.tsx:38:56
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+  extends React.ForwardRefExoticComponent<PrimitivePropsWithRef<E>> {}
+                ~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-primitive/src/Primitive.tsx:39:17
+
+TS2304 [ERROR]: Cannot find name 'HTMLSpanElement'.
+HTMLSpanElement,
+~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:28:1
+
+TS2304 [ERROR]: Cannot find name 'HTMLSpanElement'.
+  HTMLSpanElement,
+  ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:31:3
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'AriaAttributes'.
+type Orientation = React.AriaAttributes['aria-orientation'];
+                         ~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:46:26
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:80:31
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:80:100
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:80:114
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:80:133
+
+TS7006 [ERROR]: Parameter 'forwardedRef' implicitly has an 'any' type.
+  (props: ScopedProps<RovingFocusGroupProps>, forwardedRef) => {
+                                              ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:81:47
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type RovingFocusGroupImplElement = React.ElementRef<typeof Primitive.div>;
+                                         ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:96:42
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:108:35
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:108:108
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:108:122
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:108:141
+
+TS7006 [ERROR]: Parameter 'forwardedRef' implicitly has an 'any' type.
+>((props: ScopedProps<RovingFocusGroupImplProps>, forwardedRef) => {
+                                                  ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:111:51
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+  const ref = React.useRef<RovingFocusGroupImplElement>(null);
+              ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:124:15
+
+TS2322 [ERROR]: Type '{ scope: Scope; orientation: any; dir: Direction; loop: boolean; currentTabStopId: string | null; onItemFocus: any; onItemShiftTab: any; onFocusableItemAdd: any; onFocusableItemRemove: any; }' is not assignable to type 'RovingFocusGroupOptions & { currentTabStopId: string | null; onItemFocus(tabStopId: string): void; onItemShiftTab(): void; onFocusableItemAdd(): void; onFocusableItemRemove(): void; } & { ...; }'.
+  Property 'children' is missing in type '{ scope: Scope; orientation: any; dir: Direction; loop: boolean; currentTabStopId: string | null; onItemFocus: any; onItemShiftTab: any; onFocusableItemAdd: any; onFocusableItemRemove: any; }' but required in type '{ scope: Scope<any>; children: React.ReactNode; }'.
+    <RovingFocusProvider
+     ~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:147:6
+
+TS7006 [ERROR]: Parameter 'tabStopId' implicitly has an 'any' type.
+        (tabStopId) => setCurrentTabStopId(tabStopId),
+         ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:154:10
+
+TS7006 [ERROR]: Parameter 'prevCount' implicitly has an 'any' type.
+        () => setFocusableItemsCount((prevCount) => prevCount + 1),
+                                      ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:159:39
+
+TS7006 [ERROR]: Parameter 'prevCount' implicitly has an 'any' type.
+        () => setFocusableItemsCount((prevCount) => prevCount - 1),
+                                      ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:163:39
+
+TS2604 [ERROR]: JSX element type 'Primitive.div' does not have any construct or call signatures.
+      <Primitive.div
+       ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:167:8
+
+TS18046 [ERROR]: 'event' is of type 'unknown'.
+          if (event.target === event.currentTarget && isKeyboardFocus && !isTabbingBackOut) {
+              ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:183:15
+
+TS18046 [ERROR]: 'event' is of type 'unknown'.
+          if (event.target === event.currentTarget && isKeyboardFocus && !isTabbingBackOut) {
+                               ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:183:32
+
+TS18046 [ERROR]: 'event' is of type 'unknown'.
+            event.currentTarget.dispatchEvent(entryFocusEvent);
+            ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:185:13
+
+TS18046 [ERROR]: 'item' is of type 'unknown'.
+              const items = getItems().filter((item) => item.focusable);
+                                                        ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:188:57
+
+TS18046 [ERROR]: 'item' is of type 'unknown'.
+              const activeItem = items.find((item) => item.active);
+                                                      ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:189:55
+
+TS18046 [ERROR]: 'item' is of type 'unknown'.
+              const currentItem = items.find((item) => item.id === currentTabStopId);
+                                                       ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:190:56
+
+TS18046 [ERROR]: 'item' is of type 'unknown'.
+              const candidateNodes = candidateItems.map((item) => item.ref.current!);
+                                                                  ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:194:67
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type RovingFocusItemElement = React.ElementRef<typeof Primitive.span>;
+                                    ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:213:37
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:221:35
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:221:90
+
+TS2304 [ERROR]: Cannot find name 'HTMLSpanElement'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:221:104
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:221:124
+
+TS7006 [ERROR]: Parameter 'forwardedRef' implicitly has an 'any' type.
+  (props: ScopedProps<RovingFocusItemProps>, forwardedRef) => {
+                                             ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:222:46
+
+TS2604 [ERROR]: JSX element type 'Primitive.span' does not have any construct or call signatures.
+        <Primitive.span
+         ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:252:10
+
+TS18046 [ERROR]: 'event' is of type 'unknown'.
+            if (!focusable) event.preventDefault();
+                            ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:260:29
+
+TS18046 [ERROR]: 'event' is of type 'unknown'.
+            if (event.key === 'Tab' && event.shiftKey) {
+                ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:266:17
+
+TS18046 [ERROR]: 'event' is of type 'unknown'.
+            if (event.key === 'Tab' && event.shiftKey) {
+                                       ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:266:40
+
+TS18046 [ERROR]: 'event' is of type 'unknown'.
+            if (event.target !== event.currentTarget) return;
+                ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:271:17
+
+TS18046 [ERROR]: 'event' is of type 'unknown'.
+            if (event.target !== event.currentTarget) return;
+                                 ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:271:34
+
+TS18046 [ERROR]: 'event' is of type 'unknown'.
+              if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+                  ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:276:19
+
+TS18046 [ERROR]: 'event' is of type 'unknown'.
+              if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+                                   ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:276:36
+
+TS18046 [ERROR]: 'event' is of type 'unknown'.
+              if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+                                                    ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:276:53
+
+TS18046 [ERROR]: 'event' is of type 'unknown'.
+              if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+                                                                    ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:276:69
+
+TS18046 [ERROR]: 'event' is of type 'unknown'.
+              event.preventDefault();
+              ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:277:15
+
+TS18046 [ERROR]: 'item' is of type 'unknown'.
+              const items = getItems().filter((item) => item.focusable);
+                                                        ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:278:57
+
+TS18046 [ERROR]: 'item' is of type 'unknown'.
+              let candidateNodes = items.map((item) => item.ref.current!);
+                                                       ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:279:56
+
+TS18046 [ERROR]: 'event' is of type 'unknown'.
+                const currentIndex = candidateNodes.indexOf(event.currentTarget);
+                                                            ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:284:61
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'KeyboardEvent'.
+function getFocusIntent(event: React.KeyboardEvent, orientation?: Orientation, dir?: Direction) {
+                                     ~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:322:38
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+function focusFirst(candidates: HTMLElement[], preventScroll = false) {
+                                ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:329:33
+
+TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+  const PREVIOUSLY_FOCUSED_ELEMENT = document.activeElement;
+                                     ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:330:38
+
+TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+    if (document.activeElement !== PREVIOUSLY_FOCUSED_ELEMENT) return;
+        ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-roving-focus/src/RovingFocusGroup.tsx:335:9
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'HTMLAttributes'.
+interface SlotProps extends React.HTMLAttributes<HTMLElement> {
+                                  ~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:9:35
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+interface SlotProps extends React.HTMLAttributes<HTMLElement> {
+                                                 ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:9:50
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  children?: React.ReactNode;
+                   ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:10:20
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:13:19
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:13:63
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:13:77
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:13:93
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:13:110
+
+TS7006 [ERROR]: Parameter 'props' implicitly has an 'any' type.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:13:135
+
+TS7006 [ERROR]: Parameter 'forwardedRef' implicitly has an 'any' type.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:13:142
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+    const newElement = slottable.props.children as React.ReactNode;
+                                                         ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:20:58
+
+TS7006 [ERROR]: Parameter 'child' implicitly has an 'any' type.
+    const newChildren = childrenArray.map((child) => {
+                                           ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:22:44
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+          ? (newElement.props.children as React.ReactNode)
+                                                ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:28:49
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  children: React.ReactNode;
+                  ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:58:19
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+const SlotClone = React.forwardRef<any, SlotCloneProps>((props, forwardedRef) => {
+                  ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:61:19
+
+TS7006 [ERROR]: Parameter 'props' implicitly has an 'any' type.
+const SlotClone = React.forwardRef<any, SlotCloneProps>((props, forwardedRef) => {
+                                                         ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:61:58
+
+TS7006 [ERROR]: Parameter 'forwardedRef' implicitly has an 'any' type.
+const SlotClone = React.forwardRef<any, SlotCloneProps>((props, forwardedRef) => {
+                                                                ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:61:65
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+const Slottable = ({ children }: { children: React.ReactNode }): React.ReactElement => {
+                                                   ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:80:52
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactElement'.
+const Slottable = ({ children }: { children: React.ReactNode }): React.ReactElement => {
+                                                                       ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:80:72
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+function isSlottable(child: React.ReactNode): child is React.ReactElement {
+                                  ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:88:35
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactElement'.
+function isSlottable(child: React.ReactNode): child is React.ReactElement {
+                                                             ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:88:62
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'Dispatch'.
+}: UseControllableStateParams<T>): readonly [T | undefined, React.Dispatch<React.SetStateAction<T | undefined>>] {
+                                                                  ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-controllable-state/src/useControllableState.tsx:17:67
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'SetStateAction'.
+}: UseControllableStateParams<T>): readonly [T | undefined, React.Dispatch<React.SetStateAction<T | undefined>>] {
+                                                                                 ~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-controllable-state/src/useControllableState.tsx:17:82
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'Dispatch'.
+  const setValue: React.Dispatch<React.SetStateAction<T | undefined>> = React.useCallback(
+                        ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-controllable-state/src/useControllableState.tsx:23:25
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'SetStateAction'.
+  const setValue: React.Dispatch<React.SetStateAction<T | undefined>> = React.useCallback(
+                                       ~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-controllable-state/src/useControllableState.tsx:23:40
+
+TS7006 [ERROR]: Parameter 'nextValue' implicitly has an 'any' type.
+    (nextValue) => {
+     ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-controllable-state/src/useControllableState.tsx:24:6
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+  const uncontrolledState = React.useState<T | undefined>(defaultProp);
+                            ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-controllable-state/src/useControllableState.tsx:43:29
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'EffectCallback'.
+  effect: React.EffectCallback,
+                ~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-layout-effect/src/useLayoutEffect.tsx:12:17
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'DependencyList'.
+  deps?: React.DependencyList | undefined,
+               ~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-layout-effect/src/useLayoutEffect.tsx:13:16
+
+TS7017 [ERROR]: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
+) => void = Boolean(globalThis?.document) ? React.useLayoutEffect : () => {};
+                                ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-layout-effect/src/useLayoutEffect.tsx:14:33
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type RadioElement = React.ElementRef<typeof Primitive.button>;
+                          ~~~~~~~~~~
+    at file://<tmpdir>/src/Radio.tsx:4:27
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+const Radio: React.ForwardRefExoticComponent<RadioProps & React.RefAttributes<RadioElement>> = {} as never;
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Radio.tsx:11:20
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+const Radio: React.ForwardRefExoticComponent<RadioProps & React.RefAttributes<RadioElement>> = {} as never;
+                                                                ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Radio.tsx:11:65
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type RadioIndicatorElement = React.ElementRef<typeof Primitive.span>;
+                                   ~~~~~~~~~~
+    at file://<tmpdir>/src/Radio.tsx:12:36
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+const RadioIndicator: React.ForwardRefExoticComponent<RadioIndicatorProps & React.RefAttributes<RadioIndicatorElement>> = {} as never;
+                            ~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Radio.tsx:20:29
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+const RadioIndicator: React.ForwardRefExoticComponent<RadioIndicatorProps & React.RefAttributes<RadioIndicatorElement>> = {} as never;
+                                                                                  ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Radio.tsx:20:83
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type RadioGroupElement = React.ElementRef<typeof Primitive.div>;
+                               ~~~~~~~~~~
+    at file://<tmpdir>/src/RadioGroup.tsx:16:32
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+const RadioGroup: React.ForwardRefExoticComponent<RadioGroupProps & React.RefAttributes<RadioGroupElement>> = {} as never;
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/RadioGroup.tsx:30:25
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+const RadioGroup: React.ForwardRefExoticComponent<RadioGroupProps & React.RefAttributes<RadioGroupElement>> = {} as never;
+                                                                          ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/RadioGroup.tsx:30:75
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type RadioGroupItemElement = React.ElementRef<typeof Radio>;
+                                   ~~~~~~~~~~
+    at file://<tmpdir>/src/RadioGroup.tsx:31:36
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+const RadioGroupItem: React.ForwardRefExoticComponent<Omit<RadioGroupItemProps, "ref"> & React.RefAttributes<RadioGroupItemElement>> = {} as never;
+                            ~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/RadioGroup.tsx:36:29
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+const RadioGroupItem: React.ForwardRefExoticComponent<Omit<RadioGroupItemProps, "ref"> & React.RefAttributes<RadioGroupItemElement>> = {} as never;
+                                                                                               ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/RadioGroup.tsx:36:96
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type RadioGroupIndicatorElement = React.ElementRef<typeof RadioIndicator>;
+                                        ~~~~~~~~~~
+    at file://<tmpdir>/src/RadioGroup.tsx:37:41
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+const RadioGroupIndicator: React.ForwardRefExoticComponent<RadioGroupIndicatorProps & React.RefAttributes<RadioGroupIndicatorElement>> = {} as never;
+                                 ~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/RadioGroup.tsx:41:34
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+const RadioGroupIndicator: React.ForwardRefExoticComponent<RadioGroupIndicatorProps & React.RefAttributes<RadioGroupIndicatorElement>> = {} as never;
+                                                                                            ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/RadioGroup.tsx:41:93
+
+Found 144 errors.
+
+error: Type checking failed.
+

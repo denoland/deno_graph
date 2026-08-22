@@ -13,6 +13,16 @@ codehz/mtproto/0.6.3
 -- stdout --
 
 -- stderr --
+TS2846 [ERROR]: A declaration file cannot be imported without 'import type'. Did you mean to import an implementation file '../gen/api.ts' instead?
+import * as apiset from "../gen/api.d.ts";
+                        ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/rpc/mod.ts:4:25
+
+TS2846 [ERROR]: A declaration file cannot be imported without 'import type'. Did you mean to import an implementation file '../gen/api.ts' instead?
+import { type api } from "../gen/api.d.ts";
+                         ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/rpc/mod.ts:5:26
+
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<string, string>'.
   set(key: string, value: string): this {
   ~~~
@@ -53,7 +63,7 @@ class WebSocketWrapper implements Deno.Reader {
                                        ~~~~~~
     at file://<tmpdir>/transport/connection/websocket.ts:2:40
 
-Found 8 errors.
+Found 10 errors.
 
 error: Type checking failed.
 

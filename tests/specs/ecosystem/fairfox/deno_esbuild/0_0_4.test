@@ -136,4 +136,21 @@ fairfox/deno-esbuild/0.0.4
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2307 [ERROR]: Cannot find module 'npm:esbuild@0.20.2/wasm.js' or its corresponding type declarations.
+import { type BuildOptions, type BuildResult } from 'npm:esbuild@0.20.2/wasm.js';
+                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/bundle-with-wasm.ts:1:53
+
+TS2307 [ERROR]: Cannot find module 'npm:esbuild@0.20.2/wasm.js' or its corresponding type declarations.
+export * as esbuildWASM from 'npm:esbuild@0.20.2/wasm.js';
+                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/mod.ts:8:30
+
+Found 2 errors.
+
+error: Type checking failed.
+

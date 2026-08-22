@@ -32,4 +32,14 @@ dohoons/bar/0.1.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2709 [ERROR]: Cannot use namespace 'ReactNode' as a type.
+function App(): ReactNode {
+                ~~~~~~~~~
+    at file://<tmpdir>/src/App.tsx:2:17
+
+error: Type checking failed.
+

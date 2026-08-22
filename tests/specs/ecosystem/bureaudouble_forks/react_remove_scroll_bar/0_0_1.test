@@ -32,4 +32,14 @@ bureaudouble-forks/react-remove-scroll-bar/0.0.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2694 [ERROR]: Namespace '"npm:react@^18.2"' has no exported member 'FC'.
+ */ export const RemoveScrollBar: React.FC<BodyScroll> = {} as never;
+                                        ~~
+    at file://<tmpdir>/src/component.tsx:10:41
+
+error: Type checking failed.
+

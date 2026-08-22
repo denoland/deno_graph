@@ -13,31 +13,15 @@ okikio/transferables/1.0.2
 -- stdout --
 
 -- stderr --
-TS7017 [ERROR]: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
- */ export const AudioData = globalThis.AudioData;
-                                        ~~~~~~~~~
-    at file://<tmpdir>/src/mod.ts:19:41
+TS2688 [ERROR]: Cannot find type definition file for '@types/dom-webcodecs'.
+  The file is in the program because:
+    Entry point of type library '@types/dom-webcodecs' specified in compilerOptions
 
-TS7017 [ERROR]: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
- */ export const VideoFrame = globalThis.VideoFrame;
-                                         ~~~~~~~~~~
-    at file://<tmpdir>/src/mod.ts:39:42
+TS2688 [ERROR]: Cannot find type definition file for '@types/offscreencanvas'.
+  The file is in the program because:
+    Entry point of type library '@types/offscreencanvas' specified in compilerOptions
 
-TS7017 [ERROR]: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
- */ export const RTCDataChannel = globalThis.RTCDataChannel;
-                                             ~~~~~~~~~~~~~~
-    at file://<tmpdir>/src/mod.ts:60:46
-
-TS2749 [ERROR]: 'AudioData' refers to a value, but is being used as a type here. Did you mean 'typeof AudioData'?
-    at file://<tmpdir>/src/mod.ts:136:134
-
-TS2749 [ERROR]: 'VideoFrame' refers to a value, but is being used as a type here. Did you mean 'typeof VideoFrame'?
-    at file://<tmpdir>/src/mod.ts:136:160
-
-TS2749 [ERROR]: 'RTCDataChannel' refers to a value, but is being used as a type here. Did you mean 'typeof RTCDataChannel'?
-    at file://<tmpdir>/src/mod.ts:136:191
-
-Found 6 errors.
+Found 2 errors.
 
 error: Type checking failed.
 

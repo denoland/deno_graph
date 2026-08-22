@@ -6,17 +6,4 @@ gcch/libsch/0.0.2
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK FAILED ==
--- stdout --
-
--- stderr --
-TS2307 [ERROR]: Cannot find module 'file://<tmpdir>/src/types/arrays'.
-    at file://<tmpdir>/src/index.ts:3:20
-
-TS2307 [ERROR]: Cannot find module 'file://<tmpdir>/src/types/numbers'.
-    at file://<tmpdir>/src/index.ts:4:20
-
-Found 2 errors.
-
-error: Type checking failed.
-
+== TYPE CHECK PASSED ==

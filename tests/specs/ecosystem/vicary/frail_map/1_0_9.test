@@ -73,17 +73,17 @@ TS2416 [ERROR]: Property '[Symbol.iterator]' in type 'FrailMap<K, V>' is not ass
   Type '() => IterableIterator<[K, V]>' is not assignable to type '() => MapIterator<[K, V]>'.
     Type 'IterableIterator<[K, V]>' is missing the following properties from type 'MapIterator<[K, V]>': map, filter, take, drop, and 9 more.
   [Symbol.iterator](): IterableIterator<[K, V]> {
-  ~~~~~~~~~~~~~~~~~
+  ^
     at file://<tmpdir>/src/FrailMap.ts:62:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, V>'.
   [Symbol.iterator](): IterableIterator<[K, V]> {
-  ~~~~~~~~~~~~~~~~~
+  ^
     at file://<tmpdir>/src/FrailMap.ts:62:3
 
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Map<K, V>'.
   get [Symbol.toStringTag](): string {
-      ~~~~~~~~~~~~~~~~~~~~
+      ^
     at file://<tmpdir>/src/FrailMap.ts:65:7
 
 Found 13 errors.

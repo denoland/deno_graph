@@ -1,6 +1,52 @@
 sxzz/ast-kit/0.11.3
 -- deno.lock --
-{}
+{
+  "version": "5",
+  "specifiers": {
+    "npm:@babel/parser@^7.23.9": "7.29.8",
+    "npm:@babel/types@^7.23.9": "7.29.8",
+    "npm:@rollup/pluginutils@^5.1.0": "5.4.0"
+  },
+  "npm": {
+    "@babel/helper-string-parser@7.29.7": {
+      "integrity": "sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw=="
+    },
+    "@babel/helper-validator-identifier@7.29.7": {
+      "integrity": "sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg=="
+    },
+    "@babel/parser@7.29.8": {
+      "integrity": "sha512-E8lTAYNB1KW+FH+VGJuZM1ioAx2E6oVlvQFRrf5P8ZZmsiJXYAD9vTFV7yyEURNzgh1dFqMZuO6tUwcARbqFCA==",
+      "dependencies": [
+        "@babel/types"
+      ],
+      "bin": true
+    },
+    "@babel/types@7.29.8": {
+      "integrity": "sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg==",
+      "dependencies": [
+        "@babel/helper-string-parser",
+        "@babel/helper-validator-identifier"
+      ]
+    },
+    "@rollup/pluginutils@5.4.0": {
+      "integrity": "sha512-MfPp06CjRLfXQ3wY0R8vJDYBy/MvVcc9OulEfR0B8Iv9ko+GCNaRZ+EpJYFl27LhKsZK0o420sYCRHCjfCgeUg==",
+      "dependencies": [
+        "@types/estree",
+        "estree-walker",
+        "picomatch"
+      ]
+    },
+    "@types/estree@1.0.9": {
+      "integrity": "sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg=="
+    },
+    "estree-walker@2.0.2": {
+      "integrity": "sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w=="
+    },
+    "picomatch@4.0.5": {
+      "integrity": "sha512-RvwwcruNjI1ncT5xRakeyS9Lf8lcItv34KD+aif+VH9kduAyfYBipGh12274xtenIPZ119/R9BdTBa8gAwSh0A=="
+    }
+  }
+}
 
 ===
 
@@ -10,19 +56,13 @@ sxzz/ast-kit/0.11.3
 -- stdout --
 
 -- stderr --
-TS2344 [ERROR]: Type 'T' does not satisfy the constraint 'File | Expression'.
-  Type 'T' is not assignable to type 'YieldExpression'.
-export type ParseResult<T> = _ParseResult<T> & {
-                                          ^
-    at file://<tmpdir>/src/parse.ts:3:43
+TS2694 [ERROR]: Namespace '"<global_npm_dir>/@babel/types/7.29.8/lib/index-legacy"' has no exported member 'ParentMaps'.
+    at file://<tmpdir>/src/walk.ts:16:124
 
-TS2208 [ERROR]:     This type parameter might need an `extends t.YieldExpression` constraint.
-    export type ParseResult<T> = _ParseResult<T> & {
-                            ^
-        at file://<tmpdir>/src/parse.ts:3:25TS2208 [ERROR]:     This type parameter might need an `extends t.File | t.Expression` constraint.
-    export type ParseResult<T> = _ParseResult<T> & {
-                            ^
-        at file://<tmpdir>/src/parse.ts:3:25
+TS2694 [ERROR]: Namespace '"<global_npm_dir>/@babel/types/7.29.8/lib/index-legacy"' has no exported member 'ParentMaps'.
+    at file://<tmpdir>/src/walk.ts:16:139
+
+Found 2 errors.
 
 error: Type checking failed.
 

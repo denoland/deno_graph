@@ -136,4 +136,87 @@ pavindulakshan/auth-react/4.0.4
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2709 [ERROR]: Cannot use namespace 'ReactNode' as a type.
+  fallback?: ReactNode;
+             ~~~~~~~~~
+    at file://<tmpdir>/src/authenticate.tsx:22:14
+
+TS2709 [ERROR]: Cannot use namespace 'FunctionComponent' as a type.
+const AuthProvider: FunctionComponent<PropsWithChildren<AuthProviderPropsInterface>> = {} as never;
+                    ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/authenticate.tsx:27:21
+
+TS2709 [ERROR]: Cannot use namespace 'PropsWithChildren' as a type.
+const AuthProvider: FunctionComponent<PropsWithChildren<AuthProviderPropsInterface>> = {} as never;
+                                      ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/authenticate.tsx:27:39
+
+TS2709 [ERROR]: Cannot use namespace 'ReactNode' as a type.
+  fallback: ReactNode;
+            ~~~~~~~~~
+    at file://<tmpdir>/src/authenticated-component.tsx:21:13
+
+TS2709 [ERROR]: Cannot use namespace 'FunctionComponent' as a type.
+ */ export const AuthenticatedComponent: FunctionComponent<PropsWithChildren<AuthenticatedComponentPropsInterface>> = {} as never;
+                                         ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/authenticated-component.tsx:28:42
+
+TS2709 [ERROR]: Cannot use namespace 'PropsWithChildren' as a type.
+ */ export const AuthenticatedComponent: FunctionComponent<PropsWithChildren<AuthenticatedComponentPropsInterface>> = {} as never;
+                                                           ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/authenticated-component.tsx:28:60
+
+TS2305 [ERROR]: Module '"npm:@asgardeo/auth-spa@^3.0.2"' has no exported member 'AsgardeoAuthException'.
+    at file://<tmpdir>/src/models.ts:17:14
+
+TS2724 [ERROR]: '"npm:@asgardeo/auth-spa@^3.0.2"' has no exported member named 'AuthClientConfig'. Did you mean 'AuthSPAClientConfig'?
+    at file://<tmpdir>/src/models.ts:17:37
+
+TS2305 [ERROR]: Module '"npm:@asgardeo/auth-spa@^3.0.2"' has no exported member 'BasicUserInfo'.
+    at file://<tmpdir>/src/models.ts:17:76
+
+TS2724 [ERROR]: '"npm:@asgardeo/auth-spa@^3.0.2"' has no exported member named 'CustomGrantConfig'. Did you mean 'SPACustomGrantConfig'?
+    at file://<tmpdir>/src/models.ts:17:99
+
+TS2305 [ERROR]: Module '"npm:@asgardeo/auth-spa@^3.0.2"' has no exported member 'DecodedIDTokenPayload'.
+    at file://<tmpdir>/src/models.ts:17:118
+
+TS2305 [ERROR]: Module '"npm:@asgardeo/auth-spa@^3.0.2"' has no exported member 'FetchResponse'.
+    at file://<tmpdir>/src/models.ts:17:141
+
+TS2305 [ERROR]: Module '"npm:@asgardeo/auth-spa@^3.0.2"' has no exported member 'OIDCEndpoints'.
+    at file://<tmpdir>/src/models.ts:17:216
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  children?: React.ReactNode;
+                   ~~~~~~~~~
+    at file://<tmpdir>/src/secure-app.tsx:21:20
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+     */ fallback?: React.ReactNode;
+                         ~~~~~~~~~
+    at file://<tmpdir>/src/secure-app.tsx:24:26
+
+TS2709 [ERROR]: Cannot use namespace 'FunctionComponent' as a type.
+ */ export const SecureApp: FunctionComponent<PropsWithChildren<SecureAppPropsInterface>> = {} as never;
+                            ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/secure-app.tsx:43:29
+
+TS2709 [ERROR]: Cannot use namespace 'PropsWithChildren' as a type.
+ */ export const SecureApp: FunctionComponent<PropsWithChildren<SecureAppPropsInterface>> = {} as never;
+                                              ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/secure-app.tsx:43:47
+
+TS2709 [ERROR]: Cannot use namespace 'FunctionComponent' as a type.
+ */ const SecureRoute: FunctionComponent<SecureRouteInterface & RouteProps> = {} as never;
+                       ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/secure-route.tsx:26:24
+
+Found 18 errors.
+
+error: Type checking failed.
+

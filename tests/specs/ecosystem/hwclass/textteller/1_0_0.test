@@ -56,10 +56,22 @@ hwclass/textteller/1.0.0
 -- stdout --
 
 -- stderr --
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'LitElement'.
-  render(): TemplateResult | undefined {
-  ~~~~~~
-    at file://<tmpdir>/src/index.ts:17:3
+TS2305 [ERROR]: Module '"npm:lit@^2.1.3"' has no exported member 'LitElement'.
+import { LitElement, CSSResultGroup, TemplateResult } from "npm:lit@^2.1.3";
+         ~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:1:10
+
+TS2305 [ERROR]: Module '"npm:lit@^2.1.3"' has no exported member 'CSSResultGroup'.
+import { LitElement, CSSResultGroup, TemplateResult } from "npm:lit@^2.1.3";
+                     ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:1:22
+
+TS2305 [ERROR]: Module '"npm:lit@^2.1.3"' has no exported member 'TemplateResult'.
+import { LitElement, CSSResultGroup, TemplateResult } from "npm:lit@^2.1.3";
+                                     ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:1:38
+
+Found 3 errors.
 
 error: Type checking failed.
 

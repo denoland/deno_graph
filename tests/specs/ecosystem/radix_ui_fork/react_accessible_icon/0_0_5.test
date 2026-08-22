@@ -32,4 +32,21 @@ radix-ui-fork/react-accessible-icon/0.0.5
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  children?: React.ReactNode;
+                   ~~~~~~~~~
+    at file://<tmpdir>/src/AccessibleIcon.tsx:3:20
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'FC'.
+const AccessibleIcon: React.FC<AccessibleIconProps> = {} as never;
+                            ~~
+    at file://<tmpdir>/src/AccessibleIcon.tsx:9:29
+
+Found 2 errors.
+
+error: Type checking failed.
+

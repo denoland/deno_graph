@@ -32,4 +32,31 @@ yahiro/react-fcx/0.1.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2709 [ERROR]: Cannot use namespace 'ReactNode' as a type.
+export function domStyled(vdom: ReactNode, additionalClassName: string | undefined): ReactNode {
+                                ~~~~~~~~~
+    at file://<tmpdir>/mod.ts:2:33
+
+TS2709 [ERROR]: Cannot use namespace 'ReactNode' as a type.
+export function domStyled(vdom: ReactNode, additionalClassName: string | undefined): ReactNode {
+                                                                                     ~~~~~~~~~
+    at file://<tmpdir>/mod.ts:2:86
+
+TS2709 [ERROR]: Cannot use namespace 'FC' as a type.
+}>(baseFC: FC<T>, attachedCssClassName?: string): FC<T> {
+           ~~
+    at file://<tmpdir>/mod.ts:6:12
+
+TS2709 [ERROR]: Cannot use namespace 'FC' as a type.
+}>(baseFC: FC<T>, attachedCssClassName?: string): FC<T> {
+                                                  ~~
+    at file://<tmpdir>/mod.ts:6:51
+
+Found 4 errors.
+
+error: Type checking failed.
+

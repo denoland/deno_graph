@@ -9,4 +9,14 @@ agent/openai/0.0.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2846 [ERROR]: A declaration file cannot be imported without 'import type'. Did you mean to import an implementation file './types/completions.ts' instead?
+import { Completion, CompletionCreateParamsNonStreaming, CompletionCreateParamsStreaming } from "./types/completions.d.ts";
+                                                                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:2:97
+
+error: Type checking failed.
+

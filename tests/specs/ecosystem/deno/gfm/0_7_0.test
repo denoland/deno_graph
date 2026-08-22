@@ -131,7 +131,12 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
   ~~~~
     at file://<tmpdir>/mod.ts:21:3
 
-Found 4 errors.
+TS2694 [ERROR]: Namespace '"npm:sanitize-html@^2.11"' has no exported member 'AllowedAttribute'.
+  allowedAttributes?: Record<string, sanitizeHtml.AllowedAttribute[]>;
+                                                  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:37:51
+
+Found 5 errors.
 
 error: Type checking failed.
 

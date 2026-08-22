@@ -9,4 +9,21 @@ pd/pdpipe/0.1.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2306 [ERROR]: File '<tmpdir>/pipedown.d.ts' is not a module.
+import type { Pipe as PipeType, Input, Stage } from "./pipedown.d.ts";
+                                                    ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:1:53
+
+TS2306 [ERROR]: File '<tmpdir>/pipedown.d.ts' is not a module.
+import type { Stage, Input } from "./pipedown.d.ts";
+                                  ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/pipeline.ts:1:35
+
+Found 2 errors.
+
+error: Type checking failed.
+

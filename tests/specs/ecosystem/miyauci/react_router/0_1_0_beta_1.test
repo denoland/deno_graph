@@ -32,4 +32,51 @@ miyauci/react-router/0.1.0-beta.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2709 [ERROR]: Cannot use namespace 'ReactNode' as a type.
+  children?: ReactNode;
+             ~~~~~~~~~
+    at file://<tmpdir>/src/route.ts:3:14
+
+TS2709 [ERROR]: Cannot use namespace 'ReactNode' as a type.
+ */ export default function Route(props: Readonly<RouteProps>): ReactNode {
+                                                                ~~~~~~~~~
+    at file://<tmpdir>/src/route.ts:15:65
+
+TS2709 [ERROR]: Cannot use namespace 'ReactNode' as a type.
+  children?: ReactNode;
+             ~~~~~~~~~
+    at file://<tmpdir>/src/router.ts:12:14
+
+TS2709 [ERROR]: Cannot use namespace 'ReactNode' as a type.
+ */ export default function Router(props: Readonly<RouterProps>): ReactNode {
+                                                                  ~~~~~~~~~
+    at file://<tmpdir>/src/router.ts:34:67
+
+TS2709 [ERROR]: Cannot use namespace 'ReactNode' as a type.
+  /** Fallback if nothing matches. */ fallback?: ReactNode;
+                                                 ~~~~~~~~~
+    at file://<tmpdir>/src/switch.ts:3:50
+
+TS2709 [ERROR]: Cannot use namespace 'ReactElement' as a type.
+  children?: ReactElement<URLPatternInit> | ReactElement<URLPatternInit>[];
+             ~~~~~~~~~~~~
+    at file://<tmpdir>/src/switch.ts:4:14
+
+TS2709 [ERROR]: Cannot use namespace 'ReactElement' as a type.
+  children?: ReactElement<URLPatternInit> | ReactElement<URLPatternInit>[];
+                                            ~~~~~~~~~~~~
+    at file://<tmpdir>/src/switch.ts:4:45
+
+TS2709 [ERROR]: Cannot use namespace 'ReactNode' as a type.
+ */ export default function Switch(props: SwitchProps): ReactNode {
+                                                        ~~~~~~~~~
+    at file://<tmpdir>/src/switch.ts:19:57
+
+Found 8 errors.
+
+error: Type checking failed.
+

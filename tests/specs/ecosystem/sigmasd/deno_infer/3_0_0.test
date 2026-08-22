@@ -9,4 +9,14 @@ sigmasd/deno-infer/3.0.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2846 [ERROR]: A declaration file cannot be imported without 'import type'. Did you mean to import an implementation file './lib/rs_lib.generated.ts' instead?
+*/ import { type Type as wasmType } from "./lib/rs_lib.generated.d.ts";
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:23:42
+
+error: Type checking failed.
+

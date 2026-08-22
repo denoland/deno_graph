@@ -32,4 +32,26 @@ radix-ui-fork/react-presence/0.0.4
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactElement'.
+  children: React.ReactElement | ((props: {
+                  ~~~~~~~~~~~~
+    at file://<tmpdir>/src/Presence.tsx:3:19
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactElement'.
+  }) => React.ReactElement);
+              ~~~~~~~~~~~~
+    at file://<tmpdir>/src/Presence.tsx:5:15
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'FC'.
+const Presence: React.FC<PresenceProps> = {} as never;
+                      ~~
+    at file://<tmpdir>/src/Presence.tsx:8:23
+
+Found 3 errors.
+
+error: Type checking failed.
+

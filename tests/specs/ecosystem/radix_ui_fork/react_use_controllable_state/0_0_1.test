@@ -32,4 +32,21 @@ radix-ui-fork/react-use-controllable-state/0.0.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'Dispatch'.
+function useControllableState<T>({}: UseControllableStateParams<T>): readonly [T | undefined, React.Dispatch<React.SetStateAction<T | undefined>>] {
+                                                                                                    ~~~~~~~~
+    at file://<tmpdir>/src/useControllableState.tsx:7:101
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'SetStateAction'.
+function useControllableState<T>({}: UseControllableStateParams<T>): readonly [T | undefined, React.Dispatch<React.SetStateAction<T | undefined>>] {
+                                                                                                                   ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/useControllableState.tsx:7:116
+
+Found 2 errors.
+
+error: Type checking failed.
+

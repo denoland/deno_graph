@@ -9,4 +9,36 @@ julli4n/roblox-bat/0.4.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2552 [ERROR]: Cannot find name 'CryptoKeyPair'. Did you mean 'CryptoKey'?
+     */ keys?: CryptoKeyPair;
+               ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/hbaClient.ts:13:16
+
+TS2552 [ERROR]: Cannot find name 'CryptoKeyPair'. Did you mean 'CryptoKey'?
+  declare public cryptoKeyPair?: CryptoKeyPair | Promise<CryptoKeyPair | null>;
+                                 ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/hbaClient.ts:59:34
+
+TS2552 [ERROR]: Cannot find name 'CryptoKeyPair'. Did you mean 'CryptoKey'?
+  declare public cryptoKeyPair?: CryptoKeyPair | Promise<CryptoKeyPair | null>;
+                                                         ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/hbaClient.ts:59:58
+
+TS2552 [ERROR]: Cannot find name 'CryptoKeyPair'. Did you mean 'CryptoKey'?
+  declare public suppliedCryptoKeyPair?: CryptoKeyPair;
+                                         ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/hbaClient.ts:61:42
+
+TS2552 [ERROR]: Cannot find name 'CryptoKeyPair'. Did you mean 'CryptoKey'?
+     */ public getCryptoKeyPair(uncached?: boolean): Promise<CryptoKeyPair | null> {
+                                                             ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/hbaClient.ts:88:62
+
+Found 5 errors.
+
+error: Type checking failed.
+

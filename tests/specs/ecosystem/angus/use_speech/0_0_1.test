@@ -41,5 +41,17 @@ export { UseSpeechOptions, useSpeech } from "./useSpeech.ts";
          ~~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/index.ts:1:10
 
+TS2709 [ERROR]: Cannot use namespace 'SetStateAction' as a type.
+  setLanguage: (language: SetStateAction<`${string}-${Uppercase<string>}`>) => void;
+                          ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/useSpeech.ts:15:27
+
+TS2709 [ERROR]: Cannot use namespace 'SetStateAction' as a type.
+  setIsContinuous: (isContinuous: SetStateAction<boolean>) => void;
+                                  ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/useSpeech.ts:16:35
+
+Found 3 errors.
+
 error: Type checking failed.
 

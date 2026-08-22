@@ -26,4 +26,14 @@ ptm/mm-mark/0.2.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2694 [ERROR]: Namespace '"npm:showdown@^2.1.0"' has no exported member 'Converter'.
+   */ convert(): showdown.Converter {
+                          ~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:59:27
+
+error: Type checking failed.
+

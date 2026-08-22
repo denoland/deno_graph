@@ -149,8 +149,15 @@ ydcjeff/ruta/0.0.1
 -- stderr --
 TS2578 [ERROR]: Unused '@ts-expect-error' directive.
   /** Type only, no runtime equivalent. */ // @ts-expect-error Type only
-                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                           ^
     at file://<tmpdir>/src/ruta_core.ts:4:44
+
+TS2305 [ERROR]: Module '"npm:vue@^3.4.21"' has no exported member 'App'.
+import { type App } from 'npm:vue@^3.4.21';
+              ~~~
+    at file://<tmpdir>/src/ruta_vue.ts:1:15
+
+Found 2 errors.
 
 error: Type checking failed.
 

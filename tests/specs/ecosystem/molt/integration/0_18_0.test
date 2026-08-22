@@ -91,4 +91,9 @@ molt/integration/0.18.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: trailing comma at line 23 column 3
+

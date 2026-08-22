@@ -9,4 +9,14 @@ pheasant/router/0.2.0-dev
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2846 [ERROR]: A declaration file cannot be imported without 'import type'. Did you mean to import an implementation file './lib/src/spa/navigation.ts' instead?
+import { navigateTo, navigateBack, pushEvent } from "./lib/src/spa/navigation.d.ts";
+                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:2:53
+
+error: Type checking failed.
+

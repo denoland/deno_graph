@@ -9,4 +9,31 @@ wangb/vibrato-wasm/0.0.7
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2303 [ERROR]: Circular definition of import alias 'Vibrato'.
+export { Vibrato, default as initVibrato, initSync as initVibratoSync } from "./mod.d.ts";
+         ~~~~~~~
+    at file://<tmpdir>/mod.ts:1:10
+
+TS2305 [ERROR]: Module '"./mod.d.ts"' has no exported member 'default'.
+export { Vibrato, default as initVibrato, initSync as initVibratoSync } from "./mod.d.ts";
+                  ~~~~~~~
+    at file://<tmpdir>/mod.ts:1:19
+
+TS2305 [ERROR]: Module '"./mod.d.ts"' has no exported member 'initSync'.
+export { Vibrato, default as initVibrato, initSync as initVibratoSync } from "./mod.d.ts";
+                                          ~~~~~~~~
+    at file://<tmpdir>/mod.ts:1:43
+
+TS2846 [ERROR]: A declaration file cannot be imported without 'import type'. Did you mean to import an implementation file './mod.ts' instead?
+export { Vibrato, default as initVibrato, initSync as initVibratoSync } from "./mod.d.ts";
+                                                                             ~~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:1:78
+
+Found 4 errors.
+
+error: Type checking failed.
+

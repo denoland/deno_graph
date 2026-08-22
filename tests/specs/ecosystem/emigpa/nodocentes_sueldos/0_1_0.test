@@ -20,4 +20,41 @@ emigpa/nodocentes-sueldos/0.1.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2709 [ERROR]: Cannot use namespace 'DateTime' as a type.
+  'FECHA': DateTime;
+           ~~~~~~~~
+    at file://<tmpdir>/src/types.ts:33:12
+
+TS2709 [ERROR]: Cannot use namespace 'DateTime' as a type.
+  DESDE: DateTime;
+         ~~~~~~~~
+    at file://<tmpdir>/src/types.ts:56:10
+
+TS2709 [ERROR]: Cannot use namespace 'DateTime' as a type.
+  HASTA: DateTime;
+         ~~~~~~~~
+    at file://<tmpdir>/src/types.ts:57:10
+
+TS2709 [ERROR]: Cannot use namespace 'DateTime' as a type.
+  DESDE: DateTime;
+         ~~~~~~~~
+    at file://<tmpdir>/src/types.ts:69:10
+
+TS2709 [ERROR]: Cannot use namespace 'DateTime' as a type.
+  HASTA: DateTime;
+         ~~~~~~~~
+    at file://<tmpdir>/src/types.ts:70:10
+
+TS2709 [ERROR]: Cannot use namespace 'DateTime' as a type.
+  mes: DateTime;
+       ~~~~~~~~
+    at file://<tmpdir>/src/types.ts:78:8
+
+Found 6 errors.
+
+error: Type checking failed.
+

@@ -25,4 +25,26 @@ deco-cx/realtime/0.1.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2552 [ERROR]: Cannot find name 'DurableObjectStorage'. Did you mean 'DurableObjectState'?
+  storage: Pick<DurableObjectStorage, "get" | "delete" | "put" | "deleteAll" | "list">;
+                ~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/realtime.ts:18:17
+
+TS2304 [ERROR]: Cannot find name 'DurableObjectNamespace'.
+  REALTIME: DurableObjectNamespace;
+            ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/realtime.types.ts:4:13
+
+TS2304 [ERROR]: Cannot find name 'DurableObjectNamespace'.
+  EPHEMERAL_REALTIME: DurableObjectNamespace;
+                      ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/realtime.types.ts:5:23
+
+Found 3 errors.
+
+error: Type checking failed.
+

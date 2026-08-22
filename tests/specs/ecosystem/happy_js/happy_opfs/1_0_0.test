@@ -1,6 +1,17 @@
 happy-js/happy-opfs/1.0.0
 -- deno.lock --
-{}
+{
+  "version": "5",
+  "specifiers": {
+    "npm:@jsr/happy-js__happy-rusty@^1.0.3": "1.9.1"
+  },
+  "npm": {
+    "@jsr/happy-js__happy-rusty@1.9.1": {
+      "integrity": "sha512-raO4HOlggM4U56UCOzDUv8YF99En6nt4GvdSkzRFtGspzkec7l+sw9DSc4vLY/jup3vw0gyxx1iqapL31Oq2GQ==",
+      "tarball": "https://npm.jsr.io/~/11/@jsr/happy-js__happy-rusty/1.9.1.tgz"
+    }
+  }
+}
 
 ===
 

@@ -53,4 +53,56 @@ codemonument/cliffy-zod-option/1.0.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2869 [ERROR]: Right operand of ?? is unreachable because the left operand is never nullish.
+  return string?.charAt(0).toUpperCase() + string.slice(1) ?? "";
+         ~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/codemonument__cliffy/command/help/_help_generator.ts:361:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'StringType'.
+  public complete(): string[] {
+         ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/codemonument__cliffy/command/types/action_list.ts:11:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Type<boolean>'.
+  public complete(): string[] {
+         ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/codemonument__cliffy/command/types/boolean.ts:13:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'StringType'.
+  public complete(cmd: Command): string[] {
+         ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/codemonument__cliffy/command/types/child_command.ts:14:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'StringType'.
+  public complete(_cmd: Command, parent?: Command): string[] {
+         ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/codemonument__cliffy/command/types/command.ts:7:10
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Provider'.
+  async listVersions(name: string, currentVersion?: string): Promise<void> {
+        ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/codemonument__cliffy/command/upgrade/provider/github.ts:71:9
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'TCell[]'.
+  public static from<
+                ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/codemonument__cliffy/table/row.ts:73:17
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'TRow[]'.
+  public static from<
+                ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/codemonument__cliffy/table/table.ts:58:17
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'TRow[]'.
+  public toString(): string {
+         ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/codemonument__cliffy/table/table.ts:212:10
+
+Found 9 errors.
+
+error: Type checking failed.
+

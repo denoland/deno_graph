@@ -16,5 +16,22 @@ clappcodes/transporter/0.2.4
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
     at file://<tmpdir>/readable/from-event.ts:11:41
 
+TS2552 [ERROR]: Cannot find name 'RequestInfo'. Did you mean 'RequestInit'?
+export function fromURL(input: URL | RequestInfo, init?: RequestInit): Promise<ReadableStream<Uint8Array>> {
+                                     ~~~~~~~~~~~
+    at file://<tmpdir>/readable/from-url.ts:1:38
+
+TS2552 [ERROR]: Cannot find name 'RequestInfo'. Did you mean 'RequestInit'?
+  constructor(input: RequestInfo | URL, init?: RequestStreamInit){
+                     ~~~~~~~~~~~
+    at file://<tmpdir>/writeable/post.ts:5:22
+
+TS2552 [ERROR]: Cannot find name 'RequestInfo'. Did you mean 'RequestInit'?
+export function post<T extends Uint8Array>(input: RequestInfo | URL, init?: RequestStreamInit): WritableStream<T> {
+                                                  ~~~~~~~~~~~
+    at file://<tmpdir>/writeable/post.ts:9:51
+
+Found 4 errors.
+
 error: Type checking failed.
 

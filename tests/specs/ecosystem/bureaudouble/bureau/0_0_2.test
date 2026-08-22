@@ -268,4 +268,11 @@ bureaudouble/bureau/0.0.2
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS5089 [ERROR]: Option 'jsxImportSource' cannot be specified when option 'jsx' is 'react'.
+
+error: Type checking failed.
+

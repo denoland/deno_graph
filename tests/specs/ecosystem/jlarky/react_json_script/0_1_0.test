@@ -36,10 +36,17 @@ jlarky/react-json-script/0.1.0
 -- stdout --
 
 -- stderr --
+TS2694 [ERROR]: Namespace '"npm:react@^18.3.1"' has no exported member 'ComponentProps'.
+type JsonScriptProps = Omit<React.ComponentProps<"script">, "dangerouslySetInnerHTML"> & {
+                                  ~~~~~~~~~~~~~~
+    at file://<tmpdir>/index.tsx:2:35
+
 TS2503 [ERROR]: Cannot find namespace 'JSX'.
 export function JsonScript(props: JsonScriptProps): JSX.Element {
                                                     ~~~
     at file://<tmpdir>/index.tsx:5:53
+
+Found 2 errors.
 
 error: Type checking failed.
 

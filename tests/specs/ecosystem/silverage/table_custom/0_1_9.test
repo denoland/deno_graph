@@ -654,4 +654,26 @@ silverage/table-custom/0.1.9
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2709 [ERROR]: Cannot use namespace 'ReactNode' as a type.
+  modalTitle?: ReactNode;
+               ~~~~~~~~~
+    at file://<tmpdir>/src/TableCustom.tsx:16:16
+
+TS2709 [ERROR]: Cannot use namespace 'ReactNode' as a type.
+  sortHandler?: ReactNode;
+                ~~~~~~~~~
+    at file://<tmpdir>/src/TableCustom.tsx:18:17
+
+TS2694 [ERROR]: Namespace '"npm:react@^17.0.2"' has no exported member 'FC'.
+const TableCustom: React.FC<TableCustomProps<any>> = {} as never;
+                         ~~
+    at file://<tmpdir>/src/TableCustom.tsx:23:26
+
+Found 3 errors.
+
+error: Type checking failed.
+

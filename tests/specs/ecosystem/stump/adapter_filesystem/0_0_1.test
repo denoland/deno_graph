@@ -1,6 +1,27 @@
 stump/adapter-filesystem/0.0.1
 -- deno.lock --
-{}
+{
+  "version": "5",
+  "specifiers": {
+    "npm:@jsr/stump__core@^0.0.3": "0.0.3"
+  },
+  "npm": {
+    "@jsr/stump__core@0.0.3": {
+      "integrity": "sha512-3qaP15J33DqCZgEPMhzbGdz8wiHCKy+L2EcpZPGBKponu8GmK96V0AMJv6g/Tq8jNv+pjnjRuj58l6c8wBygSw==",
+      "dependencies": [
+        "chalk",
+        "std-env"
+      ],
+      "tarball": "https://npm.jsr.io/~/11/@jsr/stump__core/0.0.3.tgz"
+    },
+    "chalk@5.6.2": {
+      "integrity": "sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA=="
+    },
+    "std-env@3.10.0": {
+      "integrity": "sha512-5GS12FdOZNliM5mAOxFRg7Ir0pWz8MdpYm6AY6VPkGpbA7ZzmbzNcBJQ0GPvvyWgcY7QAhCgf9Uy89I03faLkg=="
+    }
+  }
+}
 
 ===
 

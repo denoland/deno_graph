@@ -36,17 +36,47 @@ radix-ui-fork/react-slot/0.0.4
 -- stdout --
 
 -- stderr --
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'HTMLAttributes'.
+interface SlotProps extends React.HTMLAttributes<HTMLElement> {
+                                  ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Slot.tsx:2:35
+
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
 interface SlotProps extends React.HTMLAttributes<HTMLElement> {
                                                  ~~~~~~~~~~~
     at file://<tmpdir>/src/Slot.tsx:2:50
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  children?: React.ReactNode;
+                   ~~~~~~~~~
+    at file://<tmpdir>/src/Slot.tsx:3:20
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+const Slot: React.ForwardRefExoticComponent<SlotProps & React.RefAttributes<HTMLElement>> = {} as never;
+                  ~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Slot.tsx:5:19
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+const Slot: React.ForwardRefExoticComponent<SlotProps & React.RefAttributes<HTMLElement>> = {} as never;
+                                                              ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Slot.tsx:5:63
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
 const Slot: React.ForwardRefExoticComponent<SlotProps & React.RefAttributes<HTMLElement>> = {} as never;
                                                                             ~~~~~~~~~~~
     at file://<tmpdir>/src/Slot.tsx:5:77
 
-Found 2 errors.
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  children: React.ReactNode;
+                  ~~~~~~~~~
+    at file://<tmpdir>/src/Slot.tsx:7:19
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactElement'.
+}): React.ReactElement =>({} as never);
+          ~~~~~~~~~~~~
+    at file://<tmpdir>/src/Slot.tsx:8:11
+
+Found 8 errors.
 
 error: Type checking failed.
 

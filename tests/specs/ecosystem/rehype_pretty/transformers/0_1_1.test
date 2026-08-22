@@ -10,7 +10,9 @@ rehype-pretty/transformers/0.1.1
 -- stdout --
 
 -- stderr --
-TS2307 [ERROR]: Cannot find module 'file://<tmpdir>/src/shiki'.
+TS2307 [ERROR]: Cannot find module './shiki' or its corresponding type declarations.
+import type { ShikiTransformer } from './shiki';
+                                      ~~~~~~~~~
     at file://<tmpdir>/src/copy-button.ts:1:39
 
 error: Type checking failed.

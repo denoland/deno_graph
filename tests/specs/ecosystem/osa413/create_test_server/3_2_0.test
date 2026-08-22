@@ -386,4 +386,31 @@ osa413/create-test-server/3.2.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2694 [ERROR]: Namespace '"npm:express@^4.15.3"' has no exported member 'Express'.
+export type TestServer = TestServerWrapper & Omit<express.Express, 'listen'> & {
+                                                          ~~~~~~~
+    at file://<tmpdir>/src/index.ts:4:59
+
+TS2709 [ERROR]: Cannot use namespace 'OptionsJson' as a type.
+     */ bodyParser?: false | OptionsJson & OptionsText & OptionsUrlencoded;
+                             ~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:12:30
+
+TS2709 [ERROR]: Cannot use namespace 'OptionsText' as a type.
+     */ bodyParser?: false | OptionsJson & OptionsText & OptionsUrlencoded;
+                                           ~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:12:44
+
+TS2709 [ERROR]: Cannot use namespace 'OptionsUrlencoded' as a type.
+     */ bodyParser?: false | OptionsJson & OptionsText & OptionsUrlencoded;
+                                                         ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:12:58
+
+Found 4 errors.
+
+error: Type checking failed.
+
