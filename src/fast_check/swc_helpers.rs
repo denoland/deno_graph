@@ -184,6 +184,29 @@ pub enum DeclMutabilityKind {
   Mutable,
 }
 
+/// Gets the type of an untagged template literal expression.
+///
+/// A template literal without substitutions is equivalent to a string
+/// literal, so it keeps its literal type in a const position. Otherwise
+/// the type depends on the substituted expressions, which TypeScript only
+/// evaluates in a const assertion (that case is handled by leaving the
+/// expression as-is instead of inferring a type from it).
+pub fn tpl_to_ts_type(tpl: &Tpl, decl_kind: DeclMutabilityKind) -> TsType {
+  if let DeclMutabilityKind::Const = decl_kind
+    && tpl.exprs.is_empty()
+    && let Some(quasi) = tpl.quasis.first()
+    && let Some(cooked) = &quasi.cooked
+  {
+    return ts_lit_type(TsLit::Str(Str {
+      span: DUMMY_SP,
+      value: cooked.clone(),
+      raw: None,
+    }));
+  }
+
+  ts_keyword_type(TsKeywordTypeKind::TsStringKeyword)
+}
+
 pub fn maybe_lit_to_ts_type(
   lit: &Lit,
   decl_kind: DeclMutabilityKind,

@@ -5,9 +5,36 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
+export const foobar: "F" = "F";
+export const str: string = "";
+
+// no substitutions
 export const a = `hello world`;
-export const b = `hello ${1 + 2} world`;
-export let c = `hello`;
+export let b = `hello world`;
+export const c = `hello world` as const;
+export const d = `multi
+line`;
+
+// with substitutions
+export const e = `hello ${1 + 2} world`;
+export let f = `hello ${foobar} world`;
+export const g = `hello ${foobar} world`;
+export const h = `hello ${str} world`;
+
+// const asserted with substitutions
+export const i = `hello ${foobar} world` as const;
+export const j = `hello ${str} world` as const;
+
+// class members
+export class C {
+  readonly a = `hello world`;
+  b = `hello world`;
+  static readonly c = `hello world`;
+  readonly d = `hello ${str} world`;
+}
+
+// default export
+export default `hello world`;
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -45,7 +72,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 97,
+      "size": 751,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -60,10 +87,43 @@ import 'jsr:@scope/a'
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {}
-  export const a: string = {} as never;
-  export const b: string = {} as never;
-  export let c: string = {} as never;
+  export const foobar: "F" = {} as never;
+  export const str: string = {} as never;
+  export const a: "hello world" = {} as never;
+  export let b: string = {} as never;
+  export const c = `hello world` as const;
+  export const d: "multi\nline" = {} as never;
+  export const e: string = {} as never;
+  export let f: string = {} as never;
+  export const g: string = {} as never;
+  export const h: string = {} as never;
+  export const i = `hello ${foobar} world` as const;
+  export const j = `hello ${str} world` as const;
+  export class C {
+    declare readonly a: "hello world";
+    declare b: string;
+    declare static readonly c: "hello world";
+    declare readonly d: string;
+  }
+  export default `hello world`;
   --- DTS ---
-  export declare const a: string;
-  export declare const b: string;
-  export declare let c: string;
+  export declare const foobar: "F";
+  export declare const str: string;
+  export declare const a: "hello world";
+  export declare let b: string;
+  export declare const c: "hello world";
+  export declare const d: "multi\nline";
+  export declare const e: string;
+  export declare let f: string;
+  export declare const g: string;
+  export declare const h: string;
+  export declare const i: string;
+  export declare const j: string;
+  export declare class C {
+    readonly a: "hello world";
+    b: string;
+    static readonly c: "hello world";
+    readonly d: string;
+  }
+  declare const _dts_1: string;
+  export default _dts_1;
