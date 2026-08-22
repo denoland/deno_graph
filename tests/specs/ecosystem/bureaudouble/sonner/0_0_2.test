@@ -72,4 +72,216 @@ bureaudouble/sonner/0.0.2
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'JSX'.
+const Toaster = (props: ToasterProps): React.JSX.Element =>({} as never);
+                                             ~~~
+    at file://<tmpdir>/src/index.tsx:4:46
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+    message?: string | React.ReactNode;
+                             ~~~~~~~~~
+    at file://<tmpdir>/src/state.ts:11:30
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactElement'.
+    jsx?: React.ReactElement;
+                ~~~~~~~~~~~~
+    at file://<tmpdir>/src/state.ts:14:17
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  message = (message: string | React.ReactNode, data?: ExternalToast): string | number =>({} as never);
+                                     ~~~~~~~~~
+    at file://<tmpdir>/src/state.ts:17:38
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  error = (message: string | React.ReactNode, data?: ExternalToast): string | number =>({} as never);
+                                   ~~~~~~~~~
+    at file://<tmpdir>/src/state.ts:18:36
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  success = (message: string | React.ReactNode, data?: ExternalToast): string | number =>({} as never);
+                                     ~~~~~~~~~
+    at file://<tmpdir>/src/state.ts:19:38
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  info = (message: string | React.ReactNode, data?: ExternalToast): string | number =>({} as never);
+                                  ~~~~~~~~~
+    at file://<tmpdir>/src/state.ts:20:35
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  warning = (message: string | React.ReactNode, data?: ExternalToast): string | number =>({} as never);
+                                     ~~~~~~~~~
+    at file://<tmpdir>/src/state.ts:21:38
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  loading = (message: string | React.ReactNode, data?: ExternalToast): string | number =>({} as never);
+                                     ~~~~~~~~~
+    at file://<tmpdir>/src/state.ts:22:38
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactElement'.
+  custom = (jsx: (id: number | string) => React.ReactElement, data?: ExternalToast): string | number =>({} as never);
+                                                ~~~~~~~~~~~~
+    at file://<tmpdir>/src/state.ts:24:49
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+export const toast: ((message: string | React.ReactNode, data?: ExternalToast) => string | number) & {
+                                              ~~~~~~~~~
+    at file://<tmpdir>/src/state.ts:27:47
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  loading?: string | React.ReactNode;
+                           ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:6:28
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  success?: string | React.ReactNode | ((data: ToastData) => React.ReactNode | string);
+                           ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:7:28
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  success?: string | React.ReactNode | ((data: ToastData) => React.ReactNode | string);
+                                                                   ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:7:68
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  error?: string | React.ReactNode | ((error: any) => React.ReactNode | string);
+                         ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:8:26
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  error?: string | React.ReactNode | ((error: any) => React.ReactNode | string);
+                                                            ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:8:61
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  description?: string | React.ReactNode | ((data: any) => React.ReactNode | string);
+                               ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:9:32
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  description?: string | React.ReactNode | ((data: any) => React.ReactNode | string);
+                                                                 ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:9:66
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  success?: React.ReactNode;
+                  ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:30:19
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  info?: React.ReactNode;
+               ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:31:16
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  warning?: React.ReactNode;
+                  ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:32:19
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  error?: React.ReactNode;
+                ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:33:17
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  loading?: React.ReactNode;
+                  ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:34:19
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'MouseEvent'.
+  onClick: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+                         ~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:38:26
+
+TS2304 [ERROR]: Cannot find name 'HTMLButtonElement'.
+  onClick: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+                                    ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:38:37
+
+TS2552 [ERROR]: Cannot find name 'MouseEvent'. Did you mean 'CloseEvent'?
+  onClick: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+                                                       ~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:38:56
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'CSSProperties'.
+  actionButtonStyle?: React.CSSProperties;
+                            ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:39:29
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  title?: string | React.ReactNode;
+                         ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:43:26
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  icon?: React.ReactNode;
+               ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:45:16
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  jsx?: React.ReactNode;
+              ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:46:15
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  description?: React.ReactNode;
+                      ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:50:23
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  action?: Action | React.ReactNode;
+                          ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:54:27
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  cancel?: Action | React.ReactNode;
+                          ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:55:27
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'CSSProperties'.
+  cancelButtonStyle?: React.CSSProperties;
+                            ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:59:29
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'CSSProperties'.
+  actionButtonStyle?: React.CSSProperties;
+                            ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:60:29
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'CSSProperties'.
+  style?: React.CSSProperties;
+                ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:61:17
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'CSSProperties'.
+  style?: React.CSSProperties;
+                ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:73:17
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'CSSProperties'.
+  cancelButtonStyle?: React.CSSProperties;
+                            ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:74:29
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'CSSProperties'.
+  actionButtonStyle?: React.CSSProperties;
+                            ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:75:29
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'CSSProperties'.
+  style?: React.CSSProperties;
+                ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:94:17
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+   */ loadingIcon?: React.ReactNode;
+                          ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:104:27
+
+Found 41 errors.
+
+error: Type checking failed.
+

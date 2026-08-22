@@ -32,4 +32,13 @@ miyauci/react-router/0.1.0-beta.2
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS6053 [ERROR]: File '<tmpdir>/_navigation.ts' not found.
+  The file is in the program because:
+    Part of 'files' list in tsconfig.json
+
+error: Type checking failed.
+

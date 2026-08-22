@@ -26,4 +26,14 @@ atrox/haikunator/2.1.2
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2709 [ERROR]: Cannot use namespace 'RandomSeed' as a type.
+  declare random: RandomSeed;
+                  ~~~~~~~~~~
+    at file://<tmpdir>/src/index.ts:17:19
+
+error: Type checking failed.
+

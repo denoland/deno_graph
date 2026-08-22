@@ -13,8 +13,50 @@ clappcodes/transporter/0.2.5
 -- stdout --
 
 -- stderr --
+TS2552 [ERROR]: Cannot find name 'RequestInfo'. Did you mean 'RequestInit'?
+   */ constructor(url: URL | RequestInfo | undefined, transformers: [TransformStream<I, O>, ...TransformStream[]], {}: {
+                             ~~~~~~~~~~~
+    at file://<tmpdir>/IncomingStream.ts:53:30
+
+TS2304 [ERROR]: Cannot find name 'HeadersInit'.
+   */ response(headers?: HeadersInit): Promise<Response> {
+                         ~~~~~~~~~~~
+    at file://<tmpdir>/IncomingStream.ts:83:26
+
+TS2552 [ERROR]: Cannot find name 'RequestInfo'. Did you mean 'RequestInit'?
+  constructor(url: URL | RequestInfo | undefined, transformers: [TransformStream<I, O>, ...TransformStream[]]){}
+                         ~~~~~~~~~~~
+    at file://<tmpdir>/OutgoingStream.ts:28:26
+
+TS2304 [ERROR]: Cannot find name 'HeadersInit'.
+  response(headers?: HeadersInit): Response {
+                     ~~~~~~~~~~~
+    at file://<tmpdir>/OutgoingStream.ts:42:22
+
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
     at file://<tmpdir>/readable/from-event.ts:11:41
+
+TS2552 [ERROR]: Cannot find name 'RequestInfo'. Did you mean 'RequestInit'?
+export function fromURL(input: URL | RequestInfo, init?: RequestInit): Promise<ReadableStream<Uint8Array>> {
+                                     ~~~~~~~~~~~
+    at file://<tmpdir>/readable/from-url.ts:1:38
+
+TS2552 [ERROR]: Cannot find name 'GenericTransformStream'. Did you mean 'TransformStream'?
+export const isTransformStream = (a: unknown): a is GenericTransformStream =>({} as never);
+                                                    ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/utils.ts:78:53
+
+TS2552 [ERROR]: Cannot find name 'RequestInfo'. Did you mean 'RequestInit'?
+  constructor(input: RequestInfo | URL, init?: RequestStreamInit){
+                     ~~~~~~~~~~~
+    at file://<tmpdir>/writeable/post.ts:5:22
+
+TS2552 [ERROR]: Cannot find name 'RequestInfo'. Did you mean 'RequestInit'?
+export function post<T extends Uint8Array>(input: RequestInfo | URL, init?: RequestStreamInit): WritableStream<T> {
+                                                  ~~~~~~~~~~~
+    at file://<tmpdir>/writeable/post.ts:9:51
+
+Found 9 errors.
 
 error: Type checking failed.
 

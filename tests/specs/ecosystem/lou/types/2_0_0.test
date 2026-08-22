@@ -10,15 +10,22 @@ lou/types/2.0.0
 -- stdout --
 
 -- stderr --
-TS2307 [ERROR]: Cannot find module 'file://<tmpdir>/src/@lou.codes/constants/empty.js'.
+TS2307 [ERROR]: Cannot find module './@lou.codes/constants/empty.js' or its corresponding type declarations.
+import type { EMPTY_ARRAY } from "./@lou.codes/constants/empty.js";
+                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/EmptyArray.ts:1:34
+
+TS2307 [ERROR]: Cannot find module './@lou.codes/constants/empty.js' or its corresponding type declarations.
+import type { EMPTY_STRING } from "./@lou.codes/constants/empty.js";
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/EmptyString.ts:1:35
 
 TS2304 [ERROR]: Cannot find name 'HTMLAllCollection'.
  */ export type Falsy = EmptyString | HTMLAllCollection | Nullish | 0 | 0n | false;
                                       ~~~~~~~~~~~~~~~~~
     at file://<tmpdir>/src/Falsy.ts:24:39
 
-Found 2 errors.
+Found 3 errors.
 
 error: Type checking failed.
 

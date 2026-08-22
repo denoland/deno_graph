@@ -32,4 +32,21 @@ game/krmx-client/0.4.2
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2709 [ERROR]: Cannot use namespace 'FC' as a type.
+export const KrmxProvider: FC<PropsWithChildren<{
+                           ~~
+    at file://<tmpdir>/src/client.tsx:24:28
+
+TS2709 [ERROR]: Cannot use namespace 'PropsWithChildren' as a type.
+export const KrmxProvider: FC<PropsWithChildren<{
+                              ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/client.tsx:24:31
+
+Found 2 errors.
+
+error: Type checking failed.
+

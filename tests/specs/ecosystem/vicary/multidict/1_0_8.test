@@ -38,7 +38,7 @@ TS2416 [ERROR]: Property '[Symbol.iterator]' in type 'MultiDict<K, V>' is not as
   Type '() => IterableIterator<[K | V, Set<K | V>]>' is not assignable to type '() => MapIterator<[K | V, Set<K | V>]>'.
     Type 'IterableIterator<[K | V, Set<K | V>]>' is missing the following properties from type 'MapIterator<[K | V, Set<K | V>]>': map, filter, take, drop, and 9 more.
   [Symbol.iterator](): IterableIterator<[K | V, Set<K | V>]> {
-  ~~~~~~~~~~~~~~~~~
+  ^
     at file://<tmpdir>/src/MultiDict.ts:74:3
 
 Found 4 errors.

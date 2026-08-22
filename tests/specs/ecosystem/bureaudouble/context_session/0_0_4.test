@@ -46,4 +46,9 @@ bureaudouble/context-session/0.0.4
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: No version matching '0.2.0' for @jsr/cross__jwt
+

@@ -20,4 +20,14 @@ vueutils/core/1.0.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2305 [ERROR]: Module '"npm:nanostores@^0.10.0"' has no exported member 'WritableStore'.
+import type { WritableStore } from "npm:nanostores@^0.10.0";
+              ~~~~~~~~~~~~~
+    at file://<tmpdir>/core.vue.ts:1:15
+
+error: Type checking failed.
+

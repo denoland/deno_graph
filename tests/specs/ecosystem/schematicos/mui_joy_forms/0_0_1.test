@@ -897,4 +897,14 @@ schematicos/mui-joy-forms/0.0.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2709 [ERROR]: Cannot use namespace 'ReactNode' as a type.
+export const MuiJoyForms = (): ReactNode =>({} as never);
+                               ~~~~~~~~~
+    at file://<tmpdir>/src/MuiJoyForms.tsx:2:32
+
+error: Type checking failed.
+

@@ -41,10 +41,7 @@ thesgj/nextjs-toploader/1.6.10
 -- stdout --
 
 -- stderr --
-TS2503 [ERROR]: Cannot find namespace 'JSX'.
- */ const NextTopLoader = ({}: NextTopLoaderProps): JSX.Element =>({} as never);
-                                                    ~~~
-    at file://<tmpdir>/src/index.tsx:60:53
+TS5089 [ERROR]: Option 'jsxImportSource' cannot be specified when option 'jsx' is 'react'.
 
 error: Type checking failed.
 

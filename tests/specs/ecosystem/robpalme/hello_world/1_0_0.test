@@ -9,4 +9,9 @@ robpalme/hello-world/1.0.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: expected value at line 1 column 1
+

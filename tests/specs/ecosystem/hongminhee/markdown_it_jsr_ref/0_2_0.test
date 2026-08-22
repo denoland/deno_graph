@@ -53,4 +53,14 @@ hongminhee/markdown-it-jsr-ref/0.2.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2709 [ERROR]: Cannot use namespace 'PluginSimple' as a type.
+ */ export function jsrRef(options: Options): Promise<PluginSimple> {
+                                                      ~~~~~~~~~~~~
+    at file://<tmpdir>/src/plugin.ts:15:55
+
+error: Type checking failed.
+

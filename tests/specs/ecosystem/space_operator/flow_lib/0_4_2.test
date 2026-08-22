@@ -294,4 +294,14 @@ space-operator/flow-lib/0.4.2
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2306 [ERROR]: File '<global_npm_dir>/@solana/web3.js/1.91.8/lib/index.d.ts' is not a module.
+import type { PublicKey } from "npm:@solana/web3.js@^1.91.2";
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/context.ts:4:32
+
+error: Type checking failed.
+

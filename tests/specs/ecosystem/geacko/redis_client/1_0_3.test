@@ -19,4 +19,9 @@ geacko/redis-client/1.0.3
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: No version matching '^2.1.4' for @jsr/geacko__resp3-parser
+

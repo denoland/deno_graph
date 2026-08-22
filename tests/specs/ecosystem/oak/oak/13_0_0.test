@@ -66,6 +66,11 @@ oak/oak/13.0.0
 -- stdout --
 
 -- stderr --
+TS2846 [ERROR]: A declaration file cannot be imported without 'import type'. Did you mean to import an implementation file './types.ts' instead?
+import { Key, Listener, NetAddr, ServerConstructor, ServerRequest } from "./types.d.ts";
+                                                                         ~~~~~~~~~~~~~~
+    at file://<tmpdir>/application.ts:4:74
+
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
     at file://<tmpdir>/application.ts:208:77
 
@@ -79,6 +84,11 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
    * `"error"` and `"listen"`. */ addEventListener(param0?: any, param1?: any, param2?: any): any {
                                   ~~~~~~~~~~~~~~~~
     at file://<tmpdir>/application.ts:215:35
+
+TS2846 [ERROR]: A declaration file cannot be imported without 'import type'. Did you mean to import an implementation file './types.ts' instead?
+export { type ServerConstructor } from "./types.d.ts";
+                                       ~~~~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:54:40
 
 TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
   constructor(file: (Deno.Reader & Deno.Seeker & Deno.Closer) | Uint8Array, type: string, ranges: ByteRange[], size: number, boundary: string){
@@ -95,7 +105,7 @@ TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Closer'.
                                                       ~~~~~~
     at file://<tmpdir>/range.ts:22:55
 
-Found 7 errors.
+Found 9 errors.
 
 error: Type checking failed.
 

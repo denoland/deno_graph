@@ -36,22 +36,67 @@ bureaudouble-forks/react-remove-scroll/0.0.1
 -- stdout --
 
 -- stderr --
+TS2694 [ERROR]: Namespace '"npm:react@^18.2"' has no exported member 'ReactNode'.
+  children: React.ReactNode;
+                  ~~~~~~~~~
+    at file://<tmpdir>/src/types.tsx:12:19
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2"' has no exported member 'ReactElement'.
+  children: React.ReactElement;
+                  ~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.tsx:21:19
+
+TS2709 [ERROR]: Cannot use namespace 'Ref' as a type.
+  ref?: Ref<HTMLElement>;
+        ~~~
+    at file://<tmpdir>/src/types.tsx:24:9
+
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
   ref?: Ref<HTMLElement>;
             ~~~~~~~~~~~
     at file://<tmpdir>/src/types.tsx:24:13
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2"' has no exported member 'CSSProperties'.
+  style?: React.CSSProperties;
+                ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.tsx:46:17
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2"' has no exported member 'RefObject'.
+   */ shards?: Array<React.RefObject<any> | HTMLElement>;
+                           ~~~~~~~~~
+    at file://<tmpdir>/src/types.tsx:49:28
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
    */ shards?: Array<React.RefObject<any> | HTMLElement>;
                                             ~~~~~~~~~~~
     at file://<tmpdir>/src/types.tsx:49:45
 
+TS2694 [ERROR]: Namespace '"npm:react@^18.2"' has no exported member 'ElementType'.
+   */ as?: string | React.ElementType;
+                          ~~~~~~~~~~~
+    at file://<tmpdir>/src/types.tsx:53:27
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2"' has no exported member 'FC'.
+  sideCar: React.FC<any>;
+                 ~~
+    at file://<tmpdir>/src/types.tsx:61:18
+
+TS2709 [ERROR]: Cannot use namespace 'ForwardRefExoticComponent' as a type.
+type RefForwarded<T> = ForwardRefExoticComponent<T & RefAttributes<HTMLElement>> & WithClassNames;
+                       ~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.tsx:69:24
+
+TS2709 [ERROR]: Cannot use namespace 'RefAttributes' as a type.
+type RefForwarded<T> = ForwardRefExoticComponent<T & RefAttributes<HTMLElement>> & WithClassNames;
+                                                     ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.tsx:69:54
+
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
 type RefForwarded<T> = ForwardRefExoticComponent<T & RefAttributes<HTMLElement>> & WithClassNames;
                                                                    ~~~~~~~~~~~
     at file://<tmpdir>/src/types.tsx:69:68
 
-Found 3 errors.
+Found 12 errors.
 
 error: Type checking failed.
 

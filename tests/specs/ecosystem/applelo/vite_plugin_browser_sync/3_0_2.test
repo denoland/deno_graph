@@ -1040,4 +1040,14 @@ applelo/vite-plugin-browser-sync/3.0.2
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2709 [ERROR]: Cannot use namespace 'BrowserSyncOptions' as a type.
+export type BsOptions = BrowserSyncOptions;
+                        ~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:3:25
+
+error: Type checking failed.
+

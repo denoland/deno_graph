@@ -19,4 +19,14 @@ sigma/gtk-py/0.4.13
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
+  name = "PythonError";
+  ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/denosaurs__python/src/python.ts:815:3
+
+error: Type checking failed.
+

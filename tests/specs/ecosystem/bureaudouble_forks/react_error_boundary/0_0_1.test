@@ -32,4 +32,63 @@ bureaudouble-forks/react-error-boundary/0.0.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2709 [ERROR]: Cannot use namespace 'ErrorInfo' as a type.
+  componentDidCatch(error: Error, info: ErrorInfo): void {}
+                                        ~~~~~~~~~
+    at file://<tmpdir>/src/ErrorBoundary.ts:21:41
+
+TS2709 [ERROR]: Cannot use namespace 'Context' as a type.
+export const ErrorBoundaryContext: Context<ErrorBoundaryContextType | null> = {} as never;
+                                   ~~~~~~~
+    at file://<tmpdir>/src/ErrorBoundaryContext.ts:7:36
+
+TS2709 [ERROR]: Cannot use namespace 'ReactNode' as a type.
+declare function FallbackRender(props: FallbackProps): ReactNode;
+                                                       ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:2:56
+
+TS2709 [ERROR]: Cannot use namespace 'PropsWithChildren' as a type.
+type ErrorBoundarySharedProps = PropsWithChildren<{
+                                ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:7:33
+
+TS2709 [ERROR]: Cannot use namespace 'ErrorInfo' as a type.
+  onError?: (error: Error, info: ErrorInfo) => void;
+                                 ~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:8:34
+
+TS2709 [ERROR]: Cannot use namespace 'ComponentType' as a type.
+  FallbackComponent: ComponentType<FallbackProps>;
+                     ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:21:22
+
+TS2709 [ERROR]: Cannot use namespace 'ReactElement' as a type.
+  fallback: ReactElement<unknown, string | FunctionComponent | typeof Component> | null;
+            ~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:30:13
+
+TS2709 [ERROR]: Cannot use namespace 'FunctionComponent' as a type.
+  fallback: ReactElement<unknown, string | FunctionComponent | typeof Component> | null;
+                                           ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:30:44
+
+TS2709 [ERROR]: Cannot use namespace 'ComponentType' as a type.
+    at file://<tmpdir>/src/withErrorBoundary.ts:3:68
+
+TS2709 [ERROR]: Cannot use namespace 'ForwardRefExoticComponent' as a type.
+    at file://<tmpdir>/src/withErrorBoundary.ts:3:131
+
+TS2709 [ERROR]: Cannot use namespace 'PropsWithoutRef' as a type.
+    at file://<tmpdir>/src/withErrorBoundary.ts:3:157
+
+TS2709 [ERROR]: Cannot use namespace 'RefAttributes' as a type.
+    at file://<tmpdir>/src/withErrorBoundary.ts:3:182
+
+Found 12 errors.
+
+error: Type checking failed.
+

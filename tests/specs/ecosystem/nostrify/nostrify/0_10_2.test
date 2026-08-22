@@ -134,7 +134,7 @@ TS2416 [ERROR]: Property '[Symbol.iterator]' in type 'NSet' is not assignable to
   Type '() => IterableIterator<NostrEvent>' is not assignable to type '() => SetIterator<NostrEvent>'.
     Type 'IterableIterator<NostrEvent>' is missing the following properties from type 'SetIterator<NostrEvent>': map, filter, take, drop, and 9 more.
   [Symbol.iterator](): IterableIterator<NostrEvent> {
-  ~~~~~~~~~~~~~~~~~
+  ^
     at file://<tmpdir>/src/NSet.ts:56:3
 
 Found 5 errors.

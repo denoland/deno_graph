@@ -1,6 +1,17 @@
 zeppet/actions/2.1.3
 -- deno.lock --
-{}
+{
+  "version": "5",
+  "specifiers": {
+    "npm:@jsr/zeppet__core@^2.1.3": "2.1.3"
+  },
+  "npm": {
+    "@jsr/zeppet__core@2.1.3": {
+      "integrity": "sha512-kY399HbaRgIbNw2S+FjZ+Z2aU05PcZGRRA3WF+s8THSka9IM4ZxQ+JNgdiNy09yCLZCr3YipUvsV5+9RNF+YjA==",
+      "tarball": "https://npm.jsr.io/~/11/@jsr/zeppet__core/2.1.3.tgz"
+    }
+  }
+}
 
 ===
 

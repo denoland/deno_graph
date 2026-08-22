@@ -582,4 +582,14 @@ antfu/eslint-flat-config-utils/0.0.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2503 [ERROR]: Cannot find namespace 'Linter'.
+export interface FlatConfigItem extends Linter.FlatConfig {
+                                        ~~~~~~
+    at file://<tmpdir>/src/types.ts:2:41
+
+error: Type checking failed.
+

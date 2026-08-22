@@ -165,4 +165,14 @@ ssr/dinossr/0.21.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2306 [ERROR]: File '<global_npm_dir>/svelte/4.2.12/types/index.d.ts' is not a module.
+export * as svelte from 'npm:svelte@4.2.12/compiler';
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/deps.ts:3:25
+
+error: Type checking failed.
+

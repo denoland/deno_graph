@@ -13,10 +13,21 @@ rdtlabs/ts-utils/0.2.16
 -- stdout --
 
 -- stderr --
+TS2304 [ERROR]: Cannot find name 'WindowEventMap'.
+    at file://<tmpdir>/src/async/fromEvent.ts:9:43
+
+TS2304 [ERROR]: Cannot find name 'WindowEventMap'.
+    at file://<tmpdir>/src/async/fromEvent.ts:9:86
+
+TS2304 [ERROR]: Cannot find name 'WindowEventMap'.
+    at file://<tmpdir>/src/async/fromEvent.ts:9:121
+
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
   public get cause(): ErrorLike {
              ~~~~~
     at file://<tmpdir>/src/cancellation/CancellationError.ts:11:14
+
+Found 4 errors.
 
 error: Type checking failed.
 

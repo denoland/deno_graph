@@ -9,4 +9,9 @@ sigmasd/ipc-spy/0.2.3
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: trailing comma at line 7 column 3
+

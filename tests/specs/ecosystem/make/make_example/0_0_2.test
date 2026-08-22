@@ -19,4 +19,9 @@ make/make-example/0.0.2
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: No version matching '^0.0.2' for @jsr/make__core
+

@@ -59,4 +59,9 @@ bureaudouble/checkout/0.0.16
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: No version matching '0.2.0' for @jsr/cross__jwt
+

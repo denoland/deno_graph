@@ -1,224 +1,1276 @@
 radix-ui-fork/react-popover/0.0.4
 -- deno.lock --
 {
-  "version": "3",
-  "packages": {
-    "specifiers": {
-      "jsr:@radix-ui-fork/primitive@0.0.4": "jsr:@radix-ui-fork/primitive@0.0.4",
-      "jsr:@radix-ui-fork/react-arrow@0.0.4": "jsr:@radix-ui-fork/react-arrow@0.0.4",
-      "jsr:@radix-ui-fork/react-compose-refs@0.0.4": "jsr:@radix-ui-fork/react-compose-refs@0.0.4",
-      "jsr:@radix-ui-fork/react-context@0.0.4": "jsr:@radix-ui-fork/react-context@0.0.4",
-      "jsr:@radix-ui-fork/react-dismissable-layer@0.0.4": "jsr:@radix-ui-fork/react-dismissable-layer@0.0.4",
-      "jsr:@radix-ui-fork/react-focus-scope@0.0.4": "jsr:@radix-ui-fork/react-focus-scope@0.0.4",
-      "jsr:@radix-ui-fork/react-popper@0.0.4": "jsr:@radix-ui-fork/react-popper@0.0.4",
-      "jsr:@radix-ui-fork/react-portal@0.0.4": "jsr:@radix-ui-fork/react-portal@0.0.4",
-      "jsr:@radix-ui-fork/react-primitive@0.0.4": "jsr:@radix-ui-fork/react-primitive@0.0.4",
-      "jsr:@radix-ui-fork/react-slot@0.0.4": "jsr:@radix-ui-fork/react-slot@0.0.4",
-      "jsr:@radix-ui-fork/react-use-callback-ref@0.0.4": "jsr:@radix-ui-fork/react-use-callback-ref@0.0.4",
-      "jsr:@radix-ui-fork/react-use-escape-keydown@0.0.4": "jsr:@radix-ui-fork/react-use-escape-keydown@0.0.4",
-      "jsr:@radix-ui-fork/react-use-layout-effect@0.0.4": "jsr:@radix-ui-fork/react-use-layout-effect@0.0.4",
-      "jsr:@radix-ui-fork/react-use-size@0.0.4": "jsr:@radix-ui-fork/react-use-size@0.0.4",
-      "jsr:@radix-ui-fork/rect@0.0.4": "jsr:@radix-ui-fork/rect@0.0.4",
-      "npm:@floating-ui/react-dom@2.0.8": "npm:@floating-ui/react-dom@2.0.8_react@18.3.1_react-dom@18.3.1__react@18.3.1",
-      "npm:@types/react@^18.2.0": "npm:@types/react@18.3.1",
-      "npm:@types/resize-observer-browser@0.1.11": "npm:@types/resize-observer-browser@0.1.11",
-      "npm:react-dom@^18.0.0": "npm:react-dom@18.3.1_react@18.3.1",
-      "npm:react@^18.2.0": "npm:react@18.3.1"
+  "version": "5",
+  "specifiers": {
+    "jsr:@radix-ui-fork/primitive@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-arrow@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-compose-refs@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-context@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-dismissable-layer@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-focus-scope@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-popper@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-portal@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-primitive@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-slot@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-use-callback-ref@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-use-escape-keydown@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-use-layout-effect@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/react-use-size@0.0.4": "0.0.4",
+    "jsr:@radix-ui-fork/rect@0.0.4": "0.0.4",
+    "npm:@floating-ui/react-dom@2.0.8": "2.0.8_react@18.3.1_react-dom@18.3.1__react@18.3.1",
+    "npm:@types/react@^18.2.0": "18.3.1",
+    "npm:@types/resize-observer-browser@0.1.11": "0.1.11",
+    "npm:react-dom@18": "18.3.1_react@18.3.1",
+    "npm:react@^18.2.0": "18.3.1"
+  },
+  "jsr": {
+    "@radix-ui-fork/primitive@0.0.4": {
+      "integrity": "260c5e3c0a8eef9cbdac2bcf75a552e6661e65f728c222b9d334001168755dd2"
     },
-    "jsr": {
-      "@radix-ui-fork/primitive@0.0.4": {
-        "integrity": "260c5e3c0a8eef9cbdac2bcf75a552e6661e65f728c222b9d334001168755dd2"
-      },
-      "@radix-ui-fork/react-arrow@0.0.4": {
-        "integrity": "10577f1b6a909326a8beedddf9be26ee81b72828a7d5ee4a63f9473c4dd0bab9",
-        "dependencies": [
-          "jsr:@radix-ui-fork/react-primitive@0.0.4",
-          "npm:@types/react@^18.2.0"
-        ]
-      },
-      "@radix-ui-fork/react-compose-refs@0.0.4": {
-        "integrity": "a98338b4cce11888d1e1249e35ee2b74d81db0c32212af6116d79ae2b00eeb72",
-        "dependencies": [
-          "npm:@types/react@^18.2.0"
-        ]
-      },
-      "@radix-ui-fork/react-context@0.0.4": {
-        "integrity": "daf9b1b4c1de39475521174521080048087a6ee3fb943f026a5be9bc7cf231e1",
-        "dependencies": [
-          "npm:@types/react@^18.2.0"
-        ]
-      },
-      "@radix-ui-fork/react-dismissable-layer@0.0.4": {
-        "integrity": "b02217d3f726ee6611568d375886d2552ac5219413772b1249198ccd3295f871",
-        "dependencies": [
-          "jsr:@radix-ui-fork/primitive@0.0.4",
-          "jsr:@radix-ui-fork/react-compose-refs@0.0.4",
-          "jsr:@radix-ui-fork/react-primitive@0.0.4",
-          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.4",
-          "jsr:@radix-ui-fork/react-use-escape-keydown@0.0.4",
-          "npm:@types/react@^18.2.0"
-        ]
-      },
-      "@radix-ui-fork/react-focus-scope@0.0.4": {
-        "integrity": "1bcdf22b1af617547b9c50b53b0dd36d1e94bd9e26a9b98a2077ec54fdf5ba02",
-        "dependencies": [
-          "jsr:@radix-ui-fork/react-compose-refs@0.0.4",
-          "jsr:@radix-ui-fork/react-primitive@0.0.4",
-          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.4",
-          "npm:@types/react@^18.2.0"
-        ]
-      },
-      "@radix-ui-fork/react-popper@0.0.4": {
-        "integrity": "000767b67e571e581d7f6fef9cb595de5235d5f5280d3bce808aaf19d144e713",
-        "dependencies": [
-          "jsr:@radix-ui-fork/react-arrow@0.0.4",
-          "jsr:@radix-ui-fork/react-compose-refs@0.0.4",
-          "jsr:@radix-ui-fork/react-context@0.0.4",
-          "jsr:@radix-ui-fork/react-primitive@0.0.4",
-          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.4",
-          "jsr:@radix-ui-fork/react-use-layout-effect@0.0.4",
-          "jsr:@radix-ui-fork/react-use-size@0.0.4",
-          "jsr:@radix-ui-fork/rect@0.0.4",
-          "npm:@floating-ui/react-dom@2.0.8",
-          "npm:@types/react@^18.2.0"
-        ]
-      },
-      "@radix-ui-fork/react-portal@0.0.4": {
-        "integrity": "00c148789d1874b881e306a160b27bc4056b3be2e86823a9051f31782cfeaa29",
-        "dependencies": [
-          "jsr:@radix-ui-fork/react-primitive@0.0.4",
-          "npm:@types/react@^18.2.0",
-          "npm:react-dom@^18.0.0"
-        ]
-      },
-      "@radix-ui-fork/react-primitive@0.0.4": {
-        "integrity": "913a0c06a5d46add620e3d7a81c0ab09692dda8b325f714641de610406f43c80",
-        "dependencies": [
-          "jsr:@radix-ui-fork/react-slot@0.0.4",
-          "npm:@types/react@^18.2.0",
-          "npm:react-dom@^18.0.0"
-        ]
-      },
-      "@radix-ui-fork/react-slot@0.0.4": {
-        "integrity": "a42d541d041d3efb25af23134632558e53212d43a9379fba3238c91d15fe56b3",
-        "dependencies": [
-          "jsr:@radix-ui-fork/react-compose-refs@0.0.4",
-          "npm:@types/react@^18.2.0"
-        ]
-      },
-      "@radix-ui-fork/react-use-callback-ref@0.0.4": {
-        "integrity": "51657c38f5cc9ac2f68946f106577bde307f774bfe4063d3547eb590d55d3927",
-        "dependencies": [
-          "npm:@types/react@^18.2.0"
-        ]
-      },
-      "@radix-ui-fork/react-use-escape-keydown@0.0.4": {
-        "integrity": "7be647f9b2d97768d6a1cd536eac7f4f86e80c7b44d54bca6e677574b97674fe",
-        "dependencies": [
-          "jsr:@radix-ui-fork/react-use-callback-ref@0.0.4",
-          "npm:@types/react@^18.2.0"
-        ]
-      },
-      "@radix-ui-fork/react-use-layout-effect@0.0.4": {
-        "integrity": "77947bfa42543b2ec042a8f7664647344c5c692237b3670d0454a67f69fd1d1b",
-        "dependencies": [
-          "npm:@types/react@^18.2.0"
-        ]
-      },
-      "@radix-ui-fork/react-use-size@0.0.4": {
-        "integrity": "43ad1eca89e78bc17f456d857437f04faae60f0315bd47ccb50e42c0525de0b8",
-        "dependencies": [
-          "jsr:@radix-ui-fork/react-use-layout-effect@0.0.4",
-          "npm:@types/react@^18.2.0",
-          "npm:@types/resize-observer-browser@0.1.11"
-        ]
-      },
-      "@radix-ui-fork/rect@0.0.4": {
-        "integrity": "fdfbba05847cbc1bf028726b157211fe7fa3d07b49df54046b708554e2311ece"
-      }
+    "@radix-ui-fork/react-arrow@0.0.4": {
+      "integrity": "10577f1b6a909326a8beedddf9be26ee81b72828a7d5ee4a63f9473c4dd0bab9",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-primitive",
+        "npm:@types/react",
+        "npm:react"
+      ]
     },
-    "npm": {
-      "@floating-ui/core@1.6.1": {
-        "integrity": "sha512-42UH54oPZHPdRHdw6BgoBD6cg/eVTmVrFcgeRDM3jbO7uxSoipVcmcIGFcA5jmOHO5apcyvBhkSKES3fQJnu7A==",
-        "dependencies": {
-          "@floating-ui/utils": "@floating-ui/utils@0.2.2"
-        }
-      },
-      "@floating-ui/dom@1.6.5": {
-        "integrity": "sha512-Nsdud2X65Dz+1RHjAIP0t8z5e2ff/IRbei6BqFrl1urT8sDVzM1HMQ+R0XcU5ceRfyO3I6ayeqIfh+6Wb8LGTw==",
-        "dependencies": {
-          "@floating-ui/core": "@floating-ui/core@1.6.1",
-          "@floating-ui/utils": "@floating-ui/utils@0.2.2"
-        }
-      },
-      "@floating-ui/react-dom@2.0.8_react@18.3.1_react-dom@18.3.1__react@18.3.1": {
-        "integrity": "sha512-HOdqOt3R3OGeTKidaLvJKcgg75S6tibQ3Tif4eyd91QnIJWr0NLvoXFpJA/j8HqkFSL68GDca9AuyWEHlhyClw==",
-        "dependencies": {
-          "@floating-ui/dom": "@floating-ui/dom@1.6.5",
-          "react": "react@18.3.1",
-          "react-dom": "react-dom@18.3.1_react@18.3.1"
-        }
-      },
-      "@floating-ui/utils@0.2.2": {
-        "integrity": "sha512-J4yDIIthosAsRZ5CPYP/jQvUAQtlZTTD/4suA08/FEnlxqW3sKS9iAhgsa9VYLZ6vDHn/ixJgIqRQPotoBjxIw==",
-        "dependencies": {}
-      },
-      "@types/prop-types@15.7.12": {
-        "integrity": "sha512-5zvhXYtRNRluoE/jAp4GVsSduVUzNWKkOZrCDBWYtE7biZywwdC2AcEzg+cSMLFRfVgeAFqpfNabiPjxFddV1Q==",
-        "dependencies": {}
-      },
-      "@types/react@18.3.1": {
-        "integrity": "sha512-V0kuGBX3+prX+DQ/7r2qsv1NsdfnCLnTgnRJ1pYnxykBhGMz+qj+box5lq7XsO5mtZsBqpjwwTu/7wszPfMBcw==",
-        "dependencies": {
-          "@types/prop-types": "@types/prop-types@15.7.12",
-          "csstype": "csstype@3.1.3"
-        }
-      },
-      "@types/resize-observer-browser@0.1.11": {
-        "integrity": "sha512-cNw5iH8JkMkb3QkCoe7DaZiawbDQEUX8t7iuQaRTyLOyQCR2h+ibBD4GJt7p5yhUHrlOeL7ZtbxNHeipqNsBzQ==",
-        "dependencies": {}
-      },
-      "csstype@3.1.3": {
-        "integrity": "sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==",
-        "dependencies": {}
-      },
-      "js-tokens@4.0.0": {
-        "integrity": "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==",
-        "dependencies": {}
-      },
-      "loose-envify@1.4.0": {
-        "integrity": "sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==",
-        "dependencies": {
-          "js-tokens": "js-tokens@4.0.0"
-        }
-      },
-      "react-dom@18.3.1_react@18.3.1": {
-        "integrity": "sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==",
-        "dependencies": {
-          "loose-envify": "loose-envify@1.4.0",
-          "react": "react@18.3.1",
-          "scheduler": "scheduler@0.23.2"
-        }
-      },
-      "react@18.3.1": {
-        "integrity": "sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==",
-        "dependencies": {
-          "loose-envify": "loose-envify@1.4.0"
-        }
-      },
-      "scheduler@0.23.2": {
-        "integrity": "sha512-UOShsPwz7NrMUqhR6t0hWjFduvOzbtv7toDH1/hIrfRNIDBnnBWd0CwJTGvTpngVlmwGCdP9/Zl/tVrDqcuYzQ==",
-        "dependencies": {
-          "loose-envify": "loose-envify@1.4.0"
-        }
-      }
+    "@radix-ui-fork/react-compose-refs@0.0.4": {
+      "integrity": "a98338b4cce11888d1e1249e35ee2b74d81db0c32212af6116d79ae2b00eeb72",
+      "dependencies": [
+        "npm:@types/react",
+        "npm:react"
+      ]
+    },
+    "@radix-ui-fork/react-context@0.0.4": {
+      "integrity": "daf9b1b4c1de39475521174521080048087a6ee3fb943f026a5be9bc7cf231e1",
+      "dependencies": [
+        "npm:@types/react",
+        "npm:react"
+      ]
+    },
+    "@radix-ui-fork/react-dismissable-layer@0.0.4": {
+      "integrity": "b02217d3f726ee6611568d375886d2552ac5219413772b1249198ccd3295f871",
+      "dependencies": [
+        "jsr:@radix-ui-fork/primitive",
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "jsr:@radix-ui-fork/react-primitive",
+        "jsr:@radix-ui-fork/react-use-callback-ref",
+        "jsr:@radix-ui-fork/react-use-escape-keydown",
+        "npm:@types/react",
+        "npm:react"
+      ]
+    },
+    "@radix-ui-fork/react-focus-scope@0.0.4": {
+      "integrity": "1bcdf22b1af617547b9c50b53b0dd36d1e94bd9e26a9b98a2077ec54fdf5ba02",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "jsr:@radix-ui-fork/react-primitive",
+        "jsr:@radix-ui-fork/react-use-callback-ref",
+        "npm:@types/react",
+        "npm:react"
+      ]
+    },
+    "@radix-ui-fork/react-popper@0.0.4": {
+      "integrity": "000767b67e571e581d7f6fef9cb595de5235d5f5280d3bce808aaf19d144e713",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-arrow",
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "jsr:@radix-ui-fork/react-context",
+        "jsr:@radix-ui-fork/react-primitive",
+        "jsr:@radix-ui-fork/react-use-callback-ref",
+        "jsr:@radix-ui-fork/react-use-layout-effect",
+        "jsr:@radix-ui-fork/react-use-size",
+        "jsr:@radix-ui-fork/rect",
+        "npm:@floating-ui/react-dom",
+        "npm:@types/react",
+        "npm:react"
+      ]
+    },
+    "@radix-ui-fork/react-portal@0.0.4": {
+      "integrity": "00c148789d1874b881e306a160b27bc4056b3be2e86823a9051f31782cfeaa29",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-primitive",
+        "npm:@types/react",
+        "npm:react",
+        "npm:react-dom"
+      ]
+    },
+    "@radix-ui-fork/react-primitive@0.0.4": {
+      "integrity": "913a0c06a5d46add620e3d7a81c0ab09692dda8b325f714641de610406f43c80",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-slot",
+        "npm:@types/react",
+        "npm:react",
+        "npm:react-dom"
+      ]
+    },
+    "@radix-ui-fork/react-slot@0.0.4": {
+      "integrity": "a42d541d041d3efb25af23134632558e53212d43a9379fba3238c91d15fe56b3",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-compose-refs",
+        "npm:@types/react",
+        "npm:react"
+      ]
+    },
+    "@radix-ui-fork/react-use-callback-ref@0.0.4": {
+      "integrity": "51657c38f5cc9ac2f68946f106577bde307f774bfe4063d3547eb590d55d3927",
+      "dependencies": [
+        "npm:@types/react",
+        "npm:react"
+      ]
+    },
+    "@radix-ui-fork/react-use-escape-keydown@0.0.4": {
+      "integrity": "7be647f9b2d97768d6a1cd536eac7f4f86e80c7b44d54bca6e677574b97674fe",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-use-callback-ref",
+        "npm:@types/react",
+        "npm:react"
+      ]
+    },
+    "@radix-ui-fork/react-use-layout-effect@0.0.4": {
+      "integrity": "77947bfa42543b2ec042a8f7664647344c5c692237b3670d0454a67f69fd1d1b",
+      "dependencies": [
+        "npm:@types/react",
+        "npm:react"
+      ]
+    },
+    "@radix-ui-fork/react-use-size@0.0.4": {
+      "integrity": "43ad1eca89e78bc17f456d857437f04faae60f0315bd47ccb50e42c0525de0b8",
+      "dependencies": [
+        "jsr:@radix-ui-fork/react-use-layout-effect",
+        "npm:@types/react",
+        "npm:@types/resize-observer-browser",
+        "npm:react"
+      ]
+    },
+    "@radix-ui-fork/rect@0.0.4": {
+      "integrity": "fdfbba05847cbc1bf028726b157211fe7fa3d07b49df54046b708554e2311ece"
     }
   },
-  "remote": {}
+  "npm": {
+    "@floating-ui/core@1.6.1": {
+      "integrity": "sha512-42UH54oPZHPdRHdw6BgoBD6cg/eVTmVrFcgeRDM3jbO7uxSoipVcmcIGFcA5jmOHO5apcyvBhkSKES3fQJnu7A==",
+      "dependencies": [
+        "@floating-ui/utils"
+      ]
+    },
+    "@floating-ui/dom@1.6.5": {
+      "integrity": "sha512-Nsdud2X65Dz+1RHjAIP0t8z5e2ff/IRbei6BqFrl1urT8sDVzM1HMQ+R0XcU5ceRfyO3I6ayeqIfh+6Wb8LGTw==",
+      "dependencies": [
+        "@floating-ui/core",
+        "@floating-ui/utils"
+      ]
+    },
+    "@floating-ui/react-dom@2.0.8_react@18.3.1_react-dom@18.3.1__react@18.3.1": {
+      "integrity": "sha512-HOdqOt3R3OGeTKidaLvJKcgg75S6tibQ3Tif4eyd91QnIJWr0NLvoXFpJA/j8HqkFSL68GDca9AuyWEHlhyClw==",
+      "dependencies": [
+        "@floating-ui/dom",
+        "react",
+        "react-dom"
+      ]
+    },
+    "@floating-ui/utils@0.2.2": {
+      "integrity": "sha512-J4yDIIthosAsRZ5CPYP/jQvUAQtlZTTD/4suA08/FEnlxqW3sKS9iAhgsa9VYLZ6vDHn/ixJgIqRQPotoBjxIw=="
+    },
+    "@types/prop-types@15.7.12": {
+      "integrity": "sha512-5zvhXYtRNRluoE/jAp4GVsSduVUzNWKkOZrCDBWYtE7biZywwdC2AcEzg+cSMLFRfVgeAFqpfNabiPjxFddV1Q=="
+    },
+    "@types/react@18.3.1": {
+      "integrity": "sha512-V0kuGBX3+prX+DQ/7r2qsv1NsdfnCLnTgnRJ1pYnxykBhGMz+qj+box5lq7XsO5mtZsBqpjwwTu/7wszPfMBcw==",
+      "dependencies": [
+        "@types/prop-types",
+        "csstype"
+      ]
+    },
+    "@types/resize-observer-browser@0.1.11": {
+      "integrity": "sha512-cNw5iH8JkMkb3QkCoe7DaZiawbDQEUX8t7iuQaRTyLOyQCR2h+ibBD4GJt7p5yhUHrlOeL7ZtbxNHeipqNsBzQ=="
+    },
+    "csstype@3.1.3": {
+      "integrity": "sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw=="
+    },
+    "js-tokens@4.0.0": {
+      "integrity": "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ=="
+    },
+    "loose-envify@1.4.0": {
+      "integrity": "sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==",
+      "dependencies": [
+        "js-tokens"
+      ],
+      "bin": true
+    },
+    "react-dom@18.3.1_react@18.3.1": {
+      "integrity": "sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==",
+      "dependencies": [
+        "loose-envify",
+        "react",
+        "scheduler"
+      ]
+    },
+    "react@18.3.1": {
+      "integrity": "sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==",
+      "dependencies": [
+        "loose-envify"
+      ]
+    },
+    "scheduler@0.23.2": {
+      "integrity": "sha512-UOShsPwz7NrMUqhR6t0hWjFduvOzbtv7toDH1/hIrfRNIDBnnBWd0CwJTGvTpngVlmwGCdP9/Zl/tVrDqcuYzQ==",
+      "dependencies": [
+        "loose-envify"
+      ]
+    }
+  }
 }
 
 ===
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type ArrowElement = React.ElementRef<typeof Primitive.svg>;
+                          ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-arrow/src/Arrow.tsx:13:27
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-arrow/src/Arrow.tsx:17:20
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-arrow/src/Arrow.tsx:17:65
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-arrow/src/Arrow.tsx:17:96
+
+TS7006 [ERROR]: Parameter 'props' implicitly has an 'any' type.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-arrow/src/Arrow.tsx:17:140
+
+TS7006 [ERROR]: Parameter 'forwardedRef' implicitly has an 'any' type.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-arrow/src/Arrow.tsx:17:147
+
+TS2604 [ERROR]: JSX element type 'Primitive.svg' does not have any construct or call signatures.
+    <Primitive.svg
+     ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-arrow/src/Arrow.tsx:20:6
+
+TS7026 [ERROR]: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+      {props.asChild ? children : <polygon points="0,0 30,0 15,10" />}
+                                  ^
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-arrow/src/Arrow.tsx:29:35
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'Ref'.
+type PossibleRef<T> = React.Ref<T> | undefined;
+                            ~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-compose-refs/src/composeRefs.tsx:4:29
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'MutableRefObject'.
+    (ref as React.MutableRefObject<T>).current = value;
+                  ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-compose-refs/src/composeRefs.tsx:14:19
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+      children: React.ReactNode;
+                      ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-context/src/createContext.tsx:10:23
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'JSX'.
+  ): React.JSX.Element;
+           ~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-context/src/createContext.tsx:12:12
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+  const Context = React.createContext<ContextValueType | undefined>(defaultContext);
+                  ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-context/src/createContext.tsx:15:19
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  function Provider(props: ContextValueType & { children: React.ReactNode }) {
+                                                                ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-context/src/createContext.tsx:17:65
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'Context'.
+type Scope<C = any> = { [scopeName: string]: React.Context<C>[] } | undefined;
+                                                   ~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-context/src/createContext.tsx:41:52
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+    children: React.ReactNode;
+                    ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-context/src/createContext.tsx:51:21
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'JSX'.
+  }): React.JSX.Element;
+            ~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-context/src/createContext.tsx:52:13
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    const BaseContext = React.createContext<ContextValueType | undefined>(defaultContext);
+                        ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-context/src/createContext.tsx:66:25
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+      props: ContextValueType & { scope: Scope<ContextValueType>; children: React.ReactNode }
+                                                                                  ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-context/src/createContext.tsx:71:83
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'Context'.
+const DismissableLayerContext: React.Context<{
+                                     ~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:22:38
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type DismissableLayerElement = React.ElementRef<typeof Primitive.div>;
+                                     ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:32:38
+
+TS2304 [ERROR]: Cannot find name 'KeyboardEvent'.
+  onEscapeKeyDown?: (event: KeyboardEvent) => void;
+                            ~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:45:29
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:68:31
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:68:87
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:68:129
+
+TS7006 [ERROR]: Parameter 'props' implicitly has an 'any' type.
+  (props, forwardedRef) => {
+   ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:69:4
+
+TS7006 [ERROR]: Parameter 'forwardedRef' implicitly has an 'any' type.
+  (props, forwardedRef) => {
+          ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:69:11
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    const [node, setNode] = React.useState<DismissableLayerElement | null>(null);
+                            ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:80:29
+
+TS7017 [ERROR]: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
+    const ownerDocument = node?.ownerDocument ?? globalThis?.document;
+                                                             ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:81:62
+
+TS7006 [ERROR]: Parameter 'node' implicitly has an 'any' type.
+    const composedRefs = useComposedRefs(forwardedRef, (node) => setNode(node));
+                                                        ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:83:57
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+      const target = event.target as HTMLElement;
+                                     ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:92:38
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+      const target = event.target as HTMLElement;
+                                     ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:101:38
+
+TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+      document.addEventListener(CONTEXT_UPDATE, handleUpdate);
+      ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:157:7
+
+TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+      return () => document.removeEventListener(CONTEXT_UPDATE, handleUpdate);
+                   ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:158:20
+
+TS2604 [ERROR]: JSX element type 'Primitive.div' does not have any construct or call signatures.
+      <Primitive.div
+       ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:162:8
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type DismissableLayerBranchElement = React.ElementRef<typeof Primitive.div>;
+                                           ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:192:44
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:195:37
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:195:99
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:195:147
+
+TS7006 [ERROR]: Parameter 'props' implicitly has an 'any' type.
+>((props, forwardedRef) => {
+   ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:198:4
+
+TS7006 [ERROR]: Parameter 'forwardedRef' implicitly has an 'any' type.
+>((props, forwardedRef) => {
+          ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:198:11
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+  const ref = React.useRef<DismissableLayerBranchElement>(null);
+              ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:200:15
+
+TS2604 [ERROR]: JSX element type 'Primitive.div' does not have any construct or call signatures.
+  return <Primitive.div {...props} ref={composedRefs} />;
+          ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:213:11
+
+TS2304 [ERROR]: Cannot find name 'PointerEvent'.
+type PointerDownOutsideEvent = CustomEvent<{ originalEvent: PointerEvent }>;
+                                                            ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:220:61
+
+TS2304 [ERROR]: Cannot find name 'FocusEvent'.
+type FocusOutsideEvent = CustomEvent<{ originalEvent: FocusEvent }>;
+                                                      ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:221:55
+
+TS2304 [ERROR]: Cannot find name 'Document'.
+  ownerDocument: Document = globalThis?.document
+                 ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:230:18
+
+TS7017 [ERROR]: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
+  ownerDocument: Document = globalThis?.document
+                                        ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:230:41
+
+TS2304 [ERROR]: Cannot find name 'PointerEvent'.
+    const handlePointerDown = (event: PointerEvent) => {
+                                      ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:239:39
+
+TS2304 [ERROR]: Cannot find name 'Document'.
+  ownerDocument: Document = globalThis?.document
+                 ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:313:18
+
+TS7017 [ERROR]: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
+  ownerDocument: Document = globalThis?.document
+                                        ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:313:41
+
+TS2304 [ERROR]: Cannot find name 'FocusEvent'.
+    const handleFocus = (event: FocusEvent) => {
+                                ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:322:33
+
+TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+  document.dispatchEvent(event);
+  ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-dismissable-layer/src/DismissableLayer.tsx:342:3
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+type FocusableTarget = HTMLElement | { focus(): void };
+                       ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:13:24
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type FocusScopeElement = React.ElementRef<typeof Primitive.div>;
+                               ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:21:32
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:51:25
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:51:75
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:51:111
+
+TS7006 [ERROR]: Parameter 'props' implicitly has an 'any' type.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:51:165
+
+TS7006 [ERROR]: Parameter 'forwardedRef' implicitly has an 'any' type.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:51:172
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+  const [container, setContainer] = React.useState<HTMLElement | null>(null);
+                                    ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:59:37
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+  const [container, setContainer] = React.useState<HTMLElement | null>(null);
+                                                   ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:59:52
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+  const lastFocusedElementRef = React.useRef<HTMLElement | null>(null);
+                                ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:62:33
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+  const lastFocusedElementRef = React.useRef<HTMLElement | null>(null);
+                                             ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:62:46
+
+TS7006 [ERROR]: Parameter 'node' implicitly has an 'any' type.
+  const composedRefs = useComposedRefs(forwardedRef, (node) => setContainer(node));
+                                                      ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:63:55
+
+TS2304 [ERROR]: Cannot find name 'FocusEvent'.
+      function handleFocusIn(event: FocusEvent) {
+                                    ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:78:37
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+        const target = event.target as HTMLElement | null;
+                                       ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:80:40
+
+TS2304 [ERROR]: Cannot find name 'FocusEvent'.
+      function handleFocusOut(event: FocusEvent) {
+                                     ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:88:38
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+        const relatedTarget = event.relatedTarget as HTMLElement | null;
+                                                     ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:90:54
+
+TS2304 [ERROR]: Cannot find name 'MutationRecord'.
+      function handleMutations(mutations: MutationRecord[]) {
+                                          ~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:114:43
+
+TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+        const focusedElement = document.activeElement as HTMLElement | null;
+                               ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:115:32
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+        const focusedElement = document.activeElement as HTMLElement | null;
+                                                         ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:115:58
+
+TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+        if (focusedElement !== document.body) return;
+                               ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:116:32
+
+TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+      document.addEventListener('focusin', handleFocusIn);
+      ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:122:7
+
+TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+      document.addEventListener('focusout', handleFocusOut);
+      ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:123:7
+
+TS2552 [ERROR]: Cannot find name 'MutationObserver'. Did you mean 'mutationObserver'?
+      const mutationObserver = new MutationObserver(handleMutations);
+                                   ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:124:36
+
+TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+        document.removeEventListener('focusin', handleFocusIn);
+        ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:128:9
+
+TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+        document.removeEventListener('focusout', handleFocusOut);
+        ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:129:9
+
+TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+      const previouslyFocusedElement = document.activeElement as HTMLElement | null;
+                                       ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:138:40
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+      const previouslyFocusedElement = document.activeElement as HTMLElement | null;
+                                                                 ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:138:66
+
+TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+          if (document.activeElement === previouslyFocusedElement) {
+              ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:147:15
+
+TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+            focus(previouslyFocusedElement ?? document.body, { select: true });
+                                              ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:164:47
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'KeyboardEvent'.
+    (event: React.KeyboardEvent) => {
+                  ~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:177:19
+
+TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+      const focusedElement = document.activeElement as HTMLElement | null;
+                             ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:182:30
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+      const focusedElement = document.activeElement as HTMLElement | null;
+                                                       ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:182:56
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+        const container = event.currentTarget as HTMLElement;
+                                                 ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:185:50
+
+TS2604 [ERROR]: JSX element type 'Primitive.div' does not have any construct or call signatures.
+    <Primitive.div tabIndex={-1} {...scopeProps} ref={composedRefs} onKeyDown={handleKeyDown} />
+     ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:207:6
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+function focusFirst(candidates: HTMLElement[], { select = false } = {}) {
+                                ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:221:33
+
+TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+  const previouslyFocusedElement = document.activeElement;
+                                   ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:222:36
+
+TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+    if (document.activeElement !== previouslyFocusedElement) return;
+        ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:225:9
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+function getTabbableEdges(container: HTMLElement): readonly [HTMLElement | undefined, HTMLElement | undefined] {
+                                     ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:232:38
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+function getTabbableEdges(container: HTMLElement): readonly [HTMLElement | undefined, HTMLElement | undefined] {
+                                                             ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:232:62
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+function getTabbableEdges(container: HTMLElement): readonly [HTMLElement | undefined, HTMLElement | undefined] {
+                                                                                      ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:232:87
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+function getTabbableCandidates(container: HTMLElement): HTMLElement[] {
+                                          ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:249:43
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+function getTabbableCandidates(container: HTMLElement): HTMLElement[] {
+                                                        ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:249:57
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+  const nodes: HTMLElement[] = [];
+               ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:250:16
+
+TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_ELEMENT, {
+                 ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:251:18
+
+TS2304 [ERROR]: Cannot find name 'NodeFilter'.
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_ELEMENT, {
+                                                      ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:251:55
+
+TS2304 [ERROR]: Cannot find name 'NodeFilter'.
+      if (node.disabled || node.hidden || isHiddenInput) return NodeFilter.FILTER_SKIP;
+                                                                ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:254:65
+
+TS2304 [ERROR]: Cannot find name 'NodeFilter'.
+      return node.tabIndex >= 0 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+                                  ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:258:35
+
+TS2304 [ERROR]: Cannot find name 'NodeFilter'.
+      return node.tabIndex >= 0 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+                                                             ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:258:62
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+  while (walker.nextNode()) nodes.push(walker.currentNode as HTMLElement);
+                                                             ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:261:62
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+function findVisible(elements: HTMLElement[], container: HTMLElement) {
+                               ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:271:32
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+function findVisible(elements: HTMLElement[], container: HTMLElement) {
+                                                         ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:271:58
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+function isHidden(node: HTMLElement, { upTo }: { upTo?: HTMLElement }) {
+                        ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:278:25
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+function isHidden(node: HTMLElement, { upTo }: { upTo?: HTMLElement }) {
+                                                        ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:278:57
+
+TS2304 [ERROR]: Cannot find name 'getComputedStyle'.
+  if (getComputedStyle(node).visibility === 'hidden') return true;
+      ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:279:7
+
+TS2304 [ERROR]: Cannot find name 'getComputedStyle'.
+    if (getComputedStyle(node).display === 'none') return true;
+        ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:283:9
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    node = node.parentElement as HTMLElement;
+                                 ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:284:34
+
+TS2304 [ERROR]: Cannot find name 'HTMLInputElement'.
+  return element instanceof HTMLInputElement && 'select' in element;
+                            ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:290:29
+
+TS2584 [ERROR]: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+    const previouslyFocusedElement = document.activeElement;
+                                     ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:296:38
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+function removeLinks(items: HTMLElement[]): HTMLElement[] {
+                            ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:347:29
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+function removeLinks(items: HTMLElement[]): HTMLElement[] {
+                                            ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-focus-scope/src/FocusScope.tsx:347:45
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  children?: React.ReactNode;
+                   ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:51:20
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'FC'.
+const Popper: React.FC<PopperProps> = (props: ScopedProps<PopperProps>) => {
+                    ~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:53:21
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+  const [anchor, setAnchor] = React.useState<Measurable | null>(null);
+                              ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:55:31
+
+TS2322 [ERROR]: Type '{ scope: Scope; anchor: any; onAnchorChange: any; }' is not assignable to type 'PopperContextValue & { scope: Scope<any>; children: React.ReactNode; }'.
+  Property 'children' is missing in type '{ scope: Scope; anchor: any; onAnchorChange: any; }' but required in type '{ scope: Scope<any>; children: React.ReactNode; }'.
+    <PopperProvider scope={__scopePopper} anchor={anchor} onAnchorChange={setAnchor}>
+     ~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:57:6
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type PopperAnchorElement = React.ElementRef<typeof Primitive.div>;
+                                 ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:71:34
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefObject'.
+  virtualRef?: React.RefObject<Measurable>;
+                     ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:74:22
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:77:27
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:77:79
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:77:117
+
+TS7006 [ERROR]: Parameter 'forwardedRef' implicitly has an 'any' type.
+  (props: ScopedProps<PopperAnchorProps>, forwardedRef) => {
+                                          ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:78:43
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    const ref = React.useRef<PopperAnchorElement>(null);
+                ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:81:17
+
+TS2604 [ERROR]: JSX element type 'Primitive.div' does not have any construct or call signatures.
+    return virtualRef ? null : <Primitive.div {...anchorProps} ref={composedRefs} />;
+                                ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:91:33
+
+TS2304 [ERROR]: Cannot find name 'HTMLSpanElement'.
+  onArrowChange(arrow: HTMLSpanElement | null): void;
+                       ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:105:24
+
+TS2304 [ERROR]: Cannot find name 'Element'.
+type Boundary = Element | null;
+                ~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:114:17
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type PopperContentElement = React.ElementRef<typeof Primitive.div>;
+                                  ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:116:35
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:132:28
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:132:81
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:132:120
+
+TS7006 [ERROR]: Parameter 'forwardedRef' implicitly has an 'any' type.
+  (props: ScopedProps<PopperContentProps>, forwardedRef) => {
+                                           ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:133:44
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    const [content, setContent] = React.useState<HTMLDivElement | null>(null);
+                                  ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:153:35
+
+TS2304 [ERROR]: Cannot find name 'HTMLDivElement'.
+    const [content, setContent] = React.useState<HTMLDivElement | null>(null);
+                                                 ~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:153:50
+
+TS7006 [ERROR]: Parameter 'node' implicitly has an 'any' type.
+    const composedRefs = useComposedRefs(forwardedRef, (node) => setContent(node));
+                                                        ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:154:57
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    const [arrow, setArrow] = React.useState<HTMLSpanElement | null>(null);
+                              ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:156:31
+
+TS2304 [ERROR]: Cannot find name 'HTMLSpanElement'.
+    const [arrow, setArrow] = React.useState<HTMLSpanElement | null>(null);
+                                             ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:156:46
+
+TS7019 [ERROR]: Rest parameter 'args' implicitly has an 'any[]' type.
+      whileElementsMounted: (...args) => {
+                             ^
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:182:30
+
+TS7031 [ERROR]: Binding element 'elements' implicitly has an 'any' type.
+          apply: ({ elements, rects, availableWidth, availableHeight }) => {
+                    ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:203:21
+
+TS7031 [ERROR]: Binding element 'rects' implicitly has an 'any' type.
+          apply: ({ elements, rects, availableWidth, availableHeight }) => {
+                              ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:203:31
+
+TS7031 [ERROR]: Binding element 'availableWidth' implicitly has an 'any' type.
+          apply: ({ elements, rects, availableWidth, availableHeight }) => {
+                                     ~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:203:38
+
+TS7031 [ERROR]: Binding element 'availableHeight' implicitly has an 'any' type.
+          apply: ({ elements, rects, availableWidth, availableHeight }) => {
+                                                     ~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:203:54
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    const [contentZIndex, setContentZIndex] = React.useState<string>();
+                                              ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:231:47
+
+TS2339 [ERROR]: Property 'getComputedStyle' does not exist on type 'Window & typeof globalThis'.
+      if (content) setContentZIndex(window.getComputedStyle(content).zIndex);
+                                           ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:233:44
+
+TS7026 [ERROR]: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+      <div
+      ^
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:237:7
+
+TS2322 [ERROR]: Type '{ scope: Scope; placedSide: "bottom" | "left" | "right" | "top"; onArrowChange: any; arrowX: any; arrowY: any; shouldHideArrow: boolean; }' is not assignable to type 'PopperContentContextValue & { scope: Scope<any>; children: React.ReactNode; }'.
+  Property 'children' is missing in type '{ scope: Scope; placedSide: "bottom" | "left" | "right" | "top"; onArrowChange: any; arrowX: any; arrowY: any; shouldHideArrow: boolean; }' but required in type '{ scope: Scope<any>; children: React.ReactNode; }'.
+        <PopperContentProvider
+         ~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:263:10
+
+TS2604 [ERROR]: JSX element type 'Primitive.div' does not have any construct or call signatures.
+          <Primitive.div
+           ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:271:12
+
+TS7026 [ERROR]: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+      </div>
+      ^
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:284:7
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type PopperArrowElement = React.ElementRef<typeof ArrowPrimitive.Root>;
+                                ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:304:33
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:308:26
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:308:77
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:308:114
+
+TS7006 [ERROR]: Parameter 'forwardedRef' implicitly has an 'any' type.
+  forwardedRef
+  ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:310:3
+
+TS7026 [ERROR]: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+    <span
+    ^
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:320:5
+
+TS7026 [ERROR]: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+    </span>
+    ^
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:351:5
+
+TS7006 [ERROR]: Parameter 'data' implicitly has an 'any' type.
+  fn(data) {
+     ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-popper/src/Popper.tsx:366:6
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type PortalElement = React.ElementRef<typeof Primitive.div>;
+                           ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-portal/src/Portal.tsx:14:28
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+  container?: HTMLElement | null;
+              ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-portal/src/Portal.tsx:20:15
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-portal/src/Portal.tsx:23:21
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-portal/src/Portal.tsx:23:67
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-portal/src/Portal.tsx:23:99
+
+TS7006 [ERROR]: Parameter 'props' implicitly has an 'any' type.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-portal/src/Portal.tsx:23:145
+
+TS7006 [ERROR]: Parameter 'forwardedRef' implicitly has an 'any' type.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-portal/src/Portal.tsx:23:152
+
+TS7017 [ERROR]: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
+  const { container = globalThis?.document?.body, ...portalProps } = props;
+                                  ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-portal/src/Portal.tsx:24:35
+
+TS2604 [ERROR]: JSX element type 'Primitive.div' does not have any construct or call signatures.
+    ? ReactDOM.createPortal(<Primitive.div {...portalProps} ref={forwardedRef} />, container)
+                             ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-portal/src/Portal.tsx:26:30
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementType'.
+type ComponentPropsWithoutRef<T extends React.ElementType> = PropsWithoutRef<
+                                              ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-primitive/src/Primitive.tsx:29:47
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ComponentProps'.
+  React.ComponentProps<T>
+        ~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-primitive/src/Primitive.tsx:30:9
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementType'.
+type PrimitivePropsWithRef<E extends React.ElementType> = React.ComponentPropsWithRef<E> & {
+                                           ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-primitive/src/Primitive.tsx:34:44
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ComponentPropsWithRef'.
+type PrimitivePropsWithRef<E extends React.ElementType> = React.ComponentPropsWithRef<E> & {
+                                                                ~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-primitive/src/Primitive.tsx:34:65
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementType'.
+interface PrimitiveForwardRefComponent<E extends React.ElementType>
+                                                       ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-primitive/src/Primitive.tsx:38:56
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+  extends React.ForwardRefExoticComponent<PrimitivePropsWithRef<E>> {}
+                ~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-primitive/src/Primitive.tsx:39:17
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'HTMLAttributes'.
+interface SlotProps extends React.HTMLAttributes<HTMLElement> {
+                                  ~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:9:35
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+interface SlotProps extends React.HTMLAttributes<HTMLElement> {
+                                                 ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:9:50
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  children?: React.ReactNode;
+                   ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:10:20
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:13:19
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:13:63
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:13:77
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:13:93
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:13:110
+
+TS7006 [ERROR]: Parameter 'props' implicitly has an 'any' type.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:13:135
+
+TS7006 [ERROR]: Parameter 'forwardedRef' implicitly has an 'any' type.
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:13:142
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+    const newElement = slottable.props.children as React.ReactNode;
+                                                         ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:20:58
+
+TS7006 [ERROR]: Parameter 'child' implicitly has an 'any' type.
+    const newChildren = childrenArray.map((child) => {
+                                           ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:22:44
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+          ? (newElement.props.children as React.ReactNode)
+                                                ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:28:49
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  children: React.ReactNode;
+                  ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:58:19
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+const SlotClone = React.forwardRef<any, SlotCloneProps>((props, forwardedRef) => {
+                  ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:61:19
+
+TS7006 [ERROR]: Parameter 'props' implicitly has an 'any' type.
+const SlotClone = React.forwardRef<any, SlotCloneProps>((props, forwardedRef) => {
+                                                         ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:61:58
+
+TS7006 [ERROR]: Parameter 'forwardedRef' implicitly has an 'any' type.
+const SlotClone = React.forwardRef<any, SlotCloneProps>((props, forwardedRef) => {
+                                                                ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:61:65
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+const Slottable = ({ children }: { children: React.ReactNode }): React.ReactElement => {
+                                                   ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:80:52
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactElement'.
+const Slottable = ({ children }: { children: React.ReactNode }): React.ReactElement => {
+                                                                       ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:80:72
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+function isSlottable(child: React.ReactNode): child is React.ReactElement {
+                                  ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:88:35
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactElement'.
+function isSlottable(child: React.ReactNode): child is React.ReactElement {
+                                                             ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-slot/src/Slot.tsx:88:62
+
+TS2304 [ERROR]: Cannot find name 'KeyboardEvent'.
+  onEscapeKeyDownProp?: (event: KeyboardEvent) => void,
+                                ~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-escape-keydown/src/useEscapeKeydown.tsx:9:33
+
+TS2304 [ERROR]: Cannot find name 'Document'.
+  ownerDocument: Document = globalThis?.document
+                 ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-escape-keydown/src/useEscapeKeydown.tsx:10:18
+
+TS7017 [ERROR]: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
+  ownerDocument: Document = globalThis?.document
+                                        ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-escape-keydown/src/useEscapeKeydown.tsx:10:41
+
+TS2304 [ERROR]: Cannot find name 'KeyboardEvent'.
+    const handleKeyDown = (event: KeyboardEvent) => {
+                                  ~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-escape-keydown/src/useEscapeKeydown.tsx:15:35
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'EffectCallback'.
+  effect: React.EffectCallback,
+                ~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-layout-effect/src/useLayoutEffect.tsx:12:17
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'DependencyList'.
+  deps?: React.DependencyList | undefined,
+               ~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-layout-effect/src/useLayoutEffect.tsx:13:16
+
+TS7017 [ERROR]: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
+) => void = Boolean(globalThis?.document) ? React.useLayoutEffect : () => {};
+                                ~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-layout-effect/src/useLayoutEffect.tsx:14:33
+
+TS2688 [ERROR]: Cannot find type definition file for 'npm:@types/resize-observer-browser@0.1.11'.
+/// <reference types="npm:@types/resize-observer-browser@0.1.11" />
+                      ~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-size/src/useSize.tsx:1:23
+
+TS2304 [ERROR]: Cannot find name 'HTMLElement'.
+function useSize(element: HTMLElement | null): {
+                          ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-size/src/useSize.tsx:7:27
+
+TS2347 [ERROR]: Untyped function calls may not accept type arguments.
+  const [size, setSize] = React.useState<{ width: number; height: number } | undefined>(undefined);
+                          ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-size/src/useSize.tsx:11:27
+
+TS2552 [ERROR]: Cannot find name 'ResizeObserver'. Did you mean 'resizeObserver'?
+      const resizeObserver = new ResizeObserver((entries) => {
+                                 ~~~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-size/src/useSize.tsx:18:34
+
+TS7006 [ERROR]: Parameter 'entries' implicitly has an 'any' type.
+      const resizeObserver = new ResizeObserver((entries) => {
+                                                 ~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/radix-ui-fork__react-use-size/src/useSize.tsx:18:50
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  children?: React.ReactNode;
+                   ~~~~~~~~~
+    at file://<tmpdir>/src/Popover.tsx:12:20
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'FC'.
+const Popover: React.FC<PopoverProps> = {} as never;
+                     ~~
+    at file://<tmpdir>/src/Popover.tsx:18:22
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type PopoverAnchorElement = React.ElementRef<typeof PopperPrimitive.Anchor>;
+                                  ~~~~~~~~~~
+    at file://<tmpdir>/src/Popover.tsx:19:35
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+const PopoverAnchor: React.ForwardRefExoticComponent<PopoverAnchorProps & React.RefAttributes<PopoverAnchorElement>> = {} as never;
+                           ~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Popover.tsx:23:28
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+const PopoverAnchor: React.ForwardRefExoticComponent<PopoverAnchorProps & React.RefAttributes<PopoverAnchorElement>> = {} as never;
+                                                                                ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Popover.tsx:23:81
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type PopoverTriggerElement = React.ElementRef<typeof Primitive.button>;
+                                   ~~~~~~~~~~
+    at file://<tmpdir>/src/Popover.tsx:24:36
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+const PopoverTrigger: React.ForwardRefExoticComponent<PopoverTriggerProps & React.RefAttributes<PopoverTriggerElement>> = {} as never;
+                            ~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Popover.tsx:28:29
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+const PopoverTrigger: React.ForwardRefExoticComponent<PopoverTriggerProps & React.RefAttributes<PopoverTriggerElement>> = {} as never;
+                                                                                  ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Popover.tsx:28:83
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ComponentPropsWithoutRef'.
+type PortalProps = React.ComponentPropsWithoutRef<typeof PortalPrimitive>;
+                         ~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Popover.tsx:29:26
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ReactNode'.
+  children?: React.ReactNode;
+                   ~~~~~~~~~
+    at file://<tmpdir>/src/Popover.tsx:31:20
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'FC'.
+const PopoverPortal: React.FC<PopoverPortalProps> = {} as never;
+                           ~~
+    at file://<tmpdir>/src/Popover.tsx:40:28
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+    at file://<tmpdir>/src/Popover.tsx:47:29
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+    at file://<tmpdir>/src/Popover.tsx:47:96
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type PopoverContentImplElement = React.ElementRef<typeof PopperPrimitive.Content>;
+                                       ~~~~~~~~~~
+    at file://<tmpdir>/src/Popover.tsx:51:40
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type PopoverCloseElement = React.ElementRef<typeof Primitive.button>;
+                                 ~~~~~~~~~~
+    at file://<tmpdir>/src/Popover.tsx:69:34
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+const PopoverClose: React.ForwardRefExoticComponent<PopoverCloseProps & React.RefAttributes<PopoverCloseElement>> = {} as never;
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Popover.tsx:72:27
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+const PopoverClose: React.ForwardRefExoticComponent<PopoverCloseProps & React.RefAttributes<PopoverCloseElement>> = {} as never;
+                                                                              ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Popover.tsx:72:79
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementRef'.
+type PopoverArrowElement = React.ElementRef<typeof PopperPrimitive.Arrow>;
+                                 ~~~~~~~~~~
+    at file://<tmpdir>/src/Popover.tsx:73:34
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+const PopoverArrow: React.ForwardRefExoticComponent<PopoverArrowProps & React.RefAttributes<PopoverArrowElement>> = {} as never;
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Popover.tsx:77:27
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'RefAttributes'.
+const PopoverArrow: React.ForwardRefExoticComponent<PopoverArrowProps & React.RefAttributes<PopoverArrowElement>> = {} as never;
+                                                                              ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Popover.tsx:77:79
+
+Found 223 errors.
+
+error: Type checking failed.
+

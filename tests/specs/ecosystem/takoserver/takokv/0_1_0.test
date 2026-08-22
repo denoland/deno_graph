@@ -9,4 +9,26 @@ takoserver/takokv/0.1.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2303 [ERROR]: Circular definition of import alias 'DB'.
+import { DB } from "./mod.d.ts";
+         ~~
+    at file://<tmpdir>/mod.ts:1:10
+
+TS2459 [ERROR]: Module '"./mod.d.ts"' declares 'DB' locally, but it is not exported.
+import { DB } from "./mod.d.ts";
+         ~~
+    at file://<tmpdir>/mod.ts:1:10
+
+TS2846 [ERROR]: A declaration file cannot be imported without 'import type'. Did you mean to import an implementation file './mod.ts' instead?
+import { DB } from "./mod.d.ts";
+                   ~~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:1:20
+
+Found 3 errors.
+
+error: Type checking failed.
+

@@ -155,7 +155,25 @@ TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you m
                        ~~~~~~~~~~~~~~~
     at file://<tmpdir>/createRenderPipe.ts:30:24
 
-Found 2 errors.
+TS2304 [ERROR]: Cannot find name 'BodyInit'.
+    at file://<tmpdir>/createRenderPipe.ts:72:93
+
+TS2304 [ERROR]: Cannot find name 'HeadersInit'.
+  headers?: HeadersInit;
+            ~~~~~~~~~~~
+    at file://<tmpdir>/staticFileRoute.ts:5:13
+
+TS2709 [ERROR]: Cannot use namespace 'IStringifyOptions' as a type.
+export type UrlCatConfiguration = Partial<Pick<IStringifyOptions, 'arrayFormat'> & {
+                                               ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/urlcat.ts:3:48
+
+TS2709 [ERROR]: Cannot use namespace 'IStringifyOptions' as a type.
+  objectFormat: Partial<Pick<IStringifyOptions, 'format'>>;
+                             ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/urlcat.ts:4:30
+
+Found 6 errors.
 
 error: Type checking failed.
 

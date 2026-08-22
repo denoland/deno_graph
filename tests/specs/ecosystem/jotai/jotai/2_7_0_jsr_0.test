@@ -36,10 +36,22 @@ jotai/jotai/2.7.0-jsr.0
 -- stdout --
 
 -- stderr --
+TS2709 [ERROR]: Cannot use namespace 'ReactNode' as a type.
+  children?: ReactNode;
+             ~~~~~~~~~
+    at file://<tmpdir>/src/react/Provider.ts:9:14
+
+TS2709 [ERROR]: Cannot use namespace 'FunctionComponentElement' as a type.
+}): FunctionComponentElement<{
+    ~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/react/Provider.ts:11:5
+
 TS2339 [ERROR]: Property 'observable' does not exist on type 'SymbolConstructor'.
   [Symbol.observable]?: () => ObservableLike<T> | undefined;
           ~~~~~~~~~~
     at file://<tmpdir>/src/vanilla/utils/atomWithObservable.ts:12:11
+
+Found 3 errors.
 
 error: Type checking failed.
 

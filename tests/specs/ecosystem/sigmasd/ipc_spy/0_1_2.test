@@ -9,4 +9,9 @@ sigmasd/ipc-spy/0.1.2
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: expected `,` or `}` at line 5 column 3
+

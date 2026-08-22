@@ -32,4 +32,21 @@ radix-ui-fork/react-use-layout-effect/0.0.6
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'EffectCallback'.
+ */ const useLayoutEffect: (effect: React.EffectCallback, deps?: React.DependencyList | undefined) => void = {} as never;
+                                          ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/useLayoutEffect.tsx:8:43
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'DependencyList'.
+ */ const useLayoutEffect: (effect: React.EffectCallback, deps?: React.DependencyList | undefined) => void = {} as never;
+                                                                       ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/useLayoutEffect.tsx:8:72
+
+Found 2 errors.
+
+error: Type checking failed.
+

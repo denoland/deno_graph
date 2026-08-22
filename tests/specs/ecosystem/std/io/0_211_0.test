@@ -13,6 +13,11 @@ std/io/0.211.0
 -- stdout --
 
 -- stderr --
+TS2846 [ERROR]: A declaration file cannot be imported without 'import type'. Did you mean to import an implementation file './types.ts' instead?
+import { type Reader } from "./types.d.ts";
+                            ~~~~~~~~~~~~~~
+    at file://<tmpdir>/read_lines.ts:1:29
+
 TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Seeker'.
  */ export function readRange(r: Reader & Deno.Seeker, range: ByteRange): Promise<Uint8Array> {
                                                ~~~~~~
@@ -23,7 +28,12 @@ TS2694 [ERROR]: Namespace 'Deno' has no exported member 'SeekerSync'.
                                                        ~~~~~~~~~~
     at file://<tmpdir>/read_range.ts:43:56
 
-Found 2 errors.
+TS2846 [ERROR]: A declaration file cannot be imported without 'import type'. Did you mean to import an implementation file './types.ts' instead?
+import { type Reader } from "./types.d.ts";
+                            ~~~~~~~~~~~~~~
+    at file://<tmpdir>/read_string_delim.ts:1:29
+
+Found 4 errors.
 
 error: Type checking failed.
 

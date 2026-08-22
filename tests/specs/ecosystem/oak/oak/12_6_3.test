@@ -60,6 +60,11 @@ oak/oak/12.6.3
 -- stdout --
 
 -- stderr --
+TS2846 [ERROR]: A declaration file cannot be imported without 'import type'. Did you mean to import an implementation file './types.ts' instead?
+import { Key, Listener, ServerConstructor, ServerRequest } from "./types.d.ts";
+                                                                ~~~~~~~~~~~~~~
+    at file://<tmpdir>/application.ts:4:65
+
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventTarget'.
     at file://<tmpdir>/application.ts:208:77
 
@@ -99,7 +104,7 @@ TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Closer'.
                                                       ~~~~~~
     at file://<tmpdir>/range.ts:22:55
 
-Found 9 errors.
+Found 10 errors.
 
 error: Type checking failed.
 

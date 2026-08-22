@@ -153,10 +153,445 @@ halvardm/nessie/0.0.0-2
 -- stdout --
 
 -- stderr --
+TS2322 [ERROR]: Type 'Timeout' is not assignable to type 'number'.
+    timeout = setTimeout(flush, wait);
+    ~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/async/debounce.ts:55:5
+
+TS2322 [ERROR]: Type 'Timeout' is not assignable to type 'number'.
+    setTimeout((): void => {
+    ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/async/delay.ts:5:5
+
+TS2740 [ERROR]: Type 'Uint8Array<ArrayBufferLike>' is missing the following properties from type 'ArrayBuffer': maxByteLength, resizable, resize, detached, and 2 more.
+    return digestHash(this.#hash);
+    ~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/hash/_wasm/hash.ts:70:5
+
+TS2345 [ERROR]: Argument of type 'Uint8Array<ArrayBuffer>' is not assignable to parameter of type 'string | ArrayBuffer'.
+  Type 'Uint8Array<ArrayBuffer>' is missing the following properties from type 'ArrayBuffer': maxByteLength, resizable, resize, detached, and 2 more.
+        return base64.encode(finalized);
+                             ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/hash/_wasm/hash.ts:84:30
+
+TS2769 [ERROR]: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'ArrayLike<number> | ArrayBufferLike' is not assignable to parameter of type 'ArrayBuffer | ArrayLike<number>'.
+      Type 'SharedArrayBuffer' is not assignable to type 'ArrayBuffer | ArrayLike<number>'.
+        Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+    this.#buf = ab === undefined ? new Uint8Array(0) : new Uint8Array(ab);
+                                                                      ~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/buffer.ts:33:71
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
+type Reader = Deno.Reader;
+                   ~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/bufio.ts:7:20
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Writer'.
+type Writer = Deno.Writer;
+                   ~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/bufio.ts:8:20
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'WriterSync'.
+type WriterSync = Deno.WriterSync;
+                       ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/bufio.ts:9:24
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
+  name = "BufferFullError";
+  ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/bufio.ts:22:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
+  name = "PartialReadError";
+  ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/bufio.ts:29:3
+
+TS18046 [ERROR]: 'err' is of type 'unknown'.
+        err.partial = p.subarray(0, bytesRead);
+        ~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/bufio.ts:190:9
+
+TS2339 [ERROR]: Property 'partial' does not exist on type 'unknown'.
+      let { partial } = err;
+            ~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/bufio.ts:258:13
+
+TS18046 [ERROR]: 'err' is of type 'unknown'.
+        err.partial = slice;
+        ~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/bufio.ts:360:9
+
+TS18046 [ERROR]: 'err' is of type 'unknown'.
+        err.partial = this.buf.subarray(this.r, this.w);
+        ~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/bufio.ts:396:9
+
+TS2322 [ERROR]: Type 'unknown' is not assignable to type 'Error | null'.
+      this.err = e;
+      ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/bufio.ts:475:7
+
+TS2322 [ERROR]: Type 'unknown' is not assignable to type 'Error | null'.
+          this.err = e;
+          ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/bufio.ts:503:11
+
+TS2322 [ERROR]: Type 'unknown' is not assignable to type 'Error | null'.
+      this.err = e;
+      ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/bufio.ts:565:7
+
+TS2322 [ERROR]: Type 'unknown' is not assignable to type 'Error | null'.
+          this.err = e;
+          ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/bufio.ts:593:11
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
+export async function readAll(r: Deno.Reader): Promise<Uint8Array> {
+                                      ~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/util.ts:29:39
+
+TS2724 [ERROR]: 'Deno' has no exported member named 'ReaderSync'. Did you mean 'readDirSync'?
+export function readAllSync(r: Deno.ReaderSync): Uint8Array {
+                                    ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/util.ts:57:37
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
+  r: Deno.Reader & Deno.Seeker,
+          ~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/util.ts:87:11
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Seeker'.
+  r: Deno.Reader & Deno.Seeker,
+                        ~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/util.ts:87:25
+
+TS2724 [ERROR]: 'Deno' has no exported member named 'ReaderSync'. Did you mean 'readDirSync'?
+  r: Deno.ReaderSync & Deno.SeekerSync,
+          ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/util.ts:125:11
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'SeekerSync'.
+  r: Deno.ReaderSync & Deno.SeekerSync,
+                            ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/util.ts:125:29
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Writer'.
+export async function writeAll(w: Deno.Writer, arr: Uint8Array) {
+                                       ~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/util.ts:170:40
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'WriterSync'.
+export function writeAllSync(w: Deno.WriterSync, arr: Uint8Array): void {
+                                     ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/util.ts:201:38
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
+  r: Deno.Reader,
+          ~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/util.ts:242:11
+
+TS2724 [ERROR]: 'Deno' has no exported member named 'ReaderSync'. Did you mean 'readDirSync'?
+  r: Deno.ReaderSync,
+          ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/util.ts:293:11
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
+  src: Deno.Reader,
+            ~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/util.ts:328:13
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Writer'.
+  dst: Deno.Writer,
+            ~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/io/util.ts:329:13
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'BaseHandler'.
+  format(logRecord: LogRecord): string {
+  ~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/log/handlers.ts:58:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'BaseHandler'.
+  log(msg: string): void {
+  ~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/log/handlers.ts:81:3
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Writer'.
+  protected _writer!: Deno.Writer;
+                           ~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/log/handlers.ts:87:28
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'BaseHandler'.
+  abstract log(msg: string): void;
+           ~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/log/handlers.ts:90:12
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'WriterHandler'.
+  async setup() {
+        ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/log/handlers.ts:123:9
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'WriterHandler'.
+  handle(logRecord: LogRecord): void {
+  ~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/log/handlers.ts:131:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'WriterHandler'.
+  destroy() {
+  ~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/log/handlers.ts:150:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'FileHandler'.
+  async setup() {
+        ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/log/handlers.ts:175:9
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'FileHandler'.
+  log(msg: string): void {
+  ~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/log/handlers.ts:209:3
+
+TS2339 [ERROR]: Property 'close' does not exist on type 'typeof Deno'.
+    Deno.close(this._file!.rid);
+         ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/log/handlers.ts:223:10
+
+TS2339 [ERROR]: Property 'rid' does not exist on type 'FsFile'.
+    Deno.close(this._file!.rid);
+                           ~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.104.0/log/handlers.ts:223:28
+
+TS2345 [ERROR]: Argument of type 'Uint8Array<ArrayBufferLike>' is not assignable to parameter of type 'BufferSource'.
+  Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'ArrayBufferView<ArrayBuffer>'.
+    Types of property 'buffer' are incompatible.
+      Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+        Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+        return webCrypto.subtle.digest(algorithm, bytes);
+                                                  ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.214.0/crypto/crypto.ts:217:51
+
+TS2345 [ERROR]: Argument of type 'Uint8Array<ArrayBufferLike>' is not assignable to parameter of type 'Iterable<BufferSource> | BufferSource'.
+  Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'ArrayBufferView<ArrayBuffer>'.
+    Types of property 'buffer' are incompatible.
+      Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+        Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+          return stdCrypto.subtle.digestSync(algorithm, bytes);
+                                                        ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.214.0/crypto/crypto.ts:222:57
+
+TS2322 [ERROR]: Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+  Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+          return context.digestAndDrop(length).buffer;
+          ~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.214.0/crypto/crypto.ts:240:11
+
+TS2345 [ERROR]: Argument of type 'Uint8Array<ArrayBufferLike>' is not assignable to parameter of type 'BufferSource'.
+  Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'ArrayBufferView<ArrayBuffer>'.
+    Types of property 'buffer' are incompatible.
+      Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+        Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+          (data as unknown) as Uint8Array,
+          ^
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.214.0/crypto/crypto.ts:253:11
+
+TS2322 [ERROR]: Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+  Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+        return wasmCrypto.digest(name, bytes, length)
+        ~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.214.0/crypto/crypto.ts:276:9
+
+TS2322 [ERROR]: Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+  Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+        return context.digestAndDrop(length).buffer;
+        ~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/std@0.214.0/crypto/crypto.ts:287:9
+
+TS2345 [ERROR]: Argument of type 'Uint8Array<ArrayBufferLike>' is not assignable to parameter of type 'Message'.
+  Type 'Uint8Array<ArrayBufferLike>' is missing the following properties from type 'ArrayBuffer': maxByteLength, resizable, resize, detached, and 2 more.
+  return new Uint8Array(createHash(algorithm).update(data).digest());
+                                                     ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/mysql@v2.12.1/src/auth.ts:6:54
+
+TS2322 [ERROR]: Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'Uint8Array<ArrayBuffer>'.
+  Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+    Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+  seedAndPwd2 = hash("sha1", seedAndPwd2);
+  ~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/mysql@v2.12.1/src/auth.ts:16:3
+
+TS2769 [ERROR]: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'Uint8Array<ArrayBufferLike>' is not assignable to parameter of type 'BufferSource'.
+      Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'ArrayBufferView<ArrayBuffer>'.
+        Types of property 'buffer' are incompatible.
+          Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+            Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+    base64Decode(key),
+    ~~~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/mysql@v2.12.1/src/auth_plugin/crypt.ts:13:5
+
+TS2345 [ERROR]: Argument of type 'Uint8Array<ArrayBufferLike>' is not assignable to parameter of type 'BufferSource'.
+  Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'ArrayBufferView<ArrayBuffer>'.
+    Types of property 'buffer' are incompatible.
+      Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+        Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+    data,
+    ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/mysql@v2.12.1/src/auth_plugin/crypt.ts:24:5
+
+TS18046 [ERROR]: 'error' is of type 'unknown'.
+          log.info(`ROLLBACK: ${error.message}`);
+                                ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/mysql@v2.12.1/src/client.ts:148:33
+
+TS2739 [ERROR]: Type 'Conn<Addr>' is missing the following properties from type 'TcpConn': setNoDelay, setKeepAlive
+          this.conn = await Deno.startTls(this.conn, {
+                                          ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/mysql@v2.12.1/src/connection.ts:114:43
+
+TS18046 [ERROR]: 'error' is of type 'unknown'.
+      throw new WriteError(error.message);
+                           ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/mysql@v2.12.1/src/packets/packet.ts:34:28
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
+  async parse(reader: Deno.Reader): Promise<ReceivePacket | null> {
+                           ~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/mysql@v2.12.1/src/packets/packet.ts:45:28
+
+TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Reader'.
+    reader: Deno.Reader,
+                 ~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/mysql@v2.12.1/src/packets/packet.ts:92:18
+
+TS2322 [ERROR]: Type 'Timeout' is not assignable to type 'number'.
+      this._idleTimer = setTimeout(() => {
+      ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/mysql@v2.12.1/src/pool.ts:18:7
+
+TS2345 [ERROR]: Argument of type 'number | undefined' is not assignable to parameter of type 'number | Timeout'.
+  Type 'undefined' is not assignable to type 'number | Timeout'.
+        Deno.unrefTimer(this._idleTimer);
+                        ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/mysql@v2.12.1/src/pool.ts:29:25
+
+TS2345 [ERROR]: Argument of type 'Uint8Array<ArrayBufferLike>' is not assignable to parameter of type 'AsyncIterable<BufferSource> | Iterable<BufferSource> | BufferSource'.
+  Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'ArrayBufferView<ArrayBuffer>'.
+    Types of property 'buffer' are incompatible.
+      Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+        Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+  return hex.encodeHex(await crypto.subtle.digest("MD5", bytes));
+                                                         ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/postgres@v0.19.3/connection/auth.ts:6:58
+
+TS2739 [ERROR]: Type 'Conn<Addr>' is missing the following properties from type 'TcpConn': setNoDelay, setKeepAlive
+    this.#conn = await Deno.startTls(connection, options);
+                                     ~~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/postgres@v0.19.3/connection/connection.ts:301:38
+
+TS18046 [ERROR]: 'e' is of type 'unknown'.
+                  e.message +
+                  ^
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/postgres@v0.19.3/connection/connection.ts:366:19
+
+TS2322 [ERROR]: Type 'unknown' is not assignable to type 'Error | undefined'.
+        error = e;
+        ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/postgres@v0.19.3/connection/connection.ts:473:9
+
+TS2322 [ERROR]: Type 'unknown' is not assignable to type 'Error | undefined'.
+            error = e;
+            ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/postgres@v0.19.3/connection/connection.ts:501:13
+
+TS2322 [ERROR]: Type 'unknown' is not assignable to type 'Error | undefined'.
+            error = e;
+            ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/postgres@v0.19.3/connection/connection.ts:718:13
+
+TS2322 [ERROR]: Type 'unknown' is not assignable to type 'Error | undefined'.
+            error = e;
+            ~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/postgres@v0.19.3/connection/connection.ts:916:13
+
+TS2345 [ERROR]: Argument of type 'unknown' is not assignable to parameter of type 'Error | undefined'.
+    throw new ConnectionParamsError("Could not parse the connection string", e);
+                                                                             ^
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/postgres@v0.19.3/connection/connection_params.ts:331:78
+
+TS2345 [ERROR]: Argument of type 'unknown' is not assignable to parameter of type 'Error | undefined'.
+      throw new ConnectionParamsError(`Could not parse host "${socket}"`, e);
+                                                                          ^
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/postgres@v0.19.3/connection/connection_params.ts:456:75
+
+TS2769 [ERROR]: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'Uint8Array<ArrayBufferLike>' is not assignable to parameter of type 'BufferSource'.
+      Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'ArrayBufferView<ArrayBuffer>'.
+        Types of property 'buffer' are incompatible.
+          Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+            Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+    raw_key,
+    ~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/postgres@v0.19.3/connection/scram.ts:67:5
+
+TS2322 [ERROR]: Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'BufferSource'.
+  Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'ArrayBufferView<ArrayBuffer>'.
+    Types of property 'buffer' are incompatible.
+      Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+        Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+      salt,
+      ~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/postgres@v0.19.3/connection/scram.ts:110:7
+
+TS18046 [ERROR]: '_e' is of type 'unknown'.
+        _e.message +
+        ~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/postgres@v0.19.3/query/decode.ts:202:9
+
+TS18046 [ERROR]: 'e' is of type 'unknown'.
+    throw new Error(`Invalid Box: "${value}" : ${e.message}`);
+                                                 ^
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/postgres@v0.19.3/query/decoders.ts:67:50
+
+TS18046 [ERROR]: 'e' is of type 'unknown'.
+    throw new Error(`Invalid Circle: "${value}" : ${e.message}`);
+                                                    ^
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/postgres@v0.19.3/query/decoders.ts:143:53
+
+TS18046 [ERROR]: 'e' is of type 'unknown'.
+    throw new Error(`Invalid Line Segment: "${value}" : ${e.message}`);
+                                                          ^
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/postgres@v0.19.3/query/decoders.ts:290:59
+
+TS18046 [ERROR]: 'e' is of type 'unknown'.
+      throw new Error(`Invalid Path: "${value}" : ${e.message}`);
+                                                    ^
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/postgres@v0.19.3/query/decoders.ts:307:53
+
+TS18046 [ERROR]: 'e' is of type 'unknown'.
+    throw new Error(`Invalid Polygon: "${value}" : ${e.message}`);
+                                                     ^
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/postgres@v0.19.3/query/decoders.ts:351:54
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'QueryResult'.
+  insertRow(row_data: Uint8Array[], controls?: ClientControls) {
+  ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/postgres@v0.19.3/query/query.ts:246:3
+
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'QueryResult'.
+  insertRow(row_data: Uint8Array[], controls?: ClientControls) {
+  ~~~~~~~~~
+    at file://<tmpdir>/.deno/npm-compat/@jsr/halvardm__sqlx/vendor/deno.land/x/postgres@v0.19.3/query/query.ts:307:3
+
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Type<boolean>'.
   /** Complete boolean type. */ public complete(): string[] {
                                        ~~~~~~~~
     at file://<tmpdir>/vendor/deno.land/x/cliffy@v1.0.0-rc.3/command/types/boolean.ts:7:40
+
+Found 78 errors.
 
 error: Type checking failed.
 

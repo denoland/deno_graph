@@ -87,6 +87,11 @@ harmony/harmony/2.9.1
 -- stdout --
 
 -- stderr --
+TS2459 [ERROR]: Module '"npm:redis@4.6.13"' declares 'RedisClientOptions' locally, but it is not exported.
+import { createClient, RedisClientOptions } from 'npm:redis@4.6.13';
+                       ~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/cache/redis.ts:2:24
+
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'HarmonyEventEmitter<ClientEvents>'.
   emit(event: keyof ClientEvents, ...args: any[]): Promise<void> {
   ~~~~
@@ -557,7 +562,7 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
   ~~~
     at file://<tmpdir>/src/utils/permissions.ts:12:3
 
-Found 94 errors.
+Found 95 errors.
 
 error: Type checking failed.
 

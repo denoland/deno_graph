@@ -86,4 +86,26 @@ av/poketeam/0.2.1-development
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2306 [ERROR]: File '<global_npm_dir>/pokedex-promise-v2/4.2.0/types/index.d.ts' is not a module.
+import { type Pokemon } from 'npm:pokedex-promise-v2@^4.2.0';
+                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/team.ts:1:30
+
+TS2306 [ERROR]: File '<global_npm_dir>/pokedex-promise-v2/4.2.0/types/index.d.ts' is not a module.
+import { type Pokemon } from 'npm:pokedex-promise-v2@^4.2.0';
+                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:1:30
+
+TS2306 [ERROR]: File '<global_npm_dir>/pokedex-promise-v2/4.2.0/types/index.d.ts' is not a module.
+import { type Pokemon } from 'npm:pokedex-promise-v2@^4.2.0';
+                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/utils.ts:1:30
+
+Found 3 errors.
+
+error: Type checking failed.
+

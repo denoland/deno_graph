@@ -32,4 +32,41 @@ radix-ui-fork/react-primitive/0.0.3
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementType'.
+type ComponentPropsWithoutRef<T extends React.ElementType> = PropsWithoutRef<React.ComponentProps<T>>;
+                                              ~~~~~~~~~~~
+    at file://<tmpdir>/src/Primitive.tsx:21:47
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ComponentProps'.
+type ComponentPropsWithoutRef<T extends React.ElementType> = PropsWithoutRef<React.ComponentProps<T>>;
+                                                                                   ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Primitive.tsx:21:84
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementType'.
+type PrimitivePropsWithRef<E extends React.ElementType> = React.ComponentPropsWithRef<E> & {
+                                           ~~~~~~~~~~~
+    at file://<tmpdir>/src/Primitive.tsx:25:44
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ComponentPropsWithRef'.
+type PrimitivePropsWithRef<E extends React.ElementType> = React.ComponentPropsWithRef<E> & {
+                                                                ~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Primitive.tsx:25:65
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ElementType'.
+interface PrimitiveForwardRefComponent<E extends React.ElementType> extends React.ForwardRefExoticComponent<PrimitivePropsWithRef<E>> {
+                                                       ~~~~~~~~~~~
+    at file://<tmpdir>/src/Primitive.tsx:28:56
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'ForwardRefExoticComponent'.
+interface PrimitiveForwardRefComponent<E extends React.ElementType> extends React.ForwardRefExoticComponent<PrimitivePropsWithRef<E>> {
+                                                                                  ~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/Primitive.tsx:28:83
+
+Found 6 errors.
+
+error: Type checking failed.
+

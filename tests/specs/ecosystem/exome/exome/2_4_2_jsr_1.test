@@ -118,4 +118,21 @@ exome/exome/2.4.2-jsr.1
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2305 [ERROR]: Module '"npm:lit@^3.1.2"' has no exported member 'ReactiveController'.
+import { ReactiveController, ReactiveControllerHost } from "npm:lit@^3.1.2";
+         ~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/lit.ts:2:10
+
+TS2305 [ERROR]: Module '"npm:lit@^3.1.2"' has no exported member 'ReactiveControllerHost'.
+import { ReactiveController, ReactiveControllerHost } from "npm:lit@^3.1.2";
+                             ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/lit.ts:2:30
+
+Found 2 errors.
+
+error: Type checking failed.
+

@@ -54,6 +54,11 @@ bureaudouble-forks/floating-ui-react-dom/0.0.2
 -- stdout --
 
 -- stderr --
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'MutableRefObject'.
+   */ element: React.MutableRefObject<Element | null> | Element | null;
+                     ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/arrow.ts:7:22
+
 TS2304 [ERROR]: Cannot find name 'Element'.
    */ element: React.MutableRefObject<Element | null> | Element | null;
                                       ~~~~~~~
@@ -68,6 +73,21 @@ TS2552 [ERROR]: Cannot find name 'Element'. Did you mean 'Elements'?
 export type ReferenceType = Element | VirtualElement;
                             ~~~~~~~
     at file://<tmpdir>/src/types.ts:15:29
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'CSSProperties'.
+       */ floatingStyles: React.CSSProperties;
+                                ~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:23:33
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'MutableRefObject'.
+         */ reference: React.MutableRefObject<RT | null>;
+                             ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:29:30
+
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'MutableRefObject'.
+         */ floating: React.MutableRefObject<HTMLElement | null>;
+                            ~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/types.ts:32:29
 
 TS2304 [ERROR]: Cannot find name 'HTMLElement'.
          */ floating: React.MutableRefObject<HTMLElement | null>;
@@ -94,7 +114,7 @@ TS2304 [ERROR]: Cannot find name 'HTMLElement'.
                ~~~~~~~~~~~
     at file://<tmpdir>/src/types.ts:53:16
 
-Found 8 errors.
+Found 12 errors.
 
 error: Type checking failed.
 

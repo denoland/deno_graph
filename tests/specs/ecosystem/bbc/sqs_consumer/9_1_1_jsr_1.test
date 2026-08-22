@@ -1033,17 +1033,17 @@ bbc/sqs-consumer/9.1.1-jsr.1
 -- stdout --
 
 -- stderr --
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventEmitter<DefaultEventMap>'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventEmitter<any>'.
    */ on<E extends keyof Events>(event: E, listener: (...args: Events[E]) => void): this {
       ~~
     at file://<tmpdir>/src/emitter.ts:8:7
 
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventEmitter<DefaultEventMap>'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventEmitter<any>'.
    */ once<E extends keyof Events>(event: E, listener: (...args: Events[E]) => void): this {
       ~~~~
     at file://<tmpdir>/src/emitter.ts:15:7
 
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventEmitter<DefaultEventMap>'.
+TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'EventEmitter<any>'.
    */ emit<E extends keyof Events>(event: E, ...args: Events[E]): boolean {
       ~~~~
     at file://<tmpdir>/src/emitter.ts:21:7

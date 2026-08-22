@@ -9,4 +9,9 @@ molt/cli/0.18.0
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: No version matching '0.18.0' for @jsr/molt__core
+

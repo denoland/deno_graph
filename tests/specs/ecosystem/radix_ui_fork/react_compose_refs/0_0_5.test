@@ -32,4 +32,14 @@ radix-ui-fork/react-compose-refs/0.0.5
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2694 [ERROR]: Namespace '"npm:react@^18.2.0"' has no exported member 'Ref'.
+type PossibleRef<T> = React.Ref<T> | undefined;
+                            ~~~
+    at file://<tmpdir>/src/composeRefs.tsx:2:29
+
+error: Type checking failed.
+

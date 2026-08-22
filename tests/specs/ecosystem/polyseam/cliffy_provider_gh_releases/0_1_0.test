@@ -459,6 +459,21 @@ polyseam/cliffy-provider-gh-releases/0.1.0
 -- stdout --
 
 -- stderr --
+TS2305 [ERROR]: Module '"jsr:/@cliffy/command@^1.0.0-rc.4/upgrade"' has no exported member 'GithubProviderOptions'.
+export type { GithubProviderOptions, UpgradeOptions } from "jsr:/@cliffy/command@^1.0.0-rc.4/upgrade";
+              ~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/deps.ts:2:15
+
+TS2305 [ERROR]: Module '"jsr:/@cliffy/command@^1.0.0-rc.4/upgrade"' has no exported member 'UpgradeOptions'.
+export type { GithubProviderOptions, UpgradeOptions } from "jsr:/@cliffy/command@^1.0.0-rc.4/upgrade";
+                                     ~~~~~~~~~~~~~~
+    at file://<tmpdir>/deps.ts:2:38
+
+TS2515 [ERROR]: Non-abstract class 'GithubReleasesProvider' does not implement inherited abstract member hasRequiredPermissions from class 'Provider'.
+export class GithubReleasesProvider extends Provider {
+             ~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/mod.ts:33:14
+
 TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'Provider'.
   upgrade(options: UpgradeOptions): Promise<void> {
   ~~~~~~~
@@ -469,7 +484,7 @@ TS4114 [ERROR]: This member must have an 'override' modifier because it override
   ~~~~~~~~~~~~
     at file://<tmpdir>/mod.ts:64:3
 
-Found 2 errors.
+Found 5 errors.
 
 error: Type checking failed.
 

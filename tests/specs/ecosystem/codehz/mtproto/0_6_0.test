@@ -13,10 +13,22 @@ codehz/mtproto/0.6.0
 -- stdout --
 
 -- stderr --
+TS2846 [ERROR]: A declaration file cannot be imported without 'import type'. Did you mean to import an implementation file '../gen/api.ts' instead?
+import * as apiset from "../gen/api.d.ts";
+                        ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/rpc/mod.ts:4:25
+
+TS2846 [ERROR]: A declaration file cannot be imported without 'import type'. Did you mean to import an implementation file '../gen/api.ts' instead?
+import { type api } from "../gen/api.d.ts";
+                         ~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/rpc/mod.ts:5:26
+
 TS2694 [ERROR]: Namespace 'Deno' has no exported member 'Closer'.
 export interface Transport extends Deno.Closer {
                                         ~~~~~~
     at file://<tmpdir>/types.ts:13:41
+
+Found 3 errors.
 
 error: Type checking failed.
 

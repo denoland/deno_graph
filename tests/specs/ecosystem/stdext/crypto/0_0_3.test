@@ -9,4 +9,21 @@ stdext/crypto/0.0.3
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+TS2846 [ERROR]: A declaration file cannot be imported without 'import type'. Did you mean to import an implementation file './_wasm/lib/deno_stdext_crypto_hash_wasm_argon2.generated.mts' instead?
+import { type StdextArgon2Options } from "./_wasm/lib/deno_stdext_crypto_hash_wasm_argon2.generated.d.mts";
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/hash/argon2.ts:2:42
+
+TS2846 [ERROR]: A declaration file cannot be imported without 'import type'. Did you mean to import an implementation file './_wasm/lib/deno_stdext_crypto_hash_wasm_bcrypt.generated.mts' instead?
+import { type StdextBcryptOptions } from "./_wasm/lib/deno_stdext_crypto_hash_wasm_bcrypt.generated.d.mts";
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    at file://<tmpdir>/hash/bcrypt.ts:2:42
+
+Found 2 errors.
+
+error: Type checking failed.
+

@@ -73,17 +73,17 @@ TS2304 [ERROR]: Cannot find name 'HTMLImageElement'.
                   ~~~~~~~~~~~~~~~~
     at file://<tmpdir>/canvas.ts:62:19
 
-TS2304 [ERROR]: Cannot find name 'MouseEvent'.
+TS2552 [ERROR]: Cannot find name 'MouseEvent'. Did you mean 'CloseEvent'?
   onClick(e: MouseEvent): void {}
              ~~~~~~~~~~
     at file://<tmpdir>/canvas.ts:87:14
 
-TS2304 [ERROR]: Cannot find name 'MouseEvent'.
+TS2552 [ERROR]: Cannot find name 'MouseEvent'. Did you mean 'CloseEvent'?
   offClick(e: MouseEvent): void {}
               ~~~~~~~~~~
     at file://<tmpdir>/canvas.ts:88:15
 
-TS2304 [ERROR]: Cannot find name 'MouseEvent'.
+TS2552 [ERROR]: Cannot find name 'MouseEvent'. Did you mean 'CloseEvent'?
   onDrag(e: MouseEvent): void {}
             ~~~~~~~~~~
     at file://<tmpdir>/canvas.ts:89:13

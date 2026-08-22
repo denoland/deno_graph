@@ -691,12 +691,22 @@ export const partialTrigger = (node: HTMLElement, {}: {
                                      ~~~~~~~~~~~
     at file://<tmpdir>/fresh/createPartial.ts:1:38
 
+TS2304 [ERROR]: Cannot find name 'HeadersInit'.
+  headers?: HeadersInit;
+            ~~~~~~~~~~~
+    at file://<tmpdir>/fresh/createStaticFilePlugin.ts:4:13
+
 TS2724 [ERROR]: 'Deno' has no exported member named 'ServeTlsOptions'. Did you mean 'ServeOptions'?
   server: Partial<Deno.ServeTlsOptions>;
                        ~~~~~~~~~~~~~~~
     at file://<tmpdir>/fresh/types.ts:72:24
 
-Found 3 errors.
+TS2304 [ERROR]: Cannot find name 'BodyInit'.
+  virtualNodePipe: (vn: JSXElement) => Promise<BodyInit | null | undefined | Response>;
+                                               ~~~~~~~~
+    at file://<tmpdir>/fresh/types.ts:118:48
+
+Found 5 errors.
 
 error: Type checking failed.
 

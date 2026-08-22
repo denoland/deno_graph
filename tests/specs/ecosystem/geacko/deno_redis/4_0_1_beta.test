@@ -26,4 +26,9 @@ geacko/deno-redis/4.0.1-beta
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: No version matching '^0.0.1' for @jsr/geacko__composer
+

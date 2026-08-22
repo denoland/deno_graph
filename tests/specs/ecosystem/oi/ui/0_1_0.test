@@ -56,10 +56,22 @@ oi/ui/0.1.0
 -- stdout --
 
 -- stderr --
-TS4114 [ERROR]: This member must have an 'override' modifier because it overrides a member in the base class 'LitElement'.
-  render(): TemplateResult<1> {
-  ~~~~~~
-    at file://<tmpdir>/src/OiButton.ts:7:3
+TS2305 [ERROR]: Module '"npm:lit@^2.0.2"' has no exported member 'LitElement'.
+import { LitElement, TemplateResult, CSSResult } from 'npm:lit@^2.0.2';
+         ~~~~~~~~~~
+    at file://<tmpdir>/src/OiButton.ts:1:10
+
+TS2305 [ERROR]: Module '"npm:lit@^2.0.2"' has no exported member 'TemplateResult'.
+import { LitElement, TemplateResult, CSSResult } from 'npm:lit@^2.0.2';
+                     ~~~~~~~~~~~~~~
+    at file://<tmpdir>/src/OiButton.ts:1:22
+
+TS2305 [ERROR]: Module '"npm:lit@^2.0.2"' has no exported member 'CSSResult'.
+import { LitElement, TemplateResult, CSSResult } from 'npm:lit@^2.0.2';
+                                     ~~~~~~~~~
+    at file://<tmpdir>/src/OiButton.ts:1:38
+
+Found 3 errors.
 
 error: Type checking failed.
 

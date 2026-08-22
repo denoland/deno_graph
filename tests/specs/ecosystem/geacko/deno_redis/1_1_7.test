@@ -26,4 +26,9 @@ geacko/deno-redis/1.1.7
 
 == FAST CHECK EMIT PASSED ==
 
-== TYPE CHECK PASSED ==
+== TYPE CHECK FAILED ==
+-- stdout --
+
+-- stderr --
+error: No version matching '^1.1.2' for @jsr/geacko__resp3-parser
+
