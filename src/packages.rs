@@ -8,6 +8,7 @@ use std::collections::HashSet;
 use deno_semver::StackString;
 use deno_semver::Version;
 use deno_semver::VersionReq;
+use deno_semver::WILDCARD_VERSION_REQ;
 use deno_semver::jsr::JsrDepPackageReq;
 use deno_semver::package::PackageName;
 use deno_semver::package::PackageNv;
@@ -358,56 +359,18 @@ impl<'a> JsrPackageVersionResolver<'a> {
     cached_versions: &HashSet<Version>,
   ) -> Result<JsrVersionResolverResolvedVersion<'b>, JsrPackageReqNotFoundError>
   {
-    let existing_versions = existing_versions.collect::<Vec<_>>();
-    match self.resolve_version_inner(
-      package_req,
-      &existing_versions,
-      cached_versions,
-      false,
-    ) {
-      Ok(resolved) => Ok(resolved),
-      Err(err) => {
-        // A `*` version requirement never matches pre-release versions, so a
-        // package that only has pre-release versions would never resolve.
-        // Mirror npm's behavior for such packages (where a `*` requirement
-        // resolves to the `latest` dist-tag, even when that is a pre-release)
-        // by retrying with pre-release versions included. Only do so when no
-        // version matched at all: if versions merely got excluded by the
-        // newest dependency date, the error carries that date and falling
-        // back to an unrelated pre-release would be surprising.
-        if package_req.version_req.version_text() == "*"
-          && err.newest_dependency_date.is_none()
-        {
-          self.resolve_version_inner(
-            package_req,
-            &existing_versions,
-            cached_versions,
-            true,
-          )
-        } else {
-          Err(err)
-        }
-      }
-    }
-  }
+    let include_all_prereleases =
+      prerelease_fallback_applies(&package_req.version_req, self.package_info);
 
-  fn resolve_version_inner<'b>(
-    &'b self,
-    package_req: &PackageReq,
-    existing_versions: &[&'b Version],
-    cached_versions: &HashSet<Version>,
-    include_prerelease: bool,
-  ) -> Result<JsrVersionResolverResolvedVersion<'b>, JsrPackageReqNotFoundError>
-  {
     // 1. try to resolve with the list of existing versions
     if let ResolveVersionResult::Some(version) = resolve_version(
       ResolveVersionOptions {
         version_req: &package_req.version_req,
         // don't use this here because existing versions are ok to resolve to
         newest_dependency_date: None,
-        include_prerelease,
+        include_all_prereleases,
       },
-      existing_versions.iter().map(|v| (*v, None)),
+      existing_versions.map(|v| (v, None)),
     ) {
       let is_yanked = self
         .package_info
@@ -447,7 +410,7 @@ impl<'a> JsrPackageVersionResolver<'a> {
         ResolveVersionOptions {
           version_req: &package_req.version_req,
           newest_dependency_date: self.newest_dependency_date,
-          include_prerelease,
+          include_all_prereleases,
         },
         cached_unyanked_versions,
       ) {
@@ -469,7 +432,7 @@ impl<'a> JsrPackageVersionResolver<'a> {
       ResolveVersionOptions {
         version_req: &package_req.version_req,
         newest_dependency_date: self.newest_dependency_date,
-        include_prerelease,
+        include_all_prereleases,
       },
       unyanked_versions,
     ) {
@@ -496,7 +459,7 @@ impl<'a> JsrPackageVersionResolver<'a> {
       ResolveVersionOptions {
         version_req: &package_req.version_req,
         newest_dependency_date: self.newest_dependency_date,
-        include_prerelease,
+        include_all_prereleases,
       },
       yanked_versions,
     ) {
@@ -537,10 +500,45 @@ impl<'a> JsrPackageVersionResolver<'a> {
 pub struct ResolveVersionOptions<'a> {
   pub version_req: &'a VersionReq,
   pub newest_dependency_date: Option<NewestDependencyDate>,
-  /// Whether to additionally consider pre-release versions the version
-  /// requirement does not match. Used to resolve a `*` requirement for
-  /// packages that only have pre-release versions.
-  pub include_prerelease: bool,
+  /// When enabled, **every** pre-release version is a candidate, regardless of
+  /// whether `version_req` matches it.
+  ///
+  /// This deliberately bypasses the version requirement, so only enable it for
+  /// the case it exists for. Derive it with [`prerelease_fallback_applies`]
+  /// rather than setting it directly.
+  pub include_all_prereleases: bool,
+}
+
+/// Whether resolving `version_req` against `package_info` should additionally
+/// consider pre-release versions.
+///
+/// A `*` requirement never matches a pre-release version, so a package with no
+/// usable stable release — it only ever published pre-releases, or its stable
+/// releases were all yanked — could never be resolved by `jsr:@scope/pkg`.
+/// Mirror npm's behavior for such packages, where `*` resolves to the `latest`
+/// dist-tag even when that is a pre-release.
+pub fn prerelease_fallback_applies(
+  version_req: &VersionReq,
+  package_info: &JsrPackageInfo,
+) -> bool {
+  // `*`, `x`, `X` and an absent requirement all parse to the same wildcard
+  *version_req == *WILDCARD_VERSION_REQ
+    && !package_info
+      .versions
+      .iter()
+      .any(|(version, info)| version.pre.is_empty() && !info.yanked)
+}
+
+/// Whether `version` is a candidate for `version_req`, taking the pre-release
+/// fallback into account. `include_all_prereleases` must come from
+/// [`prerelease_fallback_applies`].
+pub fn version_matches(
+  version_req: &VersionReq,
+  version: &Version,
+  include_all_prereleases: bool,
+) -> bool {
+  version_req.matches(version)
+    || (include_all_prereleases && !version.pre.is_empty())
 }
 
 pub enum ResolveVersionResult<'a> {
@@ -555,9 +553,11 @@ pub fn resolve_version<'a>(
   let mut maybe_best_version: Option<&Version> = None;
   let mut had_higher_date_version = false;
   for (version, version_info) in versions {
-    if options.version_req.matches(version)
-      || (options.include_prerelease && !version.pre.is_empty())
-    {
+    if version_matches(
+      options.version_req,
+      version,
+      options.include_all_prereleases,
+    ) {
       had_higher_date_version = true;
       if matches_newest_dependency_date(
         version_info,
