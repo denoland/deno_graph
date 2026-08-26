@@ -11,6 +11,7 @@ use super::range_finder::ModulePublicRanges;
 use super::swc_helpers::DeclMutabilityKind;
 use super::swc_helpers::any_type_ann;
 use super::swc_helpers::maybe_lit_to_ts_type;
+use super::swc_helpers::tpl_to_ts_type;
 use super::swc_helpers::ts_readonly;
 use super::swc_helpers::ts_tuple_element;
 use super::swc_helpers::type_ann;
@@ -470,13 +471,13 @@ impl<'a> FastCheckDtsTransformer<'a> {
           }),
         ))
       }
-      Expr::Tpl(_) => {
-        // Untagged template literals always produce strings.
-        Some(TsType::TsKeywordType(TsKeywordType {
-          kind: TsKeywordTypeKind::TsStringKeyword,
-          span: DUMMY_SP,
-        }))
-      }
+      Expr::Tpl(tpl) => Some(tpl_to_ts_type(
+        &tpl,
+        match as_const {
+          true => DeclMutabilityKind::Const,
+          false => DeclMutabilityKind::Mutable,
+        },
+      )),
       // Since fast check requires explicit type annotations these
       // can be dropped as they are not part of an export declaration
       Expr::This(_)

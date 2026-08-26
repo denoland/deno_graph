@@ -44,6 +44,7 @@ use super::swc_helpers::any_type_ann;
 use super::swc_helpers::is_void_type;
 use super::swc_helpers::maybe_lit_to_ts_type;
 use super::swc_helpers::new_ident;
+use super::swc_helpers::tpl_to_ts_type;
 use super::swc_helpers::ts_keyword_type;
 use super::transform_dts::FastCheckDtsDiagnostic;
 use super::transform_dts::FastCheckDtsTransformer;
@@ -1846,7 +1847,8 @@ impl<'a> FastCheckTransformer<'a> {
         true
       }
       Expr::Tpl(n) => {
-        // Untagged template literals always produce strings and are leavable.
+        // Untagged template literals are inferrable by TypeScript as long
+        // as their substitutions are.
         let mut is_leavable = true;
         for expr in &mut n.exprs {
           is_leavable = recurse(expr)?;
@@ -1899,13 +1901,7 @@ impl<'a> FastCheckTransformer<'a> {
           None
         }
       }
-      Expr::Tpl(_) => {
-        // Untagged template literals always produce strings.
-        Some(TsType::TsKeywordType(TsKeywordType {
-          span: DUMMY_SP,
-          kind: TsKeywordTypeKind::TsStringKeyword,
-        }))
-      }
+      Expr::Tpl(tpl) => Some(tpl_to_ts_type(tpl, decl_kind)),
       Expr::TsSatisfies(n) => {
         self.maybe_infer_type_from_expr(&n.expr, decl_kind)
       }
