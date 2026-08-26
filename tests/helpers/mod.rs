@@ -194,7 +194,6 @@ pub struct TestBuilder {
   workspace_members: Vec<WorkspaceMember>,
   workspace_fast_check: bool,
   unstable_bytes_imports: bool,
-  unstable_text_imports: bool,
   unstable_css_imports: bool,
 }
 
@@ -215,7 +214,6 @@ impl TestBuilder {
       workspace_members: Default::default(),
       workspace_fast_check: false,
       unstable_bytes_imports: false,
-      unstable_text_imports: false,
       unstable_css_imports: false,
     }
   }
@@ -315,12 +313,6 @@ impl TestBuilder {
   }
 
   #[allow(unused)]
-  pub fn unstable_text_imports(&mut self, value: bool) -> &mut Self {
-    self.unstable_text_imports = value;
-    self
-  }
-
-  #[allow(unused)]
   pub fn unstable_css_imports(&mut self, value: bool) -> &mut Self {
     self.unstable_css_imports = value;
     self
@@ -388,7 +380,6 @@ impl TestBuilder {
           prefer_cached_jsr_versions: self.prefer_cached_jsr_versions,
           skip_dynamic_deps: self.skip_dynamic_deps,
           unstable_bytes_imports: self.unstable_bytes_imports,
-          unstable_text_imports: self.unstable_text_imports,
           unstable_css_imports: self.unstable_css_imports,
           jsr_version_resolver: Cow::Owned(JsrVersionResolver {
             newest_dependency_date_options: self.newest_dependency_date.clone(),
