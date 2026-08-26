@@ -27,6 +27,8 @@ use crate::module_specifier::resolve_import;
 use crate::packages::JsrPackageInfo;
 use crate::packages::JsrPackageVersionInfo;
 use crate::packages::PackageSpecifiers;
+use crate::packages::prerelease_fallback_applies;
+use crate::packages::version_matches;
 use crate::rt::Executor;
 
 use crate::source::*;
@@ -4935,7 +4937,7 @@ impl<'a, 'graph> Builder<'a, 'graph> {
         Ok(info) => {
           let package_req = pending_resolution.package_ref.req();
           let cached_versions = if !self.prefer_cached_jsr_versions
-            || self.jsr_unification_decides(package_req)
+            || self.jsr_unification_decides(package_req, &info)
           {
             // Either the feature is off, or in-graph version unification
             // (step 1 of `resolve_version`) is going to decide this req, in
@@ -5349,14 +5351,27 @@ impl<'a, 'graph> Builder<'a, 'graph> {
   /// Whether step 1 of `resolve_version` (in-graph version unification) will
   /// already decide `package_req`. When it will, the cached-manifest probe is
   /// unnecessary because step 1 runs before the cached versions are ever read.
-  fn jsr_unification_decides(&self, package_req: &PackageReq) -> bool {
+  fn jsr_unification_decides(
+    &self,
+    package_req: &PackageReq,
+    package_info: &JsrPackageInfo,
+  ) -> bool {
+    // mirrors what step 1 itself considers a candidate
+    let include_all_prereleases =
+      prerelease_fallback_applies(&package_req.version_req, package_info);
     self
       .graph
       .packages
       .versions_by_name(&package_req.name)
       .into_iter()
       .flatten()
-      .any(|nv| package_req.version_req.matches(&nv.version))
+      .any(|nv| {
+        version_matches(
+          &package_req.version_req,
+          &nv.version,
+          include_all_prereleases,
+        )
+      })
   }
 
   /// Probes which versions of `package_req` that match the requirement already
@@ -5377,12 +5392,18 @@ impl<'a, 'graph> Builder<'a, 'graph> {
     // yet in this pass. `resolve_version` still applies the version req (and
     // newest dependency date) to the memoized cached set, so accumulating
     // results across reqs on the same package is safe.
+    let include_all_prereleases =
+      prerelease_fallback_applies(&package_req.version_req, package_info);
     let candidates = package_info
       .versions
       .iter()
       .filter(|(version, version_info)| {
         !version_info.yanked
-          && package_req.version_req.matches(version)
+          && version_matches(
+            &package_req.version_req,
+            version,
+            include_all_prereleases,
+          )
           && !probe.probed.contains(*version)
       })
       .map(|(version, _)| {

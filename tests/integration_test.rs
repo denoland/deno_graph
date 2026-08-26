@@ -15,13 +15,17 @@ use deno_error::JsErrorBox;
 use deno_graph::BuildOptions;
 use deno_graph::FillFromLockfileOptions;
 use deno_graph::GraphKind;
+use deno_graph::JsrLoadError;
+use deno_graph::ModuleErrorKind;
 use deno_graph::ModuleGraph;
+use deno_graph::ModuleLoadError;
 use deno_graph::NpmResolvePkgReqsResult;
 use deno_graph::Range;
 use deno_graph::packages::JsrPackageInfo;
 use deno_graph::packages::JsrPackageInfoVersion;
 use deno_graph::packages::JsrPackageVersionInfo;
 use deno_graph::packages::JsrPackageVersionManifestEntry;
+use deno_graph::packages::NewestDependencyDateOptions;
 use deno_graph::source::CacheSetting;
 use deno_graph::source::ChecksumIntegrityError;
 use deno_graph::source::LoadError;
@@ -832,23 +836,74 @@ async fn test_fill_from_lockfile() {
   );
 }
 
-/// Registers a JSR package with the given versions in both the remote and the
-/// cache of a [`TestLoader`], including each version's manifest and an (empty)
-/// `mod.ts`. Every version manifest is present in the cache so that a cached
-/// probe of it would succeed, which is what makes the probe-count assertions
-/// in the tests below meaningful.
-fn add_cached_jsr_package(
+/// A newest-dependency-date cutoff from an RFC 3339 timestamp. `chrono` is not
+/// a dev-dependency, so go through serde.
+fn newest_dependency_date(date: &str) -> NewestDependencyDateOptions {
+  NewestDependencyDateOptions {
+    date: Some(serde_json::from_value(serde_json::json!(date)).unwrap()),
+    ..Default::default()
+  }
+}
+
+/// A version of a test JSR package. Defaults to unyanked, undated, and with
+/// its version manifest present in the cache.
+struct TestJsrVersion<'a> {
+  version: &'a str,
+  yanked: bool,
+  created_at: Option<&'a str>,
+  cached: bool,
+}
+
+impl<'a> TestJsrVersion<'a> {
+  fn new(version: &'a str) -> Self {
+    Self {
+      version,
+      yanked: false,
+      created_at: None,
+      cached: true,
+    }
+  }
+
+  fn yanked(mut self) -> Self {
+    self.yanked = true;
+    self
+  }
+
+  /// RFC 3339 publish date, used by the newest dependency date checks.
+  fn created_at(mut self, created_at: &'a str) -> Self {
+    self.created_at = Some(created_at);
+    self
+  }
+
+  /// Leaves this version's manifest out of the cache, so a cached probe of it
+  /// fails.
+  fn uncached(mut self) -> Self {
+    self.cached = false;
+    self
+  }
+}
+
+/// Registers a JSR package in the remote of a [`TestLoader`], including each
+/// version's manifest and an (empty) `mod.ts`, plus whichever versions are
+/// cached.
+fn add_jsr_package(
   loader: &mut TestLoader,
   name: &str,
-  versions: &[&str],
+  versions: &[TestJsrVersion],
 ) {
   let package_info = JsrPackageInfo {
     versions: versions
       .iter()
       .map(|v| {
         (
-          deno_semver::Version::parse_standard(v).unwrap(),
-          JsrPackageInfoVersion::default(),
+          deno_semver::Version::parse_standard(v.version).unwrap(),
+          JsrPackageInfoVersion {
+            // `chrono` is not a dev-dependency, so go through serde
+            created_at: v
+              .created_at
+              .map(|d| serde_json::from_value(serde_json::json!(d)).unwrap()),
+            yanked: v.yanked,
+          },
         )
       })
       .collect(),
@@ -874,16 +929,33 @@ fn add_cached_jsr_package(
       manifest,
       ..Default::default()
     };
+    let mod_url = format!("https://jsr.io/{name}/{}/mod.ts", version.version);
     loader
       .remote
-      .add_jsr_version_info(name, version, &version_info);
-    loader
-      .cache
-      .add_jsr_version_info(name, version, &version_info);
-    let mod_url = format!("https://jsr.io/{name}/{version}/mod.ts");
+      .add_jsr_version_info(name, version.version, &version_info);
     loader.remote.add_source_with_text(&mod_url, content);
-    loader.cache.add_source_with_text(&mod_url, content);
+    if version.cached {
+      loader
+        .cache
+        .add_jsr_version_info(name, version.version, &version_info);
+      loader.cache.add_source_with_text(&mod_url, content);
+    }
   }
+}
+
+/// [`add_jsr_package`] with every version unyanked, undated and cached, so
+/// that a cached probe of any of them would succeed — which is what makes the
+/// probe-count assertions in the tests below meaningful.
+fn add_cached_jsr_package(
+  loader: &mut TestLoader,
+  name: &str,
+  versions: &[&str],
+) {
+  let versions = versions
+    .iter()
+    .map(|v| TestJsrVersion::new(v))
+    .collect::<Vec<_>>();
+  add_jsr_package(loader, name, &versions);
 }
 
 // When in-graph version unification (step 1 of `resolve_version`) already
@@ -971,6 +1043,269 @@ async fn test_prefer_cached_jsr_versions_memoizes_probes_per_package() {
       .unwrap()
       .to_string(),
     "@scope/a@1.0.4",
+  );
+}
+
+// A `*` requirement (e.g. `jsr:@scope/a` without a version) never matches
+// pre-release versions, so a package that only has pre-release versions
+// falls back to resolving to its newest pre-release instead of failing —
+// mirroring how npm resolves `*` to the `latest` dist-tag even when that is
+// a pre-release.
+#[tokio::test]
+async fn test_jsr_package_with_only_prerelease_versions() {
+  let versions = ["1.0.0-rc.1", "1.0.0-rc.2"];
+  let mut builder = TestBuilder::new();
+  builder.with_loader(|loader| {
+    loader
+      .remote
+      .add_source_with_text("file:///mod.ts", "import \"jsr:@scope/a\";");
+    add_cached_jsr_package(loader, "@scope/a", &versions);
+  });
+  let result = builder.build().await;
+  result.graph.valid().unwrap();
+  assert_eq!(
+    result
+      .graph
+      .packages
+      .mappings()
+      .get(&PackageReq::from_str("@scope/a").unwrap())
+      .unwrap()
+      .to_string(),
+    "@scope/a@1.0.0-rc.2",
+  );
+}
+
+// `x` and `X` parse to the same wildcard requirement as `*`, so they must take
+// the pre-release fallback too. Each spelling gets its own graph because
+// `PackageReq` compares the parsed requirement, not its text, so they would
+// otherwise collide in the mappings.
+#[tokio::test]
+async fn test_jsr_package_with_only_prerelease_versions_wildcard_spellings() {
+  for req in ["*", "x", "X"] {
+    let versions = ["1.0.0-rc.1", "1.0.0-rc.2"];
+    let mut builder = TestBuilder::new();
+    builder.with_loader(|loader| {
+      loader.remote.add_source_with_text(
+        "file:///mod.ts",
+        format!("import \"jsr:@scope/a@{req}\";"),
+      );
+      add_cached_jsr_package(loader, "@scope/a", &versions);
+    });
+    let result = builder.build().await;
+    result.graph.valid().unwrap_or_else(|err| {
+      panic!("`{req}` failed to resolve: {err:#}");
+    });
+    assert_eq!(
+      result
+        .graph
+        .packages
+        .mappings()
+        .get(&PackageReq::from_str(&format!("@scope/a@{req}")).unwrap())
+        .unwrap()
+        .to_string(),
+      "@scope/a@1.0.0-rc.2",
+      "for requirement `{req}`",
+    );
+  }
+}
+
+// The pre-release fallback only applies to wildcard requirements: a
+// constrained requirement on a package that only has pre-release versions
+// still fails to find a matching version.
+#[tokio::test]
+async fn test_jsr_package_with_only_prerelease_versions_constrained_req() {
+  let versions = ["1.0.0-rc.1", "1.0.0-rc.2"];
+  let mut builder = TestBuilder::new();
+  builder.with_loader(|loader| {
+    loader.remote.add_source_with_text(
+      "file:///mod.ts",
+      "import \"jsr:@scope/a@^1.0.0\";",
+    );
+    add_cached_jsr_package(loader, "@scope/a", &versions);
+  });
+  let result = builder.build().await;
+  let err = result.graph.valid().unwrap_err();
+  let Some(ModuleErrorKind::Load {
+    err: ModuleLoadError::Jsr(JsrLoadError::PackageReqNotFound(err)),
+    ..
+  }) = err.as_module_error_kind()
+  else {
+    panic!("unexpected error: {err:#?}");
+  };
+  assert_eq!(err.req.to_string(), "@scope/a@^1.0.0");
+}
+
+// A package with a usable stable release resolves to it: the fallback must not
+// drag a wildcard requirement up to a newer pre-release.
+#[tokio::test]
+async fn test_jsr_package_prerelease_not_used_when_stable_exists() {
+  let mut builder = TestBuilder::new();
+  builder.with_loader(|loader| {
+    loader
+      .remote
+      .add_source_with_text("file:///mod.ts", "import \"jsr:@scope/a\";");
+    add_jsr_package(
+      loader,
+      "@scope/a",
+      &[
+        TestJsrVersion::new("1.0.0"),
+        TestJsrVersion::new("2.0.0-rc.1"),
+      ],
+    );
+  });
+  let result = builder.build().await;
+  result.graph.valid().unwrap();
+  assert_eq!(
+    result
+      .graph
+      .packages
+      .mappings()
+      .get(&PackageReq::from_str("@scope/a").unwrap())
+      .unwrap()
+      .to_string(),
+    "@scope/a@1.0.0",
+  );
+}
+
+// A yanked stable release is not a usable stable release, so the fallback
+// still applies and the unyanked pre-release wins over it. Resolving to the
+// yanked version instead would also mark the graph as using a yanked package.
+#[tokio::test]
+async fn test_jsr_package_with_only_yanked_stable_versions() {
+  let mut builder = TestBuilder::new();
+  builder.with_loader(|loader| {
+    loader
+      .remote
+      .add_source_with_text("file:///mod.ts", "import \"jsr:@scope/a\";");
+    add_jsr_package(
+      loader,
+      "@scope/a",
+      &[
+        TestJsrVersion::new("1.0.0").yanked(),
+        TestJsrVersion::new("2.0.0-rc.1"),
+      ],
+    );
+  });
+  let mut result = builder.build().await;
+  result.graph.valid().unwrap();
+  assert_eq!(
+    result
+      .graph
+      .packages
+      .mappings()
+      .get(&PackageReq::from_str("@scope/a").unwrap())
+      .unwrap()
+      .to_string(),
+    "@scope/a@2.0.0-rc.1",
+  );
+  assert_eq!(result.graph.packages.used_yanked_packages().count(), 0);
+}
+
+// The newest dependency date still excludes pre-releases picked up by the
+// fallback, so resolution falls back to the newest pre-release published
+// before the cutoff.
+#[tokio::test]
+async fn test_jsr_package_prerelease_fallback_respects_dependency_date() {
+  let mut builder = TestBuilder::new();
+  builder
+    .with_loader(|loader| {
+      loader
+        .remote
+        .add_source_with_text("file:///mod.ts", "import \"jsr:@scope/a\";");
+      add_jsr_package(
+        loader,
+        "@scope/a",
+        &[
+          TestJsrVersion::new("1.0.0-rc.1").created_at("2024-01-01T00:00:00Z"),
+          TestJsrVersion::new("1.0.0-rc.2").created_at("2025-06-01T00:00:00Z"),
+        ],
+      );
+    })
+    .newest_dependency_date(newest_dependency_date("2025-01-01T00:00:00Z"));
+  let result = builder.build().await;
+  result.graph.valid().unwrap();
+  assert_eq!(
+    result
+      .graph
+      .packages
+      .mappings()
+      .get(&PackageReq::from_str("@scope/a").unwrap())
+      .unwrap()
+      .to_string(),
+    "@scope/a@1.0.0-rc.1",
+  );
+}
+
+// When every pre-release is excluded by the newest dependency date, the error
+// must report the date rather than claiming nothing matched.
+#[tokio::test]
+async fn test_jsr_package_prerelease_fallback_all_excluded_by_date() {
+  let mut builder = TestBuilder::new();
+  builder
+    .with_loader(|loader| {
+      loader
+        .remote
+        .add_source_with_text("file:///mod.ts", "import \"jsr:@scope/a\";");
+      add_jsr_package(
+        loader,
+        "@scope/a",
+        &[
+          TestJsrVersion::new("1.0.0-rc.1").created_at("2025-06-01T00:00:00Z"),
+          TestJsrVersion::new("1.0.0-rc.2").created_at("2025-06-01T00:00:00Z"),
+        ],
+      );
+    })
+    .newest_dependency_date(newest_dependency_date("2025-01-01T00:00:00Z"));
+  let result = builder.build().await;
+  let err = result.graph.valid().unwrap_err();
+  let Some(ModuleErrorKind::Load {
+    err: ModuleLoadError::Jsr(JsrLoadError::PackageReqNotFound(err)),
+    ..
+  }) = err.as_module_error_kind()
+  else {
+    panic!("unexpected error: {err:#?}");
+  };
+  assert!(
+    err.newest_dependency_date.is_some(),
+    "expected the error to report the dependency date: {err}",
+  );
+}
+
+// `prefer_cached_jsr_versions` must probe the pre-releases the fallback will
+// consider: probing only the versions the requirement literally matches would
+// find nothing for a pre-release-only package, and resolution would then pick
+// a version whose manifest is not in the cache.
+#[tokio::test]
+async fn test_prefer_cached_jsr_versions_probes_prerelease_fallback() {
+  let mut builder = TestBuilder::new();
+  builder
+    .with_loader(|loader| {
+      loader
+        .remote
+        .add_source_with_text("file:///mod.ts", "import \"jsr:@scope/a\";");
+      add_jsr_package(
+        loader,
+        "@scope/a",
+        &[
+          TestJsrVersion::new("1.0.0-rc.1"),
+          TestJsrVersion::new("1.0.0-rc.2").uncached(),
+        ],
+      );
+    })
+    .prefer_cached_jsr_versions(true);
+  let result = builder.build().await;
+  result.graph.valid().unwrap();
+
+  assert_eq!(builder.cached_jsr_version_manifest_probe_count(), 2);
+  assert_eq!(
+    result
+      .graph
+      .packages
+      .mappings()
+      .get(&PackageReq::from_str("@scope/a").unwrap())
+      .unwrap()
+      .to_string(),
+    "@scope/a@1.0.0-rc.1",
   );
 }
 
