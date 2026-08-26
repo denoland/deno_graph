@@ -193,7 +193,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     readonly [1]: number;
     readonly f: any;
     readonly g: any;
-    readonly h: readonly [readonly [number, number], readonly [string]];
+    readonly h: readonly [...[number, number], ...[string]];
   };
   export declare const func1: () => string;
   export declare const func2: () => string;

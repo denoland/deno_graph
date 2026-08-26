@@ -15,6 +15,7 @@ use super::swc_helpers::any_type_ann;
 use super::swc_helpers::maybe_lit_to_ts_type;
 use super::swc_helpers::tpl_to_ts_type;
 use super::swc_helpers::ts_keyword_type;
+use super::swc_helpers::ts_lit_type;
 use super::swc_helpers::ts_readonly;
 use super::swc_helpers::ts_tuple_element;
 use super::swc_helpers::type_ann;
@@ -333,16 +334,64 @@ impl<'a> FastCheckDtsTransformer<'a> {
 
         for elems in arr.elems {
           if let Some(expr_or_spread) = elems {
-            match self.expr_to_ts_type(
-              *expr_or_spread.expr.clone(),
-              as_const,
-              as_readonly,
-            ) {
-              Some(ts_expr) => {
-                elem_types.push(ts_tuple_element(ts_expr));
+            if expr_or_spread.spread.is_some() {
+              // tuple types support spreading array-likes, so a spread of
+              // an identifier can be represented as `...typeof ident` and
+              // a spread of an array literal as a rest of its tuple type
+              let rest_type = match &*expr_or_spread.expr {
+                Expr::Ident(ident) if ident.ctxt != self.unresolved_context => {
+                  Some(TsType::TsTypeQuery(TsTypeQuery {
+                    span: DUMMY_SP,
+                    expr_name: TsTypeQueryExpr::TsEntityName(
+                      TsEntityName::Ident(ident.clone()),
+                    ),
+                    type_args: None,
+                  }))
+                }
+                Expr::Array(_) => self.expr_to_ts_type(
+                  (*expr_or_spread.expr).clone(),
+                  as_const,
+                  false,
+                ),
+                _ => None,
+              };
+              match rest_type {
+                Some(rest_type) => {
+                  elem_types.push(ts_tuple_element(TsType::TsRestType(
+                    TsRestType {
+                      span: DUMMY_SP,
+                      type_ann: Box::new(rest_type),
+                    },
+                  )));
+                }
+                None => {
+                  // give up on the whole array rather than emitting a
+                  // tuple type that is missing elements
+                  self.mark_diagnostic(
+                    FastCheckDtsDiagnostic::UnableToInferTypeFromSpread {
+                      range: self.source_range_to_range(expr_or_spread.range()),
+                    },
+                  );
+                  return None;
+                }
               }
-              _ => {
-                self.mark_diagnostic_unable_to_infer(expr_or_spread.range());
+            } else {
+              match self.expr_to_ts_type(
+                *expr_or_spread.expr.clone(),
+                as_const,
+                as_readonly,
+              ) {
+                Some(ts_expr) => {
+                  elem_types.push(ts_tuple_element(ts_expr));
+                }
+                _ => {
+                  // fall back to `any` for the element so the tuple
+                  // keeps the correct number of elements
+                  self.mark_diagnostic_unable_to_infer(expr_or_spread.range());
+                  elem_types.push(ts_tuple_element(ts_keyword_type(
+                    TsKeywordTypeKind::TsAnyKeyword,
+                  )));
+                }
               }
             }
           } else {
@@ -532,10 +581,28 @@ impl<'a> FastCheckDtsTransformer<'a> {
         },
       )),
       Expr::Ident(ident) => self.ident_to_ts_type(&ident, as_const),
+      Expr::Unary(unary) => match (unary.op, &*unary.arg) {
+        (UnaryOp::Minus, Expr::Lit(Lit::Num(num))) => match as_const {
+          true => Some(ts_lit_type(TsLit::Number(Number {
+            span: num.span,
+            value: -num.value,
+            raw: None,
+          }))),
+          false => Some(ts_keyword_type(TsKeywordTypeKind::TsNumberKeyword)),
+        },
+        (UnaryOp::Minus, Expr::Lit(Lit::BigInt(bigint))) => match as_const {
+          true => Some(ts_lit_type(TsLit::BigInt(BigInt {
+            span: bigint.span,
+            value: Box::new(-(*bigint.value).clone()),
+            raw: None,
+          }))),
+          false => Some(ts_keyword_type(TsKeywordTypeKind::TsBigIntKeyword)),
+        },
+        _ => None,
+      },
       // Since fast check requires explicit type annotations these
       // can be dropped as they are not part of an export declaration
       Expr::This(_)
-      | Expr::Unary(_)
       | Expr::Update(_)
       | Expr::Bin(_)
       | Expr::Assign(_)
@@ -1753,6 +1820,41 @@ export class Foo {
 };
 export declare class Foo {
 }"#,
+    )
+    .await;
+  }
+
+  #[tokio::test]
+  async fn dts_as_const_spread() {
+    // https://github.com/jsr-io/jsr/issues/1258
+    transform_dts_test(
+      r#"export const FIRST = ["a", "b"] as const;
+export const ALL = [...FIRST, "c", "d"] as const;"#,
+      r#"export declare const FIRST: readonly ["a", "b"];
+export declare const ALL: readonly [...typeof FIRST, "c", "d"];"#,
+    )
+    .await;
+
+    transform_dts_test(
+      r#"export const flat = [...[1, 2], ...["test"]] as const;"#,
+      "export declare const flat: readonly [...[1, 2], ...[\"test\"]];",
+    )
+    .await;
+
+    // a spread of an uninferable expression falls back to `any` for the
+    // whole array instead of emitting a tuple with missing elements
+    transform_dts_test(
+      r#"export const nope = [...foo(), "a"] as const;"#,
+      "export declare const nope: any;",
+    )
+    .await;
+  }
+
+  #[tokio::test]
+  async fn dts_negative_number_literals() {
+    transform_dts_test(
+      r#"export const nums = [1, -2, 3.5] as const;"#,
+      "export declare const nums: readonly [1, -2, 3.5];",
     )
     .await;
   }
