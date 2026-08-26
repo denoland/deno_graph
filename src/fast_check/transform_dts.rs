@@ -877,7 +877,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
           Some(ClassMember::Constructor(class_constructor))
         }
         ClassMember::Method(mut method) => {
-          match valid_prop_name(&method.key) {
+          match valid_prop_name(&method.key, self.unresolved_context) {
             Some(new_prop_name) => {
               method.key = new_prop_name;
             }
@@ -894,7 +894,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
           Some(ClassMember::Method(method))
         }
         ClassMember::ClassProp(mut prop) => {
-          match valid_prop_name(&prop.key) {
+          match valid_prop_name(&prop.key, self.unresolved_context) {
             Some(new_prop_name) => {
               prop.key = new_prop_name;
             }
@@ -1137,8 +1137,54 @@ fn collect_typeof_safe_ids(module: &Module) -> HashSet<Id> {
   ids
 }
 
-fn valid_prop_name(prop_name: &PropName) -> Option<PropName> {
-  fn prop_name_from_expr(expr: &Expr) -> Option<PropName> {
+/// Whether the expression is a reference to a well-known symbol on the
+/// global `Symbol` object (e.g. `Symbol.iterator` or `Symbol.dispose`).
+fn is_well_known_symbol_expr(
+  expr: &Expr,
+  unresolved_context: SyntaxContext,
+) -> bool {
+  const WELL_KNOWN_SYMBOL_NAMES: [&str; 16] = [
+    "asyncDispose",
+    "asyncIterator",
+    "dispose",
+    "hasInstance",
+    "isConcatSpreadable",
+    "iterator",
+    "match",
+    "matchAll",
+    "metadata",
+    "replace",
+    "search",
+    "species",
+    "split",
+    "toPrimitive",
+    "toStringTag",
+    "unscopables",
+  ];
+
+  let Expr::Member(member_expr) = expr else {
+    return false;
+  };
+  let Some(obj_ident) = member_expr.obj.as_ident() else {
+    return false;
+  };
+  if obj_ident.sym != "Symbol" || obj_ident.ctxt != unresolved_context {
+    return false;
+  }
+  let Some(prop_ident) = member_expr.prop.as_ident() else {
+    return false;
+  };
+  WELL_KNOWN_SYMBOL_NAMES.contains(&prop_ident.sym.as_str())
+}
+
+fn valid_prop_name(
+  prop_name: &PropName,
+  unresolved_context: SyntaxContext,
+) -> Option<PropName> {
+  fn prop_name_from_expr(
+    expr: &Expr,
+    unresolved_context: SyntaxContext,
+  ) -> Option<PropName> {
     match expr {
       Expr::Lit(e) => match &e {
         Lit::Str(e) => Some(PropName::Str(e.clone())),
@@ -1148,22 +1194,37 @@ fn valid_prop_name(prop_name: &PropName) -> Option<PropName> {
       },
       Expr::Tpl(e) => {
         if e.quasis.is_empty() && e.exprs.len() == 1 {
-          prop_name_from_expr(&e.exprs[0])
+          prop_name_from_expr(&e.exprs[0], unresolved_context)
         } else {
           None
         }
       }
-      Expr::Paren(e) => prop_name_from_expr(&e.expr),
-      Expr::TsTypeAssertion(e) => prop_name_from_expr(&e.expr),
-      Expr::TsConstAssertion(e) => prop_name_from_expr(&e.expr),
-      Expr::TsNonNull(e) => prop_name_from_expr(&e.expr),
-      Expr::TsAs(e) => prop_name_from_expr(&e.expr),
-      Expr::TsSatisfies(e) => prop_name_from_expr(&e.expr),
+      Expr::Paren(e) => prop_name_from_expr(&e.expr, unresolved_context),
+      Expr::TsTypeAssertion(e) => {
+        prop_name_from_expr(&e.expr, unresolved_context)
+      }
+      Expr::TsConstAssertion(e) => {
+        prop_name_from_expr(&e.expr, unresolved_context)
+      }
+      Expr::TsNonNull(e) => prop_name_from_expr(&e.expr, unresolved_context),
+      Expr::TsAs(e) => prop_name_from_expr(&e.expr, unresolved_context),
+      Expr::TsSatisfies(e) => prop_name_from_expr(&e.expr, unresolved_context),
       Expr::Ident(_) => Some(PropName::Computed(ComputedPropName {
         #[allow(clippy::disallowed_methods)]
         span: deno_ast::swc::common::Spanned::span(&expr),
         expr: Box::new(expr.clone()),
       })),
+      Expr::Member(_) => {
+        if is_well_known_symbol_expr(expr, unresolved_context) {
+          Some(PropName::Computed(ComputedPropName {
+            #[allow(clippy::disallowed_methods)]
+            span: deno_ast::swc::common::Spanned::span(&expr),
+            expr: Box::new(expr.clone()),
+          }))
+        } else {
+          None
+        }
+      }
       Expr::TaggedTpl(_)
       | Expr::This(_)
       | Expr::Array(_)
@@ -1173,7 +1234,6 @@ fn valid_prop_name(prop_name: &PropName) -> Option<PropName> {
       | Expr::Update(_)
       | Expr::Bin(_)
       | Expr::Assign(_)
-      | Expr::Member(_)
       | Expr::SuperProp(_)
       | Expr::Cond(_)
       | Expr::Call(_)
@@ -1201,7 +1261,9 @@ fn valid_prop_name(prop_name: &PropName) -> Option<PropName> {
     | PropName::Str(_)
     | PropName::Num(_)
     | PropName::BigInt(_) => Some(prop_name.clone()),
-    PropName::Computed(computed) => prop_name_from_expr(&computed.expr),
+    PropName::Computed(computed) => {
+      prop_name_from_expr(&computed.expr, unresolved_context)
+    }
   }
 }
 
@@ -1656,6 +1718,41 @@ export declare const obj: {
   readonly n: number;
   readonly i: number;
 };"#,
+    )
+    .await;
+  }
+
+  #[tokio::test]
+  async fn dts_class_wellknown_symbol_members() {
+    // https://github.com/jsr-io/jsr/issues/886
+    // https://github.com/jsr-io/jsr/issues/1179
+    transform_dts_test(
+      r#"export class Foo<T> implements Iterable<T> {
+  [Symbol.iterator](): Iterator<T> {
+    return null!;
+  }
+  [Symbol.dispose](): void {}
+  readonly [Symbol.toStringTag]: string = "Foo";
+}"#,
+      r#"export declare class Foo<T> implements Iterable<T> {
+  [Symbol.iterator](): Iterator<T>;
+  [Symbol.dispose](): void;
+  readonly [Symbol.toStringTag]: string;
+}"#,
+    )
+    .await;
+
+    // a local binding named `Symbol` is not the global `Symbol` object
+    transform_dts_test(
+      r#"const Symbol = { iterator: "iter" } as const;
+export class Foo {
+  [Symbol.iterator](): void {}
+}"#,
+      r#"declare const Symbol: {
+  readonly iterator: "iter";
+};
+export declare class Foo {
+}"#,
     )
     .await;
   }
