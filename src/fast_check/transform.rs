@@ -172,6 +172,7 @@ pub fn transform(
       parsed_source.text_info_lazy(),
       public_ranges,
       specifier,
+      parsed_source.unresolved_context(),
     );
 
     let program = dts_transformer.transform(Program::Module(module));

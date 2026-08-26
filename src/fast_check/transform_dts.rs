@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use deno_ast::ModuleSpecifier;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
@@ -12,6 +14,7 @@ use super::swc_helpers::DeclMutabilityKind;
 use super::swc_helpers::any_type_ann;
 use super::swc_helpers::maybe_lit_to_ts_type;
 use super::swc_helpers::tpl_to_ts_type;
+use super::swc_helpers::ts_keyword_type;
 use super::swc_helpers::ts_readonly;
 use super::swc_helpers::ts_tuple_element;
 use super::swc_helpers::type_ann;
@@ -64,6 +67,12 @@ pub struct FastCheckDtsTransformer<'a> {
   public_ranges: &'a ModulePublicRanges,
   pub diagnostics: Vec<FastCheckDtsDiagnostic>,
   specifier: &'a ModuleSpecifier,
+  unresolved_context: SyntaxContext,
+  /// Bindings that are known to have a non-widening inferable type, so
+  /// referencing them via `typeof` in the emitted declaration is sound
+  /// (function and class declarations, and consts that are explicitly
+  /// typed or initialized with a function).
+  typeof_safe_ids: HashSet<Id>,
   is_top_level: bool,
 }
 
@@ -72,6 +81,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
     text_info: &'a SourceTextInfo,
     public_ranges: &'a ModulePublicRanges,
     specifier: &'a ModuleSpecifier,
+    unresolved_context: SyntaxContext,
   ) -> Self {
     Self {
       id_counter: 0,
@@ -79,6 +89,8 @@ impl<'a> FastCheckDtsTransformer<'a> {
       specifier,
       public_ranges,
       diagnostics: vec![],
+      unresolved_context,
+      typeof_safe_ids: HashSet::new(),
       is_top_level: true,
     }
   }
@@ -125,6 +137,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
     self.is_top_level = true;
     match program {
       Program::Module(mut module) => {
+        self.typeof_safe_ids = collect_typeof_safe_ids(&module);
         let body = module.body;
         module.body = self.transform_module_items(body);
         Program::Module(module)
@@ -212,6 +225,14 @@ impl<'a> FastCheckDtsTransformer<'a> {
             ))
           }
           ModuleDecl::ExportDefaultExpr(export_default_expr) => {
+            // a default export of an identifier can reference the
+            // declaration directly without an intermediate variable
+            if export_default_expr.expr.is_ident() {
+              new_items.push(ModuleItem::ModuleDecl(
+                ModuleDecl::ExportDefaultExpr(export_default_expr),
+              ));
+              continue;
+            }
             let name = self.gen_unique_name();
             let name_ident =
               Ident::new(name.into(), DUMMY_SP, SyntaxContext::default());
@@ -379,9 +400,18 @@ impl<'a> FastCheckDtsTransformer<'a> {
                     }
                   };
 
-                  let init_type = self
-                    .expr_to_ts_type(*key_value.value, as_const, as_readonly)
-                    .map(type_ann);
+                  let value_range = key_value.value.range();
+                  let init_type = match self.expr_to_ts_type(
+                    *key_value.value,
+                    as_const,
+                    as_readonly,
+                  ) {
+                    Some(ts_type) => type_ann(ts_type),
+                    None => {
+                      self.mark_diagnostic_any_fallback(value_range);
+                      any_type_ann()
+                    }
+                  };
 
                   members.push(TsTypeElement::TsPropertySignature(
                     TsPropertySignature {
@@ -390,12 +420,35 @@ impl<'a> FastCheckDtsTransformer<'a> {
                       key: Box::new(key),
                       computed,
                       optional: false,
-                      type_ann: init_type,
+                      type_ann: Some(init_type),
                     },
                   ));
                 }
-                Prop::Shorthand(_)
-                | Prop::Assign(_)
+                Prop::Shorthand(ident) => {
+                  match self.ident_to_ts_type(&ident, as_const) {
+                    Some(ts_type) => {
+                      members.push(TsTypeElement::TsPropertySignature(
+                        TsPropertySignature {
+                          span: DUMMY_SP,
+                          readonly: as_readonly,
+                          key: Box::new(Expr::Ident(Ident {
+                            span: ident.span,
+                            ctxt: SyntaxContext::default(),
+                            sym: ident.sym,
+                            optional: false,
+                          })),
+                          computed: false,
+                          optional: false,
+                          type_ann: Some(type_ann(ts_type)),
+                        },
+                      ));
+                    }
+                    None => {
+                      self.mark_diagnostic_unsupported_prop(ident.range());
+                    }
+                  }
+                }
+                Prop::Assign(_)
                 | Prop::Getter(_)
                 | Prop::Setter(_)
                 | Prop::Method(_) => {
@@ -478,6 +531,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
           false => DeclMutabilityKind::Mutable,
         },
       )),
+      Expr::Ident(ident) => self.ident_to_ts_type(&ident, as_const),
       // Since fast check requires explicit type annotations these
       // can be dropped as they are not part of an export declaration
       Expr::This(_)
@@ -491,7 +545,6 @@ impl<'a> FastCheckDtsTransformer<'a> {
       | Expr::Call(_)
       | Expr::New(_)
       | Expr::Seq(_)
-      | Expr::Ident(_)
       | Expr::TaggedTpl(_)
       | Expr::Class(_)
       | Expr::Yield(_)
@@ -755,6 +808,35 @@ impl<'a> FastCheckDtsTransformer<'a> {
     }
   }
 
+  fn ident_to_ts_type(
+    &mut self,
+    ident: &Ident,
+    as_const: bool,
+  ) -> Option<TsType> {
+    if ident.ctxt == self.unresolved_context {
+      return match ident.sym.as_str() {
+        "undefined" if as_const => {
+          Some(ts_keyword_type(TsKeywordTypeKind::TsUndefinedKeyword))
+        }
+        "NaN" | "Infinity" => {
+          Some(ts_keyword_type(TsKeywordTypeKind::TsNumberKeyword))
+        }
+        _ => None,
+      };
+    }
+    if self.typeof_safe_ids.contains(&ident.to_id()) {
+      Some(TsType::TsTypeQuery(TsTypeQuery {
+        span: DUMMY_SP,
+        expr_name: TsTypeQueryExpr::TsEntityName(TsEntityName::Ident(
+          ident.clone(),
+        )),
+        type_args: None,
+      }))
+    } else {
+      None
+    }
+  }
+
   fn infer_expr_fallback_any(
     &mut self,
     expr: Expr,
@@ -993,6 +1075,68 @@ impl<'a> FastCheckDtsTransformer<'a> {
   }
 }
 
+/// Collects the ids of module level bindings whose type can be soundly
+/// referenced via `typeof` in the emitted declaration file: function and
+/// class declarations don't get widened by TypeScript's inference, and
+/// consts with an explicit type annotation or a function initializer have
+/// a known non-widening declared type.
+fn collect_typeof_safe_ids(module: &Module) -> HashSet<Id> {
+  fn add_decl(ids: &mut HashSet<Id>, decl: &Decl) {
+    match decl {
+      Decl::Fn(n) => {
+        ids.insert(n.ident.to_id());
+      }
+      Decl::Class(n) => {
+        ids.insert(n.ident.to_id());
+      }
+      Decl::Var(n) => {
+        if n.kind == VarDeclKind::Const {
+          for declarator in &n.decls {
+            if let Pat::Ident(ident) = &declarator.name {
+              let is_typed = ident.type_ann.is_some();
+              let has_fn_init = matches!(
+                declarator.init.as_deref(),
+                Some(Expr::Fn(_) | Expr::Arrow(_))
+              );
+              if is_typed || has_fn_init {
+                ids.insert(ident.id.to_id());
+              }
+            }
+          }
+        }
+      }
+      _ => {}
+    }
+  }
+
+  let mut ids = HashSet::new();
+  for item in &module.body {
+    match item {
+      ModuleItem::Stmt(Stmt::Decl(decl)) => add_decl(&mut ids, decl),
+      ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(n)) => {
+        add_decl(&mut ids, &n.decl)
+      }
+      ModuleItem::ModuleDecl(ModuleDecl::ExportDefaultDecl(n)) => {
+        match &n.decl {
+          DefaultDecl::Class(n) => {
+            if let Some(ident) = &n.ident {
+              ids.insert(ident.to_id());
+            }
+          }
+          DefaultDecl::Fn(n) => {
+            if let Some(ident) = &n.ident {
+              ids.insert(ident.to_id());
+            }
+          }
+          DefaultDecl::TsInterfaceDecl(_) => {}
+        }
+      }
+      _ => {}
+    }
+  }
+  ids
+}
+
 fn valid_prop_name(prop_name: &PropName) -> Option<PropName> {
   fn prop_name_from_expr(expr: &Expr) -> Option<PropName> {
     match expr {
@@ -1146,6 +1290,7 @@ mod tests {
       parsed_source.text_info_lazy(),
       &public_ranges,
       &specifier,
+      parsed_source.unresolved_context(),
     );
     let program = transformer.transform(program);
 
@@ -1455,6 +1600,61 @@ export function foo(a: any): number {
     transform_dts_test(
       r#"export const foo = { bar } as const;"#,
       r#"export declare const foo: {
+};"#,
+    )
+    .await;
+  }
+
+  #[tokio::test]
+  async fn dts_object_prop_ident_reference() {
+    // https://github.com/jsr-io/jsr/issues/615
+    transform_dts_test(
+      r#"export function fAdd(a: number, b: number): number {
+  return a + b;
+}
+export class Foo {}
+const arrow = (a: string): string => a;
+const typed: number = 1;
+export const obj = {
+  add: fAdd,
+  arrow,
+  klass: Foo,
+  typed,
+};"#,
+      r#"export declare function fAdd(a: number, b: number): number;
+export declare class Foo {
+}
+declare const arrow: (a: string) => string;
+declare const typed: number;
+export declare const obj: {
+  readonly add: typeof fAdd;
+  readonly arrow: typeof arrow;
+  readonly klass: typeof Foo;
+  readonly typed: typeof typed;
+};"#,
+    )
+    .await;
+
+    // a `let` variable may be widened by TypeScript's inference, so
+    // referencing it via `typeof` is not safe and falls back to `any`
+    transform_dts_test(
+      r#"let counter = 0;
+export const obj = { counter };"#,
+      r#"declare let counter: number;
+export declare const obj: {
+};"#,
+    )
+    .await;
+  }
+
+  #[tokio::test]
+  async fn dts_ident_globals() {
+    transform_dts_test(
+      r#"export const foo = { u: undefined, n: NaN, i: Infinity } as const;"#,
+      r#"export declare const foo: {
+  readonly u: undefined;
+  readonly n: number;
+  readonly i: number;
 };"#,
     )
     .await;
