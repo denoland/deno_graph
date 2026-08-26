@@ -76,6 +76,9 @@ pub struct FastCheckDtsTransformer<'a> {
   /// (function and class declarations, and consts that are explicitly
   /// typed or initialized with a function).
   typeof_safe_ids: HashSet<Id>,
+  /// Module level class declarations without type parameters, whose `new`
+  /// expressions have the class instance type.
+  non_generic_class_ids: HashSet<Id>,
   is_top_level: bool,
 }
 
@@ -94,6 +97,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
       diagnostics: vec![],
       unresolved_context,
       typeof_safe_ids: HashSet::new(),
+      non_generic_class_ids: HashSet::new(),
       is_top_level: true,
     }
   }
@@ -140,7 +144,9 @@ impl<'a> FastCheckDtsTransformer<'a> {
     self.is_top_level = true;
     match program {
       Program::Module(mut module) => {
-        self.typeof_safe_ids = collect_typeof_safe_ids(&module);
+        let prescanned_ids = prescan_module_ids(&module);
+        self.typeof_safe_ids = prescanned_ids.typeof_safe;
+        self.non_generic_class_ids = prescanned_ids.non_generic_classes;
         let body = module.body;
         module.body = self.transform_module_items(body);
         Program::Module(module)
@@ -616,6 +622,22 @@ impl<'a> FastCheckDtsTransformer<'a> {
           })),
         }))
       }
+      Expr::New(new_expr) => {
+        // `new SomeClass(...)` of a non-generic class declared in this
+        // module has the class instance type
+        let ident = new_expr.callee.as_ident()?;
+        if new_expr.type_args.is_none()
+          && self.non_generic_class_ids.contains(&ident.to_id())
+        {
+          Some(TsType::TsTypeRef(TsTypeRef {
+            span: DUMMY_SP,
+            type_name: TsEntityName::Ident(ident.clone()),
+            type_params: None,
+          }))
+        } else {
+          None
+        }
+      }
       // Since fast check requires explicit type annotations these
       // can be dropped as they are not part of an export declaration
       Expr::This(_)
@@ -625,7 +647,6 @@ impl<'a> FastCheckDtsTransformer<'a> {
       | Expr::Member(_)
       | Expr::SuperProp(_)
       | Expr::Cond(_)
-      | Expr::New(_)
       | Expr::Seq(_)
       | Expr::TaggedTpl(_)
       | Expr::Class(_)
@@ -1157,19 +1178,33 @@ impl<'a> FastCheckDtsTransformer<'a> {
   }
 }
 
-/// Collects the ids of module level bindings whose type can be soundly
-/// referenced via `typeof` in the emitted declaration file: function and
-/// class declarations don't get widened by TypeScript's inference, and
-/// consts with an explicit type annotation or a function initializer have
-/// a known non-widening declared type.
-fn collect_typeof_safe_ids(module: &Module) -> HashSet<Id> {
-  fn add_decl(ids: &mut HashSet<Id>, decl: &Decl) {
+#[derive(Default)]
+struct PrescannedModuleIds {
+  /// Bindings whose type can be soundly referenced via `typeof` in the
+  /// emitted declaration file: function and class declarations don't get
+  /// widened by TypeScript's inference, and consts with an explicit type
+  /// annotation or a function initializer have a known non-widening
+  /// declared type.
+  typeof_safe: HashSet<Id>,
+  /// Class declarations without type parameters.
+  non_generic_classes: HashSet<Id>,
+}
+
+fn prescan_module_ids(module: &Module) -> PrescannedModuleIds {
+  fn add_class(ids: &mut PrescannedModuleIds, ident: &Ident, class: &Class) {
+    ids.typeof_safe.insert(ident.to_id());
+    if class.type_params.is_none() {
+      ids.non_generic_classes.insert(ident.to_id());
+    }
+  }
+
+  fn add_decl(ids: &mut PrescannedModuleIds, decl: &Decl) {
     match decl {
       Decl::Fn(n) => {
-        ids.insert(n.ident.to_id());
+        ids.typeof_safe.insert(n.ident.to_id());
       }
       Decl::Class(n) => {
-        ids.insert(n.ident.to_id());
+        add_class(ids, &n.ident, &n.class);
       }
       Decl::Var(n) => {
         if n.kind == VarDeclKind::Const {
@@ -1181,7 +1216,7 @@ fn collect_typeof_safe_ids(module: &Module) -> HashSet<Id> {
                 Some(Expr::Fn(_) | Expr::Arrow(_))
               );
               if is_typed || has_fn_init {
-                ids.insert(ident.id.to_id());
+                ids.typeof_safe.insert(ident.id.to_id());
               }
             }
           }
@@ -1191,7 +1226,7 @@ fn collect_typeof_safe_ids(module: &Module) -> HashSet<Id> {
     }
   }
 
-  let mut ids = HashSet::new();
+  let mut ids = PrescannedModuleIds::default();
   for item in &module.body {
     match item {
       ModuleItem::Stmt(Stmt::Decl(decl)) => add_decl(&mut ids, decl),
@@ -1202,12 +1237,12 @@ fn collect_typeof_safe_ids(module: &Module) -> HashSet<Id> {
         match &n.decl {
           DefaultDecl::Class(n) => {
             if let Some(ident) = &n.ident {
-              ids.insert(ident.to_id());
+              add_class(&mut ids, ident, &n.class);
             }
           }
           DefaultDecl::Fn(n) => {
             if let Some(ident) = &n.ident {
-              ids.insert(ident.to_id());
+              ids.typeof_safe.insert(ident.to_id());
             }
           }
           DefaultDecl::TsInterfaceDecl(_) => {}
@@ -1870,6 +1905,30 @@ export declare const ALL: readonly [...typeof FIRST, "c", "d"];"#,
     transform_dts_test(
       r#"export const nums = [1, -2, 3.5] as const;"#,
       "export declare const nums: readonly [1, -2, 3.5];",
+    )
+    .await;
+  }
+
+  #[tokio::test]
+  async fn dts_new_expr() {
+    transform_dts_test(
+      r#"export class Dimensions {}
+export const a = { d: new Dimensions() };"#,
+      r#"export declare class Dimensions {
+}
+export declare const a: {
+  readonly d: Dimensions;
+};"#,
+    )
+    .await;
+
+    // generic classes are not inferable from a `new` expression
+    transform_dts_test(
+      r#"export class Box<T> {}
+export const a = new Box("test");"#,
+      r#"export declare class Box<T> {
+}
+export declare const a: any;"#,
     )
     .await;
   }
