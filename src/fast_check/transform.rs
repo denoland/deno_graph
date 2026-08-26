@@ -32,7 +32,9 @@ use crate::analysis::ModuleInfo;
 use crate::ast::ParserModuleAnalyzer;
 use crate::symbols::EsModuleInfo;
 use crate::symbols::ExpandoPropertyRef;
+use crate::symbols::ExportDeclRef;
 use crate::symbols::Symbol;
+use crate::symbols::SymbolNodeRef;
 
 use super::FastCheckDiagnostic;
 use super::FastCheckDiagnosticRange;
@@ -44,6 +46,7 @@ use super::swc_helpers::any_type_ann;
 use super::swc_helpers::is_void_type;
 use super::swc_helpers::maybe_lit_to_ts_type;
 use super::swc_helpers::new_ident;
+use super::swc_helpers::object_freeze_call_arg;
 use super::swc_helpers::tpl_to_ts_type;
 use super::swc_helpers::ts_keyword_type;
 use super::transform_dts::FastCheckDtsDiagnostic;
@@ -172,6 +175,7 @@ pub fn transform(
       parsed_source.text_info_lazy(),
       public_ranges,
       specifier,
+      parsed_source.unresolved_context(),
     );
 
     let program = dts_transformer.transform(Program::Module(module));
@@ -1751,6 +1755,8 @@ impl<'a> FastCheckTransformer<'a> {
     expr: &mut Expr,
     parent_id_range: Option<SourceRange>,
   ) -> Result<bool, Vec<FastCheckDiagnostic>> {
+    let unresolved_context = self.parsed_source.unresolved_context();
+    let es_module_info = self.es_module_info;
     let mut recurse =
       |expr: &mut Expr| self.maybe_transform_expr_if_leavable(expr, None);
 
@@ -1816,7 +1822,34 @@ impl<'a> FastCheckTransformer<'a> {
         }
       }
       Expr::Ident(_) => true,
-      Expr::Call(_) | Expr::New(_) | Expr::Seq(_)  => false,
+      Expr::Call(n) => {
+        // `Object.freeze(...)` has a well-known return type based on its
+        // argument, so it can be left as-is when its argument can be
+        if object_freeze_call_arg(n, unresolved_context).is_some() {
+          recurse(&mut n.args[0].expr)?
+        } else {
+          false
+        }
+      }
+      Expr::New(n) => {
+        // the type of `new SomeClass(...)` on a non-generic class declared
+        // in this module is simply the class instance type
+        if is_new_expr_of_non_generic_class(es_module_info, n) {
+          let mut is_leavable = true;
+          if let Some(args) = &mut n.args {
+            for arg in args.iter_mut() {
+              is_leavable = recurse(&mut arg.expr)?;
+              if !is_leavable {
+                break;
+              }
+            }
+          }
+          is_leavable
+        } else {
+          false
+        }
+      }
+      Expr::Seq(_)  => false,
       Expr::Lit(n) => match n {
         Lit::Str(_)
         | Lit::Bool(_)
@@ -2045,6 +2078,31 @@ fn is_ts_private_computed_class_member(m: &ClassMember) -> bool {
     }
     _ => false,
   }
+}
+
+/// Whether the `new` expression instantiates a class declared in this
+/// module that has no type parameters, in which case its type is simply
+/// the class instance type.
+fn is_new_expr_of_non_generic_class(
+  es_module_info: &EsModuleInfo,
+  new_expr: &NewExpr,
+) -> bool {
+  if new_expr.type_args.is_some() {
+    return false;
+  }
+  let Some(ident) = new_expr.callee.as_ident() else {
+    return false;
+  };
+  let Some(symbol) = es_module_info.symbol_from_swc(&ident.to_id()) else {
+    return false;
+  };
+  symbol.decls().iter().any(|decl| match decl.maybe_node() {
+    Some(SymbolNodeRef::ClassDecl(n)) => n.class.type_params.is_none(),
+    Some(SymbolNodeRef::ExportDecl(_, ExportDeclRef::Class(n))) => {
+      n.class.type_params.is_none()
+    }
+    _ => false,
+  })
 }
 
 fn is_computed_prop_name(prop_name: &PropName) -> bool {

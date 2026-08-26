@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use deno_ast::ModuleSpecifier;
 use deno_ast::SourceRange;
 use deno_ast::SourceRangedForSpanned;
@@ -11,7 +13,10 @@ use super::range_finder::ModulePublicRanges;
 use super::swc_helpers::DeclMutabilityKind;
 use super::swc_helpers::any_type_ann;
 use super::swc_helpers::maybe_lit_to_ts_type;
+use super::swc_helpers::object_freeze_call_arg;
 use super::swc_helpers::tpl_to_ts_type;
+use super::swc_helpers::ts_keyword_type;
+use super::swc_helpers::ts_lit_type;
 use super::swc_helpers::ts_readonly;
 use super::swc_helpers::ts_tuple_element;
 use super::swc_helpers::type_ann;
@@ -64,6 +69,18 @@ pub struct FastCheckDtsTransformer<'a> {
   public_ranges: &'a ModulePublicRanges,
   pub diagnostics: Vec<FastCheckDtsDiagnostic>,
   specifier: &'a ModuleSpecifier,
+  unresolved_context: SyntaxContext,
+  /// Bindings that are known to have a non-widening inferable type, so
+  /// referencing them via `typeof` in the emitted declaration is sound
+  /// (function and class declarations, and consts that are explicitly
+  /// typed or initialized with a function).
+  typeof_safe_ids: HashSet<Id>,
+  /// Module level class declarations without type parameters, whose `new`
+  /// expressions have the class instance type.
+  non_generic_class_ids: HashSet<Id>,
+  /// Module level bindings known to have an array or tuple type, which is
+  /// required for a `...typeof ident` tuple rest element to be valid.
+  array_typed_ids: HashSet<Id>,
   is_top_level: bool,
 }
 
@@ -72,6 +89,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
     text_info: &'a SourceTextInfo,
     public_ranges: &'a ModulePublicRanges,
     specifier: &'a ModuleSpecifier,
+    unresolved_context: SyntaxContext,
   ) -> Self {
     Self {
       id_counter: 0,
@@ -79,6 +97,10 @@ impl<'a> FastCheckDtsTransformer<'a> {
       specifier,
       public_ranges,
       diagnostics: vec![],
+      unresolved_context,
+      typeof_safe_ids: HashSet::new(),
+      non_generic_class_ids: HashSet::new(),
+      array_typed_ids: HashSet::new(),
       is_top_level: true,
     }
   }
@@ -125,6 +147,10 @@ impl<'a> FastCheckDtsTransformer<'a> {
     self.is_top_level = true;
     match program {
       Program::Module(mut module) => {
+        let prescanned_ids = prescan_module_ids(&module);
+        self.typeof_safe_ids = prescanned_ids.typeof_safe;
+        self.non_generic_class_ids = prescanned_ids.non_generic_classes;
+        self.array_typed_ids = prescanned_ids.array_typed;
         let body = module.body;
         module.body = self.transform_module_items(body);
         Program::Module(module)
@@ -212,6 +238,14 @@ impl<'a> FastCheckDtsTransformer<'a> {
             ))
           }
           ModuleDecl::ExportDefaultExpr(export_default_expr) => {
+            // a default export of an identifier can reference the
+            // declaration directly without an intermediate variable
+            if export_default_expr.expr.is_ident() {
+              new_items.push(ModuleItem::ModuleDecl(
+                ModuleDecl::ExportDefaultExpr(export_default_expr),
+              ));
+              continue;
+            }
             let name = self.gen_unique_name();
             let name_ident =
               Ident::new(name.into(), DUMMY_SP, SyntaxContext::default());
@@ -312,16 +346,67 @@ impl<'a> FastCheckDtsTransformer<'a> {
 
         for elems in arr.elems {
           if let Some(expr_or_spread) = elems {
-            match self.expr_to_ts_type(
-              *expr_or_spread.expr.clone(),
-              as_const,
-              as_readonly,
-            ) {
-              Some(ts_expr) => {
-                elem_types.push(ts_tuple_element(ts_expr));
+            if expr_or_spread.spread.is_some() {
+              // tuple types support spreading array types, so a spread of
+              // an identifier known to be array-typed can be represented
+              // as `...typeof ident` and a spread of an array literal as a
+              // rest of its tuple type
+              let rest_type = match &*expr_or_spread.expr {
+                Expr::Ident(ident)
+                  if self.array_typed_ids.contains(&ident.to_id()) =>
+                {
+                  Some(TsType::TsTypeQuery(TsTypeQuery {
+                    span: DUMMY_SP,
+                    expr_name: TsTypeQueryExpr::TsEntityName(
+                      TsEntityName::Ident(ident.clone()),
+                    ),
+                    type_args: None,
+                  }))
+                }
+                Expr::Array(_) => self.expr_to_ts_type(
+                  (*expr_or_spread.expr).clone(),
+                  as_const,
+                  false,
+                ),
+                _ => None,
+              };
+              match rest_type {
+                Some(rest_type) => {
+                  elem_types.push(ts_tuple_element(TsType::TsRestType(
+                    TsRestType {
+                      span: DUMMY_SP,
+                      type_ann: Box::new(rest_type),
+                    },
+                  )));
+                }
+                None => {
+                  // give up on the whole array rather than emitting a
+                  // tuple type that is missing elements
+                  self.mark_diagnostic(
+                    FastCheckDtsDiagnostic::UnableToInferTypeFromSpread {
+                      range: self.source_range_to_range(expr_or_spread.range()),
+                    },
+                  );
+                  return None;
+                }
               }
-              _ => {
-                self.mark_diagnostic_unable_to_infer(expr_or_spread.range());
+            } else {
+              match self.expr_to_ts_type(
+                *expr_or_spread.expr.clone(),
+                as_const,
+                as_readonly,
+              ) {
+                Some(ts_expr) => {
+                  elem_types.push(ts_tuple_element(ts_expr));
+                }
+                _ => {
+                  // fall back to `any` for the element so the tuple
+                  // keeps the correct number of elements
+                  self.mark_diagnostic_unable_to_infer(expr_or_spread.range());
+                  elem_types.push(ts_tuple_element(ts_keyword_type(
+                    TsKeywordTypeKind::TsAnyKeyword,
+                  )));
+                }
               }
             }
           } else {
@@ -379,9 +464,18 @@ impl<'a> FastCheckDtsTransformer<'a> {
                     }
                   };
 
-                  let init_type = self
-                    .expr_to_ts_type(*key_value.value, as_const, as_readonly)
-                    .map(type_ann);
+                  let value_range = key_value.value.range();
+                  let init_type = match self.expr_to_ts_type(
+                    *key_value.value,
+                    as_const,
+                    as_readonly,
+                  ) {
+                    Some(ts_type) => type_ann(ts_type),
+                    None => {
+                      self.mark_diagnostic_any_fallback(value_range);
+                      any_type_ann()
+                    }
+                  };
 
                   members.push(TsTypeElement::TsPropertySignature(
                     TsPropertySignature {
@@ -390,12 +484,35 @@ impl<'a> FastCheckDtsTransformer<'a> {
                       key: Box::new(key),
                       computed,
                       optional: false,
-                      type_ann: init_type,
+                      type_ann: Some(init_type),
                     },
                   ));
                 }
-                Prop::Shorthand(_)
-                | Prop::Assign(_)
+                Prop::Shorthand(ident) => {
+                  match self.ident_to_ts_type(&ident, as_const) {
+                    Some(ts_type) => {
+                      members.push(TsTypeElement::TsPropertySignature(
+                        TsPropertySignature {
+                          span: DUMMY_SP,
+                          readonly: as_readonly,
+                          key: Box::new(Expr::Ident(Ident {
+                            span: ident.span,
+                            ctxt: SyntaxContext::default(),
+                            sym: ident.sym,
+                            optional: false,
+                          })),
+                          computed: false,
+                          optional: false,
+                          type_ann: Some(type_ann(ts_type)),
+                        },
+                      ));
+                    }
+                    None => {
+                      self.mark_diagnostic_unsupported_prop(ident.range());
+                    }
+                  }
+                }
+                Prop::Assign(_)
                 | Prop::Getter(_)
                 | Prop::Setter(_)
                 | Prop::Method(_) => {
@@ -478,20 +595,59 @@ impl<'a> FastCheckDtsTransformer<'a> {
           false => DeclMutabilityKind::Mutable,
         },
       )),
+      Expr::Ident(ident) => self.ident_to_ts_type(&ident, as_const),
+      Expr::Unary(unary) => match (unary.op, &*unary.arg) {
+        (UnaryOp::Minus, Expr::Lit(Lit::Num(num))) => match as_const {
+          true => Some(ts_lit_type(TsLit::Number(Number {
+            span: num.span,
+            value: -num.value,
+            raw: None,
+          }))),
+          false => Some(ts_keyword_type(TsKeywordTypeKind::TsNumberKeyword)),
+        },
+        (UnaryOp::Minus, Expr::Lit(Lit::BigInt(bigint))) => match as_const {
+          true => Some(ts_lit_type(TsLit::BigInt(BigInt {
+            span: bigint.span,
+            value: Box::new(-(*bigint.value).clone()),
+            raw: None,
+          }))),
+          false => Some(ts_keyword_type(TsKeywordTypeKind::TsBigIntKeyword)),
+        },
+        _ => None,
+      },
+      Expr::Call(call_expr) => {
+        // `Object.freeze(expr)` returns `Readonly<T>` of its argument
+        let arg = object_freeze_call_arg(&call_expr, self.unresolved_context)?;
+        let inner_type =
+          self.expr_to_ts_type((*arg.expr).clone(), as_const, as_readonly)?;
+        readonly_of(inner_type)
+      }
+      Expr::New(new_expr) => {
+        // `new SomeClass(...)` of a non-generic class declared in this
+        // module has the class instance type
+        let ident = new_expr.callee.as_ident()?;
+        if new_expr.type_args.is_none()
+          && self.non_generic_class_ids.contains(&ident.to_id())
+        {
+          Some(TsType::TsTypeRef(TsTypeRef {
+            span: DUMMY_SP,
+            type_name: TsEntityName::Ident(ident.clone()),
+            type_params: None,
+          }))
+        } else {
+          None
+        }
+      }
       // Since fast check requires explicit type annotations these
       // can be dropped as they are not part of an export declaration
       Expr::This(_)
-      | Expr::Unary(_)
       | Expr::Update(_)
       | Expr::Bin(_)
       | Expr::Assign(_)
       | Expr::Member(_)
       | Expr::SuperProp(_)
       | Expr::Cond(_)
-      | Expr::Call(_)
-      | Expr::New(_)
       | Expr::Seq(_)
-      | Expr::Ident(_)
       | Expr::TaggedTpl(_)
       | Expr::Class(_)
       | Expr::Yield(_)
@@ -755,6 +911,35 @@ impl<'a> FastCheckDtsTransformer<'a> {
     }
   }
 
+  fn ident_to_ts_type(
+    &mut self,
+    ident: &Ident,
+    as_const: bool,
+  ) -> Option<TsType> {
+    if ident.ctxt == self.unresolved_context {
+      return match ident.sym.as_str() {
+        "undefined" if as_const => {
+          Some(ts_keyword_type(TsKeywordTypeKind::TsUndefinedKeyword))
+        }
+        "NaN" | "Infinity" => {
+          Some(ts_keyword_type(TsKeywordTypeKind::TsNumberKeyword))
+        }
+        _ => None,
+      };
+    }
+    if self.typeof_safe_ids.contains(&ident.to_id()) {
+      Some(TsType::TsTypeQuery(TsTypeQuery {
+        span: DUMMY_SP,
+        expr_name: TsTypeQueryExpr::TsEntityName(TsEntityName::Ident(
+          ident.clone(),
+        )),
+        type_args: None,
+      }))
+    } else {
+      None
+    }
+  }
+
   fn infer_expr_fallback_any(
     &mut self,
     expr: Expr,
@@ -795,7 +980,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
           Some(ClassMember::Constructor(class_constructor))
         }
         ClassMember::Method(mut method) => {
-          match valid_prop_name(&method.key) {
+          match valid_prop_name(&method.key, self.unresolved_context) {
             Some(new_prop_name) => {
               method.key = new_prop_name;
             }
@@ -812,7 +997,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
           Some(ClassMember::Method(method))
         }
         ClassMember::ClassProp(mut prop) => {
-          match valid_prop_name(&prop.key) {
+          match valid_prop_name(&prop.key, self.unresolved_context) {
             Some(new_prop_name) => {
               prop.key = new_prop_name;
             }
@@ -993,8 +1178,204 @@ impl<'a> FastCheckDtsTransformer<'a> {
   }
 }
 
-fn valid_prop_name(prop_name: &PropName) -> Option<PropName> {
-  fn prop_name_from_expr(expr: &Expr) -> Option<PropName> {
+#[derive(Default)]
+struct PrescannedModuleIds {
+  /// Bindings whose type can be soundly referenced via `typeof` in the
+  /// emitted declaration file: function and class declarations don't get
+  /// widened by TypeScript's inference, and consts with an explicit type
+  /// annotation or a function initializer have a known non-widening
+  /// declared type.
+  typeof_safe: HashSet<Id>,
+  /// Class declarations without type parameters.
+  non_generic_classes: HashSet<Id>,
+  /// Bindings with an array or tuple type, per their type annotation or an
+  /// array literal initializer.
+  array_typed: HashSet<Id>,
+}
+
+/// The equivalent of `Readonly<T>`, expressed without referencing the
+/// global `Readonly` utility type since that identifier could be shadowed
+/// by a module-local type declaration. Types that can't be represented
+/// structurally return `None`.
+fn readonly_of(ts_type: TsType) -> Option<TsType> {
+  match ts_type {
+    TsType::TsTypeLit(mut type_lit)
+      if type_lit.members.iter().all(|member| {
+        matches!(
+          member,
+          TsTypeElement::TsPropertySignature(_)
+            | TsTypeElement::TsIndexSignature(_)
+        )
+      }) =>
+    {
+      for member in &mut type_lit.members {
+        match member {
+          TsTypeElement::TsPropertySignature(prop) => prop.readonly = true,
+          TsTypeElement::TsIndexSignature(index) => index.readonly = true,
+          _ => unreachable!(),
+        }
+      }
+      Some(TsType::TsTypeLit(type_lit))
+    }
+    TsType::TsArrayType(_) | TsType::TsTupleType(_) => {
+      Some(ts_readonly(ts_type))
+    }
+    TsType::TsTypeOperator(op) if op.op == TsTypeOperatorOp::ReadOnly => {
+      Some(TsType::TsTypeOperator(op))
+    }
+    // `Object.freeze` returns functions unchanged
+    TsType::TsFnOrConstructorType(_) => Some(ts_type),
+    _ => None,
+  }
+}
+
+fn is_array_type(ty: &TsType) -> bool {
+  match ty {
+    TsType::TsArrayType(_) | TsType::TsTupleType(_) => true,
+    TsType::TsTypeOperator(op) if op.op == TsTypeOperatorOp::ReadOnly => {
+      is_array_type(&op.type_ann)
+    }
+    TsType::TsTypeRef(type_ref) => matches!(
+      &type_ref.type_name,
+      TsEntityName::Ident(ident)
+        if ident.sym == "Array" || ident.sym == "ReadonlyArray"
+    ),
+    _ => false,
+  }
+}
+
+fn is_array_lit_init(expr: &Expr) -> bool {
+  match expr {
+    Expr::Array(_) => true,
+    Expr::Paren(e) => is_array_lit_init(&e.expr),
+    Expr::TsConstAssertion(e) => is_array_lit_init(&e.expr),
+    Expr::TsSatisfies(e) => is_array_lit_init(&e.expr),
+    Expr::TsAs(e) => is_array_type(&e.type_ann),
+    _ => false,
+  }
+}
+
+fn prescan_module_ids(module: &Module) -> PrescannedModuleIds {
+  fn add_class(ids: &mut PrescannedModuleIds, ident: &Ident, class: &Class) {
+    ids.typeof_safe.insert(ident.to_id());
+    if class.type_params.is_none() {
+      ids.non_generic_classes.insert(ident.to_id());
+    }
+  }
+
+  fn add_decl(ids: &mut PrescannedModuleIds, decl: &Decl) {
+    match decl {
+      Decl::Fn(n) => {
+        ids.typeof_safe.insert(n.ident.to_id());
+      }
+      Decl::Class(n) => {
+        add_class(ids, &n.ident, &n.class);
+      }
+      Decl::Var(n) => {
+        if n.kind == VarDeclKind::Const {
+          for declarator in &n.decls {
+            if let Pat::Ident(ident) = &declarator.name {
+              let is_typed = ident.type_ann.is_some();
+              let has_fn_init = matches!(
+                declarator.init.as_deref(),
+                Some(Expr::Fn(_) | Expr::Arrow(_))
+              );
+              if is_typed || has_fn_init {
+                ids.typeof_safe.insert(ident.id.to_id());
+              }
+              let is_array_typed = match &ident.type_ann {
+                Some(type_ann) => is_array_type(&type_ann.type_ann),
+                None => {
+                  declarator.init.as_deref().is_some_and(is_array_lit_init)
+                }
+              };
+              if is_array_typed {
+                ids.array_typed.insert(ident.id.to_id());
+              }
+            }
+          }
+        }
+      }
+      _ => {}
+    }
+  }
+
+  let mut ids = PrescannedModuleIds::default();
+  for item in &module.body {
+    match item {
+      ModuleItem::Stmt(Stmt::Decl(decl)) => add_decl(&mut ids, decl),
+      ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(n)) => {
+        add_decl(&mut ids, &n.decl)
+      }
+      ModuleItem::ModuleDecl(ModuleDecl::ExportDefaultDecl(n)) => {
+        match &n.decl {
+          DefaultDecl::Class(n) => {
+            if let Some(ident) = &n.ident {
+              add_class(&mut ids, ident, &n.class);
+            }
+          }
+          DefaultDecl::Fn(n) => {
+            if let Some(ident) = &n.ident {
+              ids.typeof_safe.insert(ident.to_id());
+            }
+          }
+          DefaultDecl::TsInterfaceDecl(_) => {}
+        }
+      }
+      _ => {}
+    }
+  }
+  ids
+}
+
+/// Whether the expression is a reference to a well-known symbol on the
+/// global `Symbol` object (e.g. `Symbol.iterator` or `Symbol.dispose`).
+fn is_well_known_symbol_expr(
+  expr: &Expr,
+  unresolved_context: SyntaxContext,
+) -> bool {
+  const WELL_KNOWN_SYMBOL_NAMES: [&str; 16] = [
+    "asyncDispose",
+    "asyncIterator",
+    "dispose",
+    "hasInstance",
+    "isConcatSpreadable",
+    "iterator",
+    "match",
+    "matchAll",
+    "metadata",
+    "replace",
+    "search",
+    "species",
+    "split",
+    "toPrimitive",
+    "toStringTag",
+    "unscopables",
+  ];
+
+  let Expr::Member(member_expr) = expr else {
+    return false;
+  };
+  let Some(obj_ident) = member_expr.obj.as_ident() else {
+    return false;
+  };
+  if obj_ident.sym != "Symbol" || obj_ident.ctxt != unresolved_context {
+    return false;
+  }
+  let Some(prop_ident) = member_expr.prop.as_ident() else {
+    return false;
+  };
+  WELL_KNOWN_SYMBOL_NAMES.contains(&prop_ident.sym.as_str())
+}
+
+fn valid_prop_name(
+  prop_name: &PropName,
+  unresolved_context: SyntaxContext,
+) -> Option<PropName> {
+  fn prop_name_from_expr(
+    expr: &Expr,
+    unresolved_context: SyntaxContext,
+  ) -> Option<PropName> {
     match expr {
       Expr::Lit(e) => match &e {
         Lit::Str(e) => Some(PropName::Str(e.clone())),
@@ -1004,22 +1385,37 @@ fn valid_prop_name(prop_name: &PropName) -> Option<PropName> {
       },
       Expr::Tpl(e) => {
         if e.quasis.is_empty() && e.exprs.len() == 1 {
-          prop_name_from_expr(&e.exprs[0])
+          prop_name_from_expr(&e.exprs[0], unresolved_context)
         } else {
           None
         }
       }
-      Expr::Paren(e) => prop_name_from_expr(&e.expr),
-      Expr::TsTypeAssertion(e) => prop_name_from_expr(&e.expr),
-      Expr::TsConstAssertion(e) => prop_name_from_expr(&e.expr),
-      Expr::TsNonNull(e) => prop_name_from_expr(&e.expr),
-      Expr::TsAs(e) => prop_name_from_expr(&e.expr),
-      Expr::TsSatisfies(e) => prop_name_from_expr(&e.expr),
+      Expr::Paren(e) => prop_name_from_expr(&e.expr, unresolved_context),
+      Expr::TsTypeAssertion(e) => {
+        prop_name_from_expr(&e.expr, unresolved_context)
+      }
+      Expr::TsConstAssertion(e) => {
+        prop_name_from_expr(&e.expr, unresolved_context)
+      }
+      Expr::TsNonNull(e) => prop_name_from_expr(&e.expr, unresolved_context),
+      Expr::TsAs(e) => prop_name_from_expr(&e.expr, unresolved_context),
+      Expr::TsSatisfies(e) => prop_name_from_expr(&e.expr, unresolved_context),
       Expr::Ident(_) => Some(PropName::Computed(ComputedPropName {
         #[allow(clippy::disallowed_methods)]
         span: deno_ast::swc::common::Spanned::span(&expr),
         expr: Box::new(expr.clone()),
       })),
+      Expr::Member(_) => {
+        if is_well_known_symbol_expr(expr, unresolved_context) {
+          Some(PropName::Computed(ComputedPropName {
+            #[allow(clippy::disallowed_methods)]
+            span: deno_ast::swc::common::Spanned::span(&expr),
+            expr: Box::new(expr.clone()),
+          }))
+        } else {
+          None
+        }
+      }
       Expr::TaggedTpl(_)
       | Expr::This(_)
       | Expr::Array(_)
@@ -1029,7 +1425,6 @@ fn valid_prop_name(prop_name: &PropName) -> Option<PropName> {
       | Expr::Update(_)
       | Expr::Bin(_)
       | Expr::Assign(_)
-      | Expr::Member(_)
       | Expr::SuperProp(_)
       | Expr::Cond(_)
       | Expr::Call(_)
@@ -1057,7 +1452,9 @@ fn valid_prop_name(prop_name: &PropName) -> Option<PropName> {
     | PropName::Str(_)
     | PropName::Num(_)
     | PropName::BigInt(_) => Some(prop_name.clone()),
-    PropName::Computed(computed) => prop_name_from_expr(&computed.expr),
+    PropName::Computed(computed) => {
+      prop_name_from_expr(&computed.expr, unresolved_context)
+    }
   }
 }
 
@@ -1146,6 +1543,7 @@ mod tests {
       parsed_source.text_info_lazy(),
       &public_ranges,
       &specifier,
+      parsed_source.unresolved_context(),
     );
     let program = transformer.transform(program);
 
@@ -1456,6 +1854,203 @@ export function foo(a: any): number {
       r#"export const foo = { bar } as const;"#,
       r#"export declare const foo: {
 };"#,
+    )
+    .await;
+  }
+
+  #[tokio::test]
+  async fn dts_object_prop_ident_reference() {
+    // https://github.com/jsr-io/jsr/issues/615
+    transform_dts_test(
+      r#"export function fAdd(a: number, b: number): number {
+  return a + b;
+}
+export class Foo {}
+const arrow = (a: string): string => a;
+const typed: number = 1;
+export const obj = {
+  add: fAdd,
+  arrow,
+  klass: Foo,
+  typed,
+};"#,
+      r#"export declare function fAdd(a: number, b: number): number;
+export declare class Foo {
+}
+declare const arrow: (a: string) => string;
+declare const typed: number;
+export declare const obj: {
+  readonly add: typeof fAdd;
+  readonly arrow: typeof arrow;
+  readonly klass: typeof Foo;
+  readonly typed: typeof typed;
+};"#,
+    )
+    .await;
+
+    // a `let` variable may be widened by TypeScript's inference, so
+    // referencing it via `typeof` is not safe and falls back to `any`
+    transform_dts_test(
+      r#"let counter = 0;
+export const obj = { counter };"#,
+      r#"declare let counter: number;
+export declare const obj: {
+};"#,
+    )
+    .await;
+  }
+
+  #[tokio::test]
+  async fn dts_ident_globals() {
+    transform_dts_test(
+      r#"export const foo = { u: undefined, n: NaN, i: Infinity } as const;"#,
+      r#"export declare const foo: {
+  readonly u: undefined;
+  readonly n: number;
+  readonly i: number;
+};"#,
+    )
+    .await;
+  }
+
+  #[tokio::test]
+  async fn dts_class_wellknown_symbol_members() {
+    // https://github.com/jsr-io/jsr/issues/886
+    // https://github.com/jsr-io/jsr/issues/1179
+    transform_dts_test(
+      r#"export class Foo<T> implements Iterable<T> {
+  [Symbol.iterator](): Iterator<T> {
+    return null!;
+  }
+  [Symbol.dispose](): void {}
+  readonly [Symbol.toStringTag]: string = "Foo";
+}"#,
+      r#"export declare class Foo<T> implements Iterable<T> {
+  [Symbol.iterator](): Iterator<T>;
+  [Symbol.dispose](): void;
+  readonly [Symbol.toStringTag]: string;
+}"#,
+    )
+    .await;
+
+    // a local binding named `Symbol` is not the global `Symbol` object
+    transform_dts_test(
+      r#"const Symbol = { iterator: "iter" } as const;
+export class Foo {
+  [Symbol.iterator](): void {}
+}"#,
+      r#"declare const Symbol: {
+  readonly iterator: "iter";
+};
+export declare class Foo {
+}"#,
+    )
+    .await;
+  }
+
+  #[tokio::test]
+  async fn dts_as_const_spread() {
+    // https://github.com/jsr-io/jsr/issues/1258
+    transform_dts_test(
+      r#"export const FIRST = ["a", "b"] as const;
+export const ALL = [...FIRST, "c", "d"] as const;"#,
+      r#"export declare const FIRST: readonly ["a", "b"];
+export declare const ALL: readonly [...typeof FIRST, "c", "d"];"#,
+    )
+    .await;
+
+    transform_dts_test(
+      r#"export const flat = [...[1, 2], ...["test"]] as const;"#,
+      "export declare const flat: readonly [...[1, 2], ...[\"test\"]];",
+    )
+    .await;
+
+    // a spread of an uninferable expression falls back to `any` for the
+    // whole array instead of emitting a tuple with missing elements
+    transform_dts_test(
+      r#"export const nope = [...foo(), "a"] as const;"#,
+      "export declare const nope: any;",
+    )
+    .await;
+
+    // a spread of a binding that is not array-typed cannot become a tuple
+    // rest element (`...typeof source` of a string is invalid TypeScript)
+    transform_dts_test(
+      r#"const source: string = "abc";
+export const bad = [...source, "a"] as const;"#,
+      r#"declare const source: string;
+export declare const bad: any;"#,
+    )
+    .await;
+  }
+
+  #[tokio::test]
+  async fn dts_negative_number_literals() {
+    transform_dts_test(
+      r#"export const nums = [1, -2, 3.5] as const;"#,
+      "export declare const nums: readonly [1, -2, 3.5];",
+    )
+    .await;
+  }
+
+  #[tokio::test]
+  async fn dts_new_expr() {
+    transform_dts_test(
+      r#"export class Dimensions {}
+export const a = { d: new Dimensions() };"#,
+      r#"export declare class Dimensions {
+}
+export declare const a: {
+  readonly d: Dimensions;
+};"#,
+    )
+    .await;
+
+    // generic classes are not inferable from a `new` expression
+    transform_dts_test(
+      r#"export class Box<T> {}
+export const a = new Box("test");"#,
+      r#"export declare class Box<T> {
+}
+export declare const a: any;"#,
+    )
+    .await;
+  }
+
+  #[tokio::test]
+  async fn dts_object_freeze() {
+    // https://github.com/jsr-io/jsr/issues/155
+    transform_dts_test(
+      r#"export const props = Object.freeze({ a: 1, b: "test" });"#,
+      r#"export declare const props: {
+  readonly a: number;
+  readonly b: string;
+};"#,
+    )
+    .await;
+
+    transform_dts_test(
+      r#"export const list = Object.freeze([1, 2]);"#,
+      "export declare const list: readonly [number, number];",
+    )
+    .await;
+
+    // the emitted type must not reference the global `Readonly` utility
+    // type, which can be shadowed by a module-local declaration
+    transform_dts_test(
+      r#"export type Readonly<T> = string;
+export const frozen = Object.freeze({ value: 1 });"#,
+      r#"export type Readonly<T> = string;
+export declare const frozen: {
+  readonly value: number;
+};"#,
+    )
+    .await;
+
+    // other calls are still not inferable
+    transform_dts_test(
+      r#"export const foo = Object.entries({ a: 1 });"#,
+      "export declare const foo: any;",
     )
     .await;
   }

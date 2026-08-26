@@ -189,11 +189,11 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     readonly b: boolean;
     readonly c: number;
     readonly d: bigint;
-    readonly e;
+    readonly e: any;
     readonly [1]: number;
-    readonly f;
-    readonly g;
-    readonly h: readonly [readonly [number, number], readonly [string]];
+    readonly f: any;
+    readonly g: any;
+    readonly h: readonly [...[number, number], ...[string]];
   };
   export declare const func1: () => string;
   export declare const func2: () => string;
@@ -215,3 +215,12 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   export declare const inferred10: (1 | 2n)[];
   export declare const inferred11: (keyof string)[];
   export declare const inferred12: 1;
+  --- DTS Diagnostics ---
+  unable to infer type, falling back to any type
+      at https://jsr.io/@scope/a/1.0.0/mod.ts@488
+
+  unable to infer type, falling back to any type
+      at https://jsr.io/@scope/a/1.0.0/mod.ts@510
+
+  unable to infer type, falling back to any type
+      at https://jsr.io/@scope/a/1.0.0/mod.ts@533

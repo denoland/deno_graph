@@ -123,14 +123,13 @@ Fast check https://jsr.io/@scope/a/1.0.0/functions.ts:
   declare function func(): void;
   export declare function other_func(): void;
   export declare const functions: {
-    readonly other;
+    readonly func: typeof func;
+    readonly other: typeof other_func;
   };
   export declare namespace functions {
     type Function<T> = Internal<T>;
   }
-  --- DTS Diagnostics ---
-  unable to infer type from object property, skipping
-      at https://jsr.io/@scope/a/1.0.0/functions.ts@125
+
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
   {
     "./functions.ts": {

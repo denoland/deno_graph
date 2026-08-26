@@ -5,13 +5,17 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-function create(): number {
-  return 1;
-}
+export const DEFAULT_UPDATE_TYPES = [
+  "message",
+  "edited_message",
+] as const;
 
-export default {
-  test: create(),
-};
+export const ALL_UPDATE_TYPES = [
+  ...DEFAULT_UPDATE_TYPES,
+  "chat_member",
+  "message_reaction",
+  "message_reaction_count",
+] as const;
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -49,7 +53,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 81,
+      "size": 224,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -63,18 +67,17 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  error[unsupported-default-export-expr]: default export expression was too complex
-   --> https://jsr.io/@scope/a/1.0.0/mod.ts:5:1
-    |
-  5 | export default {
-    | ^^^^^^^^^^^^^^^^
-    |
-  6 |   test: create(),
-    | ^^^^^^^^^^^^^^^^^
-    |
-  7 | };
-    | ^^
-    = hint: add an 'as' clause with an explicit type after the expression, or extract to a variable
-
-    info: fast check was unable to infer the type of the default export expression
-    docs: https://jsr.io/go/slow-type-unsupported-default-export-expr
+  {}
+  export const DEFAULT_UPDATE_TYPES = [
+    "message",
+    "edited_message"
+  ] as const;
+  export const ALL_UPDATE_TYPES = [
+    ...DEFAULT_UPDATE_TYPES,
+    "chat_member",
+    "message_reaction",
+    "message_reaction_count"
+  ] as const;
+  --- DTS ---
+  export declare const DEFAULT_UPDATE_TYPES: readonly ["message", "edited_message"];
+  export declare const ALL_UPDATE_TYPES: readonly [...typeof DEFAULT_UPDATE_TYPES, "chat_member", "message_reaction", "message_reaction_count"];

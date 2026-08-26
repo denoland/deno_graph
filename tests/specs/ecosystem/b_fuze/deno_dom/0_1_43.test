@@ -256,11 +256,76 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
-error[missing-explicit-type]: missing explicit type in the public API
-   --> /src/dom/element.ts:506:3
+error[missing-explicit-return-type]: missing explicit return type in the public API
+   --> /src/dom/element.ts:506:39
     | 
 506 |   attributes = new NamedNodeMap(this, (attribute, value) => {
-    |   ^^^^^^^^^^ this symbol is missing an explicit type
+    |                                       ^^^^^^^^^^^^^^^^^^^^^^^
+    | 
+507 |     if (value === null) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
+508 |       value = "";
+    | ^^^^^^^^^^^^^^^^^
+    | 
+509 |     }
+    | ^^^^^
+    | 
+510 | 
+    | 
+    | 
+511 |     switch (attribute) {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
+512 |       case "class":
+    | ^^^^^^^^^^^^^^^^^^^
+    | 
+513 |         this.#classList.value = value;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
+514 |         break;
+    | ^^^^^^^^^^^^^^
+    | 
+515 |       case "id":
+    | ^^^^^^^^^^^^^^^^
+    | 
+516 |         this.#currentId = value;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    | 
+517 |         break;
+    | ^^^^^^^^^^^^^^
+    | 
+518 |     }
+    | ^^^^^
+    | 
+519 |   }, CTOR_KEY);
+    | ^^^ this function is missing an explicit return type
+    | 
+    = hint: add an explicit return type of 'void' or 'never' to the function
+
+  info: all functions in the public API must have an explicit return type
+  info: function expressions without a return statement can have a return type of either 'void' or 'never'
+  info: this function has no return statements, so a return type could not be inferred automatically
+  docs: https://jsr.io/go/slow-type-missing-explicit-return-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /src/dom/element.ts:506:40
+    | 
+506 |   attributes = new NamedNodeMap(this, (attribute, value) => {
+    |                                        ^^^^^^^^^ this symbol is missing an explicit type
+    | 
+    = hint: add an explicit type annotation to the symbol
+
+  info: all symbols in the public API must have an explicit type
+  docs: https://jsr.io/go/slow-type-missing-explicit-type
+
+
+error[missing-explicit-type]: missing explicit type in the public API
+   --> /src/dom/element.ts:506:51
+    | 
+506 |   attributes = new NamedNodeMap(this, (attribute, value) => {
+    |                                                   ^^^^^ this symbol is missing an explicit type
     | 
     = hint: add an explicit type annotation to the symbol
 

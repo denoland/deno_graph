@@ -5,13 +5,15 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-function create(): number {
-  return 1;
+export class CircularBuffer<T> implements Iterable<T, undefined> {
+  [Symbol.iterator](): Iterator<T, undefined> {
+    return null!;
+  }
 }
 
-export default {
-  test: create(),
-};
+export class A {
+  [Symbol.dispose](): void {}
+}
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -49,7 +51,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 81,
+      "size": 189,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -63,18 +65,19 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  error[unsupported-default-export-expr]: default export expression was too complex
-   --> https://jsr.io/@scope/a/1.0.0/mod.ts:5:1
-    |
-  5 | export default {
-    | ^^^^^^^^^^^^^^^^
-    |
-  6 |   test: create(),
-    | ^^^^^^^^^^^^^^^^^
-    |
-  7 | };
-    | ^^
-    = hint: add an 'as' clause with an explicit type after the expression, or extract to a variable
-
-    info: fast check was unable to infer the type of the default export expression
-    docs: https://jsr.io/go/slow-type-unsupported-default-export-expr
+  {}
+  export class CircularBuffer<T> implements Iterable<T, undefined> {
+    [Symbol.iterator](): Iterator<T, undefined> {
+      return {} as never;
+    }
+  }
+  export class A {
+    [Symbol.dispose](): void {}
+  }
+  --- DTS ---
+  export declare class CircularBuffer<T> implements Iterable<T, undefined> {
+    [Symbol.iterator](): Iterator<T, undefined>;
+  }
+  export declare class A {
+    [Symbol.dispose](): void;
+  }

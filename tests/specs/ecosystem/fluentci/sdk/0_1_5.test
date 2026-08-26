@@ -120,18 +120,6 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
 
 
-error[missing-explicit-type]: missing explicit type in the public API
-    --> /src/plugin.ts:1806:14
-     | 
-1806 | export const dag = new Client();
-     |              ^^^ this symbol is missing an explicit type
-     | 
-     = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
 error[missing-explicit-return-type]: missing explicit return type in the public API
   --> /src/client.gen.ts:41:7
    | 
@@ -142,29 +130,5 @@ error[missing-explicit-return-type]: missing explicit return type in the public 
 
   info: all functions in the public API must have an explicit return type
   docs: https://jsr.io/go/slow-type-missing-explicit-return-type
-
-
-error[missing-explicit-type]: missing explicit type in the public API
-    --> /src/client.gen.ts:1861:14
-     | 
-1861 | export const dag = new Client({ ctx: defaultContext });
-     |              ^^^ this symbol is missing an explicit type
-     | 
-     = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
-
-
-error[missing-explicit-type]: missing explicit type in the public API
-  --> /src/context.ts:53:14
-   | 
-53 | export const defaultContext = new Context();
-   |              ^^^^^^^^^^^^^^ this symbol is missing an explicit type
-   | 
-   = hint: add an explicit type annotation to the symbol
-
-  info: all symbols in the public API must have an explicit type
-  docs: https://jsr.io/go/slow-type-missing-explicit-type
 
 

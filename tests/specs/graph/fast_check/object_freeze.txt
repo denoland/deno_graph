@@ -5,13 +5,19 @@
 { "exports": { ".": "./mod.ts" } }
 
 # https://jsr.io/@scope/a/1.0.0/mod.ts
-function create(): number {
-  return 1;
-}
+export const prefixes = Object.freeze(
+  {
+    k: 1e+3,
+    M: 1e+6,
+  } as const satisfies Record<string, number>,
+);
 
-export default {
-  test: create(),
-};
+export const prefixes2 = Object.freeze(
+  {
+    k: 1e+3,
+    M: 1e+6,
+  } as const,
+) satisfies Record<string, number>;
 
 # mod.ts
 import 'jsr:@scope/a'
@@ -49,7 +55,7 @@ import 'jsr:@scope/a'
     },
     {
       "kind": "esm",
-      "size": 81,
+      "size": 240,
       "mediaType": "TypeScript",
       "specifier": "https://jsr.io/@scope/a/1.0.0/mod.ts"
     }
@@ -63,18 +69,21 @@ import 'jsr:@scope/a'
 }
 
 Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
-  error[unsupported-default-export-expr]: default export expression was too complex
-   --> https://jsr.io/@scope/a/1.0.0/mod.ts:5:1
-    |
-  5 | export default {
-    | ^^^^^^^^^^^^^^^^
-    |
-  6 |   test: create(),
-    | ^^^^^^^^^^^^^^^^^
-    |
-  7 | };
-    | ^^
-    = hint: add an 'as' clause with an explicit type after the expression, or extract to a variable
-
-    info: fast check was unable to infer the type of the default export expression
-    docs: https://jsr.io/go/slow-type-unsupported-default-export-expr
+  {}
+  export const prefixes = Object.freeze({
+    k: 1e+3,
+    M: 1e+6
+  } as const satisfies Record<string, number>);
+  export const prefixes2 = Object.freeze({
+    k: 1e+3,
+    M: 1e+6
+  } as const) satisfies Record<string, number>;
+  --- DTS ---
+  export declare const prefixes: {
+    readonly k: 1e+3;
+    readonly M: 1e+6;
+  };
+  export declare const prefixes2: {
+    readonly k: 1e+3;
+    readonly M: 1e+6;
+  };
