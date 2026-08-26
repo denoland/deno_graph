@@ -179,6 +179,32 @@ pub fn ts_tuple_element(ts_type: TsType) -> TsTupleElement {
   }
 }
 
+/// Gets the argument of an `Object.freeze(...)` call where `Object` is
+/// the global object, if the call expression matches that shape.
+pub fn object_freeze_call_arg(
+  call_expr: &CallExpr,
+  unresolved_context: SyntaxContext,
+) -> Option<&ExprOrSpread> {
+  let callee = call_expr.callee.as_expr()?;
+  let member_expr = callee.as_member()?;
+  let obj_ident = member_expr.obj.as_ident()?;
+  if obj_ident.sym != "Object" || obj_ident.ctxt != unresolved_context {
+    return None;
+  }
+  let prop_ident = member_expr.prop.as_ident()?;
+  if prop_ident.sym != "freeze" {
+    return None;
+  }
+  if call_expr.args.len() != 1 {
+    return None;
+  }
+  let arg = call_expr.args.first()?;
+  if arg.spread.is_some() {
+    return None;
+  }
+  Some(arg)
+}
+
 pub enum DeclMutabilityKind {
   Const,
   Mutable,

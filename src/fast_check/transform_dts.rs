@@ -13,6 +13,8 @@ use super::range_finder::ModulePublicRanges;
 use super::swc_helpers::DeclMutabilityKind;
 use super::swc_helpers::any_type_ann;
 use super::swc_helpers::maybe_lit_to_ts_type;
+use super::swc_helpers::new_ident;
+use super::swc_helpers::object_freeze_call_arg;
 use super::swc_helpers::tpl_to_ts_type;
 use super::swc_helpers::ts_keyword_type;
 use super::swc_helpers::ts_lit_type;
@@ -600,6 +602,20 @@ impl<'a> FastCheckDtsTransformer<'a> {
         },
         _ => None,
       },
+      Expr::Call(call_expr) => {
+        // `Object.freeze(expr)` returns `Readonly<T>` of its argument
+        let arg = object_freeze_call_arg(&call_expr, self.unresolved_context)?;
+        let inner_type =
+          self.expr_to_ts_type((*arg.expr).clone(), as_const, as_readonly)?;
+        Some(TsType::TsTypeRef(TsTypeRef {
+          span: DUMMY_SP,
+          type_name: TsEntityName::Ident(new_ident("Readonly".into())),
+          type_params: Some(Box::new(TsTypeParamInstantiation {
+            span: DUMMY_SP,
+            params: vec![Box::new(inner_type)],
+          })),
+        }))
+      }
       // Since fast check requires explicit type annotations these
       // can be dropped as they are not part of an export declaration
       Expr::This(_)
@@ -609,7 +625,6 @@ impl<'a> FastCheckDtsTransformer<'a> {
       | Expr::Member(_)
       | Expr::SuperProp(_)
       | Expr::Cond(_)
-      | Expr::Call(_)
       | Expr::New(_)
       | Expr::Seq(_)
       | Expr::TaggedTpl(_)
@@ -1855,6 +1870,26 @@ export declare const ALL: readonly [...typeof FIRST, "c", "d"];"#,
     transform_dts_test(
       r#"export const nums = [1, -2, 3.5] as const;"#,
       "export declare const nums: readonly [1, -2, 3.5];",
+    )
+    .await;
+  }
+
+  #[tokio::test]
+  async fn dts_object_freeze() {
+    // https://github.com/jsr-io/jsr/issues/155
+    transform_dts_test(
+      r#"export const props = Object.freeze({ a: 1, b: "test" });"#,
+      r#"export declare const props: Readonly<{
+  readonly a: number;
+  readonly b: string;
+}>;"#,
+    )
+    .await;
+
+    // other calls are still not inferable
+    transform_dts_test(
+      r#"export const foo = Object.entries({ a: 1 });"#,
+      "export declare const foo: any;",
     )
     .await;
   }

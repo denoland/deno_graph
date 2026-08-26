@@ -44,6 +44,7 @@ use super::swc_helpers::any_type_ann;
 use super::swc_helpers::is_void_type;
 use super::swc_helpers::maybe_lit_to_ts_type;
 use super::swc_helpers::new_ident;
+use super::swc_helpers::object_freeze_call_arg;
 use super::swc_helpers::tpl_to_ts_type;
 use super::swc_helpers::ts_keyword_type;
 use super::transform_dts::FastCheckDtsDiagnostic;
@@ -1752,6 +1753,7 @@ impl<'a> FastCheckTransformer<'a> {
     expr: &mut Expr,
     parent_id_range: Option<SourceRange>,
   ) -> Result<bool, Vec<FastCheckDiagnostic>> {
+    let unresolved_context = self.parsed_source.unresolved_context();
     let mut recurse =
       |expr: &mut Expr| self.maybe_transform_expr_if_leavable(expr, None);
 
@@ -1817,7 +1819,16 @@ impl<'a> FastCheckTransformer<'a> {
         }
       }
       Expr::Ident(_) => true,
-      Expr::Call(_) | Expr::New(_) | Expr::Seq(_)  => false,
+      Expr::Call(n) => {
+        // `Object.freeze(...)` has a well-known return type based on its
+        // argument, so it can be left as-is when its argument can be
+        if object_freeze_call_arg(n, unresolved_context).is_some() {
+          recurse(&mut n.args[0].expr)?
+        } else {
+          false
+        }
+      }
+      Expr::New(_) | Expr::Seq(_)  => false,
       Expr::Lit(n) => match n {
         Lit::Str(_)
         | Lit::Bool(_)
