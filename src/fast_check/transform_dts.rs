@@ -13,7 +13,6 @@ use super::range_finder::ModulePublicRanges;
 use super::swc_helpers::DeclMutabilityKind;
 use super::swc_helpers::any_type_ann;
 use super::swc_helpers::maybe_lit_to_ts_type;
-use super::swc_helpers::new_ident;
 use super::swc_helpers::object_freeze_call_arg;
 use super::swc_helpers::tpl_to_ts_type;
 use super::swc_helpers::ts_keyword_type;
@@ -79,6 +78,9 @@ pub struct FastCheckDtsTransformer<'a> {
   /// Module level class declarations without type parameters, whose `new`
   /// expressions have the class instance type.
   non_generic_class_ids: HashSet<Id>,
+  /// Module level bindings known to have an array or tuple type, which is
+  /// required for a `...typeof ident` tuple rest element to be valid.
+  array_typed_ids: HashSet<Id>,
   is_top_level: bool,
 }
 
@@ -98,6 +100,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
       unresolved_context,
       typeof_safe_ids: HashSet::new(),
       non_generic_class_ids: HashSet::new(),
+      array_typed_ids: HashSet::new(),
       is_top_level: true,
     }
   }
@@ -147,6 +150,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
         let prescanned_ids = prescan_module_ids(&module);
         self.typeof_safe_ids = prescanned_ids.typeof_safe;
         self.non_generic_class_ids = prescanned_ids.non_generic_classes;
+        self.array_typed_ids = prescanned_ids.array_typed;
         let body = module.body;
         module.body = self.transform_module_items(body);
         Program::Module(module)
@@ -343,11 +347,14 @@ impl<'a> FastCheckDtsTransformer<'a> {
         for elems in arr.elems {
           if let Some(expr_or_spread) = elems {
             if expr_or_spread.spread.is_some() {
-              // tuple types support spreading array-likes, so a spread of
-              // an identifier can be represented as `...typeof ident` and
-              // a spread of an array literal as a rest of its tuple type
+              // tuple types support spreading array types, so a spread of
+              // an identifier known to be array-typed can be represented
+              // as `...typeof ident` and a spread of an array literal as a
+              // rest of its tuple type
               let rest_type = match &*expr_or_spread.expr {
-                Expr::Ident(ident) if ident.ctxt != self.unresolved_context => {
+                Expr::Ident(ident)
+                  if self.array_typed_ids.contains(&ident.to_id()) =>
+                {
                   Some(TsType::TsTypeQuery(TsTypeQuery {
                     span: DUMMY_SP,
                     expr_name: TsTypeQueryExpr::TsEntityName(
@@ -613,14 +620,7 @@ impl<'a> FastCheckDtsTransformer<'a> {
         let arg = object_freeze_call_arg(&call_expr, self.unresolved_context)?;
         let inner_type =
           self.expr_to_ts_type((*arg.expr).clone(), as_const, as_readonly)?;
-        Some(TsType::TsTypeRef(TsTypeRef {
-          span: DUMMY_SP,
-          type_name: TsEntityName::Ident(new_ident("Readonly".into())),
-          type_params: Some(Box::new(TsTypeParamInstantiation {
-            span: DUMMY_SP,
-            params: vec![Box::new(inner_type)],
-          })),
-        }))
+        readonly_of(inner_type)
       }
       Expr::New(new_expr) => {
         // `new SomeClass(...)` of a non-generic class declared in this
@@ -1188,6 +1188,71 @@ struct PrescannedModuleIds {
   typeof_safe: HashSet<Id>,
   /// Class declarations without type parameters.
   non_generic_classes: HashSet<Id>,
+  /// Bindings with an array or tuple type, per their type annotation or an
+  /// array literal initializer.
+  array_typed: HashSet<Id>,
+}
+
+/// The equivalent of `Readonly<T>`, expressed without referencing the
+/// global `Readonly` utility type since that identifier could be shadowed
+/// by a module-local type declaration. Types that can't be represented
+/// structurally return `None`.
+fn readonly_of(ts_type: TsType) -> Option<TsType> {
+  match ts_type {
+    TsType::TsTypeLit(mut type_lit)
+      if type_lit.members.iter().all(|member| {
+        matches!(
+          member,
+          TsTypeElement::TsPropertySignature(_)
+            | TsTypeElement::TsIndexSignature(_)
+        )
+      }) =>
+    {
+      for member in &mut type_lit.members {
+        match member {
+          TsTypeElement::TsPropertySignature(prop) => prop.readonly = true,
+          TsTypeElement::TsIndexSignature(index) => index.readonly = true,
+          _ => unreachable!(),
+        }
+      }
+      Some(TsType::TsTypeLit(type_lit))
+    }
+    TsType::TsArrayType(_) | TsType::TsTupleType(_) => {
+      Some(ts_readonly(ts_type))
+    }
+    TsType::TsTypeOperator(op) if op.op == TsTypeOperatorOp::ReadOnly => {
+      Some(TsType::TsTypeOperator(op))
+    }
+    // `Object.freeze` returns functions unchanged
+    TsType::TsFnOrConstructorType(_) => Some(ts_type),
+    _ => None,
+  }
+}
+
+fn is_array_type(ty: &TsType) -> bool {
+  match ty {
+    TsType::TsArrayType(_) | TsType::TsTupleType(_) => true,
+    TsType::TsTypeOperator(op) if op.op == TsTypeOperatorOp::ReadOnly => {
+      is_array_type(&op.type_ann)
+    }
+    TsType::TsTypeRef(type_ref) => matches!(
+      &type_ref.type_name,
+      TsEntityName::Ident(ident)
+        if ident.sym == "Array" || ident.sym == "ReadonlyArray"
+    ),
+    _ => false,
+  }
+}
+
+fn is_array_lit_init(expr: &Expr) -> bool {
+  match expr {
+    Expr::Array(_) => true,
+    Expr::Paren(e) => is_array_lit_init(&e.expr),
+    Expr::TsConstAssertion(e) => is_array_lit_init(&e.expr),
+    Expr::TsSatisfies(e) => is_array_lit_init(&e.expr),
+    Expr::TsAs(e) => is_array_type(&e.type_ann),
+    _ => false,
+  }
 }
 
 fn prescan_module_ids(module: &Module) -> PrescannedModuleIds {
@@ -1217,6 +1282,15 @@ fn prescan_module_ids(module: &Module) -> PrescannedModuleIds {
               );
               if is_typed || has_fn_init {
                 ids.typeof_safe.insert(ident.id.to_id());
+              }
+              let is_array_typed = match &ident.type_ann {
+                Some(type_ann) => is_array_type(&type_ann.type_ann),
+                None => {
+                  declarator.init.as_deref().is_some_and(is_array_lit_init)
+                }
+              };
+              if is_array_typed {
+                ids.array_typed.insert(ident.id.to_id());
               }
             }
           }
@@ -1898,6 +1972,16 @@ export declare const ALL: readonly [...typeof FIRST, "c", "d"];"#,
       "export declare const nope: any;",
     )
     .await;
+
+    // a spread of a binding that is not array-typed cannot become a tuple
+    // rest element (`...typeof source` of a string is invalid TypeScript)
+    transform_dts_test(
+      r#"const source: string = "abc";
+export const bad = [...source, "a"] as const;"#,
+      r#"declare const source: string;
+export declare const bad: any;"#,
+    )
+    .await;
   }
 
   #[tokio::test]
@@ -1938,10 +2022,28 @@ export declare const a: any;"#,
     // https://github.com/jsr-io/jsr/issues/155
     transform_dts_test(
       r#"export const props = Object.freeze({ a: 1, b: "test" });"#,
-      r#"export declare const props: Readonly<{
+      r#"export declare const props: {
   readonly a: number;
   readonly b: string;
-}>;"#,
+};"#,
+    )
+    .await;
+
+    transform_dts_test(
+      r#"export const list = Object.freeze([1, 2]);"#,
+      "export declare const list: readonly [number, number];",
+    )
+    .await;
+
+    // the emitted type must not reference the global `Readonly` utility
+    // type, which can be shadowed by a module-local declaration
+    transform_dts_test(
+      r#"export type Readonly<T> = string;
+export const frozen = Object.freeze({ value: 1 });"#,
+      r#"export type Readonly<T> = string;
+export declare const frozen: {
+  readonly value: number;
+};"#,
     )
     .await;
 

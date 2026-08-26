@@ -95,7 +95,7 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     values: number[];
     constructor(values: number[]);
   }
-  export declare const units: Readonly<{
+  export declare const units: {
     readonly m: {
       readonly s: 1;
       readonly d: Dimensions;
@@ -104,4 +104,4 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
       readonly s: 1e-3;
       readonly d: Dimensions;
     };
-  }>;
+  };

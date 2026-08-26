@@ -79,11 +79,11 @@ Fast check https://jsr.io/@scope/a/1.0.0/mod.ts:
     M: 1e+6
   } as const) satisfies Record<string, number>;
   --- DTS ---
-  export declare const prefixes: Readonly<{
+  export declare const prefixes: {
     readonly k: 1e+3;
     readonly M: 1e+6;
-  }>;
-  export declare const prefixes2: Readonly<{
+  };
+  export declare const prefixes2: {
     readonly k: 1e+3;
     readonly M: 1e+6;
-  }>;
+  };
