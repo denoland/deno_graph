@@ -2944,10 +2944,56 @@ fn resolve(
   jsr_url_provider: &dyn JsrUrlProvider,
   maybe_resolver: Option<&dyn Resolver>,
 ) -> Resolution {
-  let response = if let Some(resolver) = maybe_resolver {
-    resolver.resolve(specifier_text, &referrer_range, resolution_kind)
+  resolve_with_specifier_text(
+    specifier_text,
+    specifier_text,
+    referrer_range,
+    resolution_kind,
+    jsr_url_provider,
+    maybe_resolver,
+  )
+}
+
+fn resolve_ts_reference_path(
+  specifier_text: &str,
+  referrer_range: Range,
+  jsr_url_provider: &dyn JsrUrlProvider,
+  maybe_resolver: Option<&dyn Resolver>,
+) -> Resolution {
+  // TypeScript resolves triple-slash `path` references relative to the
+  // containing file even when they don't start with `./`. Normalize those
+  // paths for resolvers, which otherwise interpret them as bare specifiers.
+  let resolver_specifier_text = if Url::parse(specifier_text).is_err()
+    && !specifier_text.starts_with("./")
+    && !specifier_text.starts_with("../")
+    && !specifier_text.starts_with(['/', '\\'])
+  {
+    Cow::Owned(format!("./{specifier_text}"))
   } else {
-    resolve_import(specifier_text, &referrer_range.specifier)
+    Cow::Borrowed(specifier_text)
+  };
+  resolve_with_specifier_text(
+    &resolver_specifier_text,
+    specifier_text,
+    referrer_range,
+    ResolutionKind::Types,
+    jsr_url_provider,
+    maybe_resolver,
+  )
+}
+
+fn resolve_with_specifier_text(
+  resolver_specifier_text: &str,
+  specifier_text: &str,
+  referrer_range: Range,
+  resolution_kind: ResolutionKind,
+  jsr_url_provider: &dyn JsrUrlProvider,
+  maybe_resolver: Option<&dyn Resolver>,
+) -> Resolution {
+  let response = if let Some(resolver) = maybe_resolver {
+    resolver.resolve(resolver_specifier_text, &referrer_range, resolution_kind)
+  } else {
+    resolve_import(resolver_specifier_text, &referrer_range.specifier)
       .map_err(|err| err.into())
   };
   if resolution_kind.is_types()
@@ -3568,10 +3614,9 @@ pub(crate) fn parse_js_module_from_module_info(
             resolution_mode: None,
           };
           if dep.maybe_type.is_none() {
-            dep.maybe_type = resolve(
+            dep.maybe_type = resolve_ts_reference_path(
               &specifier.text,
               range.clone(),
-              ResolutionKind::Types,
               jsr_url_provider,
               maybe_resolver,
             );
@@ -7968,6 +8013,56 @@ mod tests {
       )
       .await;
     assert!(*loader.loaded_bar.borrow());
+  }
+
+  #[tokio::test]
+  async fn dependency_typescript_path_reference_without_dot_slash() {
+    #[derive(Debug)]
+    struct TestResolver;
+    impl Resolver for TestResolver {
+      fn resolve(
+        &self,
+        specifier_text: &str,
+        referrer_range: &Range,
+        _kind: ResolutionKind,
+      ) -> Result<ModuleSpecifier, ResolveError> {
+        Ok(resolve_import(specifier_text, &referrer_range.specifier)?)
+      }
+    }
+
+    let mut loader = MemoryLoader::default();
+    loader.add_source_with_text(
+      "file:///types/index.d.ts",
+      r#"/// <reference path="globals.d.ts" />"#,
+    );
+    loader.add_source_with_text(
+      "file:///types/globals.d.ts",
+      "declare const value: string;",
+    );
+
+    let mut graph = ModuleGraph::new(GraphKind::TypesOnly);
+    graph
+      .build(
+        vec![Url::parse("file:///types/index.d.ts").unwrap()],
+        Vec::new(),
+        &loader,
+        BuildOptions {
+          resolver: Some(&TestResolver),
+          ..Default::default()
+        },
+      )
+      .await;
+
+    let module = graph
+      .get(&Url::parse("file:///types/index.d.ts").unwrap())
+      .unwrap()
+      .js()
+      .unwrap();
+    let dependency = module.dependencies.get("globals.d.ts").unwrap();
+    assert_eq!(
+      dependency.maybe_type.maybe_specifier().unwrap().as_str(),
+      "file:///types/globals.d.ts",
+    );
   }
 
   #[tokio::test]
